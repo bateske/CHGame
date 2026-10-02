@@ -82,7 +82,7 @@ static void enter(Scr s) {
 // Save the options and the records, and the puzzle in play if there is one.
 static void persist(bool withGame) {
     gfx_wait();                      // save builds its page in the chunk scratch
-    game::Record r;
+    game::Record r = {};             // (zeroed: the save holds every byte, padding too)
     if (withGame) {
         game::save(r);
         r.packId = pack::id();
@@ -692,7 +692,7 @@ static void optionsRender(uint32_t frame) {
 //   X <0|1>             (simulator) put the card in / pull it out
 //   Q                   (simulator) time the calibration primitives
 static bool debugHook(char cmd, const char *args) {
-    char buf[120], *p;
+    char buf[160], *p;              // (a late-game STATE line is ~125 characters)
     switch (cmd) {
         case 'G': {
             uint8_t i = (uint8_t)dbg::parseNum(args, 10), pk = (uint8_t)dbg::parseNum(args, 10);
