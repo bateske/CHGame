@@ -42,7 +42,7 @@ In the menus the D-pad moves, A selects and B goes back.
 
 Your record against each opponent, your best game and your best single play are kept (hold SELECT on the opponent screen to clear the record). OPTIONS has sound, the colour of the felt, and WORDS. Options, records and a game in progress (SAVE+QUIT, then CONTINUE) are saved.
 
-To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `python tools/device.py upload` from this folder.
+To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `chgame upload` from this folder.
 
 ## Developer notes
 

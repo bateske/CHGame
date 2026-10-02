@@ -1,6 +1,6 @@
 # The glove with the D-pad: taps step half a cell (lines, corners), holds run
 # whole cells; chips go down with A, come back with B; SELECT changes chip.
-#   python tools/chsim/chdrive.py --sim . tools/scripts/bet_tour.txt out/bet_tour
+#   chgame run tools/scripts/bet_tour.txt out/bet_tour
 say R 5
 say J P
 wait 100

@@ -1,7 +1,7 @@
 // Host tests for the puzzle bank: the flash decoder against what
 // tools/phrases/build_bank.py says it packed, every puzzle on the board, the
 // shuffled deal, and whole CPU episodes dealt from the real bank.
-//   python tools/phrases/build_bank.py && python tools/tests/run_tests.py
+//   python tools/phrases/build_bank.py && chgame test
 #include <stdio.h>
 #include <string.h>
 #include <set>

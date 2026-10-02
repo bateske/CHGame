@@ -1,6 +1,6 @@
 // Host tests for the rules, the game flow and the CPU.
 //
-//   python tools/tests/run_tests.py [--quick]
+//   chgame test [--quick]
 //
 // The rules are checked against a second, deliberately naive implementation
 // written here in another representation (one signed array in White's

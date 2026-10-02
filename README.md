@@ -178,13 +178,13 @@ pip install -r tools/requirements.txt ziglang
 
 # 3. Build a game (from its folder) against this repository's libraries
 cd platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHFour
-python tools/device.py build              # release build + size report
-python tools/check.py --no-device         # host tests + every sim script, twice (games that have check.py)
-python tools/run.py chsim/chsim.py build . # just the PC simulator
-python tools/chsim/chdrive.py --sim . tools/scripts/endings.txt out/endings   # screenshots in out/endings
+chgame build              # release build + size report
+chgame check --no-device         # host tests + every sim script, twice (games that have check.py)
+chgame sim # just the PC simulator
+chgame run tools/scripts/endings.txt out/endings   # screenshots in out/endings
 
 # 4. On a board (plugged in by USB)
-python tools/device.py upload
+chgame upload
 
 # 5. A card for the game menu: builds and packs every game into out/sdcard/
 cd ../..
@@ -277,7 +277,7 @@ it; [docs/sd-menu.md](docs/sd-menu.md) is the players' guide and
 
 The tools for working with the system outside the Arduino IDE:
 - **`device.py`**: builds, uploads and drives any sketch on the board (each
-  game's `tools/device.py` runs it on that game);
+  `chgame` command runs it on the game it is started in);
 - the **PC simulator** (`tools/chsim`): it compiles a sketch's real code
   with CHGfx's and the library's for the PC, runs it deterministically, and
   produces screenshots and GIFs; its **script driver** (`chdrivelib.py`,

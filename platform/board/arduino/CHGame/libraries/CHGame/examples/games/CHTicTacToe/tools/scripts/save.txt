@@ -1,6 +1,6 @@
 # Saving: a run's purse, table and stake come back after "a power cycle"
 # (the title's CONTINUE), and the stats count the games.
-#   python tools/chsim/chdrive.py --sim . tools/scripts/save.txt out/save
+#   chgame run tools/scripts/save.txt out/save
 say R 5
 say J T
 wait 30

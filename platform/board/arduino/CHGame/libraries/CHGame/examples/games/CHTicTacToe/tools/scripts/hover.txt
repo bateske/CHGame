@@ -1,5 +1,5 @@
 # A held piece over a taken pad rises clear of the piece there.
-#   python tools/chsim/chdrive.py --sim . tools/scripts/hover.txt out/hover
+#   chgame run tools/scripts/hover.txt out/hover
 say R 5
 say D 0
 say J P 0

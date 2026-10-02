@@ -1,5 +1,5 @@
 # Forced spins on both wheels: the whip, the ball, the landing, the payout.
-#   python tools/chsim/chdrive.py --sim . tools/scripts/spin_forced.txt out/spin_forced
+#   chgame run tools/scripts/spin_forced.txt out/spin_forced
 say R 3
 say J P
 wait 100

@@ -2,8 +2,8 @@
 // of seeded games with every seat a CPU or a "human" pressing buttons at
 // random, checking the books balance and every game ends.
 //
-//   python tools/tests/run_tests.py            tests + the game-length table
-//   python tools/tests/run_tests.py quick      fewer fuzzed games
+//   chgame test            tests + the game-length table
+//   chgame test quick      fewer fuzzed games
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

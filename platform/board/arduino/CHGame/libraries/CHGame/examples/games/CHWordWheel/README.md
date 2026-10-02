@@ -47,7 +47,7 @@ FULL EPISODE is a toss-up, three rounds at the wheel, the final spin and the bon
 
 111 puzzles are built in. Copy [`sdcard/PHRASES.BNK`](sdcard/PHRASES.BNK) to the top level of a FAT32 or FAT16 microSD card and the game draws from 606; the title screen says **CARD 606 PUZZLES** when it has found the file.
 
-To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `python tools/device.py upload` from this folder.
+To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `chgame upload` from this folder.
 
 ## Developer notes
 

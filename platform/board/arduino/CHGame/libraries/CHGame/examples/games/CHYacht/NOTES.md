@@ -11,7 +11,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
   - `tools/tests/run_tests.py`: the rules against an oracle over all 7,776 rolls, the house player's self-play and the paytable's return, the 3D dice physics at every power for every set of kept dice.
   - `tools/tests/sim_save.py`: save mid-turn, reboot, continue; a finished game leaves nothing to continue but keeps the purse.
   - The scripts in tools/scripts (look, modes, perf, showcase, gameplay) through `tools/chsim/chdrive.py --sim .`.
-  - `python tools/device.py build` for the release image and its size.
+  - `chgame build` for the release image and its size.
 - Never run on a CHGame. The dice cam is estimated at 10-14 ms a frame in the simulator (about 30 fps during the throw, like CHCraps); unmeasured.
 
 ## Design decisions
@@ -45,14 +45,14 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 
 Everything can be checked on a PC (Python 3 with Pillow, and a C++ compiler for the simulator and host tests: `CHSIM_CXX`, zig, clang++ or g++; root CLAUDE.md). Device builds need the CHGame board package 0.2.4+, CHGfx 1.3 and the CHGame library, all in `../../../../../../../../../platform`.
 
-    python tools/tests/run_tests.py     # rules, house player, dice physics
+    chgame test     # rules, house player, dice physics
     python tools/tests/sim_save.py      # save mid-turn, reboot, continue
-    python tools/run.py chsim/chsim.py build .
-    python tools/chsim/chdrive.py --sim . tools/scripts/look.txt out/look
-    python tools/run.py readme_gif.py    # tools/scripts/gameplay.txt -> docs/gameplay.gif (the README's one GIF, <= 1 MB)
+    chgame sim
+    chgame run tools/scripts/look.txt out/look
+    chgame gif    # tools/scripts/gameplay.txt -> docs/gameplay.gif (the README's one GIF, <= 1 MB)
     python tools/assets.py              # art -> src/assets
-    python tools/device.py build        # release image + size report
-    python tools/device.py upload       # ... and upload it
+    chgame build        # release image + size report
+    chgame upload       # ... and upload it
 
 - Scripts in tools/scripts drive the game through its serial debug protocol (the CHGame library's `chgame/Debug.h`; the game's commands are listed at the end of src/states/Screens.cpp). `say R seed` fixes the dice, `say F a b c d e` forces the next roll, `say J P` jumps to a solo game, `idle [W]` runs until the dice cam and the payout are over. The same scripts run on the board with `--device` (a debug build).
 - gameplay.txt records the README's clips (01_title, 02_turn, 03_yacht, 04_dealer, 05_result), each its own `rec start 3` / `rec stop`; readme_gif.py joins them. look.txt, modes.txt, showcase.txt and perf.txt are tests: every screen, the three modes, one recorded turn, estimated render cost.

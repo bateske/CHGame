@@ -3,7 +3,7 @@
 # bought and a BANKRUPT, and the bonus round won. Each clip is its own
 # recording, named in the order it is shown; ../../../../../../../../../tools/readme_gif.py runs
 # this script and joins them:
-#   python tools/run.py readme_gif.py
+#   chgame gif
 say R 7
 say J T
 wait 30

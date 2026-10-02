@@ -7,7 +7,7 @@ Agent-facing notes for continuing work on this game. Rules and controls are in [
 - Imported from https://github.com/bateske/CHBoardwalk at commit a99a4f8 (2026-10-01). Develop here now, not in the old repo.
 - Release build (`CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly`, core 0.2.4, CHGfx 1.3.0): flash 49,600 of 50,944 B (1,344 spare), static RAM 15,404 of 18,416 B (3,012 spare).
 - On the CHGame library since 2026-10-02 (`platform/board/arduino/CHGame/libraries/CHGame`, `<CHGame.h>`): the input, palette, drawing, 3x5 font, masks, fx maths, shake and formatting that were `src/CHGame.*` and `src/gfx/` are the library's; `src/fx/Fx.*` keeps the game's particles, banners and floating texts. The same frames on every repeatable script; image 49,884 -> 49,712 B, static RAM 15,404 -> 15,100 B (the doubled 3x5 text runs from flash).
-- Sound on the library's engine (`chgame/Audio.h`) since 2026-10-02: `src/audio/Sounds.*` holds the effect tables (3-byte steps: 20 Hz / 2 ms units, so a pitch moves up to 10 Hz and an odd length gains 1 ms; LOSE's 700 ms sweep is two steps), Tick/Tock are `audio::SOFT`, and the bid blip keeps its rule (refused over priority 2+). The preview is the shared `python tools/run.py audio/preview.py . out/audio`. Image 49,676 -> 49,612 B, static RAM 15,100 -> 15,052 B; frames unchanged.
+- Sound on the library's engine (`chgame/Audio.h`) since 2026-10-02: `src/audio/Sounds.*` holds the effect tables (3-byte steps: 20 Hz / 2 ms units, so a pitch moves up to 10 Hz and an odd length gains 1 ms; LOSE's 700 ms sweep is two steps), Tick/Tock are `audio::SOFT`, and the bid blip keeps its rule (refused over priority 2+). The preview is the shared `chgame audio out/audio`. Image 49,676 -> 49,612 B, static RAM 15,100 -> 15,052 B; frames unchanged.
 - The debug protocol (`chgame/Debug.h`, `CHGAME_DEBUG`), the flash save record (`chgame/Save.h`; `src/save/Save.cpp` says only what the record holds, byte for byte the old layout) and RAMFUNC are the library's too since 2026-10-02, and `tools/chsim/chdrive.py` is the shared `tools/chsim/chdrivelib.py` plus this game's `board`, `waitturn` and `cal`. Image 49,612 -> 49,664 B (the library's `audio::setOn()` out of line, about +14 B; its save code, about +30 B), static RAM 15,052 B unchanged; frames unchanged.
 - Save pages: `../../../../../../../../../tools/check_size.py` reports the image as 49,664 B. Both A/B save pages need the image to stay at or below 50,432 B (0xF500 and 0xF600, the CHGame library's `chgame/Save.cpp`), so the margin is only about 768 B. Treat flash as full: any feature needs a cut first. LTO inlining makes small additions cost more than they look.
 - Verification as of 2026-10-01: simulator only.
@@ -63,7 +63,7 @@ Agent-facing notes for continuing work on this game. Rules and controls are in [
 
 ## Gotchas
 
-- `docs/` holds one picture, `gameplay.gif`, made by `python tools/run.py readme_gif.py`. Run the other scripts into `out/`, never into `docs/`: they write snaps and a contact sheet (`result.png`, `sheet.png`) beside their GIFs.
+- `docs/` holds one picture, `gameplay.gif`, made by `chgame gif`. Run the other scripts into `out/`, never into `docs/`: they write snaps and a contact sheet (`result.png`, `sheet.png`) beside their GIFs.
 - The simulator's `cal`/`perf` render estimate is host time and swings by ±50% from run to run under load. It is useless for small differences.
 - Debug protocol (the CHGame library's `chgame/Debug.h`):
   - The game's commands are listed above `debugHook()` in `src/states/Screens.cpp`.
@@ -85,15 +85,15 @@ Agent-facing notes for continuing work on this game. Rules and controls are in [
 
 Everything can be checked on a PC: Python 3 with `pip install -r ../../../../../../../../../tools/requirements.txt`, and a C++ compiler for the host builds (zig, clang++ or g++ on the PATH, `pip install ziglang`, or `CHSIM_CXX="path/to/zig c++"`; root CLAUDE.md).
 
-    python tools/tests/run_tests.py     # every rule, then 5,000 seeded games, and the tuning table
-    python tools/run.py chsim/chsim.py build .
-    python tools/chsim/chdrive.py --sim . tools/scripts/showcase.txt out/showcase
-    python tools/run.py readme_gif.py    # tools/scripts/gameplay.txt -> docs/gameplay.gif (the README's one GIF, <= 1 MB)
+    chgame test     # every rule, then 5,000 seeded games, and the tuning table
+    chgame sim
+    chgame run tools/scripts/showcase.txt out/showcase
+    chgame gif    # tools/scripts/gameplay.txt -> docs/gameplay.gif (the README's one GIF, <= 1 MB)
     python tools/assets.py              # art -> src/assets
-    python tools/run.py audio/preview.py . out/audio    # the sound effects as WAV
-    python tools/device.py build        # release build + size
-    python tools/device.py upload [--debug]
-    python tools/run.py check_size.py build/release --top 20
+    chgame audio out/audio    # the sound effects as WAV
+    chgame build        # release build + size
+    chgame upload [--debug]
+    chgame size --top 20
 
 - In the Arduino IDE: *Tools > Optimize > Smallest + LTO* and *Tools > USB > Upload only*, with CHGfx from `platform/board/arduino/CHGame/libraries/CHGfx`. From the command line, `arduino-cli compile -b CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly` is what `tools/device.py build` does.
 - `upload --debug` adds the serial protocol for screenshots, injected input and lockstep; to fit, it leaves out the options screen and saving (`CHBW_LEAN`).

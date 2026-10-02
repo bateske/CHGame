@@ -7,7 +7,7 @@ Agent-facing notes for continuing work on this game. Rules and controls are in [
 - Imported from https://github.com/bateske/CHCheckers at commit a9ec530 (2026-10-01). Develop here now, not in the old repo.
 - Release build (`CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly`, core 0.2.4, CHGfx 1.3.0): flash 41,768 of 50,944 B (9,176 spare), static RAM 17,436 of 18,416 B (980 spare). RAM is the tight budget here. It includes the 1 KB think-frame stack.
 - Save pages: `../../../../../../../../../tools/check_size.py` puts the image at about 42.0 KB, so both A/B save pages fit with about 8.4 KB to spare.
-- Verification as of 2026-10-01: simulator only. `python tools/check.py` passes:
+- Verification as of 2026-10-01: simulator only. `chgame check` passes:
   - Host tests: perft from the opening (7 … 179,740), a second naive move generator across all 8 rule sets, both kinds of draw, and 2,000 random games with undo and save/load.
   - The CPU: legal moves, inside its budget, abortable, repeatable from a seed, stronger at a higher level.
   - Every script runs twice with identical frames, and the release build compiles.
@@ -32,7 +32,7 @@ Made by the owner:
   - Render profile with `say Y`. The simulator's estimate of about 14 ms max when zoomed is unreliable.
   - CPU speed with `say W` (ms, nodes). This sets the level node budgets and `SIM_US_PER_POLL` in `src/Frame.cpp`, which currently guesses about 6,000 nodes/s.
   - Stack high-water marks with `perf`, the frame stack included.
-  - Sound and the title tune by ear (`python tools/run.py audio/preview.py . out/audio` renders them on the PC).
+  - Sound and the title tune by ear (`chgame audio out/audio` renders them on the PC).
   - No `device_*.txt` scripts exist yet; `check.py` already skips that name pattern. On the board only `G`, `M`, `W` and `Y` exist among the game's commands, so device scripts must start games with `say G` and play with `say M` or the pad.
 - Choices approved only as plan assumptions, which the owner has not yet seen on screen:
   - Must-jump UI: the D-pad still visits every piece; pieces that can't jump say MUST JUMP and buzz; the ones that can are ringed. In the middle of a chain a single continuation plays itself and B is refused (KEEP JUMPING).
@@ -83,20 +83,20 @@ Made by the owner:
 
 Everything can be checked on a PC (Python 3 with `pip install -r ../../../../../../../../../tools/requirements.txt`, and a C++ compiler for the host builds: root CLAUDE.md).
 
-    python tools/check.py                # everything below except the board, in one go
-    python tools/tests/run_tests.py      # host tests
-    python tools/run.py chsim/chsim.py build .
-    python tools/chsim/chdrive.py --sim . tools/scripts/moments.txt out/moments
-    python tools/run.py readme_gif.py     # tools/scripts/gameplay.txt -> docs/gameplay.gif (the README's one GIF, <= 1 MB)
-    python tools/device.py build         # release build + size report
-    python tools/device.py upload        # build and upload the release
+    chgame check                # everything below except the board, in one go
+    chgame test      # host tests
+    chgame sim
+    chgame run tools/scripts/moments.txt out/moments
+    chgame gif     # tools/scripts/gameplay.txt -> docs/gameplay.gif (the README's one GIF, <= 1 MB)
+    chgame build         # release build + size report
+    chgame upload        # build and upload the release
     python tools/assets.py               # art (tools/art) -> src/assets
     python tools/sheet.py export         # the art as one sheet to edit; import reads it back
-    python tools/run.py audio/preview.py . out/audio   # the effects and the title's tune to WAV
+    chgame audio out/audio   # the effects and the title's tune to WAV
 
 - Host tests (`tools/tests/test_checkers.cpp`): move counts from the opening against the published numbers (7, 49, 302, 1469, 7361, 36768, 179740); every rule combination against a second, naive move generator written in the test; hand-made positions for each rule; both kinds of draw; 2,000 random games through the same calls the pad makes, with undo and save/load on the way; the CPU.
 - `tools/check.py` runs every script in `tools/scripts` twice and compares the frames. `--quick` runs each once, `--no-device` skips the device compile.
 - Scripts: `say X <32 cells> <w|b> <rules>` sets a position up, `auto N` plays N of your moves with the pad (the game picks them, the script walks the glove), `goto SQ` walks the glove to a square, `waitturn` runs until it is your move, `board` prints the board; `snap` and `rec` take pictures. The header of `tools/chsim/chdrive.py` lists them.
 - `gameplay.txt` records the README's clips (`01_title` ... `05_sweep`) at `rec start 4`; one opening move is all that fits beside the three showpieces under 1 MB, because the camera's dive changes every pixel. `showcase.txt` records the same showpieces (and a flying king and the CPU's turn) as separate GIFs, as a test only.
-- On the board: `python tools/device.py run SCRIPT OUTDIR` (a debug build, uploaded and driven the same way). What is still to do there is under *Open items*.
+- On the board: `chgame run --device SCRIPT OUTDIR` (a debug build, uploaded and driven the same way). What is still to do there is under *Open items*.
 - With the Arduino IDE: *Tools > Optimize > Smallest + LTO* and *Tools > USB > Upload only* (the game has no use for USB Serial).

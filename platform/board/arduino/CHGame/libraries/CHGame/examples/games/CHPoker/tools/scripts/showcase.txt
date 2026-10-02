@@ -1,6 +1,6 @@
 # A tour of the game as GIFs, kept as a test (the README's one GIF comes from
 # gameplay.txt):
-#   python tools/chsim/chdrive.py --sim . tools/scripts/showcase.txt out/showcase
+#   chgame run tools/scripts/showcase.txt out/showcase
 # Cards: rank*4 + suit (ranks 2..A = 0..12, suits c d h s = 0..3).
 #
 # The title.

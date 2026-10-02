@@ -1,5 +1,6 @@
 """Build a CHGame sketch for the PC simulator.
 
+    chgame sim [-D NAME=VAL ...]                                        (from a game's folder)
     python tools/chsim/chsim.py build <sketch dir> [-D NAME=VAL ...]   -> prints the .exe path
 
 This is the repository's shared simulator: every game builds with it (a
@@ -37,7 +38,7 @@ $CHSIM_FLAGS are added after the usual flags. A memory check of a game
 
     CHSIM_FLAGS="-O0 -g -fno-sanitize=undefined -mcpu=baseline" \
     CHSIM_WRAP="valgrind -q --error-exitcode=9" \
-        python tools/chsim/chdrive.py --sim . tools/scripts/<s>.txt out/<s>
+        chgame run tools/scripts/<s>.txt out/<s>
 
 (-mcpu=baseline: zig otherwise targets this PC's CPU, whose newest
 instructions valgrind may not know; zig's -O0 also turns UBSan on, which
@@ -202,13 +203,13 @@ def build(sketch, defines=(), out=None):
     return exe
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
     b = sub.add_parser("build")
     b.add_argument("sketch")
     b.add_argument("-D", dest="defines", action="append", default=[])
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
     if a.cmd == "build":
         print(build(a.sketch, a.defines))
 

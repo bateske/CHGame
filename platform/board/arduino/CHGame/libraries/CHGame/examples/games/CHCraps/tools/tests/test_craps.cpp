@@ -1,6 +1,6 @@
 // Host tests for the craps rules (src/game/Craps.cpp).
 //
-//   python tools/tests/run_tests.py
+//   chgame test
 //
 // 1. Every bet x every point state x 36 rolls against an oracle written
 //    separately from the game's own decide().

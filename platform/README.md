@@ -124,7 +124,7 @@ cd platform/board/arduino/CHGame/libraries/CHSd
 python tests/run_tests.py          # FAT16/FAT32 images, every failure mode
 ```
 
-Then run `tools/check.py` in each of the three games. Its `tools/fatimg.py`
+Then run `chgame check` in each of the three games. Its `tools/fatimg.py`
 builds and reads FAT16/FAT32 card images; it is useful for any SD work.
 
 ## The bootloader (`bootloader/`)
@@ -153,7 +153,7 @@ differences from 0.2.4, building, testing and installing.
 
 1. Make the change here and say what it is for in the commit. For the
    bootloader, also list it in its README.
-2. Rebuild every game. `python tools/device.py build` in each game must still
+2. Rebuild every game. `chgame build` in each game must still
    fit, and the simulator frames must be unchanged or deliberately changed
    (CLAUDE.md rules 2 and 3).
 3. `bootloader/src/sd.c` and `fat.c` are a C fork of CHSd: a fix to one

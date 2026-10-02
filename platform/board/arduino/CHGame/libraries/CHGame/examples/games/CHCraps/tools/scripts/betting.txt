@@ -1,7 +1,7 @@
 # Betting up close: the plaque names each spot, what it pays and what's on
 # it; the stickman explains a refused bet; chips go down with A, come back
 # with B (hold B: the whole bet), and the rack's chips are picked with A.
-#   python tools/chsim/chdrive.py --sim . tools/scripts/betting.txt out/betting
+#   chgame run tools/scripts/betting.txt out/betting
 say J P
 wait 40
 rec start 2

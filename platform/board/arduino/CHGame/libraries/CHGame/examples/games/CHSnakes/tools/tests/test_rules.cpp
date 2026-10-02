@@ -1,7 +1,7 @@
 // Host tests of the rules: the board, the two modes turn by turn, saved
 // games, the CPU's choice, and whole games by the thousand.
 //
-//     python tools/tests/run_tests.py [quick]
+//     chgame test [quick]
 #include <stdio.h>
 #include <string.h>
 #include <vector>

@@ -1,6 +1,6 @@
 # Render cost of the heavy moments: a slide across nine cards, a daub with
 # sparks, the win.
-#   python tools/chsim/chdrive.py --sim . tools/scripts/perf.txt out/perf
+#   chgame run tools/scripts/perf.txt out/perf
 cal
 say J T
 wait 30

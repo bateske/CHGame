@@ -1,5 +1,5 @@
 # A round played with the buttons: toss-up, spin, pick, vowel, bankrupt, the CPUs.
-#   python tools/chsim/chdrive.py --sim . tools/scripts/round.txt out/round
+#   chgame run tools/scripts/round.txt out/round
 say R 7
 say U 1 0
 say J P

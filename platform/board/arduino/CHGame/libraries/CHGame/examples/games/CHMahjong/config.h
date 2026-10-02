@@ -11,7 +11,7 @@
 
 // The CHGame library's switches: CHGAME_DEBUG (the serial debug protocol:
 // screenshots, input injection, lockstep, perf; always on in the simulator,
-// on the board only in `tools/device.py build --debug`) and CHGAME_PROFILE.
+// on the board only in `chgame build --debug`) and CHGAME_PROFILE.
 #include <chgame/Config.h>
 
 // Device debug builds carry the ~3 KB protocol, and with it the game no

@@ -1,6 +1,6 @@
 // Host tests for the rules, the CPU, the game flow and the dealer's lines.
 //
-//   python tools/tests/run_tests.py [--quick]
+//   chgame test [--quick]
 //
 // The bitboard rules are checked against a second, deliberately naive
 // implementation written here on a plain 7 x 6 grid.

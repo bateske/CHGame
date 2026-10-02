@@ -1,0 +1,12 @@
+pillow
+pyserial
+
+[all]
+ziglang
+wordfreq
+
+[sim]
+ziglang
+
+[words]
+wordfreq

@@ -1,4 +1,4 @@
-# For the board (python tools/device.py run tools/scripts/device/perf.txt out/dev_perf):
+# For the board (chgame run --device tools/scripts/device/perf.txt out/dev_perf):
 # measured render times (the PERF lines: rnd = average, max, late frames),
 # free-running, where the simulator can only estimate.
 say J T

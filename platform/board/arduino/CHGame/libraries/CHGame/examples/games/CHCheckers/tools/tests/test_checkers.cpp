@@ -1,6 +1,6 @@
 // Host tests for the checkers engine and the match flow.
 //
-//     python tools/tests/run_tests.py
+//     chgame test
 //
 // The engine is #included (so its internals can be counted), and checked
 // against published perft numbers and against a second, naive move

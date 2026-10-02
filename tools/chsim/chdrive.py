@@ -1,7 +1,7 @@
 """Drive a CHGame sketch - in the simulator or on the board - with a script:
 see chdrivelib.py.
 
-    python tools/chsim/chdrive.py --sim <sketch dir> <script> <outdir>
+    chgame --sketch <sketch dir> run <script> <outdir>
     python tools/chsim/chdrive.py --device [--port COMx] <script> <outdir>
 """
 import sys

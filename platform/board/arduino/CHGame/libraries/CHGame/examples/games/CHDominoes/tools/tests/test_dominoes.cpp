@@ -2,7 +2,7 @@
 // matches through the game's own calls; the table layout; save and reload;
 // the CPU's levels against each other.
 //
-//     python tools/tests/run_tests.py [--quick]
+//     chgame test [--quick]
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

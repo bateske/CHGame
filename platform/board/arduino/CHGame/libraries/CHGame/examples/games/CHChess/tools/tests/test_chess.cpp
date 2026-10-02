@@ -1,6 +1,6 @@
 // Host tests for the chess engine port and the game logic.
 //
-//   python tools/tests/run_tests.py
+//   chgame test
 //
 // Engine.cpp is compiled into this file (one translation unit) so the tests
 // can reach ch2k's internals for perft and the book walk.

@@ -1,5 +1,5 @@
 # SAVE & QUIT, then CONTINUE: the purse, the layout and the tote come back.
-#   python tools/chsim/chdrive.py --sim . tools/scripts/save_continue.txt out/save_continue
+#   chgame run tools/scripts/save_continue.txt out/save_continue
 say R 4
 say J P
 wait 100

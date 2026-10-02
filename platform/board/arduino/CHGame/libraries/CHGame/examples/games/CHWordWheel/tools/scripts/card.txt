@@ -1,6 +1,6 @@
 # The SD bank: run with CHSD_CARD pointing at sdcard/PHRASES.BNK.
 #   set CHSD_CARD=sdcard/PHRASES.BNK
-#   python tools/chsim/chdrive.py --sim . tools/scripts/card.txt out/card
+#   chgame run tools/scripts/card.txt out/card
 wait 40
 snap 01_title_card
 say H

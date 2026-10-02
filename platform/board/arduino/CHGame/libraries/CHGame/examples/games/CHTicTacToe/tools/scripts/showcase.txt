@@ -1,5 +1,5 @@
 # A clip per feature (a test; the README's GIF is gameplay.txt's).
-#   python tools/chsim/chdrive.py --sim . tools/scripts/showcase.txt out/showcase
+#   chgame run tools/scripts/showcase.txt out/showcase
 say R 21
 say M 100
 say J T

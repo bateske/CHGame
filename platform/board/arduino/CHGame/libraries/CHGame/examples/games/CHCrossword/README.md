@@ -45,7 +45,7 @@ SAVE + QUIT on the pause menu keeps the puzzle, clock and score for CONTINUE on 
 
 **More puzzles on the SD card.** Packs of up to 32 puzzles, up to 15x15, go in a folder named `CHCW` at the top level of a FAT32 or FAT16 microSD card (not exFAT), up to eight packs. [`sdcard/CHCW/BONUS.CWD`](sdcard/CHCW) is one to start with, and `tools/puzzles/puz2cwd.py` makes packs from your own Across Lite `.puz` files. The game looks at the card each time you choose PLAY, and the list says so if something is wrong with it.
 
-To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `python tools/device.py upload` from this folder.
+To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `chgame upload` from this folder.
 
 ## Developer notes
 

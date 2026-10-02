@@ -41,7 +41,7 @@ OPTIONS has draw one or draw three, the scoring, the timed game on or off, sound
 
 Pausing saves: the game on the table, the bank, your options, deck and statistics go to flash and survive switching off and re-uploading. A new deal walks away from the one on the table, which ends a winning streak (a deal you never touched does not count). STATS keeps the record.
 
-To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `python tools/device.py upload` from this folder.
+To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `chgame upload` from this folder.
 
 ## Developer notes
 

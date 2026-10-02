@@ -11,7 +11,7 @@ which is small and recent.
 | | |
 |---|---|
 | `<Name>.ino` | Includes `<CHGame.h>` (first, then `config.h`). `setup()` calls `arduboy.boot()`, `dbg::begin("<ID> <version>")`, `gfx_begin(...)` and the frame loop's `begin()`; `loop()` runs one frame. |
-| `config.h` | The game's build switches, prefixed with its four letters (`CHF4_`): its version, frame rate, often `<PFX>_LEAN` (drops saving or screens so a device debug build fits, derived from the library's `CHGAME_DEBUG`). It includes `<chgame/Config.h>`, the library's switches (`CHGAME_DEBUG`: the serial debug protocol, on in the simulator, set on the board by `tools/device.py build --debug`; `CHGAME_PROFILE`). Put new switches here, not in build flags. |
+| `config.h` | The game's build switches, prefixed with its four letters (`CHF4_`): its version, frame rate, often `<PFX>_LEAN` (drops saving or screens so a device debug build fits, derived from the library's `CHGAME_DEBUG`). It includes `<chgame/Config.h>`, the library's switches (`CHGAME_DEBUG`: the serial debug protocol, on in the simulator, set on the board by `chgame build --debug`; `CHGAME_PROFILE`). Put new switches here, not in build flags. |
 | `README.md` | The hook, one GIF, controls, rules, how to play, developer notes, credits: the format in [game-readme.md](game-readme.md). Its GIF, `docs/gameplay.gif`, comes from `tools/scripts/gameplay.txt` by way of `tools/readme_gif.py`. |
 | `NOTES.md` | For developers: snapshot, design decisions, open items, gotchas. |
 | `LICENSE`, `NOTICE` | Apache-2.0, plus attribution for anything derived from elsewhere. |
@@ -69,7 +69,7 @@ game has:
 - `scripts/*.txt` for `chsim/chdrive.py` (the shared driver,
   `tools/chsim/chdrivelib.py`, plus the game's own script commands);
 - `tests/` with `run_tests.py`;
-- `device.py` (it runs the shared `tools/device.py` on the game);
+- `game.py` (the game's description for the shared tools: its host tests, its scripts' needs);
 - often `check.py`.
 
 The simulator, the driver, `device.py`, the sound preview
@@ -81,13 +81,13 @@ shared in the root `tools/`.
 1. Read the game's `NOTES.md` (decisions and open items) and the README
    section for the area you're changing.
 2. Run the relevant scripts first, to keep a baseline:
-   `python tools/chsim/chdrive.py --sim . tools/scripts/<s>.txt out/before_<s>`.
+   `chgame run tools/scripts/<s>.txt out/before_<s>`.
 3. Make the change. Rerun `tools/assets.py` if art changed.
-4. Run `python tools/tests/run_tests.py`, `python tools/check.py` if the
+4. Run `chgame test`, `chgame check` if the
    game has one (otherwise the scripts), and
-   `python tools/device.py build` for the size.
+   `chgame build` for the size.
 5. Compare frames with the baseline. Re-record the README's GIF if the look
-   changed on purpose (`python tools/run.py readme_gif.py`).
+   changed on purpose (`chgame gif`).
 6. If a device check is needed, follow "The device" in
    [../CLAUDE.md](../CLAUDE.md). Record what was or was not measured on
    hardware in the game's `NOTES.md`.

@@ -1,4 +1,4 @@
-// Host tests for the rules (src/game/Bingo.*): python tools/tests/run_tests.py
+// Host tests for the rules (src/game/Bingo.*): chgame test
 //   test_bingo            run the checks
 //   test_bingo --dump     round set-ups for tools/tests/ref_bingo.py
 #include <stdio.h>

@@ -1,0 +1,332 @@
+Metadata-Version: 2.4
+Name: chgame-tools
+Version: 0.1.0
+Summary: PC tools for the CHGame handheld: build, upload, simulate, check, pack
+License:                                  Apache License
+                                   Version 2.0, January 2004
+                                http://www.apache.org/licenses/
+        
+           TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+        
+           1. Definitions.
+        
+              "License" shall mean the terms and conditions for use, reproduction,
+              and distribution as defined by Sections 1 through 9 of this document.
+        
+              "Licensor" shall mean the copyright owner or entity authorized by
+              the copyright owner that is granting the License.
+        
+              "Legal Entity" shall mean the union of the acting entity and all
+              other entities that control, are controlled by, or are under common
+              control with that entity. For the purposes of this definition,
+              "control" means (i) the power, direct or indirect, to cause the
+              direction or management of such entity, whether by contract or
+              otherwise, or (ii) ownership of fifty percent (50%) or more of the
+              outstanding shares, or (iii) beneficial ownership of such entity.
+        
+              "You" (or "Your") shall mean an individual or Legal Entity
+              exercising permissions granted by this License.
+        
+              "Source" form shall mean the preferred form for making modifications,
+              including but not limited to software source code, documentation
+              source, and configuration files.
+        
+              "Object" form shall mean any form resulting from mechanical
+              transformation or translation of a Source form, including but
+              not limited to compiled object code, generated documentation,
+              and conversions to other media types.
+        
+              "Work" shall mean the work of authorship, whether in Source or
+              Object form, made available under the License, as indicated by a
+              copyright notice that is included in or attached to the work
+              (an example is provided in the Appendix below).
+        
+              "Derivative Works" shall mean any work, whether in Source or Object
+              form, that is based on (or derived from) the Work and for which the
+              editorial revisions, annotations, elaborations, or other modifications
+              represent, as a whole, an original work of authorship. For the purposes
+              of this License, Derivative Works shall not include works that remain
+              separable from, or merely link (or bind by name) to the interfaces of,
+              the Work and Derivative Works thereof.
+        
+              "Contribution" shall mean any work of authorship, including
+              the original version of the Work and any modifications or additions
+              to that Work or Derivative Works thereof, that is intentionally
+              submitted to Licensor for inclusion in the Work by the copyright owner
+              or by an individual or Legal Entity authorized to submit on behalf of
+              the copyright owner. For the purposes of this definition, "submitted"
+              means any form of electronic, verbal, or written communication sent
+              to the Licensor or its representatives, including but not limited to
+              communication on electronic mailing lists, source code control systems,
+              and issue tracking systems that are managed by, or on behalf of, the
+              Licensor for the purpose of discussing and improving the Work, but
+              excluding communication that is conspicuously marked or otherwise
+              designated in writing by the copyright owner as "Not a Contribution."
+        
+              "Contributor" shall mean Licensor and any individual or Legal Entity
+              on behalf of whom a Contribution has been received by Licensor and
+              subsequently incorporated within the Work.
+        
+           2. Grant of Copyright License. Subject to the terms and conditions of
+              this License, each Contributor hereby grants to You a perpetual,
+              worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+              copyright license to reproduce, prepare Derivative Works of,
+              publicly display, publicly perform, sublicense, and distribute the
+              Work and such Derivative Works in Source or Object form.
+        
+           3. Grant of Patent License. Subject to the terms and conditions of
+              this License, each Contributor hereby grants to You a perpetual,
+              worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+              (except as stated in this section) patent license to make, have made,
+              use, offer to sell, sell, import, and otherwise transfer the Work,
+              where such license applies only to those patent claims licensable
+              by such Contributor that are necessarily infringed by their
+              Contribution(s) alone or by combination of their Contribution(s)
+              with the Work to which such Contribution(s) was submitted. If You
+              institute patent litigation against any entity (including a
+              cross-claim or counterclaim in a lawsuit) alleging that the Work
+              or a Contribution incorporated within the Work constitutes direct
+              or contributory patent infringement, then any patent licenses
+              granted to You under this License for that Work shall terminate
+              as of the date such litigation is filed.
+        
+           4. Redistribution. You may reproduce and distribute copies of the
+              Work or Derivative Works thereof in any medium, with or without
+              modifications, and in Source or Object form, provided that You
+              meet the following conditions:
+        
+              (a) You must give any other recipients of the Work or
+                  Derivative Works a copy of this License; and
+        
+              (b) You must cause any modified files to carry prominent notices
+                  stating that You changed the files; and
+        
+              (c) You must retain, in the Source form of any Derivative Works
+                  that You distribute, all copyright, patent, trademark, and
+                  attribution notices from the Source form of the Work,
+                  excluding those notices that do not pertain to any part of
+                  the Derivative Works; and
+        
+              (d) If the Work includes a "NOTICE" text file as part of its
+                  distribution, then any Derivative Works that You distribute must
+                  include a readable copy of the attribution notices contained
+                  within such NOTICE file, excluding those notices that do not
+                  pertain to any part of the Derivative Works, in at least one
+                  of the following places: within a NOTICE text file distributed
+                  as part of the Derivative Works; within the Source form or
+                  documentation, if provided along with the Derivative Works; or,
+                  within a display generated by the Derivative Works, if and
+                  wherever such third-party notices normally appear. The contents
+                  of the NOTICE file are for informational purposes only and
+                  do not modify the License. You may add Your own attribution
+                  notices within Derivative Works that You distribute, alongside
+                  or as an addendum to the NOTICE text from the Work, provided
+                  that such additional attribution notices cannot be construed
+                  as modifying the License.
+        
+              You may add Your own copyright statement to Your modifications and
+              may provide additional or different license terms and conditions
+              for use, reproduction, or distribution of Your modifications, or
+              for any such Derivative Works as a whole, provided Your use,
+              reproduction, and distribution of the Work otherwise complies with
+              the conditions stated in this License.
+        
+           5. Submission of Contributions. Unless You explicitly state otherwise,
+              any Contribution intentionally submitted for inclusion in the Work
+              by You to the Licensor shall be under the terms and conditions of
+              this License, without any additional terms or conditions.
+              Notwithstanding the above, nothing herein shall supersede or modify
+              the terms of any separate license agreement you may have executed
+              with Licensor regarding such Contributions.
+        
+           6. Trademarks. This License does not grant permission to use the trade
+              names, trademarks, service marks, or product names of the Licensor,
+              except as required for reasonable and customary use in describing the
+              origin of the Work and reproducing the content of the NOTICE file.
+        
+           7. Disclaimer of Warranty. Unless required by applicable law or
+              agreed to in writing, Licensor provides the Work (and each
+              Contributor provides its Contributions) on an "AS IS" BASIS,
+              WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+              implied, including, without limitation, any warranties or conditions
+              of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+              PARTICULAR PURPOSE. You are solely responsible for determining the
+              appropriateness of using or redistributing the Work and assume any
+              risks associated with Your exercise of permissions under this License.
+        
+           8. Limitation of Liability. In no event and under no legal theory,
+              whether in tort (including negligence), contract, or otherwise,
+              unless required by applicable law (such as deliberate and grossly
+              negligent acts) or agreed to in writing, shall any Contributor be
+              liable to You for damages, including any direct, indirect, special,
+              incidental, or consequential damages of any character arising as a
+              result of this License or out of the use or inability to use the
+              Work (including but not limited to damages for loss of goodwill,
+              work stoppage, computer failure or malfunction, or any and all
+              other commercial damages or losses), even if such Contributor
+              has been advised of the possibility of such damages.
+        
+           9. Accepting Warranty or Additional Liability. While redistributing
+              the Work or Derivative Works thereof, You may choose to offer,
+              and charge a fee for, acceptance of support, warranty, indemnity,
+              or other liability obligations and/or rights consistent with this
+              License. However, in accepting such obligations, You may act only
+              on Your own behalf and on Your sole responsibility, not on behalf
+              of any other Contributor, and only if You agree to indemnify,
+              defend, and hold each Contributor harmless for any liability
+              incurred by, or claims asserted against, such Contributor by reason
+              of your accepting any such warranty or additional liability.
+        
+           END OF TERMS AND CONDITIONS
+        
+           APPENDIX: How to apply the Apache License to your work.
+        
+              To apply the Apache License to your work, attach the following
+              boilerplate notice, with the fields enclosed by brackets "[]"
+              replaced with your own identifying information. (Don't include
+              the brackets!)  The text should be enclosed in the appropriate
+              comment syntax for the file format. We also recommend that a
+              file or class name and description of purpose be included on the
+              same "printed page" as the copyright notice for easier
+              identification within third-party archives.
+        
+           Copyright [yyyy] [name of copyright owner]
+        
+           Licensed under the Apache License, Version 2.0 (the "License");
+           you may not use this file except in compliance with the License.
+           You may obtain a copy of the License at
+        
+               http://www.apache.org/licenses/LICENSE-2.0
+        
+           Unless required by applicable law or agreed to in writing, software
+           distributed under the License is distributed on an "AS IS" BASIS,
+           WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+           See the License for the specific language governing permissions and
+           limitations under the License.
+        
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+License-File: NOTICE
+Requires-Dist: pillow
+Requires-Dist: pyserial
+Provides-Extra: sim
+Requires-Dist: ziglang; extra == "sim"
+Provides-Extra: words
+Requires-Dist: wordfreq; extra == "words"
+Provides-Extra: all
+Requires-Dist: ziglang; extra == "all"
+Requires-Dist: wordfreq; extra == "all"
+Dynamic: license-file
+
+# tools/: platform-wide tools
+
+The tools in this folder are **shared by every game** (the CHGame library's
+examples, `platform/board/arduino/CHGame/libraries/CHGame/examples/games/`). From a game's folder,
+`python tools/run.py <tool> ...` runs one of them; from the repository root
+they take a game by name (`paths.py`). They know
+nothing about any one game. Each game's own scripts find them by the fixed
+layout: the repository's `tools/` is nine folders above a game (search for
+`the repository's tools/` in their comments to see every place that does).
+
+Run them from a game's folder (or, for any sketch, from the root with its
+folder as an argument):
+
+```bash
+cd platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHFour
+python tools/run.py chsim/chsim.py build .          # build the PC simulator of this game
+python tools/run.py check_size.py build/release     # flash/RAM report of the last release build
+python tools/run.py serialcap.py --seconds 5        # print what the board says on USB serial
+```
+
+Python packages: `pip install -r tools/requirements.txt` (Pillow and
+pyserial). The simulator also needs a C++ compiler: `$CHSIM_CXX`, zig,
+`pip install ziglang`, clang++ or g++.
+
+## What is here
+
+| Tool | What it does |
+|---|---|
+| `device.py` | Builds, uploads and drives any sketch on the board through arduino-cli, against `platform/board/arduino/CHGame/libraries/CHGfx` and `CHGame`: `[--sketch DIR] build [--debug]`, `upload`, `run SCRIPT OUTDIR`, `shot OUT.png`. A debug build adds `-DCHGAME_DEBUG=1`. Each game's `tools/device.py` runs it on that game. |
+| `chsim/chsim.py` | Builds a sketch for the PC: its `.ino` + `src/`, CHGfx's portable drawing code (`platform/board/arduino/CHGame/libraries/CHGfx`, or `$CHSIM_CHGFX`), the CHGame library (`$CHSIM_CHGAME`), and the host shims. `$CHSIM_FLAGS` adds compiler flags (a memory check under valgrind: see its docstring). `build()` and `find_cxx()` are imported by the games' tools. Output: `<sketch>/tools/chsim/build/<Name>/sim.exe`. |
+| `chsim/chdrivelib.py`, `chsim/chdrive.py` | The script driver: runs a script against the simulator (`--sim`) or the board (`--device`) over the library's debug protocol: `wait tap hold release snap gif rec step say free freegif perf prof cal`. `chdrive.py` drives any sketch; a game's own `tools/chsim/chdrive.py` subclasses `Driver` for its commands. `$CHSIM_WRAP` runs the simulator under another program (valgrind). |
+| `audio/preview.py` + `audio/host/` | Renders a game's sound effects and songs to WAV from the real engine (the library's `chgame/Audio.cpp` with the game's `src/audio/*.cpp`) through a model of the piezo timer, and prints a hash per sound: `preview.py <game dir> OUTDIR [--only NAME ...]`. The names come from the game's `enum class Sfx` / `Song`. |
+| `chsim/host/main.cpp` | The simulator's main loop: virtual time, lockstep frames, the game's serial port on stdin/stdout, a deterministic random seed. |
+| `chsim/host/chgfx_host.cpp` | Stands in for `CHGfx.cpp`, the SPI/DMA part. It times the simulated panel and reports `BUG:` when a game draws into rows that are still being sent. |
+| `chsim/host/Arduino.h`, `sim.h` | A minimal Arduino API for the PC, and the shims' internal declarations (including the SD card hooks some games add). |
+| `chsim/fbimage.py` | Turns a framebuffer dump (8 KB of 4 bpp + 32 B palette, from the `S` debug command) into a PNG, a contact sheet, or a full-colour GIF (`save_gif`). |
+| `readme_gif.py` | Makes a game's one README picture: runs its `tools/scripts/gameplay.txt`, joins the clips it records (`01_title`, `02_...`) into `docs/gameplay.gif` and refuses anything over 1 MB. `--check` checks every game's. The README format is in `docs/game-readme.md`. |
+| `libzip.py` | Packs a bundled library (`platform/board/arduino/CHGame/libraries/<Name>`) as `out/<Name>-<version>.zip` for the IDE's *Add .ZIP Library*: how CHGfx is installed on its own. |
+| `chsim/gifsheet.py` | Tiles a GIF's frames into one image to review it: `gifsheet.py IN.gif OUT.png [--every N] [--start F] [--count N] [--cols C] [--scale S]`. |
+| `check_size.py` | Flash and RAM report from the linker map. It checks the 50,944 B / 18,416 B limits and shows the space left for the save pages; `--top N` and `--symbols` list what takes the room. |
+| `serialcap.py` | Finds the board's USB serial port (VID:PID 16C0:27DD), opens it with DTR set and prints its output. `find_port()` and `open_port()` are used by `device.py` and `chdrive.py`. |
+| `chgpack.py` | Game packages for the SD menu (`docs/chg-format.md`): `pack <bin> <out.chg> --title ...` wraps a sketch's release `.bin`; `verify` checks packages exactly as the bootloader does; `info <card\|folder\|image>` lists a card's packages (and their fragmentation in a FAT image). Run from the repository root. |
+| `sdcard/mkcard.py` | Builds every game in `sdcard/games.json` (and CHSDtoUSB), packs them and lays out a whole card in `out/sdcard/` (`GAMES/*.CHG` plus the games' data files); `--image` also writes a FAT32 image, `--no-build` packs the existing builds. Run from the repository root. |
+
+A game can add its own simulator shims in `<game>/tools/chsim/host/`. They
+are compiled with the shared ones, and a `.cpp` there with the same name as
+a shared one replaces it. The SD games keep CHSd's pretend card there
+(`VCard.h`, `sd_host.cpp`).
+
+## Every tool in the repository, classified
+
+### Per-game, built from a shared template
+
+Every game has its own copy of these, adapted to that game. Copy one from
+a similar game when starting a new one.
+
+| Tool | In | What changes per game |
+|---|---|---|
+| `tools/chsim/chdrive.py` | all 20 | The shared driver (`tools/chsim/chdrivelib.py`) with the game's handshake `ident` and its own script commands (e.g. CHChess `goto`/`waitturn`/`board`, CHCrossword `type`/`solve`/`--card`, CHMahjong `solve`/`takehint`); some games have none yet. |
+| `tools/device.py` | all 20 | A few lines that run the shared `tools/device.py` on the game. |
+| `tools/check.py` | CHBackgammon, CHCheckers, CHCrossword, CHDominoes, CHFour, CHSnakes, CHSolitaire, CHWords, CHWordWheel | Everything checkable without a board: host tests, every script twice (same frames, no `BUG:`), release build + size. Some add game checks: the network's evaluation, puzzle packs, card scripts, the redraw check. |
+| `tools/tests/run_tests.py` | all 20 | Builds and runs the host unit tests. The source list is per game. |
+| `tools/chsim/diffdrive.py` | CHBingo, CHRoulette, CHSlots, CHTicTacToe, CHWordWheel | The redraw check: builds the game twice, normal and forced to redraw everything every frame, and reports any pixel the incremental redraw got wrong. The forced-redraw patch is per game. |
+| `tools/tests/sim_save.py` | CHBingo, CHCraps, CHYacht | Save, power off, continue, in the simulator. |
+| `tools/assets.py` | all 20 | The art pipeline: `tools/art/*` → `src/assets/Assets.{h,cpp}`, with previews in `build/assets`. |
+| `tools/scripts/*.txt` | all 20 | chdrive scripts: the README's GIF (`gameplay`, joined by `readme_gif.py`), smoke tests, perf runs, device-only runs (`device_*`). |
+
+### Game-specific
+
+| Game | Tools |
+|---|---|
+| CHBackgammon | `train/` (self-play trainer for the CPU's network, the race table fit, the match equity table), `lookdev.py`, `font_preview.py` |
+| CHBingo | `chsim/autoplay.py` (records a won round as a GIF), `tests/ref_bingo.py` (independent model of the set-up) |
+| CHBlackjack | `make_music.py` (songs → Playtune bytes), **`probes/FlashProbe/`** (a hardware probe sketch that proves a sketch can erase and write a flash page that survives re-upload; the save-page mechanism of every game rests on it) |
+| CHBoardwalk | `sheet.py` (sprites ↔ one editable PNG sheet), `lookdev.py` |
+| CHCheckers | `sheet.py`, `tests/demo_line.cpp` (finds the title screen's demo game) |
+| CHChess | `book.py` (trims the opening book), `pieces.py` (renders the iso pieces), `sheet.py` |
+| CHCrossword | `puzzles/` (pack format, builder, grid filler, `.puz` import, card images), `tilefont.py` (anti-aliased tile font) |
+| CHDominoes | `aafont.py` (derived from CHCrossword's `tilefont.py`), `tilemock.py` |
+| CHFour | `font_preview.py` |
+| CHMahjong | `faces.py` (tile faces), `bird.py`, `layouts.py` + `layouts/*.txt` (layout maps → `Layouts.cpp`), `sheet.py` |
+| CHRoulette | `wheel.py` (wheel angle maps), `spin_preview.py`, `logo_preview.py`, `make_music.py`, `mockup.py`, `pixkit.py` (Python copy of the drawing code), `tests/run_ball_tests.py`, `tests/ref_roulette.py` |
+| CHSlots | `strips.py` (reel strips → `Strips.h`) |
+| CHSnakes | `turns.py` (CPU turn table), `sheet.py`, `lookdev.py` |
+| CHSolitaire, CHTicTacToe | `make_logo.py`; CHTicTacToe also `pieces.py` (ray-marched iso pieces) |
+| CHWords | `dict/` (word lists → flash dictionary and `sdcard/WORDS.DIC`), `tilefont.py` |
+| CHWordWheel | `phrases/build_bank.py` (flash bank + `sdcard/PHRASES.BNK`), `make_music.py`, `mockup.py`, `pixkit.py` |
+
+### Elsewhere in the repository
+
+| Tool | What it does |
+|---|---|
+| `platform/board/arduino/CHGame/libraries/CHSd/tools/fatimg.py` | Builds and reads FAT16/FAT32 card images: useful for any SD-card test. |
+| `platform/board/arduino/CHGame/libraries/CHSd/tests/run_tests.py` | CHSd's host tests on FAT images. |
+| `platform/board/arduino/CHGame/libraries/CHGfx/extras/fontconvert.py`, `sprite4.py` | CHGfx's font and sprite converters. |
+| `platform/board/arduino/CHGame/libraries/CHGfx/extras/sim/` | CHGfx's own simulator for testing the library and its examples. It is not the game simulator above. |
+| `platform/board/arduino/CHGame/libraries/CHGame/examples/apps/CHSDtoUSB/tools/chsd_test.py`, `scsi.py` | Hardware test suite for the SD-to-USB sketch (Windows, SCSI pass-through). `find_drive()` locates the board's drive. |
+
+## Candidates to share later
+
+These exist in several games in nearly the same form. They were left in
+place so that bringing the games together changed no behaviour:
+- **`check.py`, `tests/run_tests.py`:** each could take a small per-game
+  config. (The script driver, `device.py` and the audio preview are shared
+  now.)
+- **`make_music.py`'s composer:** CHBlackjack, CHRoulette, CHWordWheel.
+- **`pixkit.py`:** CHRoulette and CHWordWheel differ by 8 lines.
+- **The font tools:** `tilefont.py`, `aafont.py`, `font_preview.py`.
+- **The `sheet.py` export/import pattern.**
+- **Shared art:** `tools/art/hand.png`, `dealer.png`, `faces.png` and
+  `font.txt` are byte-identical in several games.

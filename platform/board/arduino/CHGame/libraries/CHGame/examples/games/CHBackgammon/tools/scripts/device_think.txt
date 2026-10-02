@@ -1,4 +1,4 @@
-# For the board (python tools/device.py run tools/scripts/device_think.txt out/dev_think):
+# For the board (chgame run --device tools/scripts/device_think.txt out/dev_think):
 # how long the CPU thinks. W prints the positions it weighed, the time its
 # turn's thinking took (the stage's minimum included) and the longest slice
 # of a tick it used: that slice should stay under ~8 ms (QUANTUM in

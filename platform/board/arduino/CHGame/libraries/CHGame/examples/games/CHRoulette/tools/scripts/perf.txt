@@ -1,6 +1,6 @@
 # Estimated device render times for the heavy moments (simulator: host time
 # scaled by the CHGfx benchmark calibration).
-#   python tools/chsim/chdrive.py --sim . tools/scripts/perf.txt out/perf
+#   chgame run tools/scripts/perf.txt out/perf
 cal
 say R 9
 say J T

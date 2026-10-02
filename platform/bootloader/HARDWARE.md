@@ -183,7 +183,7 @@ jumping. It changes nothing else.
    python platform/bootloader/test/hil/test_powercut.py arm --at 50    # switch off when told
    python platform/bootloader/test/hil/test_powercut.py verify         # after switching on
    ```
-3. **A normal upload.** `cd platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHFour && python tools/device.py upload`.
+3. **A normal upload.** `cd platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHFour && chgame upload`.
    The game runs. Switch off and on: it runs again.
 
 ## HW2b: the menu bootloader
@@ -220,7 +220,7 @@ expected result.
 
 **USB and uploads**
 - [ ] With the menu on screen, upload from the IDE (or
-      `cd platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHFour && python tools/device.py upload`). The upload works,
+      `cd platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHFour && chgame upload`). The upload works,
       CHFour starts, and on the next power-on the menu shows
       INSTALLED PROGRAM.
 - [ ] With the menu on screen, `UP probe` or `UP info` answers, and the menu

@@ -1,4 +1,4 @@
-# For the board (python tools/device.py run tools/scripts/device_render.txt out/dev_render):
+# For the board (chgame run --device tools/scripts/device_render.txt out/dev_render):
 # what a frame costs to draw, scene by scene. Y prints microseconds per
 # section (board + targets, checkers, dice + glove, HUD + plate, particles +
 # banner); perf prints the average and worst whole frame since the last perf.

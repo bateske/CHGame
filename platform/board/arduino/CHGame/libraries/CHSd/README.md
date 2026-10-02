@@ -56,7 +56,7 @@ To change the library, edit it here, then run (from this folder):
 
     python tests/run_tests.py
 
-Then run each of the three games' `tools/check.py`, which also checks that
+Then run `chgame check` in each of the three games, which also checks that
 both save pages still fit.
 
 ## Testing

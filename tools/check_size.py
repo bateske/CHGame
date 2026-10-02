@@ -1,9 +1,9 @@
 """Flash and RAM report for a CHGame build, from the linker map.
 
-    python tools/run.py check_size.py [build/release] [--top 30] [--flash-limit N] [--ram-limit N]
+    chgame size [build/release] [--top 30] [--flash-limit N] [--ram-limit N]
 
-The repository's shared copy: run it from a game's folder (platform/board/arduino/CHGame/libraries/CHGame/examples/games/<Name>), or pass
-the build folder. tools/device.py runs it after every build.
+(or `python tools/check_size.py BUILDDIR ...`). tools/device.py runs it after
+every build.
 
 The ceiling for statics + heap is 18,416 B (the 2 KB stack is fixed at the
 top of SRAM); this reads _ebss from the map. The image is everything flash
@@ -61,14 +61,14 @@ def parse(map_path):
     return per_file, per_sym, sym
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("build", nargs="?", default="build/release")
     ap.add_argument("--top", type=int, default=25)
     ap.add_argument("--flash-limit", type=int, default=FLASH_LIMIT)
     ap.add_argument("--ram-limit", type=int, default=RAM_LIMIT)
     ap.add_argument("--symbols", action="store_true")
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
     maps = list(Path(a.build).glob("*.map"))
     if not maps:
         raise SystemExit(f"no .map in {a.build}")
@@ -91,8 +91,8 @@ def main():
         ram = sym["_ebss"] - 0x20000010
         print(f"static RAM: {ram} B of {a.ram_limit} (stack 2048 B separate)")
         ok &= ram <= a.ram_limit
-    sys.exit(0 if ok else 1)
+    return 0 if ok else 1
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

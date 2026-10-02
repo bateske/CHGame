@@ -122,7 +122,7 @@ in it. The CHGame library's examples are:
 
 Each game keeps its whole folder there: sketch, `src/`, `tools/`, `docs/`,
 `NOTES.md`. The shared tools stay in the repository's `tools/`; a game
-reaches them through `tools/run.py`, and they take a game by name
+reaches them through the `chgame` command, and they take a game by name
 (`tools/paths.py`). Every release image is byte for byte what it was in
 `games/`, and every simulator reel frame for frame.
 

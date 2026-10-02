@@ -1,7 +1,7 @@
 # The README's one picture (docs/gameplay.gif): the title, then clips of
 # play. Each clip is its own recording, named in the order it is shown;
 # ../../../../../../../../../tools/readme_gif.py runs this script and joins them:
-#   python tools/run.py readme_gif.py
+#   chgame gif
 # Each hand starts from a fresh table (J P) with a stacked deck (D), so the
 # clips don't depend on what came before.
 say J T

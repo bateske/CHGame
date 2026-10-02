@@ -1,5 +1,5 @@
 # The game's moments, one recording each, kept as a test (the README's GIF is
-# gameplay.txt): python tools/chsim/chdrive.py --sim . tools/scripts/showcase.txt out/showcase
+# gameplay.txt): chgame run tools/scripts/showcase.txt out/showcase
 
 # The title.
 wait 8

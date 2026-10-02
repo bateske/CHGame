@@ -6,7 +6,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 
 - Imported from https://github.com/bateske/CHTicTacToe at commit db8274c (2026-10-01); develop here now, not in the old repo.
 - Release build (FQBN `CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly`, core 0.2.4, CHGfx 1.3.0): flash 49,265 of 50,944 B (1,679 spare); the image is 49,644 B, 788 B under the 50,432 B line that keeps both save pages (2026-10-02, with the debug protocol, saving and RAMFUNC from the CHGame library too: chgame/Debug.h, chgame/Save.h; earlier that day the library's sound engine saved 316 B over the game's own sequencer, and its shared core 688 B over the game's own copies, which left 80 B), static RAM 14,580 of 18,416 B (3,836 spare). Trust check_size over any older figure.
-- Verification: simulator and host tests only, as of 2026-10-01 (not re-run since the import): `tools/tests/run_tests.py` (rules, dealer, match flow); scripts smoke, endings, save, iso, hover, perf, showcase, gameplay all deterministic with no BUG lines; `tools/chsim/diffdrive.py` on tools/scripts/diff_iso.txt with 0 stale frames. There is no tools/check.py here: run those plus `python tools/device.py build` by hand.
+- Verification: simulator and host tests only, as of 2026-10-01 (not re-run since the import): `tools/tests/run_tests.py` (rules, dealer, match flow); scripts smoke, endings, save, iso, hover, perf, showcase, gameplay all deterministic with no BUG lines; `tools/chsim/diffdrive.py` on tools/scripts/diff_iso.txt with 0 stale frames. There is no tools/check.py here: run those plus `chgame build` by hand.
 - Never run on a CHGame: frame times (simulator estimates: full iso frame ~7 ms, glove move ~5-6 ms), the dealer's thinking time and every sound are unchecked.
 
 ## Design decisions
@@ -22,7 +22,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 - Removed at the owner's request: the decorative poker chips (iso stake stacks, title stacks, tables-room stake chip). Kept: GOBBLE and AUCTION chips, which are game pieces.
 - Removed for flash (the owner allowed it if space was needed): the TOWER table, leaving 16 tables; save `VERSION` 2 in src/save/Save.cpp.
 - No music, only a title sting: there is no flash for a score.
-- Sound: the CHGame library's engine (chgame/Audio.h); the effect tables are src/audio/Sounds.cpp (Tick and Tock `audio::SOFT`). The SOUND option (`opt.sound`: 0 on, 1 off) maps to `audio::begin(SOUNDS, COUNT, !opt.sound)` / `audio::setOn`. `python tools/run.py audio/preview.py . out/audio` renders them to WAV. The old engine's 800 ms last step of BROKE is two 400 ms sweeps (a step holds at most 510 ms).
+- Sound: the CHGame library's engine (chgame/Audio.h); the effect tables are src/audio/Sounds.cpp (Tick and Tock `audio::SOFT`). The SOUND option (`opt.sound`: 0 on, 1 off) maps to `audio::begin(SOUNDS, COUNT, !opt.sound)` / `audio::setOn`. `chgame audio out/audio` renders them to WAV. The old engine's 800 ms last step of BROKE is two 400 ms sweeps (a step holds at most 510 ms).
 
 ## Open items
 
@@ -35,30 +35,30 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 
 - Flash is effectively full. Earlier squeezes: `gfx_ellipse` dropped (fills drawn as pairs), only the bounce curve kept (`fx::bounce`, now the CHGame library's), unused banner styles cut. Nothing fails when the image passes 50,432 B: read check_size's "save pages free: N" line after every build (one page: saving loses its power-cut safety; none: saving switches off).
 - LTO inlines almost everything into `stage::render`, so the symbol table does not show what a feature costs: measure by building a patched copy with and without it.
-- Band redraw: when only the glove or cursor moved, Stage redraws just the rows they swept, inside CHGfx's clip rectangle (`gfx_setClip` in `stage::render`, src/render/Stage.cpp), which the CHGame library's primitives and CHGfx's both honour (the library's masks do not). New play-screen drawing must respect that clip. Check with `python tools/chsim/diffdrive.py tools/scripts/diff_iso.txt out/diff 1` (0 stale frames expected). diffdrive patches the line `    wasMoving = moving;` in src/render/Stage.cpp in a temp copy: keep it or update the tool.
+- Band redraw: when only the glove or cursor moved, Stage redraws just the rows they swept, inside CHGfx's clip rectangle (`gfx_setClip` in `stage::render`, src/render/Stage.cpp), which the CHGame library's primitives and CHGfx's both honour (the library's masks do not). New play-screen drawing must respect that clip. Check with `chgame redraw tools/scripts/diff_iso.txt out/diff 1` (0 stale frames expected). diffdrive patches the line `    wasMoving = moving;` in src/render/Stage.cpp in a temp copy: keep it or update the tool.
 - Palette cycling (the `FX_A`/`FX_B` slots, the CHGame library's `pal::`, platform/board/arduino/CHGame/libraries/CHGame/src/chgame/Palette.cpp) animates the cursor, the fading VANISH mark and the winning line with no redraw; static art drawn in those slots will flicker with them.
 - Iso pieces: tools/pieces.py ray-marches signed-distance models (CHChess's renderer) into tools/art/pieces/*.png + .anchor (L for 3x3, S for 5x5, L1/L2 spin frames). Re-running overwrites hand touch-ups. Then `python tools/assets.py`.
 - tools/assets.py requires the dealer, faces and PPOT end lettering to come out byte-identical to ../CHBlackjack's src/assets/Assets.cpp and the glove to ../CHChess's; it stops with an error if they differ. Change shared art in the sibling first.
 - Iso D-pad: the nearest cell in the pressed screen direction, scored `along + 3 * |perp|` (src/game/Match.cpp).
 - Debug hooks (CHTicTacToe.ino): `R seed`, `J <T|G|P|W|L|O|S> [table]`, `C cell [arg]`, `H cell` (the dealer's next move), `M purse`, `D 0..2` dealer level, `V ticks` BLITZ clock, `E 1|0` (a non-lean device debug build writes saves only after `E 1`), `Q` simulator calibration.
-- The README's one GIF, docs/gameplay.gif, is made by `python tools/run.py readme_gif.py` from tools/scripts/gameplay.txt (clips 01_title, 02_classic, 03_vanish, 04_ultimate, 05_cat in out/gameplay). showcase.txt is kept as a test and records its clips into the folder it is given (use out/showcase, not docs/).
+- The README's one GIF, docs/gameplay.gif, is made by `chgame gif` from tools/scripts/gameplay.txt (clips 01_title, 02_classic, 03_vanish, 04_ultimate, 05_cat in out/gameplay). showcase.txt is kept as a test and records its clips into the folder it is given (use out/showcase, not docs/).
 - Simulator: `../../../../../../../../../tools/chsim/chsim.py` (shared; this game's tools/chsim/chdrive.py and diffdrive.py import it). Set `CHSIM_CXX` or have zig/clang++/g++ on PATH (see root CLAUDE.md). Size report: `../../../../../../../../../tools/check_size.py` (`tools/device.py build` runs it).
 
 ## Development
 
 Everything can be checked on a PC (Python 3 with Pillow, and a C++ compiler for the host builds: root CLAUDE.md). There is no tools/check.py here.
 
-    python tools/tests/run_tests.py [table]   # the rules, the dealer, the match flow
-    python tools/run.py chsim/chsim.py build .
-    python tools/chsim/chdrive.py --sim . tools/scripts/smoke.txt out/smoke
-    python tools/run.py readme_gif.py          # tools/scripts/gameplay.txt -> docs/gameplay.gif (the README's one GIF, <= 1 MB)
-    python tools/chsim/diffdrive.py tools/scripts/diff_iso.txt out/diff 1   # band redraws against full ones: 0 stale frames
+    chgame test [table]   # the rules, the dealer, the match flow
+    chgame sim
+    chgame run tools/scripts/smoke.txt out/smoke
+    chgame gif          # tools/scripts/gameplay.txt -> docs/gameplay.gif (the README's one GIF, <= 1 MB)
+    chgame redraw tools/scripts/diff_iso.txt out/diff 1   # band redraws against full ones: 0 stale frames
     python tools/assets.py                    # tools/art -> src/assets
     python tools/make_logo.py                 # redrafts the title lettering
     python tools/pieces.py                    # re-renders the iso pieces (overwrites the PNGs)
-    python tools/device.py build|upload [--debug]
-    python tools/run.py check_size.py build/release
-    python tools/run.py audio/preview.py . out/audio   # the effects as WAV files
+    chgame build|upload [--debug]
+    chgame size
+    chgame audio out/audio   # the effects as WAV files
 
 - `run_tests.py table` prints the dealer's results against a random player at every table and level.
 - Scripts (tools/scripts): `smoke` (every screen and table), `endings`, `save`, `iso`, `hover`, `perf`, `showcase` (a clip per feature), `gameplay` (the README GIF), `diff_iso` (for diffdrive). They use the common commands (`wait`, `tap`, `snap`, `rec`, `gif`, `say`, `perf`, `cal`) and the debug hooks listed under Gotchas: `say J P 4` jumps to table 5's play screen, `say H 8` fixes the dealer's next move, `say C 4` plays a cell.

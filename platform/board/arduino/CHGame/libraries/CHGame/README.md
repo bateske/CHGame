@@ -50,15 +50,15 @@ CHCraps' `.ino`.
 
 ## Building and running
 
-From the repository root (or a game's folder, whose `tools/device.py` does
+From the repository root (or a game's folder, where `chgame` does
 the same for that game):
 
 | What | Command |
 |---|---|
-| Release build + size | `python tools/device.py --sketch <dir> build` |
-| Debug build (protocol on) | `python tools/device.py --sketch <dir> build --debug` |
-| Upload | `python tools/device.py --sketch <dir> upload [--debug]` |
-| Run in the simulator | `python tools/chsim/chdrive.py --sim <dir> <script.txt> <outdir>` |
+| Release build + size | `chgame --sketch <dir> build` |
+| Debug build (protocol on) | `chgame --sketch <dir> build --debug` |
+| Upload | `chgame --sketch <dir> upload [--debug]` |
+| Run in the simulator | `chgame --sketch <dir> run <script.txt> <outdir>` |
 | Sound effects to WAV | `python tools/audio/preview.py <dir> <outdir>` |
 
 The simulator compiles the sketch, CHGfx and this library for the PC and

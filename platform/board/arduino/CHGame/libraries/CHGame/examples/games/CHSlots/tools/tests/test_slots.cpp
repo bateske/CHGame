@@ -1,4 +1,4 @@
-// Host tests for src/game/Slots.cpp (python tools/tests/run_tests.py).
+// Host tests for src/game/Slots.cpp (chgame test).
 //
 //   * LUCKY 7's return, exactly: every one of the 35^3 stops.
 //   * DRAGON FORTUNE's line evaluation against a slow reference written a

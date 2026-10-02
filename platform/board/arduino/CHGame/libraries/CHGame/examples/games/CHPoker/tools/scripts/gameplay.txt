@@ -1,7 +1,7 @@
 # The README's one picture (docs/gameplay.gif): the title, then a hand of
 # three of the games. Each clip is its own recording, named in the order it
 # is shown; ../../../../../../../../../tools/readme_gif.py runs this script and joins them:
-#   python tools/run.py readme_gif.py
+#   chgame gif
 # Cards: rank*4 + suit (ranks 2..A = 0..12, suits c d h s = 0..3).
 rec start 3
 wait 150

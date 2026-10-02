@@ -8,7 +8,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 - Release build (CHGame core 0.2.4, CHGfx 1.3.0, `opt=oslto,rtlib=nano,periph=game,usb=uploadonly`): flash 48,108 of 50,944 B (2,836 spare), static RAM 18,084 of 18,416 B (332 spare). RAM is the tight budget, not flash.
 - Save pages: `../../../../../../../../../tools/check_size.py` reports the image as 48,364 B, 256 B more than the compile's flash figure. Both A/B pages (0xF500, 0xF600) fit while the image is at most 50,432 B, so the margin is 2,068 B. Past that, the CHGame library's saving (`chgame/Save.cpp`) uses page B only.
 - Simulator-verified (as of 2026-10-01):
-  - `python tools/tests/run_tests.py` passes: 10,000 deals per layout cleared, golden deal hashes, every free tile reachable by the cursor.
+  - `chgame test` passes: 10,000 deals per layout cleared, golden deal hashes, every free tile reachable by the cursor.
   - Scripts `ui`, `match`, `clear`, `stuck`, `save` and `showcase` run clean in `tools/chsim/chdrive.py --sim`. They also ran clean once with the simulator built under UBSan.
 - Device: the owner ran an early build on the board (before the close-up, classic faces, new title and sparrow) and reported it worked well. No run of the current build on hardware is recorded. Render time, pacing and sound by ear are unmeasured.
 
@@ -34,7 +34,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 
 ## Open items
 
-- First device run: `python tools/device.py run tools/scripts/device_render.txt out/device` measures the draw cost of a frame on the board.
+- First device run: `chgame run --device tools/scripts/device_render.txt out/device` measures the draw cost of a frame on the board.
   - Do it with the owner watching the screen. An early debug upload got no serial answer, and the board then dropped off USB.
   - Port contention is the likely cause, but a hardware-only crash was not ruled out.
 - After that: check pacing and sound by ear, then leave the release build on the board.
@@ -83,20 +83,20 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 
 Everything can be checked on a PC (Python 3 with Pillow, and a C++ compiler for the host builds: root CLAUDE.md). There is no `tools/check.py` here yet.
 
-    python tools/tests/run_tests.py     # the board: layouts, deals, matching, saves, the cursor
-    python tools/run.py chsim/chsim.py build .
-    python tools/chsim/chdrive.py --sim . tools/scripts/clear.txt out/clear
-    python tools/run.py readme_gif.py    # tools/scripts/gameplay.txt -> docs/gameplay.gif (the README's one GIF, <= 1 MB)
+    chgame test     # the board: layouts, deals, matching, saves, the cursor
+    chgame sim
+    chgame run tools/scripts/clear.txt out/clear
+    chgame gif    # tools/scripts/gameplay.txt -> docs/gameplay.gif (the README's one GIF, <= 1 MB)
     python tools/assets.py              # art -> src/assets
-    python tools/run.py audio/preview.py . out/audio   # the sound effects as WAV
-    python tools/device.py upload       # build and upload the release
-    python tools/run.py check_size.py build/release --top 20
+    chgame audio out/audio   # the sound effects as WAV
+    chgame upload       # build and upload the release
+    chgame size --top 20
 
 - The host tests cover: the layouts, the free rule against a slow reference, 10,000 deals of each layout cleared by their own order, the same deal however it is stepped (and against known hashes), matching, the streak, undo, shuffles (including tiles that cannot be dealt), saved games, the cursor reaching every free tile, and random calls in any order.
 - Script commands (besides the shared `wait`, `tap`, `snap`, `gif`, `rec`): `solve N [W]` takes the deal's own next N pairs with the D-pad and A as a player would, `takehint` the pair a hint is showing, `auto N` any N pairs with no glove work, `goto TILE` walks the glove, `say G <layout> <seed>` deals a table, `say M <a> <b>` takes a pair, `hold`/`release` keep buttons down under the taps, `state` prints the game's state, `cal` and `perf` estimate the device's render time.
 - Scripts: `gameplay.txt` (the README's GIF: five clips), `showcase.txt` (the set pieces as separate pictures), `ui.txt` (every screen), `layouts.txt` (each layout dealt), `match.txt` (a pair, frame by frame), `clear.txt` (a whole table to MAHJONG!), `stuck.txt` (no moves, undo, shuffle, hint), `save.txt` (save, continue), `zoom.txt` (the close-up, and a pair taken in it), `play.txt` (a few pairs), `perf.txt` (render cost at both sizes), `device_render.txt` (the same, on the board).
 - The README GIF is within about 1.5 KB of the 1 MB limit. The close-up clip is the dear one (every pixel changes during the whip), which is why it records with `rec start 4` and takes two pairs only.
-- `python tools/device.py upload --debug` adds the CHGame library's serial protocol (`chgame/Debug.h`) for screenshots, injected input and lockstep. The Arduino IDE settings for a release are *Tools > Optimize > Smallest + LTO* and *Tools > USB > Upload only*.
+- `chgame upload --debug` adds the CHGame library's serial protocol (`chgame/Debug.h`) for screenshots, injected input and lockstep. The Arduino IDE settings for a release are *Tools > Optimize > Smallest + LTO* and *Tools > USB > Upload only*.
 - **The classic faces:** `python tools/faces.py` writes `tools/art/classic.txt` (7 x 11) and `classic2x.txt` (15 x 23): the dots and bamboo laid out from their patterns, the characters, winds, dragons and the bird as text in the script. Edit either file afterwards (or the script), then `python tools/assets.py`.
 - **The EASY faces:** `python tools/sheet.py export` writes `tools/art/sheet.png`, an indexed PNG of every face on the game's palette; edit it, then `python tools/sheet.py import` turns it back into `tools/art/tiles.txt` and rebuilds the assets. The text file can be edited directly too: a letter is a colour. A face may use two colours besides the tile's white.
 - **Layouts:** edit or add a map in `tools/layouts/` (an X for each tile's corner, a grid per layer), then `python tools/layouts.py` checks it (it fits the screen, nothing hangs in the air, a deal can be found) and writes `src/game/Layouts.cpp`.

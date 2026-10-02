@@ -48,7 +48,7 @@ one, using its built-in data in flash. The card adds to that.
   never been written, so CHSd waits up to 1 s per block and CHSDtoUSB up to
   1.5 s.
 - **The games hold no copy of CHSd.** They include the library; change it
-  there and run its tests and the three games' `tools/check.py`.
+  there and run its tests and `chgame check` in the three games.
 
 ## In the simulator
 

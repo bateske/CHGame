@@ -23,8 +23,8 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 
 ## Open items
 
-- First device run. Simulator estimates put the dice cam's shake and the result + banner at 9-15 ms a frame, over the ~8 ms drawing budget for 60 fps. Measure on the board (`python tools/device.py run tools/scripts/perf.txt OUTDIR`) before optimising.
-- Listen to the sound effects on the piezo (`python tools/run.py audio/preview.py . out/audio` renders them to WAV meanwhile).
+- First device run. Simulator estimates put the dice cam's shake and the result + banner at 9-15 ms a frame, over the ~8 ms drawing budget for 60 fps. Measure on the board (`chgame run --device tools/scripts/perf.txt OUTDIR`) before optimising.
+- Listen to the sound effects on the piezo (`chgame audio out/audio` renders them to WAV meanwhile).
 - Known issue (logged, not fixed; see ../../../../../../../../../docs/status.md): CHYacht uses this game's save magic `0x52434843` "CHCR" with the same
   version 1, so after playing one, the other accepts its save. The fix is a new magic in CHYacht.
 - Music: deferred until flash allows (it does not now).
@@ -45,20 +45,20 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 
 Everything can be checked on a PC: Python 3 with `pip install -r ../../../../../../../../../tools/requirements.txt`, and a C++ compiler for the simulator and the tests (zig, clang++ or g++ on the PATH, `pip install ziglang`, or `CHSIM_CXX="path/to/zig c++"`; root CLAUDE.md).
 
-    python tools/tests/run_tests.py          # rules, dice physics, layout reachability
+    chgame test          # rules, dice physics, layout reachability
     python tools/tests/sim_save.py           # save mid-hand, power-cycle, continue
-    python tools/run.py chsim/chsim.py build .
-    python tools/chsim/chdrive.py --sim . tools/scripts/sc_show.txt out/sc_show
-    python tools/run.py readme_gif.py         # tools/scripts/gameplay.txt -> docs/gameplay.gif (the README's one GIF, <= 1 MB)
+    chgame sim
+    chgame run tools/scripts/sc_show.txt out/sc_show
+    chgame gif         # tools/scripts/gameplay.txt -> docs/gameplay.gif (the README's one GIF, <= 1 MB)
     python tools/assets.py                   # dealer, logo, chips -> src/assets/
-    python tools/run.py audio/preview.py . out/audio  # every sound effect to WAV
-    python tools/device.py build|upload [--debug]
-    python tools/run.py check_size.py build/release
+    chgame audio out/audio  # every sound effect to WAV
+    chgame build|upload [--debug]
+    chgame size
 
 - The README GIF: `gameplay.txt` records five clips (`01_title`, `02_comeout`, `03_hardfour`, `04_hot`, `05_sevenout`). The come-out is played with the buttons alone; the later clips set bets with `say E` off camera, and every roll is forced with `say F`. The play clips use `rec start 4` to stay under 1 MB (the dice cam compresses badly).
 - Other scripts are tests and look-dev, written to `out/`: `betting.txt` (the plaque, a refused bet, chips down and back, picking from the rack), `beginner.txt` (a Beginner-table hand: line and field, point 8, the 6 placed for $12, $20 odds, a hard six, winner eight), `showcase.txt`, `sc_show.txt`, `sc_screens.txt`, `look_table.txt`, `look_cam.txt`, `review_roll.txt`, `perf.txt`.
-- The debug build (`--debug`) speaks the CHGame library's serial protocol (`chgame/Debug.h`). The game's commands are in `src/states/Screens.cpp`: reseed or force the dice, jump to a screen, set bets, the purse or the point, move the cursor, dump the table state (letters under Gotchas). The same scripts run on the board (`python tools/device.py run SCRIPT OUTDIR`); `goto` is simulator only.
-- Installing by hand (Arduino IDE): board package 0.2.4 or later, CHGfx 1.3.0 and the CHGame library from `platform/board/arduino/CHGame/libraries/`, *Tools > Optimize > Smallest + LTO* (needed to fit) and *Tools > USB > Upload only*. `python tools/device.py build` does the same as `arduino-cli compile -b CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly CHCraps`.
+- The debug build (`--debug`) speaks the CHGame library's serial protocol (`chgame/Debug.h`). The game's commands are in `src/states/Screens.cpp`: reseed or force the dice, jump to a screen, set bets, the purse or the point, move the cursor, dump the table state (letters under Gotchas). The same scripts run on the board (`chgame run --device SCRIPT OUTDIR`); `goto` is simulator only.
+- Installing by hand (Arduino IDE): board package 0.2.4 or later, CHGfx 1.3.0 and the CHGame library from `platform/board/arduino/CHGame/libraries/`, *Tools > Optimize > Smallest + LTO* (needed to fit) and *Tools > USB > Upload only*. `chgame build` does the same as `arduino-cli compile -b CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly CHCraps`.
 - `tools/tests/test_craps.cpp` checks every bet against every point and all 36 rolls with an independent oracle, and works out each bet's house edge exactly by enumerating the dice (pass 1.414%, don't 1.364%, field 2.778%, place 6 1.515%, odds 0). It also runs a long fuzz for money conservation and a chi-square test of the dice.
 - Dice3D details: Euler-angle rotation matrices, faces back-face culled, scanline filled, shaded in three levels and outlined. Physics: gravity, felt bounces that turn speed into a tumble, the back wall's kick, side rails, and the two dice pushing off each other. The relabelled die is always a real die (opposites add to 7); of the four ways to do it the game picks the one that changes the fewest pips, and the new pips go on at the back-wall hit, in a shower of sparks.
 - The point puck: the black OFF puck turns over and slides to the number's box, where it sits as a round white badge on the box's top right corner, so the box's own number stays clear.

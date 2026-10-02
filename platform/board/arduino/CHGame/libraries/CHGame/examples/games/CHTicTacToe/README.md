@@ -50,7 +50,7 @@ OPTIONS:
 - **SOUND**: on or off.
 - **CROUPIER**: CLASSIC or NIGHT colours.
 
-To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `python tools/device.py upload` from this folder.
+To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `chgame upload` from this folder.
 
 ## Developer notes
 

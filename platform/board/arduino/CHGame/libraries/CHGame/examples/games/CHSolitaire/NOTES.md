@@ -6,7 +6,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 
 - Imported from https://github.com/bateske/CHSolitaire at commit 38d0309 (2026-10-01); develop here now, not in the old repo.
 - Release build (FQBN `CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly`, core 0.2.4, CHGfx 1.3.0): flash 30,888 of 50,944 B (20,056 spare; the image is 31,144 B, so both save pages fit with ~19.3 KB to go), static RAM 16,540 of 18,416 B (1,876 spare). RAM, not flash, is the tight budget in this game.
-- Verification: simulator and host tests only. `python tools/check.py` (host tests, every script in tools/scripts run twice with identical frames and every `expect` holding, release build) passed as of 2026-10-01; not re-run since the import.
+- Verification: simulator and host tests only. `chgame check` (host tests, every script in tools/scripts run twice with identical frames and every `expect` holding, release build) passed as of 2026-10-01; not re-run since the import.
 - Never run on a CHGame: pace, frame rate, sound and card legibility on the real LCD are unchecked. The ~5 ms full-table / <1 ms cascade frame figures are simulator estimates scaled by the CHGfx benchmark (chdrive `cal`, sim hook `Q`).
 
 ## Design decisions
@@ -26,7 +26,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 
 ## Open items
 
-- Device run: pace, sound by ear, card legibility, real frame times. A device debug build (`tools/device.py upload --debug`) keeps saving unless built with `-DCHSO_LEAN=1`, so it writes the shared save pages like the release; put the release build back afterwards. (A LEAN build's Stats page says "SAVING UNAVAILABLE": it asks `!CHSO_LEAN && save::available()`.)
+- Device run: pace, sound by ear, card legibility, real frame times. A device debug build (`chgame upload --debug`) keeps saving unless built with `-DCHSO_LEAN=1`, so it writes the shared save pages like the release; put the release build back afterwards. (A LEAN build's Stats page says "SAVING UNAVAILABLE": it asks `!CHSO_LEAN && save::available()`.)
 - The owner's art pass on the card backs (tools/art/backs/*.txt, 15x21 in palette letters; a palette-exact PNG of the same name overrides one).
 - The owner's verdict on the plan-level choices listed above.
 - Fixed 2026-10-01 (with the SD game menu, which makes switching games routine): the save magic, the debug handshake id and the macro prefix used to be CHSlots' (`0x4C534843` "CHSL", `CHSL_`). They are now `0x4F534843` "CHSO", handshake "CHSO" (tools/chsim/chdrive.py `--id` default) and `CHSO_` (CHSO_VERSION etc.; the debug protocol's switch is now the CHGame library's `CHGAME_DEBUG`). A save written by an older build is ignored once.
@@ -38,7 +38,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 - The whole game state (`Klondike`, src/game/Klondike.h) plus options and stats must fit one 256 B flash page: `static_assert` in src/save/Save.cpp. Undo is a copy of that struct, so growing it costs RAM twice.
 - Debug hooks beyond the ones under Development (G, W, O, C), in `debugHook` in src/states/Screens.cpp: `$ n` Vegas bank, `J <T|P|D|O|S>` jump to a screen, `H` the table as one line (what chdrive's `expect KEY=VALUE` and `waitstate` read); simulator only: `X` the tallest possible column, `Z` a power cycle (reloads the save), `Q` timing calibration.
 - tools/scripts/gameplay.txt (the README's GIF) plays a real deal (`say G 1`) whose moves were worked out by the host tests' sensible player and written out as glove moves (`say C pile depth`); the one-off generator is not in the repo. Any change to dealing or the RNG invalidates the move list.
-- The README's GIF is made by `python tools/run.py readme_gif.py`, which runs gameplay.txt into out/gameplay and joins its clips. showcase.txt is a test like the other scripts now; run it into out/, not docs/.
+- The README's GIF is made by `chgame gif`, which runs gameplay.txt into out/gameplay and joins its clips. showcase.txt is a test like the other scripts now; run it into out/, not docs/.
 - tools/make_logo.py renders the title once from a TrueType font (Georgia Bold Italic by default; pass another path as the first argument). tools/art/logo.txt is the source from then on; re-running overwrites hand edits. Then `python tools/assets.py`.
 - The card face (ranks, pips, court busts, suit glyphs in tools/art/) and the 3x5 font come from CHBlackjack/CHPoker; assets.py does not cross-check them against those siblings.
 - Simulator: `../../../../../../../../../tools/chsim/chsim.py` (shared; this game's tools/chsim/chdrive.py imports it). Set `CHSIM_CXX` or have zig/clang++/g++ on PATH (see root CLAUDE.md). Size report: `../../../../../../../../../tools/check_size.py` (`tools/device.py build` runs it).
@@ -47,20 +47,20 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 
 Everything can be checked on a PC (Python 3 with `pip install -r ../../../../../../../../../tools/requirements.txt`, and a C++ compiler for the host builds: zig, clang++ or g++ on the PATH, `pip install ziglang`, or `CHSIM_CXX="path/to/zig c++"`; root CLAUDE.md).
 
-    python tools/check.py               # host tests, every script twice (identical frames), device compile + size
-    python tools/tests/run_tests.py     # the rules, both scorings, the stock and its passes, the clock and bonus, thousands of random and sensible games
-    python tools/run.py chsim/chsim.py build .
-    python tools/chsim/chdrive.py --sim . tools/scripts/play.txt out/play
-    python tools/run.py readme_gif.py    # tools/scripts/gameplay.txt -> docs/gameplay.gif (the README's one GIF, <= 1 MB)
+    chgame check               # host tests, every script twice (identical frames), device compile + size
+    chgame test     # the rules, both scorings, the stock and its passes, the clock and bonus, thousands of random and sensible games
+    chgame sim
+    chgame run tools/scripts/play.txt out/play
+    chgame gif    # tools/scripts/gameplay.txt -> docs/gameplay.gif (the README's one GIF, <= 1 MB)
     python tools/assets.py              # art -> src/assets
-    python tools/run.py audio/preview.py . out/audio    # the sound effects as WAV
-    python tools/device.py upload [--debug]            # build and upload
-    python tools/run.py check_size.py build/release --top 20
+    chgame audio out/audio    # the sound effects as WAV
+    chgame upload [--debug]            # build and upload
+    chgame size --top 20
 
 - Scripts: `say G <seed>` deals a known game, `say W <n>` leaves n cards to play, `say O <i> <v>` sets an option, `say C <pile> <cards>` puts the glove on a pile; `expect KEY=VALUE` checks the table's numbers, `waitstate S` runs until the table is in a state; `snap` and `rec` take pictures. The host tests' thousands of games must leave all 52 cards in place.
 - gameplay.txt records four clips: 01_title, 02_deal (the deal and first moves of `say G 1`), 03_runs (later in the same game, which plays on unrecorded in between) and 04_win (`say G 11`, `say W 16`: the game plays itself out and the cascade).
-- `--debug` adds the CHGame library's serial protocol (`chgame/Debug.h`) for screenshots, injected input and lockstep; `python tools/device.py run SCRIPT OUTDIR` runs a script on the board.
-- Build: `CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly` (in the IDE: *Optimize > Smallest + LTO*, *USB > Upload only*; the game has no use for USB Serial). `python tools/device.py build` does it and prints the size.
+- `--debug` adds the CHGame library's serial protocol (`chgame/Debug.h`) for screenshots, injected input and lockstep; `chgame run --device SCRIPT OUTDIR` runs a script on the board.
+- Build: `CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly` (in the IDE: *Optimize > Smallest + LTO*, *USB > Upload only*; the game has no use for USB Serial). `chgame build` does it and prints the size.
 - Art is in `tools/art`: the cards (`ranks.txt`, `suits.txt`, `pip9.txt`, `court.txt`), the glove (`hand.*`), the title lettering (`logo.txt`, as `#` and `.`) and the card backs (`backs/*.txt`, 15x21 in palette letters; a PNG of the same name in the game's 16 colours overrides one).
 - The card: seven columns in 128 pixels leave 18 a column, so it is 17x23, with CHBlackjack's bold rank and Press Play On Tape's suit glyph side by side along the top and a pip or a court card's bust below. The tallest column there can be (six face down, king to ace on top) runs over the status line with the top of every rank still showing.
 - The cascade: kings leave first, round the four foundations, as Windows did it; each card takes a random sideways speed and loses a fifth of its bounce every time it hits the floor.

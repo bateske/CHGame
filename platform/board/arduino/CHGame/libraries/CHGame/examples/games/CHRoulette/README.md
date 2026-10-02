@@ -39,7 +39,7 @@ You start with $500 and play to the goal ($1000, $5000 or endless) or until you 
 
 OPTIONS has the wheel, the goal, the pace (FUN, or QUICK for shorter spins and payouts), the sound (the melody, an arpeggio of all the voices, or off) and the croupier's look. STATS keeps your spins, wins, biggest win, straight-up hits and the hot and cold numbers (hold SELECT there to reset them). Options, statistics and a game in progress are saved: SAVE & QUIT, then CONTINUE.
 
-To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `python tools/device.py upload` from this folder.
+To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `chgame upload` from this folder.
 
 ## Developer notes
 

@@ -8,7 +8,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 - Release build (CHGame core 0.2.4, CHGfx 1.3.0, `opt=oslto,rtlib=nano,periph=game,usb=uploadonly`): flash 37,080 of 50,944 B (13,864 spare), static RAM 15,704 of 18,416 B (2,712 spare).
 - The debug protocol (`chgame/Debug.h`, `CHGAME_DEBUG`), the flash save record (`chgame/Save.h`; `src/save/Save.cpp` says only what the record holds, byte for byte the old layout) and RAMFUNC are the CHGame library's since 2026-10-02, and `tools/chsim/chdrive.py` is the shared `tools/chsim/chdrivelib.py` plus this game's `board`, `waitturn`, `cal`, the calibrated `perf` and a `say` that also takes the frame ack owed after a HELD command. Image 37,136 -> 37,208 B (the library's `audio::setOn()` out of line, about +12 B; its save code, about +30 B), static RAM 15,360 B unchanged; the same frames on every script.
 - Save pages: `../../../../../../../../../tools/check_size.py` reports the image as 37,208 B (2026-10-02). Both A/B pages (0xF500, 0xF600, the CHGame library's `chgame/Save.cpp`) fit with 13,224 B to spare (the limit is an image of at most 50,432 B).
-- Simulator-verified (as of 2026-10-01): `python tools/check.py` passes. It runs:
+- Simulator-verified (as of 2026-10-01): `chgame check` passes. It runs:
   - the host tests (100,000 seeded games, saves, CPUs, the SHARK table against the layout);
   - every script in `tools/scripts/` twice, with identical frames and no drawing into a frame still being sent;
   - the device compile and size check.
@@ -37,11 +37,11 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 ## Open items
 
 - The rest of the device run (pace in play, sound by ear, `tools/scripts/perf.txt`). It needs the owner's go-ahead.
-  - `python tools/run.py audio/preview.py . out/audio` renders the effects to WAV on the PC meanwhile.
+  - `chgame audio out/audio` renders the effects to WAV on the PC meanwhile.
   - The simulator estimates 5-14 ms a frame (the title about 20 ms), over the 8.3 ms budget during motion, so expect 30-60 fps.
   - Snakes and ladders are the main cost.
   - `tools/scripts/perf.txt` prints the per-moment estimates.
-  - After a device run, `python tools/check.py --compare out/<sim> out/<device>` compares the frames pixel for pixel.
+  - After a device run, `chgame check --compare out/<sim> out/<device>` compares the frames pixel for pixel.
 - The owner's feedback on the look and on the unconfirmed choices above.
 - An art redraw through `tools/sheet.py`, if the owner wants one.
 
@@ -69,20 +69,20 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 
 Everything can be checked on a PC (Python 3 with `pip install -r ../../../../../../../../../tools/requirements.txt`, and a C++ compiler for the host builds: zig, clang++ or g++ on the PATH, `pip install ziglang`, or `CHSIM_CXX="path/to/zig c++"`; root CLAUDE.md).
 
-    python tools/check.py               # host tests, every script twice, device compile + size (--quick, --no-device)
-    python tools/tests/run_tests.py     # the board, both games turn by turn, saves, the CPUs, 100,000 seeded games
-    python tools/run.py chsim/chsim.py build .
-    python tools/chsim/chdrive.py --sim . tools/scripts/snake.txt out/snake
-    python tools/run.py readme_gif.py    # tools/scripts/gameplay.txt -> docs/gameplay.gif (the README's one GIF, <= 1 MB)
+    chgame check               # host tests, every script twice, device compile + size (--quick, --no-device)
+    chgame test     # the board, both games turn by turn, saves, the CPUs, 100,000 seeded games
+    chgame sim
+    chgame run tools/scripts/snake.txt out/snake
+    chgame gif    # tools/scripts/gameplay.txt -> docs/gameplay.gif (the README's one GIF, <= 1 MB)
     python tools/assets.py              # art -> src/assets
-    python tools/run.py audio/preview.py . out/audio   # the sound effects as WAV
-    python tools/device.py upload [--debug]           # build and upload
-    python tools/run.py check_size.py build/release --top 20
+    chgame audio out/audio   # the sound effects as WAV
+    chgame upload [--debug]           # build and upload
+    chgame size --top 20
 
 - Status: complete and played through in the simulator. Frame timing and the sound on the handheld itself are still to be checked.
 - The host tests check that the board is a fair one (no chains, no wall of snakes) and that 100,000 seeded games all end.
-- Scripts tap buttons, `waitturn` until the game wants you, `snap` and `rec` take pictures, and `say` sends debug commands: `say G 1 3 0 0 1 11` a new game, `say D 2 5` the next dice, `say M 0 91` puts a token on a square. `cal` and `perf` estimate the device's render time. The same scripts run on the device with a debug build (`python tools/device.py run SCRIPT OUTDIR`).
+- Scripts tap buttons, `waitturn` until the game wants you, `snap` and `rec` take pictures, and `say` sends debug commands: `say G 1 3 0 0 1 11` a new game, `say D 2 5` the next dice, `say M 0 91` puts a token on a square. `cal` and `perf` estimate the device's render time. The same scripts run on the device with a debug build (`chgame run --device SCRIPT OUTDIR`).
 - `gameplay.txt` records the README's clips (`01_title` ... `05_home`) at `rec start 5` to stay under 1 MB; `showcase.txt` (title, a snake's meal, a ladder) is kept as a test.
-- A device build with the Arduino IDE or plain `arduino-cli`: *Tools > Optimize > Smallest + LTO*, *Tools > USB > Upload only*, or the release FQBN in the root CLAUDE.md (`python tools/device.py build` does the same).
+- A device build with the Arduino IDE or plain `arduino-cli`: *Tools > Optimize > Smallest + LTO*, *Tools > USB > Upload only*, or the release FQBN in the root CLAUDE.md (`chgame build` does the same).
 - Ladders are two rails and a rung every four pixels, a span to each row they cross. Each row of the board is a copy of one of five 64-byte patterns (`src/board/Board.cpp`).
 - The art is in `tools/art`: `sprites.txt`, plus a `<name>.png` for each sprite edited through `tools/sheet.py` (see Gotchas).

@@ -43,7 +43,7 @@ Agent-facing notes for continuing work on this game. Rules and controls are in [
   - No `snprintf`: it is 3.5 KB with 64-bit division; use the CHGame library's `fmt*` (`chgame/Fmt.h`).
   - No `pinMode`: its pin tables are about 2 KB; write the registers.
   - Sound is the CHGame library's piezo sequencer (`chgame/Audio.h`), not CHGameSound; `src/audio/Sounds.*` holds the effect tables, `playSong` and the two sound switches (the options' mode and SELECT's mute, `sound::`).
-  - "How it fits" below has the budget breakdown. Measure with `python tools/run.py check_size.py build/release` after every change.
+  - "How it fits" below has the budget breakdown. Measure with `chgame size` after every change.
 - Big outlined lettering (Mask: a 1 bpp mask, grown for the outline, painted in up to three layers) costs about 5-10 ms per word on the board. Draw it once, on still screens or static layers, never every frame.
 - The credits page draws its felt once and redraws only the wall band: 3.3 ms a frame measured on CHGfx 1.2.
 - Libraries:
@@ -54,7 +54,7 @@ Agent-facing notes for continuing work on this game. Rules and controls are in [
   - `src/assets/Assets.cpp` comes from `python tools/assets.py`. The first run clones PPOT's repository into `tools/.cache/ppot` (gitignored), pinned to a commit, so it needs git and network. `tools/art/dealer.png` must use palette colours only.
   - `src/audio/Music.cpp` comes from `python tools/make_music.py`.
 - Debug builds:
-  - Every `CHGAME_DEBUG` build, the simulator included, has no music scores (`Music.cpp` is under `#if !CHGAME_DEBUG`). Listen with `python tools/run.py audio/preview.py . out/audio` or a release build.
+  - Every `CHGAME_DEBUG` build, the simulator included, has no music scores (`Music.cpp` is under `#if !CHGAME_DEBUG`). Listen with `chgame audio out/audio` or a release build.
   - Device debug builds (`CHBJ_LEAN`) also drop the credits page; `-DCHBJ_FULL` forces it back in.
   - Announce device uploads, and put a release build back afterwards: a debug build looks like a game without its music.
 - Profiling:
@@ -90,16 +90,16 @@ Files:
 
 Everything except timing and sound can be checked on a PC (Python 3 with `pip install -r ../../../../../../../../../tools/requirements.txt`, and a C++ compiler for the host builds: root CLAUDE.md). `CHSIM_CHGFX` can point the simulator at another CHGfx `src/` folder.
 
-    python tools/tests/run_tests.py     # the rules: hand values, dealer policies, every payout, PPOT's bug regressions, a 16,000-hand fuzz
-    python tools/run.py chsim/chsim.py build .
-    python tools/chsim/chdrive.py --sim . tools/scripts/sc_split.txt out/sc_split
-    python tools/run.py readme_gif.py    # tools/scripts/gameplay.txt -> docs/gameplay.gif (the README's one GIF, <= 1 MB)
+    chgame test     # the rules: hand values, dealer policies, every payout, PPOT's bug regressions, a 16,000-hand fuzz
+    chgame sim
+    chgame run tools/scripts/sc_split.txt out/sc_split
+    chgame gif    # tools/scripts/gameplay.txt -> docs/gameplay.gif (the README's one GIF, <= 1 MB)
     python tools/assets.py              # art -> src/assets
     python tools/make_music.py          # the scores -> src/audio/Music.cpp
-    python tools/run.py audio/preview.py . out/audio    # every tune and effect to WAV, from the real sequencer code
-    python tools/device.py upload [--debug]            # build and upload
-    python tools/device.py run tools/scripts/sc_split.txt out/   # the same script on the board, in lockstep
-    python tools/run.py check_size.py build/release --top 20
+    chgame audio out/audio    # every tune and effect to WAV, from the real sequencer code
+    chgame upload [--debug]            # build and upload
+    chgame run --device tools/scripts/sc_split.txt out/   # the same script on the board, in lockstep
+    chgame size --top 20
 
 - There is no `tools/check.py` here: the checks are the host tests and running the scripts (twice gives identical pictures).
 - Scripts: `say J <T|P|W|L|O|S|C>` jumps to a screen (P is a new game on a fresh table), `say D 26,8,25,46` stacks the deck with the next cards to be dealt, `say R 7` seeds the shoe; `snap`, `gif` and `rec` take pictures. `chdrive.py` flags drawing into the framebuffer while a flush is still converting it.

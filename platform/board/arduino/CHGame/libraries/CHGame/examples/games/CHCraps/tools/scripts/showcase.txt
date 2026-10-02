@@ -1,5 +1,5 @@
 # A test and look-dev run (the title, a whole roll, the hot hand, the seven-out):
-#   python tools/chsim/chdrive.py --sim . tools/scripts/showcase.txt out/showcase
+#   chgame run tools/scripts/showcase.txt out/showcase
 # The README picture is gameplay.txt.
 say J T
 rec start 3

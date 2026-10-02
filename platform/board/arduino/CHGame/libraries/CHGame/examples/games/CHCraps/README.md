@@ -56,7 +56,7 @@ OPTIONS:
 
 STATS keeps rolls, points made, seven-outs, the longest hand, hardways hit, the best purse, the biggest win, banks broken and times broke (hold SELECT there to reset them). The options, the stats and the table as it stands are saved: SAVE & QUIT, then CONTINUE, puts you back mid-hand.
 
-To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `python tools/device.py upload` from this folder.
+To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `chgame upload` from this folder.
 
 ## Developer notes
 

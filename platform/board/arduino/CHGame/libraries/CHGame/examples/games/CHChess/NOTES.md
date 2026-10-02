@@ -76,17 +76,17 @@ Opponents and flash priorities:
 
 Everything can be checked on a PC (Python 3 with `pip install -r ../../../../../../../../../tools/requirements.txt`, and a C++ compiler for the host builds: zig, clang++ or g++ on the PATH, `pip install ziglang`, or `CHSIM_CXX="path/to/zig c++"`; root CLAUDE.md).
 
-    python tools/tests/run_tests.py     # perft on five positions, draw rules, book, snapshots, every CPU level, ~100,000 fuzzed moves with undo and save/load
-    python tools/run.py chsim/chsim.py build .
-    python tools/chsim/chdrive.py --sim . tools/scripts/showcase.txt out/showcase
-    python tools/run.py readme_gif.py    # tools/scripts/gameplay.txt -> docs/gameplay.gif (the README's one GIF, <= 1 MB)
-    python tools/device.py build        # release build and size (the Arduino IDE: Tools > Optimize > Smallest + LTO, Tools > USB > Upload only)
-    python tools/device.py upload [--debug]
+    chgame test     # perft on five positions, draw rules, book, snapshots, every CPU level, ~100,000 fuzzed moves with undo and save/load
+    chgame sim
+    chgame run tools/scripts/showcase.txt out/showcase
+    chgame gif    # tools/scripts/gameplay.txt -> docs/gameplay.gif (the README's one GIF, <= 1 MB)
+    chgame build        # release build and size (the Arduino IDE: Tools > Optimize > Smallest + LTO, Tools > USB > Upload only)
+    chgame upload [--debug]
     python tools/sheet.py export        # the art as one indexed PNG; `import` takes the edits back
     python tools/pieces.py              # render the pieces from the 3D models (tools/art/gen)
     python tools/assets.py              # art -> src/assets
     python tools/book.py N              # cut the opening book to N plies
-    python tools/run.py audio/preview.py . out/audio    # the sound effects as WAV
+    chgame audio out/audio    # the sound effects as WAV
 
 - The build needs link-time optimisation to fit, and `usb=uploadonly` saves 0.6 KB (the game has no use for USB Serial). By hand: `arduino-cli compile -b CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly --library ../../../../CHGfx --library ../../../../CHGame .`. `--debug` adds the CHGame library's serial protocol (`chgame/Debug.h`) for screenshots, injected input and lockstep.
 - Scripts: `goto SQ` walks the glove to a square with D-pad presses, `waitturn` waits for your move, `rec start N` / `rec stop NAME` record across a script, `gif` and `snap` take pictures. `say G <mode> <black> <level> <seed>` starts a game, `say X <fen>` sets up a position for two players and `say V <fen>` against the CPU, `say M <from> <to> [promo]` plays a move (squares 0 = a1 .. 63 = h8). `cal` and `perf` estimate the device's render time. A move to the last rank made with the buttons opens the PROMOTE TO panel: `tap A` takes the queen.

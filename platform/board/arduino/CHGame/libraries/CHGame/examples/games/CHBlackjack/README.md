@@ -41,7 +41,7 @@ OPTIONS has the rules, the goal ($1000, $5000 or endless), speed, sound (lead: t
 
 STATS shows the lifetime figures: hold SELECT for a second and a half to reset them, or press A for the credits page in the casino's back room.
 
-To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `python tools/device.py upload` from this folder.
+To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `chgame upload` from this folder.
 
 ## Developer notes
 

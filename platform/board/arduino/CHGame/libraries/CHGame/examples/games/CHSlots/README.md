@@ -48,7 +48,7 @@ Reach the goal to break the bank; run out of money and you are broke. OPTIONS se
 
 The game saves by itself every ten spins and on SAVE & QUIT, never in the middle of a feature. The purse, the machine, the bets and DRAGON FORTUNE's growing meters are all kept.
 
-To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `python tools/device.py upload` from this folder.
+To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `chgame upload` from this folder.
 
 ## Developer notes
 

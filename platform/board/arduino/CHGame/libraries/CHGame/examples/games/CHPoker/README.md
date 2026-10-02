@@ -45,7 +45,7 @@ A CPU that goes broke leaves, and a new player takes the seat. When your chips r
 
 The CPUs judge their hands the way a player does, by imagining the rest of the hand: each plays it out with random cards for what it can't see, while its plate glows and a soft clock ticks, and weighs the share it wins against the price of calling. They never see your cards or each other's.
 
-To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `python tools/device.py upload` from this folder.
+To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `chgame upload` from this folder.
 
 ## Developer notes
 

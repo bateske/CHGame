@@ -1,7 +1,7 @@
 # The game's set pieces, each as its own picture: the title, the deal, pairs,
 # a shuffle, MAHJONG!, the layouts and the close-up (the README's one GIF is
 # gameplay.txt):
-#   python tools/chsim/chdrive.py --sim . tools/scripts/showcase.txt out/showcase
+#   chgame run tools/scripts/showcase.txt out/showcase
 wait 30
 gif title 80 2
 say G 0 2026

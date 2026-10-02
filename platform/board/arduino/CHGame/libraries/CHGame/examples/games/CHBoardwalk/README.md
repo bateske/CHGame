@@ -39,7 +39,7 @@ The result draws everyone's worth round by round: the story of the game.
 
 OPTIONS has sound on or off, and the pace: FUN, or QUICK (faster turns, no zooming in on landings). Options, the house's records and a game in progress (SAVE + QUIT, then CONTINUE, which picks the game up as that turn began) are saved to flash and survive re-uploading.
 
-To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `python tools/device.py upload` from this folder.
+To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `chgame upload` from this folder.
 
 ## Developer notes
 

@@ -46,7 +46,7 @@ The top bar shows everyone's square. A roll from home, your heart beats and the 
 
 OPTIONS has sound on or off, and the pace: FUN, or QUICK (faster turns, no close-ups). Options, the house's records and a game in progress (SAVE + QUIT, then CONTINUE, which picks the game up as that turn began) are saved to flash and survive re-uploading.
 
-To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `python tools/device.py upload` from this folder.
+To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `chgame upload` from this folder.
 
 ## Developer notes
 

@@ -7,7 +7,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 - Imported from https://github.com/bateske/CHDominoes at commit ddace41 (2026-10-01); develop here now, not in the old repo.
 - Release build (`opt=oslto,rtlib=nano,periph=game,usb=uploadonly`, core 0.2.4, CHGfx 1.3.0): flash 42,100 of 50,944 B (8,844 spare), static RAM 17,296 of 18,416 B (1,120 spare). The image (~42.4 KB) leaves both A/B save pages free with ~8 KB to go: RAM is the tight budget here, not flash.
 - On the CHGame library's debug protocol (`chgame/Debug.h`, `CHGAME_DEBUG`), flash save record (`chgame/Save.h`; `src/save/Save.cpp` says only what the record holds, byte for byte the old layout, magic "CHDM" version 1) and RAMFUNC since 2026-10-02; `tools/chsim/chdrive.py` is the shared `tools/chsim/chdrivelib.py` plus this game's `auto`, `round`, `board`, `waitturn`, `cal`, its `perf` and its GIF writer (`fbimage.save_gif`). Image 42,596 -> 42,736 B (the library's `audio::setOn()` out of line, about +18 B; its save code, which GCC splits so the `available()` check is inlined into both callers, about +120 B), static RAM 16,864 B unchanged; debug build 45,944 -> 46,196 B, RAM 17,076 -> 17,084 B. Frames unchanged.
-- Verification: simulator only. `python tools/check.py` passes: host tests (rules vs a naive reference, 20,000 matches laid out with no overlap, save/reload mid-round, CPU levels against each other), every script twice with identical frames, device compile and size.
+- Verification: simulator only. `chgame check` passes: host tests (rules vs a naive reference, 20,000 matches laid out with no overlap, save/reload mid-round, CPU levels against each other), every script twice with identical frames, device compile and size.
 - As of 2026-10-01 it has never run on the device: frame times unmeasured, sound unheard.
 
 ## Design decisions
@@ -35,7 +35,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
   - levels ROOKIE / REGULAR / SHARK, targets 100/150/200 (fives) and 50/100/150 (draw), default ALL FIVES to 100 vs REGULAR;
   - the "YOU/CPU: LAST TILE!" call; SELECT hint = the SHARK's play.
 - Deferred: per-number pip colours as an option, if the owner misses them.
-- First device run: `python tools/device.py run tools/scripts/perf.txt OUTDIR` for frame times, `say Y` for the cost by section (felt, line, HUD, rack, rest), and `python tools/check.py --compare` against the simulator's run. Earlier simulator estimates: 6-8 ms in play, ~7-10 ms on the title. Listen to the sound.
+- First device run: `chgame run --device tools/scripts/perf.txt OUTDIR` for frame times, `say Y` for the cost by section (felt, line, HUD, rack, rest), and `chgame check --compare` against the simulator's run. Earlier simulator estimates: 6-8 ms in play, ~7-10 ms on the title. Listen to the sound.
 - Flash is spare: more sizzle in the finale is affordable if asked.
 
 ## Gotchas
@@ -48,7 +48,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 - `fontText` picks the half-ink tone from the ink (WHITE to SILVER, GOLD/FX_B to WOOD, FELT_LT to FELT; any other ink gets no half ink): a new ink colour needs a mapping. Selection boxes are 15 px tall (y - 3) for the 9-px caps.
 - Speed: close-up tiles use an SRAM row-pattern renderer (`tileFast`). `text35x2` (the floating score, the plates of ends out of view) is now the CHGame library's, which runs from flash and draws each pixel as a 2x2 `gfx_fillRect`; this game's own wrote the framebuffer directly from SRAM. The same pixels; the cost on the board is unmeasured. The simulator cannot show gains like these (host calls are cheap; the device pays flash wait states): measure on the board.
 - Simulator perf estimates swing with host load (about 2x seen): compare against a clean copy of HEAD run at the same time before blaming a change.
-- Sound is the CHGame library's engine (`chgame/Audio.h`); this game's effects are `src/audio/Sounds.*`, and the crackers, the deal and the counting scores are `audio::blip()`s in `src/stage/Stage.cpp`. `python tools/run.py audio/preview.py . out/audio` renders the effects to WAV.
+- Sound is the CHGame library's engine (`chgame/Audio.h`); this game's effects are `src/audio/Sounds.*`, and the crackers, the deal and the counting scores are `audio::blip()`s in `src/stage/Stage.cpp`. `chgame audio out/audio` renders the effects to WAV.
 - `CHDM_LEAN` exists but is off: debug builds (`CHGAME_DEBUG` on the board) carry the whole game, saving included. Turn it on only if the game outgrows the debug build.
 - Debug protocol: the CHGame library's (`chgame/Debug.h`; it owns `? S K L N P B`, and `T` in a `CHGAME_PROFILE=1` build). The game's hooks (above the hook in `src/states/Screens.cpp`): `G` start a match, `D` stack the deal, `C` score, `W` end the round, `Y` render profile, `J` jump, `A` play for the human, `H` state, `Q` (simulator) calibration. chdrive extras (`tools/chsim/chdrive.py`): `waitturn`, `auto`, `round`, `board`, `cal`.
 - Look-dev: `tools/tilemock.py` draws the pip-treatment sheet; `tools/aafont.py` regenerates `tools/art/aafont.txt`.
@@ -72,16 +72,16 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 
 Everything can be checked on a PC (Python 3 with Pillow, and a C++ compiler for the host builds: root CLAUDE.md).
 
-    python tools/check.py               # host tests, every script twice, device compile + size (--quick, --no-device)
-    python tools/check.py --compare A B # two runs' images (the simulator's against the board's)
-    python tools/tests/run_tests.py     # the rules against the reference, whole matches, the layout, save/reload, the CPU's levels
-    python tools/run.py chsim/chsim.py build .
-    python tools/chsim/chdrive.py --sim . tools/scripts/showcase.txt out/showcase
-    python tools/run.py readme_gif.py    # tools/scripts/gameplay.txt -> docs/gameplay.gif (the README's one GIF, <= 1 MB)
+    chgame check               # host tests, every script twice, device compile + size (--quick, --no-device)
+    chgame check --compare A B # two runs' images (the simulator's against the board's)
+    chgame test     # the rules against the reference, whole matches, the layout, save/reload, the CPU's levels
+    chgame sim
+    chgame run tools/scripts/showcase.txt out/showcase
+    chgame gif    # tools/scripts/gameplay.txt -> docs/gameplay.gif (the README's one GIF, <= 1 MB)
     python tools/assets.py              # tools/art -> src/assets
-    python tools/device.py upload       # build and upload the release (--debug adds the serial protocol)
-    python tools/run.py audio/preview.py . out/audio
-    python tools/run.py check_size.py build/release --top 20
+    chgame upload       # build and upload the release (--debug adds the serial protocol)
+    chgame audio out/audio
+    chgame size --top 20
 
 - With the Arduino IDE: *Tools > Optimize > Smallest + LTO* and *Tools > USB > Upload only* (the game has no use for USB Serial).
 - Scripts: `say G <mode> <level> <seed> <game> <target>` starts a match, `say D 63 55 50 ..` stacks the next deal (seven tiles for you, seven for the other side, then the boneyard in order), `say C <you> <them>` sets the score, `say W <side>` ends the round as if that side had gone out, `waitturn` waits for your turn, `auto` and `round` play on for you, `rec` records, `cal` and `perf` estimate the device's render time, `say Y` reports the drawing time by section (on the board in microseconds; in the simulator in host nanoseconds).

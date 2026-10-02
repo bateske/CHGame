@@ -1,6 +1,6 @@
 # The show moments, one recording each: a test of the whole presentation.
 # (The README picture is gameplay.txt.)
-#   python tools/chsim/chdrive.py --sim . tools/scripts/showcase.txt out/showcase
+#   chgame run tools/scripts/showcase.txt out/showcase
 say R 21
 say J T
 wait 4

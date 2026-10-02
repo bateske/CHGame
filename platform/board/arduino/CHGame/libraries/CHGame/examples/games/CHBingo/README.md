@@ -40,7 +40,7 @@ Buy up to nine cards and race a hall of rivals to the first line, while the deal
 
 Options, lifetime statistics, the jackpot and a game in progress, the round being played included, are saved and survive re-uploading: SAVE & QUIT from the pause menu, then CONTINUE. **STATS** shows the lifetime numbers; hold SELECT there to reset them.
 
-To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `python tools/device.py upload` from this folder.
+To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `chgame upload` from this folder.
 
 ## Developer notes
 

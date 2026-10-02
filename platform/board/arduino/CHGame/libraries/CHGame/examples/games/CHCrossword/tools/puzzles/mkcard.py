@@ -5,7 +5,7 @@
 The packs go in the folder CHCW, where the game looks for them. (On a real
 card just copy the .CWD files into a folder named CHCW; the card must be
 FAT16 or FAT32, which is how cards up to 32 GB come.)
-Run in the simulator with: python tools/chsim/chdrive.py --sim . --card OUT.img SCRIPT OUTDIR
+Run in the simulator with: chgame run --card OUT.img SCRIPT OUTDIR
 """
 import argparse
 import sys

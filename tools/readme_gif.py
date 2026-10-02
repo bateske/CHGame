@@ -1,7 +1,7 @@
 """Make a game's one README picture: docs/gameplay.gif.
 
     python tools/readme_gif.py CHFour            (from the repository root)
-    python tools/run.py readme_gif.py            (from the game's folder)
+    chgame gif                                   (from the game's folder)
     python tools/readme_gif.py CHFour --no-run   join what out/gameplay holds
     python tools/readme_gif.py --check           every game's GIF against the rules
 
@@ -98,14 +98,14 @@ def check():
     return 1 if bad else 0
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("sketch", nargs="?", default=".", help="the game's folder or name (default: here)")
     ap.add_argument("--no-run", action="store_true", help="don't run the script: join out/gameplay as it is")
     ap.add_argument("--every", type=int, default=1, help="keep every N-th recorded frame")
     ap.add_argument("--hold", type=int, default=HOLD_MS, help="ms added to each clip's last frame")
     ap.add_argument("--check", action="store_true", help="check every game's docs/gameplay.gif")
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
     if a.check:
         return check()
 
