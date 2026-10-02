@@ -48,7 +48,7 @@ The design specs are in `docs/design/*.md`. Where they conflict, `critique.md` d
 
 ## Gotchas
 
-- Every `CHRL_DEBUG` build has no music scores (`Music.cpp`), and that includes the simulator. Audition the tunes with `python tools/audio/preview.py out/`.
+- Every `CHRL_DEBUG` build has no music scores (`Music.cpp`), and that includes the simulator; its `playSong()` is empty, so the library's score player is left out too (about 0.5 KB). Audition the tunes with `python ../../tools/audio/preview.py . out/audio` (the shared preview: the CHGame library's engine with `src/audio/Sounds.cpp` and `Music.cpp`).
 - Device debug builds (`CHRL_LEAN`) also drop the credits page and use `title35` lettering on the win/broke screens instead of PPOT's bitmaps. `-DCHRL_FULL` forces a full device debug build.
 - Device debug builds write flash only after a script sends `say E 1`, because the save pages are shared with the release build and the other games.
   - `architecture.md` §1.2 calls this hook `Y`; the code uses `E`.

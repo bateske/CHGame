@@ -16,7 +16,7 @@
 #include "../render/ChipArt.h"
 #include "../render/Layout.h"
 #include "../render/Table.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../save/Save.h"
 #include "../assets/Assets.h"
 #include "../debug/Debug.h"
@@ -42,9 +42,12 @@ static bool titleReady = false;            // the title's still parts are drawn
 
 static void toast(const char *s) { toastText = s; toastT = 60; }
 
-// Options "SOUND|LEAD|ARPEGGIO|OFF" (all-zero is the default) -> audio mode
-// (2 lead, 1 arpeggio, 0 off).
-static uint8_t soundMode(uint8_t opt) { return opt >= 2 ? 0 : (uint8_t)(2 - opt); }
+// Options "SOUND|LEAD|ARPEGGIO|OFF" (all-zero is the default) -> the sound
+// engine: on or off, and the music's rendering.
+static void applySound(uint8_t opt) {
+    audio::setMusic(opt == 0 ? audio::LEAD : audio::ARPEGGIO);
+    audio::setOn(opt < 2);
+}
 
 // The play screen only redraws what changed; anything drawn over it from
 // outside (pause menu, toast) has to force a full redraw.
@@ -71,7 +74,7 @@ static void enter(Scr s) {
     switch (s) {
         case Scr::Title:
             paused = false; menuSel = 0; demo = false;
-            audio::music(Song::Title, true);
+            playSong(Song::Title, true);
             break;
         case Scr::Play:
             audio::stopMusic();
@@ -82,11 +85,11 @@ static void enter(Scr s) {
             lastPhase = game.phase;
             break;
         case Scr::Win:
-            audio::music(Song::Victory, false);
+            playSong(Song::Victory, false);
             audio::led(audio::LED_PARTY);
             break;
         case Scr::Lose:
-            audio::music(Song::Broke, true);
+            playSong(Song::Broke, true);
             break;
         default:
             break;
@@ -95,7 +98,8 @@ static void enter(Scr s) {
 
 void begin() {
     save::load(game, hasGame);
-    audio::begin(soundMode(game.opt.sound));
+    audio::begin(SOUNDS, (uint8_t)Sfx::COUNT, false);
+    applySound(game.opt.sound);
     enter(Scr::Title);
 }
 
@@ -442,7 +446,7 @@ static void optionsUpdate() {
         uint8_t n = (uint8_t)(optField(OPT_TEXT[optSel], 0, tmp) - 1);
         uint8_t *f = (uint8_t *)&game.opt + optSel;
         *f = (uint8_t)((*f + n + d) % n);
-        if (optSel == O_SOUND) audio::setMode(soundMode(*f));
+        if (optSel == O_SOUND) applySound(*f);
         audio::sfx(Sfx::Chip);
     }
     if ((arduboy.justPressed(A_BUTTON) && optSel == O_BACK) || arduboy.justPressed(B_BUTTON)) {

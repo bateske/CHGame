@@ -159,7 +159,8 @@ C++ compiler for the simulator and tests (zig, clang++ or g++ on the PATH,
   croupier, his faces and the glove come out byte-identical to
   CHBlackjack's and CHChess's), `python tools/wheel.py` makes the wheel's
   map and previews, `python tools/make_music.py` the tunes,
-  `python tools/audio/preview.py out/` renders them to WAV.
+  `python ../../tools/audio/preview.py . out/audio` renders them and the
+  effects to WAV.
 * `tools/mockup.py` drew the design mockups (`docs/design/` has the specs).
 
 ## Files
@@ -173,7 +174,7 @@ C++ compiler for the simulator and tests (zig, clang++ or g++ on the PATH,
     src/render/             the wall and croupier, the felt layout, chips, the action bar
     src/gfx/Remap.*         the glove's colour remaps
     src/states/Screens.*    title, play, options, stats, won, broke
-    src/audio/              sound sequencer and music
+    src/audio/              the effects (Sounds.*) and the music's scores (Music.*)
     src/save/               flash save pages
     src/debug/              serial debug protocol (debug builds only)
     src/assets/             generated art and the wheel's map

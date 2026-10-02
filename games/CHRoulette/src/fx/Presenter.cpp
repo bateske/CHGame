@@ -14,7 +14,7 @@
 #include "../render/Felt.h"
 #include "../render/Bar.h"
 #include "../gfx/Remap.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../assets/Assets.h"
 #include "../debug/Debug.h"
 
