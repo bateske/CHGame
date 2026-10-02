@@ -2,7 +2,6 @@
 #include <string.h>
 #include <CHGame.h>
 #include "Iso.h"
-#include "../RamFunc.h"
 
 namespace iso {
 

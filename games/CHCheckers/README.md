@@ -136,11 +136,11 @@ CPU's hand.
 
 | | Flash | RAM |
 |---|---|---|
-| Release build | 42.1 KB of 50.9 KB | 17.4 KB of 18.4 KB (+ 2 KB stack) |
+| Release build | 42.2 KB of 50.9 KB | 17.1 KB of 18.4 KB (+ 2 KB stack) |
 
-The save takes the last two flash pages (shared with the other CHGame
-games: each ignores the others' records, so saving in one replaces the
-other's save).
+The save takes the last two flash pages, through the CHGame library's
+`chgame/Save` (shared with the other CHGame games: each ignores the others'
+records, so saving in one replaces the other's save).
 
 - `src/engine`: the rules and the CPU. The board is the 32 dark squares in
   a padded row, moves are single steps (a multiple jump is several, the
@@ -179,7 +179,8 @@ g++, or name one in `CHSIM_CXX` (for example `CHSIM_CXX="C:\zig\zig.exe c++"`).
   repeatable from a seed, stronger at a higher level).
 - **Simulator** (`tools/chsim`): the game compiled for the PC, driven by
   scripts (`tools/scripts/*.txt`) over the same debug protocol as the
-  board. `tools/check.py` runs every script twice and compares the frames.
+  board (the CHGame library's `chgame/Debug.h`). `tools/check.py` runs
+  every script twice and compares the frames.
   Scripts set positions up with `say X <32 cells> <w|b> <rules>` and can
   play with the pad themselves (`auto N`: the game picks the moves, the
   script walks the glove).

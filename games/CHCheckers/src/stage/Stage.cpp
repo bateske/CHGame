@@ -1025,7 +1025,7 @@ bool render(uint32_t frame, uint32_t ui) {
     return true;
 }
 
-#if CHCK_DEBUG
+#if CHGAME_DEBUG
 // Device render profile (debug Y command): microseconds per section,
 // averaged over 8 draws of the current scene.
 static void profTable(uint32_t) { drawTable(); }
