@@ -205,7 +205,7 @@ a C++ compiler for the simulator and tests (zig, clang++ or g++ on the PATH,
     python tools/tests/sim_save.py           # save mid-hand, power-cycle, continue
     python tools/chsim/chdrive.py --sim . tools/scripts/gameplay.txt docs/   # also betting, beginner, showcase
     python tools/assets.py                   # dealer, logo, chips -> src/assets/
-    python tools/audio/preview.py out/audio  # every sound effect to WAV
+    python ../../tools/audio/preview.py . out/audio  # every sound effect to WAV
     python tools/device.py build|upload [--debug]
     python ../../tools/check_size.py build/release
 
@@ -233,7 +233,8 @@ So a script reads like a player at the table.
     src/render/             the wall, the layout and its spots, chips, the bar
     src/fx/                 particles and banners; the presenter
     src/states/Screens.*    title, play, options, stats, the two endings
-    src/audio, src/save, src/debug   shared with CHBlackjack/CHChess
+    src/audio/Sounds.*      the sound effects (the CHGame library plays them)
+    src/save, src/debug     shared with CHBlackjack/CHChess
     tools/                  simulator, tests, assets, sound preview, device helpers
 
 ## License and credits

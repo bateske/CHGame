@@ -18,13 +18,13 @@ Agent-facing notes for continuing work here; rules, controls and build are in RE
 - Chosen: CHBlackjack's dealer works the table as the stickman and calls every roll.
 - Chosen: keep the lit ON puck - a white disc showing the point number in the 3x5 font, pinned to the number box.
 - Chosen: the dice show pips whenever they are on screen. The result is repainted at the back-wall hit, choosing the labelling that changes the fewest faces.
-- Chosen: music only if flash is left once the game is complete; there is none (`src/audio/Audio.h` says so).
+- Chosen: music only if flash is left once the game is complete; there is none (`src/audio/Sounds.h` says so).
 - Architecture to keep: the rules settle the whole roll in `Craps::throwDice()` (a result per spot); the presenter (`src/fx/Presenter.cpp`) only replays it - call, losers swept, pays, home, come moves. Money has already moved, so a save mid-show is always consistent.
 
 ## Open items
 
 - First device run. Simulator estimates put the dice cam's shake and the result + banner at 9-15 ms a frame, over the ~8 ms drawing budget for 60 fps. Measure on the board (`python tools/device.py run tools/scripts/perf.txt OUTDIR`) before optimising.
-- Listen to the sound effects on the piezo (`tools/audio/preview.py` renders them to WAV meanwhile).
+- Listen to the sound effects on the piezo (`python ../../tools/audio/preview.py . out/audio` renders them to WAV meanwhile).
 - Known issue (logged, not fixed; see ../../docs/status.md): CHYacht uses this game's save magic `0x52434843` "CHCR" with the same
   version 1, so after playing one, the other accepts its save. The fix is a new magic in CHYacht.
 - Music: deferred until flash allows (it does not now).

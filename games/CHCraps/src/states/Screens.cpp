@@ -16,7 +16,7 @@
 #include "../render/Layout.h"
 #include "../render/Wall.h"
 #include "../render/Zones.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../save/Save.h"
 #include "../assets/Assets.h"
 #include "../debug/Debug.h"
@@ -103,8 +103,8 @@ void begin() {
     (void)ok;
     if (!hasGame) game.newGame();
     game.mix(micros() * 2654435761u);
+    audio::begin(SOUNDS, (uint8_t)Sfx::COUNT, !game.opt.sound);
     applyOptions();
-    audio::begin(!game.opt.sound);
     titleDiceInit();
     enter(Scr::Title);
 }

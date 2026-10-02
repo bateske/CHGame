@@ -4,7 +4,7 @@
 #include "Cam.h"
 #include "Dice3D.h"
 #include "../fx/Fx.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../render/Chips.h"
 
 namespace cam {
