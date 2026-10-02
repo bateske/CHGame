@@ -5,7 +5,7 @@
 #include "../../config.h"
 #include "Screens.h"
 #include "../fx/Fx.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../game/Klondike.h"
 #include "../render/CardArt.h"
 #include "../assets/Assets.h"
@@ -602,7 +602,7 @@ void begin() {
     game.live = 0;
     save::load(opt, stats, game);
     if (opt.back >= art::BACKS) opt.back = 0;
-    audio::begin(true);
+    audio::begin(SOUNDS, (uint8_t)Sfx::COUNT, false);   // on once applyOptions() reads the option
     applyOptions();
 #if CHSO_DEBUG
     dbg::hook = debugHook;

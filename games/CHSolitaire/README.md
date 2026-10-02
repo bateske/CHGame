@@ -152,7 +152,8 @@ C++ compiler (zig, clang++ or g++ on the PATH, `pip install ziglang`, or
   glove, the title lettering (`logo.txt`, as `#` and `.`) and the card
   backs (`backs/*.txt`, 15x21 in palette letters; a PNG of the same name in
   the game's 16 colours overrides one).
-  `python tools/audio/preview.py out/` renders the sound effects to WAV.
+  `python ../../tools/audio/preview.py . out/audio` renders the sound
+  effects to WAV.
 
 ## Files
 

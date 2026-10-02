@@ -5,7 +5,7 @@
 #include "../render/Layout.h"
 #include "../render/CardArt.h"
 #include "../fx/Fx.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../assets/Assets.h"
 
 namespace stage {
@@ -156,7 +156,7 @@ static void landed(const Klondike &k, const Fly &f) {
         cardPos(k, f.pile, f.idx, x, y);
         fx::burst(fx::SPARK, x + 8, y + 11, 7, 30, rankOf(f.card) == RK ? FX_A : GOLD);
         if (k.scoring != NO_SCORE) fx::floatText(k.scoring == VEGAS ? "+$5" : "+10", x + 2, y + SH - 2, GOLD);
-        audio::blip((uint16_t)(1800 + rankOf(f.card) * 150), 40);
+        if (!audio::playing()) audio::blip((uint16_t)(1800 + rankOf(f.card) * 150), 40);   // never over an effect
         if (rankOf(f.card) == RK) {
             static const char *const SUIT[4] = {"CLUBS!", "DIAMONDS!", "SPADES!", "HEARTS!"};
             fx::banner(SUIT[suitOf(f.card)], redCard(f.card) ? fx::B_RED : fx::B_CYAN, 70, 44);
@@ -333,7 +333,7 @@ static bool cascadeTick() {
     if (cas.y > floor) {
         cas.y = (int16_t)floor;
         cas.vy = (int16_t)(-(cas.vy * 13) / 16);
-        if (cas.vy < -6) audio::blip((uint16_t)(1200 - cas.vy * 12), 12);
+        if (cas.vy < -6 && !audio::playing()) audio::blip((uint16_t)(1200 - cas.vy * 12), 12);
     }
     if (cas.nStamp < 3) cas.nStamp++;
     auto &s = cas.stamp[cas.nStamp - 1];

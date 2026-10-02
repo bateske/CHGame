@@ -9,7 +9,7 @@
 #include "config.h"
 #include <CHGame.h>
 #include "src/states/Screens.h"
-#include "src/audio/Audio.h"
+#include "src/audio/Sounds.h"
 #include "src/debug/Debug.h"
 
 void setup() {
