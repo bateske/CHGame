@@ -62,5 +62,5 @@ The design specs are in `docs/design/*.md`. Where they conflict, `critique.md` d
   - The solver dry-runs the spin and turns the rotor by whole pockets so the ball lands there.
   - After any change to `Ball.cpp` or `PACE`, rerun `run_ball_tests.py`, which checks every pocket lands within its time window. `tools/spin_preview.py` traces one spin to a GIF.
 - The wheel ring's map comes from `tools/wheel.py` (`src/assets/WheelMap.*`).
-- `gfx_chunkScratch()` (1 KB) is shared by three users: the wheel's per-frame colour table (`src/wheel/WheelArt.cpp`), Mask lettering (`src/gfx/Mask.cpp`) and `save::store()`. Only one may hold it at a time, and only between `gfx_wait()` and the next flush.
+- `gfx_chunkScratch()` (1 KB) is shared by three users: the wheel's per-frame colour table (`src/wheel/WheelArt.cpp`), Mask lettering (the CHGame library's `chgame/Mask.cpp`) and `save::store()`. Only one may hold it at a time, and only between `gfx_wait()` and the next flush.
 - Compiler: the simulator and tests need `CHSIM_CXX` set, or zig/clang++/g++ on PATH (see the root CLAUDE.md).

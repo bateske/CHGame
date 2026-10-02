@@ -1,9 +1,6 @@
 #pragma GCC optimize("Os")   // cold code: size over speed (the ring loop runs from SRAM)
-#include <CHGfx.h>
+#include <CHGame.h>
 #include "WheelArt.h"
-#include "../fx/Ease.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Palette.h"
 #include "../assets/WheelMap.h"
 #include "../RamFunc.h"
 

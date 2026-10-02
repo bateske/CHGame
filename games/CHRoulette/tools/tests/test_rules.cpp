@@ -11,7 +11,7 @@
 #include "../../src/game/Nav.h"
 #include "../../src/game/Spots.h"
 #include "../../src/game/Wheel.h"
-#include "../../src/CHGame.h"
+#include <chgame/Input.h>          // button masks (the CHGame library)
 
 using namespace spots;
 

@@ -5,7 +5,7 @@
 #include "Roulette.h"
 #include "Nav.h"
 #include "Wheel.h"
-#include "../CHGame.h"
+#include <chgame/Input.h>   // the button masks only, so the rules build on the PC for the host tests
 
 using namespace spots;
 

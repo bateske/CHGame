@@ -16,7 +16,8 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
-SOURCES = [HERE / "test_ball.cpp", ROOT / "src" / "wheel" / "Ball.cpp", ROOT / "src" / "fx" / "Ease.cpp"]
+LIB = HERE.parents[3] / "platform" / "libraries" / "CHGame" / "src"   # the CHGame library
+SOURCES = [HERE / "test_ball.cpp", ROOT / "src" / "wheel" / "Ball.cpp", LIB / "chgame" / "Ease.cpp"]
 EXE = HERE / "build" / "test_ball.exe"
 
 
@@ -36,7 +37,7 @@ def build():
     EXE.parent.mkdir(exist_ok=True)
     cmd = cxx() + ["-std=gnu++17", "-O2", "-Wall", "-Wextra", "-Wno-unknown-pragmas",
                    "-fsanitize=undefined",
-                   "-fno-sanitize-recover=undefined", "-DCHTEST",
+                   "-fno-sanitize-recover=undefined", "-DCHTEST", f"-I{LIB}",
                    *[str(s) for s in SOURCES], "-o", str(EXE)]
     r = subprocess.run(cmd, capture_output=True, text=True)
     if r.returncode:

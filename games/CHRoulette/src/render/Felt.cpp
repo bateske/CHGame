@@ -1,10 +1,8 @@
 #pragma GCC optimize("Os")   // cold code: size over speed
-#include <CHGfx.h>
+#include <CHGame.h>
 #include <string.h>
 #include "Felt.h"
 #include "Layout.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Palette.h"
 #include "../game/Wheel.h"
 
 namespace felt {
