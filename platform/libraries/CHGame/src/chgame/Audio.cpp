@@ -230,7 +230,7 @@ void begin(const Effect *effects, uint8_t count, bool o) {
     setOn(o);
 }
 
-void setOn(bool o) {
+__attribute__((noinline)) void setOn(bool o) {   // (one copy: begin() and the game both call it)
     if (!o || !table) {
         started = false;
         lastHz = 1; tone(0, false);
