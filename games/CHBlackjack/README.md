@@ -34,8 +34,9 @@ You need the Arduino IDE (2.x) or `arduino-cli`, and:
    in the repository's README.
 
 2. **The CHGfx library, 1.3.0**, in this repository at
-   [`platform/libraries/CHGfx`](../../platform/libraries/CHGfx). Copy it into your
-   sketchbook's `libraries/` folder.
+   [`platform/libraries/CHGfx`](../../platform/libraries/CHGfx), and **the CHGame
+   library** at [`platform/libraries/CHGame`](../../platform/libraries/CHGame).
+   Copy both into your sketchbook's `libraries/` folder.
 
 3. **This game's folder**, `games/CHBlackjack` of this repository (the name must
    match `CHBlackjack.ino`; cloning the repository does that for you).
@@ -181,9 +182,8 @@ folder instead).
     config.h                build switches
     src/game/Round.*        the rules and PPOT's ViewState flow (no graphics)
     src/fx/Presenter.*      events -> motion; band-level redraw
-    src/fx/Fx.*             easing, particles, banners, floating text, shake
+    src/fx/Fx.*             particles, banners, floating text
     src/render/*            table, cards and chips, action bar, layout
-    src/gfx/*               palette, primitives, masks (outlined text), numbers
     src/states/Screens.*    splash, title, play, options, stats, credits, win, lose
     src/audio/*             sound sequencer and music
     src/save/*              flash save pages

@@ -1,13 +1,12 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask and CHGfx)
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library and CHGfx)
 // Screens derived from Press-Play-On-Tape/Blackjack (Apache-2.0):
 // SplashScreenState, TitleScreenState, GameWinState, GameLoseState and the
 // Game loop. Modified 2026 for CHGame by bateske: colour, animation, music,
 // options, statistics, saving, a pause menu and an attract-mode demo.
-#include <CHGfx.h>
+#include <CHGame.h>
 #include <string.h>
 #include "../../config.h"
 #include "Screens.h"
-#include "../CHGame.h"
 #include "../game/Round.h"
 #include "../fx/Presenter.h"
 #include "../fx/Fx.h"
@@ -15,10 +14,6 @@
 #include "../render/CardArt.h"
 #include "../render/Layout.h"
 #include "../render/Table.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Fmt.h"
-#include "../gfx/Mask.h"
-#include "../gfx/Palette.h"
 #include "../audio/Audio.h"
 #include "../save/Save.h"
 #include "../assets/Assets.h"
@@ -141,10 +136,10 @@ static void seedOnce() {
 // ---------------------------------------------------------------------------
 static void feltBackdrop() {
     gfx_clear(FELT);
-    gfx_dither(0, 0, 128, 6, FELT_DK, 0);
-    gfx_dither(0, 122, 128, 6, FELT_DK, 1);
-    gfx_dither(0, 0, 6, 128, FELT_DK, 0);
-    gfx_dither(122, 0, 6, 128, FELT_DK, 1);
+    dither(0, 0, 128, 6, FELT_DK, 0);
+    dither(0, 122, 128, 6, FELT_DK, 1);
+    dither(0, 0, 6, 128, FELT_DK, 0);
+    dither(122, 0, 6, 128, FELT_DK, 1);
     gfx_rect(2, 2, 124, 124, GOLD);
 }
 
@@ -254,7 +249,7 @@ static void titleUpdate() {
 static void titleRender(uint32_t frame) {
     feltBackdrop();
     // Spotlight.
-    gfx_dither(24, 30, 80, 44, FELT_LT, 0);
+    dither(24, 30, 80, 44, FELT_LT, 0);
     // Logo: the top rows use FX_B, so the palette makes it shimmer with no redraw.
     Mask m = maskBegin(104, 14);
     maskBlit1(m, LOGO, 104, 14);
@@ -397,7 +392,7 @@ static void playRender(uint32_t frame) {
         centred57(52, "DEMO", FX_A);
     }
     if (paused) {
-        gfx_dither(0, 0, 128, 128, INK, 0);
+        dither(0, 0, 128, 128, INK, 0);
         panel(24, 34, 80, 56, 4, NAVY, GOLD);
         centred57(39, "PAUSED", GOLD);
         static const char *const P[3] = {"RESUME", "OPTIONS", "SAVE & QUIT"};
@@ -559,9 +554,9 @@ static void creditsRender(uint32_t frame) {
         creditsReady = true;
         const int top = lay::RAIL_Y + lay::RAIL_H;
         gfx_fillRect(0, top, 128, 128 - top, FELT);
-        gfx_dither(0, top, 6, 128, FELT_DK, 0);           // the lamplight falls off
-        gfx_dither(122, top, 6, 128, FELT_DK, 1);
-        gfx_dither(0, 122, 128, 6, FELT_DK, 1);
+        dither(0, top, 6, 128, FELT_DK, 0);           // the lamplight falls off
+        dither(122, top, 6, 128, FELT_DK, 1);
+        dither(0, 122, 128, 6, FELT_DK, 1);
         ppotLogo(64 - PPOT_LOGO_W / 2, 51, true);         // printed on the felt
         art::chipStack(16, 80, 25 * 3 + 10 * 2, 6);
         art::chipStack(112, 80, 100 + 25 * 2 + 5, 6);

@@ -40,16 +40,16 @@ Agent-facing notes for continuing work on this game. Rules, controls and build s
 
 - Flash:
   - Every hand-written `.cpp` uses `#pragma GCC optimize("Os")`.
-  - No `snprintf`: it is 3.5 KB with 64-bit division; use `src/gfx/Fmt.*`.
+  - No `snprintf`: it is 3.5 KB with 64-bit division; use the CHGame library's `fmt*` (`chgame/Fmt.h`).
   - No `pinMode`: its pin tables are about 2 KB; write the registers.
   - The game has its own 1.8 KB sound sequencer, not CHGameSound.
   - The README's "How it fits" has the budget breakdown. Measure with `python ../../tools/check_size.py build/release` after every change.
 - Big outlined lettering (Mask: a 1 bpp mask, grown for the outline, painted in up to three layers) costs about 5-10 ms per word on the board. Draw it once, on still screens or static layers, never every frame.
 - The credits page draws its felt once and redraws only the wall band: 3.3 ms a frame measured on CHGfx 1.2.
-- CHGfx 1.3 usage:
-  - From the library: `sprite4` spans (court and face art are converted in `tools/assets.py`), dither, ellipses, `gfx_scroll` for the shake, and `copyRow`.
-  - Kept local: the rounded rects plus `panel()`, `remapRect` (CHGfx's `gfx_remapRect` costs more SRAM, see `src/gfx/Draw.cpp`), the 3x5 font/`text35`, and the Mask banners.
-  - The only pixel difference from the 1.2 build is the shake's uncovered edges.
+- Libraries:
+  - The CHGame library (`<CHGame.h>`, `platform/libraries/CHGame`) gives the input core, the palette, the rounded rects and `panel()`, `remapRect`, `sprite4` spans (court and face art are converted in `tools/assets.py`), dither, the 3x5 font/`text35`, the Mask banners, `fx::` easing, sine, randomness and the shake, and the `fmt*` number formatting. The game's own effects (particles, banners, floating texts) stay in `src/fx/Fx.cpp`.
+  - From CHGfx 1.3 directly: ellipses and `copyRow`.
+  - The shake is the library's `fx::applyShake()` without a fill: the rows and columns the move uncovers shift in place. The earlier `gfx_scroll` shake left them as they were; that edge is the only pixel difference (`sc_double_bust`'s `h_bust`).
 - Generated files, don't hand-edit:
   - `src/assets/Assets.cpp` comes from `python tools/assets.py`. The first run clones PPOT's repository into `tools/.cache/ppot` (gitignored), pinned to a commit, so it needs git and network. `tools/art/dealer.png` must use palette colours only.
   - `src/audio/Music.cpp` comes from `python tools/make_music.py`.

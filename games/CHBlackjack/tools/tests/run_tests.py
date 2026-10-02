@@ -10,13 +10,14 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 sys.path.insert(0, str(HERE.parents[3] / "tools" / "chsim"))  # CHCasino/tools/chsim (find_cxx)
 from chsim import find_cxx  # noqa: E402
+LIB = HERE.parents[3] / "platform" / "libraries" / "CHGame" / "src"  # chgame/Input.h: the button masks
 
 
 def main():
     exe = HERE / "build" / "test_rules.exe"
     exe.parent.mkdir(exist_ok=True)
     cmd = find_cxx() + ["-std=gnu++17", "-O1", "-Wall", "-Wextra", "-Wno-unused-parameter",
-                        "-fsanitize=undefined", "-fno-sanitize-recover=undefined",
+                        "-fsanitize=undefined", "-fno-sanitize-recover=undefined", "-I" + str(LIB),
                         str(HERE / "test_rules.cpp"), str(ROOT / "src" / "game" / "Round.cpp"),
                         "-o", str(exe)]
     r = subprocess.run(cmd, capture_output=True, text=True)

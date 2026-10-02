@@ -1,12 +1,9 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask and CHGfx)
-#include <CHGfx.h>
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library and CHGfx)
+#include <CHGame.h>
 #include <string.h>
 #include "Table.h"
 #include "Layout.h"
 #include "CardArt.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Fmt.h"
-#include "../gfx/Palette.h"
 #include "../game/Round.h"
 #include "../assets/Assets.h"
 
@@ -23,15 +20,15 @@ void wall(uint32_t frame) {
     memset(row, NAVY | (NAVY << 4), sizeof row);
     for (int x = 3; x < 128; x += 8) row[x >> 1] = (uint8_t)((row[x >> 1] & 0x0F) | (INK << 4));
     for (int y = 0; y < WALL_H; y++) gfx_copyRow(y, row, 0, GFX_W);
-    gfx_dither(0, 0, 128, 3, INK, 0);                    // darker ceiling
+    dither(0, 0, 128, 3, INK, 0);                    // darker ceiling
     // Warm spotlight behind the dealer.
-    gfx_dither(DEALER_X + 6, 2, 36, 30, WOOD, 1);
+    dither(DEALER_X + 6, 2, 36, 30, WOOD, 1);
 }
 
 void dealer(uint8_t expr, uint8_t look, bool alt, int x, int y) {
-    gfx_sprite4(DEALER, x, y, alt ? DEALER_ALT_REMAP : nullptr);
+    sprite4(DEALER, x, y, alt ? DEALER_ALT_REMAP : nullptr);
     int fx = x + (FACE_X - DEALER_X), fy = y + (FACE_Y - DEALER_Y);
-    gfx_sprite4(FACE_NORMAL, fx, fy, alt ? DEALER_ALT_REMAP : nullptr);
+    sprite4(FACE_NORMAL, fx, fy, alt ? DEALER_ALT_REMAP : nullptr);
     if (expr > E_TALK) expr = E_NORMAL;
     if (expr) {
         for (uint16_t i = FACE_EDIT_AT[expr - 1]; i < FACE_EDIT_AT[expr]; i++) {
@@ -80,8 +77,8 @@ static void arcText(int y, const char *s, uint8_t c) {
     int x = 64 - w / 2;
     for (; *s; s++) {
         if (*s != ' ') {
-            int g = glyph35(*s);
-            if (g >= 0) glyph(x, y - arcDy(x + 1), FONT35[g], 3, c);
+            const uint8_t *g = glyph35(*s);
+            if (g) glyph(x, y - arcDy(x + 1), g, 3, c);
         }
         x += 4;
     }
@@ -97,8 +94,8 @@ static void arcLine(int x0, int x1, int y, uint8_t c) {
 
 void felt(const Round &r) {
     // Darker edges give the felt some depth.
-    gfx_dither(0, RAIL_Y + 4, 3, TRIM_Y - RAIL_Y - 4, FELT_DK, 0);
-    gfx_dither(125, RAIL_Y + 4, 3, TRIM_Y - RAIL_Y - 4, FELT_DK, 1);
+    dither(0, RAIL_Y + 4, 3, TRIM_Y - RAIL_Y - 4, FELT_DK, 0);
+    dither(125, RAIL_Y + 4, 3, TRIM_Y - RAIL_Y - 4, FELT_DK, 1);
     gfx_hline(0, RAIL_Y + 4, 128, FELT_DK);
     // Table printing, the way a real layout reads.
     arcLine(10, 118, PRINT_Y - 2, FELT_LT);
