@@ -103,9 +103,13 @@ class Hello:
 
     @classmethod
     def parse(cls, payload: bytes) -> "Hello":
+        if not payload:
+            raise ProtocolError("empty HELLO")
         status = payload[0]
         if status != ST_OK:
             raise StatusError(CMD_HELLO, status)
+        if len(payload) < 30:
+            raise ProtocolError(f"HELLO payload is {len(payload)} bytes, expected at least 30")
         (pv, mode, app_state, bootver, app_start, app_max,
          page, maxpl) = struct.unpack_from("<BBBHIIHH", payload, 1)
         return cls(pv, mode, app_state, bootver, app_start, app_max,

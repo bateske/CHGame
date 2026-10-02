@@ -27,9 +27,9 @@ import zlib
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "host" / "py"))
 
-from chgame.client import Client, ensure_bootloader, find_ports   # noqa: E402
-from chgame import upload as up                                   # noqa: E402
-from chgame import protocol as P                                  # noqa: E402
+from chgame_upload.client import Client, ensure_bootloader, find_ports   # noqa: E402
+from chgame_upload import upload as up                                   # noqa: E402
+from chgame_upload import protocol as P                                  # noqa: E402
 
 FQBN = "CHGame:ch32v:CHGame"
 

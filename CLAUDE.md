@@ -35,7 +35,12 @@ changing that game.
 3. **Measure size after every change.** `chgame build`
    prints flash and RAM. Most games are within 1 KB of full (see Limits).
 4. **Generated files are not edited by hand:**
-   - `src/assets/Assets.*` comes from `tools/assets.py` and `tools/art/`.
+   - `src/assets/Assets.*` comes from `tools/assets.py` and `tools/art/`, plus
+     the shared `tools/art/common/` at the repository root (the dealer and his
+     faces, the glove, the display font, the card art, the chips, the
+     end-screen lettering: `tools/artlib.py` looks in the game's folder
+     first). The three `make_music.py` use `tools/music/composer.py`, the font
+     tools `tools/fonts/`, the mock-ups `tools/pixkit.py`.
    - Several games generate other tables, e.g. CHWords `src/dict/DictData.*`,
      CHWordWheel `src/bank/BankData.*`, CHCrossword `src/game/PuzzleData.*`,
      CHSlots `src/game/Strips.h`, CHMahjong `src/game/Layouts.cpp`. The header
@@ -147,7 +152,9 @@ it, `python tools/chgame.py` is the same thing. The shared tools under
 | Build and pack every game into `out/sdcard/` (+ FAT32 image) | `python tools/sdcard/mkcard.py [--image out/sdcard.img]` |
 | Package one sketch / check packages / list a card | `python tools/chgpack.py pack\|verify\|info` |
 | Install the menu bootloader on a board | `platform/bootloader/HARDWARE.md` (self-update over USB) |
-| Build the uploader, `chgame-upload` (Go, five hosts, into `out/chgame-upload/`) | `platform/bootloader/host/go/build.sh` |
+| Build the uploader, `chgame-upload` (Go, five hosts, into `out/chgame-upload/`) | `python tools/release/build_uploader.py` |
+| The uploaders' parity tests (Python and Go against one vector file) | `python -m unittest discover -s platform/bootloader/test/protocol`; `go test ./...` in `host/go` |
+| A release, dry or real (`platform/board/docs/building.md`) | `python tools/release/release.py [--dry-run]` |
 
 The release FQBN is
 `CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly`. A debug
@@ -257,7 +264,8 @@ and other sessions may share it.
 - Check that no other `device.py`, `chgame-upload` or `chdrive.py --device`
   process is using the board.
 - Never probe the port with a bare pyserial open: it can hang holding the
-  port. `chgame-upload -port <PORT> probe` is the safe check. A crashed
+  port. `chgame uploader probe` (or `chgame-upload -port <PORT> probe`) is
+  the safe check. A crashed
   sketch (the core's HardFault handler spins, which also stops USB) and a
   board busy in its bootloader look the same.
 
@@ -301,7 +309,7 @@ Each is in the game's `sdcard/` folder. See [docs/sd-card.md](docs/sd-card.md).
 [docs/getting-started.md](docs/getting-started.md) is the guide for
 developers coming from the Arduboy, and the library's `examples/Hello` the
 smallest complete sketch. For a full game, copy the closest existing one;
-the newest have the most complete tooling (`check.py`, `diffdrive.py`).
+every game has `chgame check`; the newest have the most scripts and tests.
 Then:
 1. Rename the folder, the `.ino`, the `config.h` prefix (`<PFX>_VERSION`,
    `<PFX>_LEAN` ...), the debug hello (`dbg::begin("<ID> " ...)`, and
@@ -330,7 +338,10 @@ Then:
   have a `<PFX>_LEAN` switch (derived from `CHGAME_DEBUG`) that drops
   saving or screens from device debug builds so they fit. A device debug build is therefore not the whole game. Say so
   if someone will be playing it.
-- **Sibling assets:** some `tools/assets.py` read another game's art (for
-  example `../CHBlackjack/tools/art/dealer.png`) to check or share it. The
-  games must stay side by side in `examples/games/`.
+- **Sibling assets:** the art several games share is in `tools/art/common/`
+  at the repository root, but four `tools/assets.py` (CHBingo, CHRoulette,
+  CHTicTacToe, CHWordWheel) still check their generated arrays against
+  `../CHBlackjack`'s and `../CHChess`'s `src/assets/Assets.cpp`, and
+  CHRoulette's `logo_preview.py` reads the former. The games must stay side
+  by side in `examples/games/`.
 - `tools/chsim/build/`, `build/` and `out/` are build output and ignored.

@@ -14,6 +14,23 @@ import zlib
 from . import layout as L
 
 
+def check_boot_image(boot: bytes) -> None:
+    """Refuse anything that is not a bootloader for this board: too small, over
+    the reservation, or linked for another address (word 1 of the vector table
+    is the reset address's high word on this core: 0 for the bootloader,
+    APP_START for a sketch). The messages are the Go tool's."""
+    if len(boot) < 256:
+        raise ValueError(f"{len(boot)} bytes is too small to be a bootloader")
+    if len(boot) > L.BOOT_SIZE:
+        raise ValueError(f"bootloader is {len(boot)} bytes, over the {L.BOOT_SIZE}-byte reservation")
+    linked = struct.unpack_from("<I", boot, 4)[0]
+    if linked == 0:
+        return
+    if linked == L.APP_START:
+        raise ValueError(f"this image is a sketch (linked for 0x{linked:04X}), not a bootloader")
+    raise ValueError(f"this image is not a CHGame bootloader (linked for 0x{linked:08X})")
+
+
 def build_metadata(app: bytes, app_version: int = 0) -> bytes:
     meta = struct.pack(
         "<8I",
@@ -30,7 +47,7 @@ def pad_to_word(data: bytes) -> bytes:
 def build_image(boot: bytes, app: bytes | None = None, app_version: int = 0) -> bytes:
     """Compose the full 62 KB flash image.
 
-    With no application, the device comes up in the bootloader and waits — which
+    With no application, the device comes up in the bootloader and waits, which
     is the correct state for a freshly provisioned board: it enumerates as a CDC
     port immediately and the first sketch can be uploaded over USB with no
     further use of the BOOT button.

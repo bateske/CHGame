@@ -1,18 +1,22 @@
 """Firmware upload over the CHGame bootloader protocol."""
 from __future__ import annotations
 
+import pathlib
 import struct
 import time
 import zlib
 from typing import Callable
 
-from .client import Client
+from .client import Client, ensure_bootloader, resolve_port, wait_for_application
 from .protocol import (
     CMD_ABORT, CMD_BEGIN, CMD_DEV_UNLOCK, CMD_DEV_WRITE_BOOT, CMD_END,
-    CMD_READ, CMD_WRITE, ST_OK, StatusError,
+    CMD_READ, CMD_WRITE, ST_OK, MODE_NAMES, STATUS_NAMES, StatusError,
 )
 
-DEV_KEY = 0x43484744  # "CHGD" — an interlock against accidents, not a secret.
+DEV_KEY = 0x43484744  # "CHGD": an interlock against accidents, not a secret.
+ERASE_TIMEOUT = 30.0  # BEGIN erases up to ~200 pages; END recomputes the CRC from flash
+PROMOTE_TIMEOUT = 10.0
+
 
 def chunk_size(max_payload: int, page: int = 256) -> int:
     """Largest WRITE data chunk the device will accept.
@@ -54,9 +58,7 @@ def upload(c: Client, image: bytes,
     step = chunk_size(h.max_payload, h.page_size)
 
     t0 = time.monotonic()
-    # BEGIN erases; on a nearly-full image that is ~200 page erases, so it needs
-    # a longer deadline than an ordinary command.
-    c.check(CMD_BEGIN, struct.pack("<II", len(image), crc), )
+    c.check(CMD_BEGIN, struct.pack("<II", len(image), crc), timeout=ERASE_TIMEOUT)
     t_erase = time.monotonic() - t0
 
     sent = 0
@@ -68,7 +70,7 @@ def upload(c: Client, image: bytes,
             progress(sent, len(image))
     t_write = time.monotonic() - t0 - t_erase
 
-    c.check(CMD_END)
+    c.check(CMD_END, timeout=ERASE_TIMEOUT)
     t_total = time.monotonic() - t0
 
     result = {
@@ -115,7 +117,7 @@ def selfupdate(c: Client, boot_image: bytes,
     it with DEV_WRITE_BOOT.
 
     The device is briefly without a usable bootloader. If that is interrupted,
-    recovery is the BOOT button and the factory ISP — see docs/recovery.md.
+    recovery is the BOOT button and the factory ISP (docs/recovery.md).
     This also destroys the installed application, because the staging area IS
     the application region; re-upload afterwards.
     """
@@ -125,13 +127,24 @@ def selfupdate(c: Client, boot_image: bytes,
     # for address 0 would be left looking like a launchable application.
     # (BOOT_VERSION 2 and later also refuse to launch an image carrying the
     # bootloader signature, CHGAME_BOOT_SIG, but older ones do not.)
-    c.check(CMD_DEV_UNLOCK, struct.pack("<I", DEV_KEY))
-    info = upload(c, boot_image, progress=progress)
+    try:
+        c.check(CMD_DEV_UNLOCK, struct.pack("<I", DEV_KEY))
+    except StatusError as e:
+        if STATUS_NAMES.get(e.status) in ("ERR_LOCKED", "ERR_BADCMD"):
+            raise RuntimeError("the installed bootloader is locked: it does not accept a bootloader update "
+                               'over USB.\nUse the programmer "WCH factory ISP" instead') from e
+        raise
+    try:
+        info = upload(c, boot_image, progress=progress)
+    except Exception as e:
+        raise RuntimeError(f"staging failed, the installed bootloader is untouched: {e}") from e
 
     crc = zlib.crc32(boot_image) & 0xFFFFFFFF
-
     try:
-        c.check(CMD_DEV_WRITE_BOOT, struct.pack("<II", len(boot_image), crc))
+        r = c.request(CMD_DEV_WRITE_BOOT, struct.pack("<II", len(boot_image), crc), timeout=PROMOTE_TIMEOUT)
+        if r and r[0] != ST_OK:
+            raise RuntimeError(f"the device refused to replace its bootloader ({STATUS_NAMES.get(r[0], hex(r[0]))}); "
+                               "the installed bootloader is untouched")
     except (TimeoutError, OSError):
         # The device resets as part of this command; a lost acknowledgement is
         # expected rather than a failure.
@@ -139,3 +152,57 @@ def selfupdate(c: Client, boot_image: bytes,
 
     info["promoted"] = True
     return info
+
+
+def flash_file(image_path, *, port: str | None = None, run: bool = True, verify: bool = False,
+               timeout: float = 10.0, progress: Callable[[int, int], None] | None = None,
+               log: Callable[[str], None] | None = print, debug: bool = False) -> dict:
+    """Upload an image file the way the `flash` verb does: find the board, put
+    it in the bootloader (the 1200-baud touch), upload, optionally read back,
+    optionally RUN and wait for the sketch to come back. Returns upload()'s
+    dict plus "port" (the bootloader's) and, after RUN, "app_port".
+    Raises NoDevice / SeveralDevices / StatusError / TimeoutError / ValueError."""
+    say = log or (lambda s: None)
+    image_path = pathlib.Path(image_path)
+    image = image_path.read_bytes()
+    port = resolve_port(port)
+    timeout = max(timeout, 10.0)
+
+    # Do the whole transition here rather than relying on the IDE. One actor
+    # owning the port through app -> bootloader -> app is what makes this
+    # reliable; two actors racing for it is the classic native-USB upload bug.
+    boot_port = ensure_bootloader(port, timeout=timeout)
+    if boot_port != port:
+        say(f"note    : bootloader appeared on {boot_port} (was {port})")
+
+    with Client(boot_port, timeout=timeout, debug=debug) as c:
+        h = c.hello()
+        if h.mode != 1:
+            raise RuntimeError(f"{boot_port} is in {MODE_NAMES.get(h.mode, h.mode)} mode, not the bootloader")
+        say(f"port    : {boot_port}")
+        say(f"image   : {image_path}  ({len(image)} bytes)")
+        say(f"region  : 0x{h.app_start:04X} + {h.app_max_size} bytes")
+        if len(image) > h.app_max_size:
+            raise ValueError(f"image does not fit: {len(image)} > {h.app_max_size}")
+        r = upload(c, image, progress=progress, verify_readback=verify)
+        r["port"] = boot_port
+        say(f"crc32   : 0x{r['crc32']:08X}")
+        say(f"erase   : {r['erase_s']:.2f} s")
+        say(f"write   : {r['write_s']:.2f} s  ({r['kbps']:.1f} KiB/s, {r['chunk']} B chunks)")
+        if verify:
+            say(f"readback: {'MATCHES' if r['readback_ok'] else 'MISMATCH'}")
+            if not r["readback_ok"]:
+                return r
+        say(f"total   : {r['total_s']:.2f} s  -- image accepted and marked valid")
+        if run:
+            c.run()
+            say("sent RUN")
+    if run:
+        # Confirm the sketch actually came back, so a silent failure to launch
+        # is reported here rather than discovered later by the user.
+        try:
+            r["app_port"] = wait_for_application(6.0)
+            say(f"running : application is up on {r['app_port']}")
+        except TimeoutError:
+            say("warning : the application did not re-enumerate within 6s")
+    return r

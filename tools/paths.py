@@ -11,6 +11,7 @@ well as by its folder (`chgame --sketch CHFour build`, `python
 tools/readme_gif.py CHFour`), and `chgame` run from inside a game's folder
 finds the game by itself (`here()`).
 """
+import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
@@ -18,10 +19,12 @@ LIBRARIES = REPO / "platform" / "board" / "arduino" / "CHGame" / "libraries"
 EXAMPLES = LIBRARIES / "CHGame" / "examples"
 GAMES = EXAMPLES / "games"
 APPS = EXAMPLES / "apps"
-# The Python uploader (the bootloader's host side); the Go tool in host/go is
-# what the board package ships.
+# The Python uploader, the package chgame_upload (the bootloader's host side;
+# the Go tool in host/go is what the board package ships). On sys.path when
+# not installed: `import chgame_upload`.
 UPLOADER_DIR = REPO / "platform" / "bootloader" / "host" / "py"
-UPLOADER = UPLOADER_DIR / "chgame_upload.py"
+if str(UPLOADER_DIR) not in sys.path:
+    sys.path.append(str(UPLOADER_DIR))
 
 
 def games():

@@ -81,10 +81,11 @@ def upload(sketch, out, port=None, arduino=False):
             raise SystemExit("upload failed")
         print(r.stdout.strip().splitlines()[-1])
         return
-    r = subprocess.run([sys.executable, str(paths.UPLOADER), "--port", port, "flash", str(image(sketch, out)),
-                        "--run"])
-    if r.returncode:
-        raise SystemExit("upload failed")
+    from chgame_upload.upload import flash_file
+    try:
+        flash_file(image(sketch, out), port=port, run=True)
+    except Exception as e:                  # NoDevice, StatusError, TimeoutError ...
+        raise SystemExit(f"upload failed: {e}")
 
 
 def run(sketch, script, outdir, port=None, flags=""):

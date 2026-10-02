@@ -12,7 +12,7 @@ here. The table's "Came from" column is history, not something to sync with.
 | `board/arduino/CHGame/libraries/CHGame/` | The CHGame library: `CHGame.h`, the one include of a sketch (buttons, pacing, palette, drawing, sound, saving, the debug protocol) | 0.1.0 | built here (2026-10-02) from the code the twenty games shared | Apache-2.0 (`LICENSE`, `NOTICE`) |
 | `board/arduino/CHGame/libraries/CHGfx/` | The graphics library | 1.3.0 | CHGfx tag `1.3.0` (838bbb0) | MIT (+ font notices in its `LICENSE`) |
 | `board/arduino/CHGame/libraries/CHSd/` | Read-only SD card + FAT16/32 library | 1.0.0 | never had a repository of its own | MIT |
-| `bootloader/` | The bootloader with the SD game menu: sources, PC test suite, built binaries, and the uploader's source (`host/go`; `host/py` is the Python reference) | 0.2.4 + the SD menu (BOOT_VERSION 2) | CH32SerialBoot tag `v0.2.4` (5de3006): `bootloader/`, `shared/`, `host/py/`, `test/` | MIT (+ BSD font, `bootloader/NOTICE`) |
+| `bootloader/` | The bootloader with the SD game menu: sources, PC test suite, built binaries, and the uploader in Go (`host/go`, the executable the board package installs) and in Python (`host/py`, what the repository's tools use) | 0.2.4 + the SD menu (BOOT_VERSION 2) | CH32SerialBoot tag `v0.2.4` (5de3006): `bootloader/`, `shared/`, `host/py/`, `test/` | MIT (+ BSD font, `bootloader/NOTICE`) |
 | `hardware/` | Rev 0 schematic (PDF) and netlist (EasyEDA `.tel`) | 2026-08-21 | | |
 
 The third-party code inside these (the WCH core and SPL, the USB CDC stack,
@@ -60,9 +60,8 @@ is still served from
 **Gaps:**
 - The board docs sometimes refer to `bootloader/`, `host/` or `tools/`
   paths as they were in CH32SerialBoot. `bootloader/` and `host/py` are now
-  under [bootloader/](bootloader). The release scripts they mention
-  (`tools/release.sh`, `make_package.py`, `make_tool_archives.py`) were not
-  brought over; see the roadmap.
+  under [bootloader/](bootloader). The release scripts are
+  `tools/release/` (Python), described in `board/docs/building.md`.
 - `board/docs/hardware-pinmap.md` leaves some ports as "—". The variant
   header has them all; the summary is in
   [../docs/platform.md](../docs/platform.md).

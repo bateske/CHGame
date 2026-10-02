@@ -101,7 +101,7 @@ board already has: no driver, no buttons. From the next board package
 release that is *Tools > Programmer* **CHGame USB**, then *Tools > Burn
 Bootloader* (*Tools > Bootloader* chooses between the SD game menu, no menu
 and the 0.2.4 one). Until then:
-`python platform/bootloader/host/py/chgame_upload.py selfupdate platform/bootloader/release/chgame_sdboot.bin`
+`chgame uploader selfupdate platform/bootloader/release/chgame_sdboot.bin`
 ([platform/bootloader](platform/bootloader/README.md#installing-it-on-a-board)).
 The WCH driver and the BOOT button are only for recovery.
 
@@ -291,12 +291,18 @@ The tools for working with the system outside the Arduino IDE:
   `.CHG` for the SD menu, checks packages, lists a card;
 - the **card builder** (`sdcard/mkcard.py`): builds every game and lays out
   a whole card;
-- the **uploader** (`platform/bootloader/host/go`): the source of
-  `chgame-upload`, the program the board package installs for Windows,
-  Linux and macOS (`host/py` beside it is the same protocol in Python).
+- the **uploader**: `chgame upload` and `chgame uploader ...` go through the
+  Python one (`platform/bootloader/host/py`, the package `chgame_upload`);
+  `platform/bootloader/host/go` is the same tool in Go, `chgame-upload`, the
+  executable the board package installs for Windows, Linux and macOS. The
+  two share their test vectors;
+- the **release scripts** (`tools/release/`): the uploader for five hosts,
+  the platform archive and the Boards Manager index, published with `gh`
+  ([platform/board/docs/building.md](platform/board/docs/building.md)).
 
 What is a game's own stays with it: its script commands (`chdrive.py`),
-`check.py`, the tests and the asset pipeline. [tools/README.md](tools/README.md) classifies every tool in
+its description for the shared checks (`game.py`), the tests and the asset
+pipeline. [tools/README.md](tools/README.md) classifies every tool in
 the repository.
 
 ## Licences

@@ -8,20 +8,40 @@ import serial
 import serial.tools.list_ports
 
 from .protocol import (
-    SOF, CMD_HELLO, CMD_RUN, CMD_STATUS, ST_OK, Hello,
+    SOF, CMD_HELLO, CMD_RUN, CMD_STATUS, MODE_BOOTLOADER, ST_OK, Hello,
     ProtocolError, StatusError, build_frame, crc16,
 )
 
-# Development identifiers. See shared/wch_usbcdc_config.h — these are the shared
+# Development identifiers. See shared/wch_usbcdc_config.h: these are the shared
 # V-USB CDC pair and MUST be replaced before shipping.
 CHGAME_VID = 0x16C0
 CHGAME_PID = 0x27DD
+
+
+class NoDevice(Exception):
+    pass
+
+
+class SeveralDevices(Exception):
+    pass
 
 
 def find_ports(vid: int = CHGAME_VID, pid: int = CHGAME_PID) -> list[str]:
     """Candidate CHGame ports, most recently seen first."""
     return [p.device for p in serial.tools.list_ports.comports()
             if p.vid == vid and p.pid == pid]
+
+
+def resolve_port(explicit: str | None) -> str:
+    """The port to use: the one given, else the one CHGame on USB."""
+    if explicit:
+        return explicit
+    ports = find_ports()
+    if not ports:
+        raise NoDevice("no CHGame device found (looked for 16C0:27DD). Is it plugged in?")
+    if len(ports) > 1:
+        raise SeveralDevices(f"several CHGame devices found: {', '.join(ports)}; pass -port")
+    return ports[0]
 
 
 def upload_touch(port: str, settle: float = 0.05) -> None:
@@ -42,6 +62,14 @@ def upload_touch(port: str, settle: float = 0.05) -> None:
             pass
 
 
+def quick_hello(port: str, timeout: float = 2.0, debug: bool = False) -> Hello:
+    """One HELLO with a hard limit. A sketch never answers (it does not speak
+    the protocol), and a write to a sketch that is not reading can block, so
+    the port is opened with the same limit as a write timeout."""
+    with Client(port, timeout=timeout, debug=debug) as c:
+        return c.hello()
+
+
 def wait_for_bootloader(timeout: float = 10.0, port_hint: str | None = None) -> str:
     """Wait for a device answering HELLO in bootloader mode; return its port.
 
@@ -58,21 +86,46 @@ def wait_for_bootloader(timeout: float = 10.0, port_hint: str | None = None) -> 
             candidates = [port_hint] + [p for p in candidates if p != port_hint]
         for cand in candidates:
             try:
-                with Client(cand, timeout=1.0) as c:
-                    if c.hello().mode == 1:
-                        return cand
+                if quick_hello(cand, 1.0).mode == MODE_BOOTLOADER:
+                    return cand
             except Exception as e:      # not up yet, or still the application
                 last = e
         time.sleep(0.2)
     raise TimeoutError(f"no bootloader appeared within {timeout:.0f}s ({last})")
 
 
+def wait_for_application(timeout: float = 6.0) -> str:
+    """Wait for the sketch to come back up.
+
+    An application is identified by a CHGame port that does NOT answer HELLO.
+    That is deliberate: sketches do not implement the bootloader protocol, and
+    they must not. A sketch owns its Serial stream, so a protocol responder
+    living in the core would eat bytes the sketch was meant to receive and
+    inject frames into its output. The mode field exists for the bootloader to
+    identify ITSELF; absence of a reply is what identifies the application.
+    """
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        for cand in find_ports():
+            try:
+                if quick_hello(cand, 0.8).mode == MODE_BOOTLOADER:
+                    continue            # still the bootloader
+            except Exception:
+                return cand             # present but silent => the sketch
+        time.sleep(0.25)
+    raise TimeoutError("application did not re-enumerate")
+
+
 def ensure_bootloader(port: str, timeout: float = 10.0) -> str:
-    """Return a port in bootloader mode, performing the touch if needed."""
+    """Return a port in bootloader mode, performing the touch if needed.
+
+    A HELLO is tried first with a short limit (a sketch that is not reading
+    makes the write time out rather than hang: write_timeout); if that does
+    not find the bootloader, the touch is sent and the bootloader waited for.
+    """
     try:
-        with Client(port, timeout=1.5) as c:
-            if c.hello().mode == 1:
-                return port
+        if quick_hello(port, 1.5).mode == MODE_BOOTLOADER:
+            return port
     except Exception:
         pass                            # not answering as either mode; try the touch
 
@@ -83,7 +136,7 @@ def ensure_bootloader(port: str, timeout: float = 10.0) -> str:
 class Client:
     """Framed request/response over a CDC serial port.
 
-    Baud rate is irrelevant over USB CDC — the peripheral ignores it — except
+    Baud rate is irrelevant over USB CDC (the peripheral ignores it) except
     for 1200, which is reserved as the upload-request signal.
     """
 
@@ -156,8 +209,10 @@ class Client:
             if self.debug:
                 print(f"  (ignoring stale response to 0x{rcmd:02X})")
 
-    def check(self, cmd: int, payload: bytes = b"") -> bytes:
-        r = self.request(cmd, payload)
+    def check(self, cmd: int, payload: bytes = b"", timeout: float | None = None) -> bytes:
+        """A command that must come back OK. `timeout` overrides the client's
+        for the long ones (BEGIN erases up to 200 pages)."""
+        r = self.request(cmd, payload, timeout)
         if not r or r[0] != ST_OK:
             raise StatusError(cmd, r[0] if r else 0xFF)
         return r
@@ -171,6 +226,6 @@ class Client:
     def run(self) -> None:
         """Ask the bootloader to launch the application. The port disappears."""
         try:
-            self.check(CMD_RUN)
+            self.check(CMD_RUN, timeout=2.0)
         except (TimeoutError, serial.SerialException):
             pass  # device may vanish before the ack lands

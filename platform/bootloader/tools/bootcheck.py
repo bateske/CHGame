@@ -15,8 +15,8 @@ import sys
 
 HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent / "host" / "py"))
-from chgame.client import Client, find_ports  # noqa: E402
-from chgame.protocol import CMD_READ  # noqa: E402
+from chgame_upload.client import Client, find_ports  # noqa: E402
+from chgame_upload.protocol import CMD_READ  # noqa: E402
 
 BOOT_SIZE = 0x3000
 

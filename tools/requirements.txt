@@ -1,3 +1,5 @@
+# The tools' Python packages, for a plain install. `pip install -e .[sim]` in the
+# repository root installs the same, plus the `chgame` command (pyproject.toml).
 # Python packages for CHGame's tools (not needed to build or play).
 pillow      # screenshots, GIFs, asset pipelines
 pyserial    # talking to the board (device.py, chdrive.py --device, serialcap.py)

@@ -24,10 +24,10 @@ resort ([recovery.md](../board/docs/recovery.md)).
 - **Software.** This branch checked out. Python 3 with `pip install -r
   tools/requirements.txt`. arduino-cli with `CHGame:ch32v@0.2.4`
   (CLAUDE.md, Setup).
-- **Commands.** Run from the repository root. `UP` is
-  `python platform/bootloader/host/py/chgame_upload.py`, the uploader with
-  the self-update command. `chgame-upload` is the board package's own tool;
-  either uploader works for `flash`.
+- **Commands.** Run from the repository root. `UP` is `chgame uploader`
+  (the Python uploader, `platform/bootloader/host/py`; `python -m
+  chgame_upload` from that folder is the same). `chgame-upload` is the board
+  package's Go tool; both have the same verbs and flags.
 - **Another session using the board.** Check that nothing else is using it
   (CLAUDE.md, "The device"). `UP probe` lists the board's port and what it
   is running.

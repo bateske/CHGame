@@ -17,7 +17,7 @@ done in order and checked.
 |---|---|---|
 | Arduino core, variant, linker scripts, Tools menus | `platform/board/arduino/CHGame` | 0.2.4, as released |
 | Bootloader with the SD game menu | `platform/bootloader` | built and tested on the PC; installed and checked on a board on 2026-10-01 (`test/hil/RESULTS-2026-10-01.md`) |
-| Uploader source (`chgame-upload`, Go; Windows, Linux, macOS) | `platform/bootloader/host/go` | 0.2.0 here, with the bootloader update over USB; the installed package has 0.1.0. `host/py` is the Python reference |
+| Uploader: `chgame-upload` in Go (the executable the board package installs; Windows, Linux, macOS) and the same tool in Python (`chgame_upload`, what the repository's tools use) | `platform/bootloader/host/go`, `host/py` | 0.2.0 here, with the bootloader update over USB and `burn`; the installed package has 0.1.0. Shared test vectors (`test/protocol/`) hold the two together |
 | Graphics | `platform/board/arduino/CHGame/libraries/CHGfx` | 1.3.0 |
 | SD card / FAT | `platform/board/arduino/CHGame/libraries/CHSd` | 1.0.0; never yet run against a real card on a board |
 | The `CHGame` library: buttons and pacing, palette, drawing, the 3x5 font, lettering, effects maths, sound, saving, the debug protocol, `RAMFUNC` | `platform/board/arduino/CHGame/libraries/CHGame` | every game is built on it ([its README](../platform/board/arduino/CHGame/libraries/CHGame/README.md)); in the board package's `libraries/` folder with CHGfx and CHSd |
@@ -28,11 +28,14 @@ done in order and checked.
 
 ### 1. Release tooling
 
-The board package's release scripts stayed behind in CH32SerialBoot:
-`tools/release.sh`, `make_package.py`, `make_tool_archives.py` and the
-package index they write (`platform/board/docs/building.md` describes
-them). They have to come here before a release can be cut from this
-repository.
+**Done in this repository** (2026-10-02): `tools/release/` (`release.py`,
+`build_uploader.py`, `make_tool_archives.py`, `make_package.py`, all Python)
+builds the uploader for the five hosts, the platform archive and the Boards
+Manager index, and publishes them with `gh`
+(`platform/board/docs/building.md`). `python tools/release/release.py
+--dry-run` makes the whole set in `out/dist/`. What is left is the release
+itself: bump `platform.txt` to 0.3.0, retitle the changelog's Unreleased
+section, run it.
 
 - The package index then lives at
   `https://github.com/bateske/CHGame/releases/latest/download/package_chgame_index.json`.
@@ -57,11 +60,10 @@ already on the board) or through the factory ISP. Tried on a board with
 `arduino-cli burn-bootloader`: every change between the three, then
 *Upload Using Programmer* and a normal upload.
 
-**What is left for the release:** build the `chgame-upload` 0.2.0 archives
-for the five hosts (`platform/bootloader/host/go/build.sh` makes the
-binaries), publish them and name 0.2.0 as the package's tool dependency in
-the index (step 1's scripts). `platform.txt` here needs 0.2.0: the 0.1.0
-tool has no `burn` command.
+**What is left for the release:** the release itself. `tools/release/release.py`
+builds the `chgame-upload` 0.2.0 archives for the five hosts and names 0.2.0
+as the package's tool dependency in the index. `platform.txt` here needs
+0.2.0: the 0.1.0 tool has no `burn` command.
 
 ### 3. One `CHGame` library
 
@@ -142,13 +144,14 @@ reaches them through the `chgame` command, and they take a game by name
 They are here already. What a release should add is a way to use them
 without reading the source:
 
-- one requirements file and one entry point per job (simulator, upload,
-  screenshot, pack, card), documented in `tools/README.md`;
-- the uploader (`platform/bootloader/host/go`) named among the tools, with
-  its binaries attached to the release, since it is the thing people
-  outside Arduino need first;
-- the candidates for sharing already listed at the end of
-  [tools/README.md](../tools/README.md).
+- ~~one requirements file and one entry point per job~~ done 2026-10-02:
+  `pip install -e .` and the `chgame` command (`tools/chgame.py`), one
+  environment for every tool, documented in `tools/README.md`;
+- the uploader named among the tools: done; `chgame upload` and `chgame
+  uploader` are the Python one, and the release attaches the Go binaries;
+- the candidates for sharing listed at the end of
+  [tools/README.md](../tools/README.md): `check.py`, `run_tests.py` and the
+  redraw check are shared since 2026-10-02 (`tools/game.py` per game).
 
 ### 6. Known problems to fix on the way
 
