@@ -12,26 +12,26 @@
 
 | Game | Image | Save room | RAM | Simulator | Device |
 |---|---|---|---|---|---|
-| CHBackgammon | 49,580 | 852 | 16,924 | check.py | never run |
-| CHBingo | 36,748 | 13,684 | 15,208 | tests, scripts, sim_save, diffdrive | never run |
-| CHBlackjack | 45,872 | 4,560 | 15,736 | tests, scripts | **runs; render times measured** (the last art-only commit not re-run) |
-| CHBoardwalk | 49,884 | 548 | 15,404 | tests, scripts | never run |
-| CHCheckers | 42,048 | 8,384 | 17,444 | check.py | never run |
-| CHChess | 48,904 | 1,528 | 17,880 | tests, scripts | **runs; render and think times, stack measured** |
-| CHCraps | 50,064 | 368 | 15,520 | tests, scripts, sim_save | never run |
-| CHCrossword | 50,312 | 120 | 17,540 | check.py (incl. FAT card images) | never run |
-| CHDominoes | 42,364 | 8,068 | 17,296 | check.py | never run |
-| CHFour | 36,356 | 14,076 | 16,388 | check.py | never run |
-| CHMahjong | 48,456 | 1,976 | 18,084 | tests, scripts | an early build ran well; current build not run |
-| CHPoker | 48,940 | 1,492 | 15,868 | tests, scripts | never run |
-| CHRoulette | 49,804 | 628 | 16,084 | tests, scripts, ball tests, diffdrive | never run |
-| CHSlots | 47,092 | 3,340 | 14,788 | tests, scripts, diffdrive | never run |
-| CHSnakes | 37,348 | 13,084 | 15,704 | check.py | never run |
-| CHSolitaire | 31,184 | 19,248 | 16,540 | check.py | never run |
-| CHTicTacToe | 50,352 | 80 | 15,176 | tests, scripts, diffdrive | never run |
-| CHWords | 50,416 | 16 | 15,836 | check.py (incl. the SD dictionary) | never run |
-| CHWordWheel | 50,348 | 84 | 15,244 | check.py (incl. the SD bank, diffdrive) | never run |
-| CHYacht | 43,732 | 6,700 | 14,996 | tests, scripts, sim_save | never run |
+| CHBackgammon | 50,224 | 208 | 16,892 | check.py | never run |
+| CHBingo | 36,320 | 14,112 | 14,912 | tests, scripts, sim_save, diffdrive | never run |
+| CHBlackjack | 45,572 | 4,860 | 15,436 | tests, scripts | **runs; render times measured** (the last art-only commit not re-run) |
+| CHBoardwalk | 49,668 | 764 | 15,052 | tests, scripts | never run |
+| CHCheckers | 42,168 | 8,264 | 17,108 | check.py | never run |
+| CHChess | 48,764 | 1,668 | 17,544 | tests, scripts | **runs; render and think times, stack measured** |
+| CHCraps | 49,876 | 556 | 15,568 | tests, scripts, sim_save | never run |
+| CHCrossword | 50,360 | 72 | 17,276 | check.py (incl. FAT card images) | never run |
+| CHDominoes | 42,728 | 7,704 | 16,864 | check.py | never run |
+| CHFour | 36,728 | 13,704 | 16,348 | check.py | never run |
+| CHMahjong | 48,516 | 1,916 | 17,812 | tests, scripts | an early build ran well; current build not run |
+| CHPoker | 48,480 | 1,952 | 15,500 | tests, scripts | never run |
+| CHRoulette | 49,848 | 584 | 16,072 | tests, scripts, ball tests, diffdrive | never run |
+| CHSlots | 47,596 | 2,836 | 14,916 | tests, scripts, diffdrive | never run |
+| CHSnakes | 37,204 | 13,228 | 15,360 | check.py | never run |
+| CHSolitaire | 30,812 | 19,620 | 16,188 | check.py | never run |
+| CHTicTacToe | 49,644 | 788 | 14,580 | tests, scripts, diffdrive | never run |
+| CHWords | 50,328 | 104 | 15,788 | check.py (incl. the SD dictionary) | never run |
+| CHWordWheel | 50,368 | 64 | 14,952 | check.py (incl. the SD bank, diffdrive) | never run |
+| CHYacht | 44,036 | 6,396 | 15,260 | tests, scripts, sim_save | never run |
 
 When the games were brought into this repository, every simulator script (211), host
 test, audio preview, redraw check and release build was re-run and compared
@@ -40,6 +40,20 @@ files were identical. The one exception was CHBoardwalk's `save` script,
 which also differs between two runs of the original (see Known issues).
 The release builds compiled against `platform/libraries/CHGfx` with no
 sketchbook libraries.
+
+**On the CHGame library (2026-10-02).** Every game moved onto
+`platform/libraries/CHGame` (graphics helpers, sound, saving, the debug
+protocol). Checked game by game:
+- every simulator script against the frames from before (identical, but
+  for the one-pixel changes listed in [unification.md](unification.md));
+- every sound effect, millisecond by millisecond, against the old engine;
+- every save layout, field by field (old saves still load);
+- every script again under valgrind (`tools/chsim/chsim.py`'s memory check).
+
+That turned up two bugs, both fixed: CHBoardwalk dealt from an
+uninitialised count (its `save` script's frames changed from run to run, and
+the simulator usually crashed), and CHCrossword's debug STATE line
+overflowed its buffer late in a puzzle.
 
 **The first device session for each game should cover:**
 - frame times (debug build, `perf` scripts);
@@ -91,18 +105,11 @@ last one's record. [sd-menu.md](sd-menu.md) says so to players.
 
 ### Other
 
-- **CHBlackjack's device-only scripts never finish in the simulator.** They
-  are `perf_free`, `prof` and `prof_hand` (wall-clock and profile-build
-  scripts), and they must be run on the board.
+- **CHBlackjack's device-only scripts stop in the simulator.** They are
+  `perf_free`, `prof` and `prof_hand` (wall-clock and profile-build
+  scripts: `prof` needs `-DCHGAME_PROFILE=1`), and they are for the board.
 - **Some device-only scripts stop in the simulator.** CHBoardwalk `pace` and
   CHChess `pace` exit with "game refused" there.
-- **`tools/audio/preview.py` exits with status 1** in CHCheckers,
-  CHCrossword, CHSnakes and CHWords after writing every WAV. The same
-  happened in the original repositories.
-- **CHBoardwalk's `save` script is not deterministic.** In the simulator,
-  `tools/scripts/save.txt` draws different frames from run to run after
-  SAVE + QUIT. The original repository does the same; every other script
-  of every game repeats exactly.
 - **Generated files a fresh clone needs before some tests:**
   - CHWordWheel: `run_tests.py` needs `tools/phrases/build/bank_ref.txt`
     (run `tools/phrases/build_bank.py` or `check.py` first).
