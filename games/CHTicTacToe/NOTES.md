@@ -5,7 +5,7 @@ Agent-facing notes for continuing work here; rules, controls and build are in RE
 ## Snapshot
 
 - Imported from https://github.com/bateske/CHTicTacToe at commit db8274c (2026-10-01); develop here now, not in the old repo.
-- Release build (FQBN `CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly`, core 0.2.4, CHGfx 1.3.0): flash 49,283 of 50,944 B (1,661 spare); the image is 49,664 B, 768 B under the 50,432 B line that keeps both save pages (2026-10-02, on the CHGame library's sound engine: 316 B less than with the game's own sequencer, 688 B less than with its own copies of the whole shared core, which left 80 B), static RAM 14,644 of 18,416 B (3,772 spare). README's "50,308 B" (How it fits) and "43.9 KB" (Installing) are older figures; trust check_size.
+- Release build (FQBN `CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly`, core 0.2.4, CHGfx 1.3.0): flash 49,265 of 50,944 B (1,679 spare); the image is 49,644 B, 788 B under the 50,432 B line that keeps both save pages (2026-10-02, with the debug protocol, saving and RAMFUNC from the CHGame library too: chgame/Debug.h, chgame/Save.h; earlier that day the library's sound engine saved 316 B over the game's own sequencer, and its shared core 688 B over the game's own copies, which left 80 B), static RAM 14,580 of 18,416 B (3,836 spare). README's "50,308 B" (How it fits) and "43.9 KB" (Installing) are older figures; trust check_size.
 - Verification: simulator and host tests only, as of 2026-10-01 (not re-run since the import): `tools/tests/run_tests.py` (rules, dealer, match flow); scripts smoke, endings, save, iso, hover, perf, showcase, gameplay all deterministic with no BUG lines; `tools/chsim/diffdrive.py` on tools/scripts/diff_iso.txt with 0 stale frames. There is no tools/check.py here: run those plus `python tools/device.py build` by hand.
 - Never run on a CHGame: frame times (simulator estimates: full iso frame ~7 ms, glove move ~5-6 ms), the dealer's thinking time and every sound are unchecked.
 
@@ -27,7 +27,7 @@ Agent-facing notes for continuing work here; rules, controls and build are in RE
 ## Open items
 
 - The owner's verdict on the iso look and on the extra tables.
-- Device run: iso frame times (full and band redraws), dealer time on the big felts (12 cells a frame), every sound. Device debug builds are `CHTT_LEAN` (no saving, plain end-screen lettering) and are 632 B under the 50,944 B ceiling (50,312 B, with the 49,664 B release); `-DCHTT_FULL` does not fit (52,512 B). Put the release build back afterwards.
+- Device run: iso frame times (full and band redraws), dealer time on the big felts (12 cells a frame), every sound. Device debug builds are `CHTT_LEAN` (no saving, plain end-screen lettering; their Stats page still says HOLD SELECT TO RESET, since `save::available()` is now the library's) and are 476 B under the 50,944 B ceiling (50,468 B, with the 49,644 B release; the library's protocol is ~180 B bigger than the game's old copy); `-DCHTT_FULL` does not fit (52,512 B). Put the release build back afterwards.
 - Logo touch-up: tools/art/logo.txt and royale.txt (drafted by tools/make_logo.py from Arial Black and Georgia; the .txt files are the source).
 - Optional music: impossible without cuts elsewhere.
 

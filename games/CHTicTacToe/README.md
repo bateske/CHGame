@@ -172,7 +172,8 @@ are not offered, since they need a clock or a secret.
     src/states/       Screens: title, tables room, play, options, stats, win, broke
     src/gfx, src/fx   sprite remaps, particles, banners, floating text (palette,
                       drawing and lettering: the CHGame library)
-    src/audio, src/save, src/debug
+    src/audio         the sound effects (the CHGame library plays them)
+    src/save          what a save holds (the CHGame library keeps it in flash)
     tools/            assets, simulator, scripts, tests
 
 ## License

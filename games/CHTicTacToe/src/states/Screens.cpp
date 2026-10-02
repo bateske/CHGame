@@ -16,7 +16,6 @@
 #include "../audio/Sounds.h"
 #include "../save/Save.h"
 #include "../assets/Assets.h"
-#include "../debug/Debug.h"
 
 namespace screens {
 
