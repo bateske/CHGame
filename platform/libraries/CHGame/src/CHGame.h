@@ -12,12 +12,17 @@
 //   chgame/Mask.h     outlined, shadowed and gradient lettering and logos
 //   chgame/Fx.h       fx:: easing, integer sine, randomness, screen shake
 //   chgame/Audio.h    audio:: effects, music and the status LED (the piezo)
+//   chgame/Save.h     save:: a record in flash that survives power cycles
 //   chgame/Fmt.h      number formatting without printf
-//   chgame/RamFunc.h  CHGAME_RAMFUNC: code that runs from SRAM
+//   chgame/RamFunc.h  RAMFUNC: code that runs from SRAM
+//   chgame/Debug.h    dbg:: the serial debug protocol the simulator and
+//                     the tools drive a game through (CHGAME_DEBUG builds)
+//   chgame/Config.h   the library's build switches (CHGAME_DEBUG ...)
 //
 // The casino games in this library's examples are built from these.
 #pragma once
 #include <CHGfx.h>
+#include "chgame/Config.h"
 #include "chgame/Input.h"
 #include "chgame/RamFunc.h"
 #include "chgame/Palette.h"
@@ -26,3 +31,5 @@
 #include "chgame/Fx.h"
 #include "chgame/Audio.h"
 #include "chgame/Fmt.h"
+#include "chgame/Save.h"
+#include "chgame/Debug.h"

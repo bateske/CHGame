@@ -7,8 +7,14 @@
 // .sdata/.sbss. linkonce merges sections of the same name, so every
 // function needs a name of its own (which also lets the linker drop unused
 // ones one at a time). The library's are "chg.<name>"; CHGfx's are
-// "chgfx.<name>". A sketch's own CHGAME_APP_RAMFUNC(name) uses
-// "app.<name>", so a game's `save` can never merge with the library's.
+// "chgfx.<name>". A sketch's own, RAMFUNC(name), are "app.<name>", so a
+// sketch's function can never merge with one of the library's of the same
+// name (but two of the sketch's must have different names).
+//
+//     RAMFUNC(blitRow) static void blitRow(uint8_t *dst, ...) { ... }
+//
+// The simulator keeps noinline but not the section: Mach-O (macOS) rejects
+// ELF section names.
 #pragma once
 
 #if defined(__riscv) && !defined(CHSIM)
@@ -17,4 +23,8 @@
 #else
 #define CHGAME_RAMFUNC(name) __attribute__((noinline))     // the simulator, host tests and tools
 #define CHGAME_APP_RAMFUNC(name) __attribute__((noinline))
+#endif
+
+#ifndef RAMFUNC
+#define RAMFUNC(name) CHGAME_APP_RAMFUNC(name)
 #endif
