@@ -50,8 +50,8 @@ bool (*hook)(char cmd, const char *args) = nullptr;
 static const char *helloLine = "CHGAME";
 static bool (*holdBusy)(char cmd) = nullptr;
 
-static char line[100];
-static char held[100];                  // a game command waiting for holdBusy to let go
+static char line[LINE];
+static char *held;                      // a game command waiting for holdBusy to let go
 static uint8_t len = 0;
 static bool ackPending = false;
 static uint32_t tRnd;
@@ -66,7 +66,7 @@ void begin(const char *hello) {
 #endif
 }
 
-void holdWhile(bool (*busy)(char cmd)) { holdBusy = busy; }
+void holdInto(bool (*busy)(char cmd), char *buf) { holdBusy = busy; held = buf; }
 
 #if CHGAME_PROFILE
 static uint32_t profT, profSum[12], profFrames;
@@ -210,7 +210,7 @@ static void execute() {
 #endif
         default:
             // The game is busy: answer HELD now, OK/ERR once it has run.
-            if (holdBusy && holdBusy(cmd)) { memcpy(held, line, sizeof held); print("HELD\n"); break; }
+            if (holdBusy && holdBusy(cmd)) { memcpy(held, line, LINE); print("HELD\n"); break; }
             runHook(line);
             break;
     }
@@ -241,7 +241,7 @@ void poll() {
             len = 0;    // binary noise: drop the line
         }
     }
-    if (held[0] && !holdBusy(held[0])) {
+    if (held && held[0] && !holdBusy(held[0])) {
         runHook(held);
         held[0] = 0;
     }

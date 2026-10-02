@@ -41,7 +41,10 @@ extern bool (*hook)(char cmd, const char *args);
 // A game busy with something long (a search) can hold its commands: while
 // busy(cmd) is true a command waits (answered HELD at once, OK/ERR once it
 // has run) while N, S, P and the rest go on working.
-void holdWhile(bool (*busy)(char cmd));
+// (The waiting command's buffer exists only in a game that calls this.)
+static const uint8_t LINE = 100;    // the longest command line
+void holdInto(bool (*busy)(char cmd), char *buf);
+inline void holdWhile(bool (*busy)(char cmd)) { static char held[LINE]; holdInto(busy, held); }
 // A second stack (frames drawn from inside a search) also reported by P.
 void frameStack(uint32_t *lo, uint32_t *hi);
 #if CHGAME_PROFILE
