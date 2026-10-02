@@ -1,21 +1,16 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask and CHGfx)
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library and CHGfx)
 // Screens after CHBlackjack's (src/states/Screens.cpp): fades between them,
 // the options list, statistics, the pause menu and the two endings. New
 // here: the machine menu, and the scrolling paytable (drawn by render/Machine.cpp).
-#include <CHGfx.h>
+#include <CHGame.h>
 #include <string.h>
 #include "../../config.h"
 #include "Screens.h"
-#include "../CHGame.h"
 #include "../game/Slots.h"
 #include "../fx/Presenter.h"
 #include "../fx/Fx.h"
 #include "../render/Layout.h"
 #include "../render/Machine.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Fmt.h"
-#include "../gfx/Mask.h"
-#include "../gfx/Palette.h"
 #include "../audio/Audio.h"
 #include "../save/Save.h"
 #include "../assets/Assets.h"
@@ -77,7 +72,7 @@ static void enter(Scr s) {
     fx::clear();
     pal::setDesaturate(0);
     pal::setMode(pal::CASINO);
-    pal::setTheme(s == Scr::Play ? game.machine : (uint8_t)pal::GREEN);     // pal::Theme follows Machine
+    pal::setTheme(s == Scr::Play ? game.machine : (uint8_t)mach::GREEN);    // mach::Theme follows Machine
     switch (s) {
         case Scr::Title: paused = false; audio::music(Song::Title); break;
         case Scr::Floor: for (uint8_t k = 0; k < M_COUNT; k++) if (FLOOR[k] == game.machine) floorSel = k; break;
@@ -117,10 +112,10 @@ void begin() {
 // ---------------------------------------------------------------------------
 static void feltBackdrop() {
     gfx_clear(FELT);
-    gfx_dither(0, 0, 128, 6, FELT_DK, 0);
-    gfx_dither(0, 122, 128, 6, FELT_DK, 1);
-    gfx_dither(0, 0, 6, 128, FELT_DK, 0);
-    gfx_dither(122, 0, 6, 128, FELT_DK, 1);
+    dither(0, 0, 128, 6, FELT_DK, 0);
+    dither(0, 122, 128, 6, FELT_DK, 1);
+    dither(0, 0, 6, 128, FELT_DK, 0);
+    dither(122, 0, 6, 128, FELT_DK, 1);
     gfx_rect(2, 2, 124, 124, GOLD);
 }
 
@@ -139,7 +134,7 @@ static void centred35(int y, const char *s, uint8_t c) { text35(64 - text35Width
 static void centred57(int y, const char *s, uint8_t c) { gfx_text(64 - gfx_textWidth(s) / 2, y, s, c); }
 
 static void sym(uint8_t index, int x, int y, const uint8_t *remap = nullptr) {
-    gfx_sprite4(SYMBOLS + SYMBOL_AT[index], x, y, remap);
+    sprite4(SYMBOLS + SYMBOL_AT[index], x, y, remap);
 }
 
 // ---------------------------------------------------------------------------
@@ -228,7 +223,7 @@ static void titleRender(uint32_t frame) {
             int step = (int)(t * 5 + i * 37);
             for (int j = 0; j < 2; j++)
                 sym((uint8_t)((step / 26 + j + i) % C_COUNT), x + 1, Y + 5 + (step % 26) - j * 26);
-            gfx_dither(x, Y + 3, 24, 26, WHITE, (uint8_t)(frame & 1));
+            dither(x, Y + 3, 24, 26, WHITE, (uint8_t)(frame & 1));
         } else {
             int drop = (int)k - (150 + i * 15);
             sym(C_SEVEN, x + 1, Y + 5 + (drop < 6 ? 6 - drop : 0) - (drop >= 6 && drop < 9 ? 1 : 0));
@@ -425,7 +420,7 @@ static void playRender(uint32_t frame) {
         centred57(60, "DEMO", WHITE);
     }
     if (paused) {
-        gfx_dither(0, 0, 128, 128, INK, 0);
+        dither(0, 0, 128, 128, INK, 0);
         panel(20, 30, 88, 62, 4, NAVY, GOLD);
         centred57(35, "PAUSED", GOLD);
         static const char *const P[4] = {"RESUME", "MACHINES", "OPTIONS", "SAVE & QUIT"};

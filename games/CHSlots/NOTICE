@@ -12,7 +12,9 @@ Simon Holmes (filmote), code, and Stephane C (vampirics), art:
 licensed under the Apache License, Version 2.0, by way of CHBlackjack
 (https://github.com/bateske/CHBlackjack, the same author's colour port):
 
-  * The 3x5 font (src/gfx/Draw.cpp, FONT35), extended with a few symbols.
+  * The 3x5 font (the CHGame library,
+    platform/libraries/CHGame/src/chgame/Draw.cpp, FONT35), extended with a
+    few symbols.
 
 New for this game: the rules of both machines, the reel symbols and the
 "SLOTS" title lettering (tools/assets.py, tools/art/), the sound effects and

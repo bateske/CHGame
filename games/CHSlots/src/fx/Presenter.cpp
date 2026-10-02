@@ -1,15 +1,11 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask and CHGfx)
-#include <CHGfx.h>
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library and CHGfx)
+#include <CHGame.h>
 #include <string.h>
 #include "../../config.h"
 #include "Presenter.h"
 #include "Fx.h"
 #include "../render/Layout.h"
 #include "../render/Machine.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Fmt.h"
-#include "../gfx/Mask.h"
-#include "../gfx/Palette.h"
 #include "../audio/Audio.h"
 
 namespace present {
@@ -554,7 +550,7 @@ void render(const Slots &g, uint32_t frame) {
             for (uint8_t i = 0; i < 18; i++) ramp[i] = i < 6 ? WHITE : (i < 11 ? FX_B : GOLD);       // (wood would vanish on the plate)
             maskDraw(m, 64 - w / 2, 73, GOLD, -1, -1, ramp);
         }
-        fx::applyShake(0, 127);
+        fx::applyShake(0, 127, INK);
     }
 }
 

@@ -1,18 +1,20 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (the pixel loops are CHGfx's and Draw/Mask's)
-#include <CHGfx.h>
+#pragma GCC optimize("Os")   // cold code: size over speed (the pixel loops are CHGfx's and the CHGame library's)
+#include <CHGame.h>
 #include <string.h>
 #include "Machine.h"
 #include "Layout.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Fmt.h"
-#include "../gfx/Mask.h"
-#include "../gfx/Palette.h"
 #include "../fx/Fx.h"
 #include "../assets/Assets.h"
 
 namespace mach {
 
 using namespace lay;
+
+const uint16_t THEMES[THEME_COUNT][3] = {
+    {0x042, 0x173, 0x4B5},   // the casino's green
+    {0x401, 0x2A6, 0xF82},   // DRAGON FORTUNE: maroon, jade, orange
+    {0xF7A, 0x7DB, 0xA6E},   // SWEET: pink, mint, lilac
+};
 
 int reelX(uint8_t machine, uint8_t reel) {
     if (machine == M_FORTUNE) return F_WIN_X + reel * CELL;
@@ -26,7 +28,7 @@ static const uint8_t SYM_BASE[M_COUNT] = {0, SYM_FORTUNE, SYM_SWEET};
 static const char *const TAG[3] = {"MINI", "MINOR", "MAJOR"};
 
 void symbol(const Slots &g, uint8_t sym, int x, int y, uint8_t k) {
-    gfx_sprite4(SYMBOLS + SYMBOL_AT[SYM_BASE[g.machine] + sym], x, y);
+    sprite4(SYMBOLS + SYMBOL_AT[SYM_BASE[g.machine] + sym], x, y);
     if (!k) return;
     char buf[10];
     if (k >= K_MINI) fmtStr(buf, TAG[k - K_MINI]);
@@ -110,7 +112,7 @@ static void reel(const Slots &g, const View &v, uint8_t i, uint32_t frame) {
         gfx_fillRect(sx, yt, w, rise, FX_B);
         for (uint8_t row = 0; row < ROWS; row++) symbol(g, F_DRAGON, cx + 1, y0 + row * CELL + 1);
         gfx_resetClip();
-        if (rise < WIN_H) { gfx_hline(sx, yt, w, RED); gfx_dither(sx, yt - 3, w, 3, FELT_LT, (uint8_t)(frame & 1)); }
+        if (rise < WIN_H) { gfx_hline(sx, yt, w, RED); dither(sx, yt - 3, w, 3, FELT_LT, (uint8_t)(frame & 1)); }
         if (rise >= WIN_H) return;
     }
     gfx_setClip(sx, y0, w, WIN_H - rise);
@@ -124,17 +126,17 @@ static void reel(const Slots &g, const View &v, uint8_t i, uint32_t frame) {
         if (v.state[i] != SPINNING && d < ROWS) { s = v.cell[i][d]; coin = v.coin[i][d]; }
         else s = g.stripSym(i, j);
         int y = y0 + k * CELL - ((frac * CELL) >> 8) + 1;
-        // text35 does not clip: a coin's value shows only once it is wholly in the window.
+        // A coin's value shows only once it is wholly in the window (never cut in half).
         if (y + 11 < y0 || y + 16 > y0 + WIN_H - rise) coin = K_NONE;
         symbol(g, s, cx + 1, y, coin);
     }
     gfx_resetClip();
-    if (v.state[i] == SPINNING) gfx_dither(sx, y0, w, WIN_H, bg, (uint8_t)(frame & 1));
+    if (v.state[i] == SPINNING) dither(sx, y0, w, WIN_H, bg, (uint8_t)(frame & 1));
     else if (classic) {
         // The drum curves away at the top and bottom.
         uint8_t shade = g.machine == M_SWEET ? FELT_DK : SILVER;
-        gfx_dither(sx, y0, w, 5, shade, 0);
-        gfx_dither(sx, y0 + WIN_H - 5, w, 5, shade, 1);
+        dither(sx, y0, w, 5, shade, 0);
+        dither(sx, y0 + WIN_H - 5, w, 5, shade, 1);
     }
     if (v.antic == i + 1) gfx_rect(sx, y0, w, WIN_H, FX_A);
 }
@@ -152,9 +154,9 @@ static void holdCells(const Slots &g, const View &v, uint32_t frame) {
             gfx_setClip(x, y, CELL, CELL);
             symbol(g, F_COIN, x + 1, y + 1 + (int)((frame * 7 + c * 11) % 48) - 24);
             gfx_resetClip();
-            gfx_dither(x, y, CELL, CELL, FELT_DK, (uint8_t)(frame & 1));
+            dither(x, y, CELL, CELL, FELT_DK, (uint8_t)(frame & 1));
         } else {
-            gfx_dither(x + 3, y + 3, CELL - 6, CELL - 6, WINE, 0);
+            dither(x + 3, y + 3, CELL - 6, CELL - 6, WINE, 0);
         }
         gfx_rect(x, y, CELL, CELL, WINE);
     }
@@ -201,7 +203,7 @@ static void dim(uint16_t keep) {
     if (!keep) return;
     for (uint8_t c = 0; c < CELLS; c++)
         if (!(keep >> c & 1))
-            gfx_dither(reelX(M_FORTUNE, (uint8_t)(c / 3)), F_WIN_Y + (c % 3) * CELL, CELL, CELL, INK, (uint8_t)(c & 1));
+            dither(reelX(M_FORTUNE, (uint8_t)(c / 3)), F_WIN_Y + (c % 3) * CELL, CELL, CELL, INK, (uint8_t)(c & 1));
 }
 
 static uint16_t lineCells(const Slots &g, uint8_t l) {
@@ -258,7 +260,7 @@ static void armWall() {
     for (int y = C_TOP_H; y < C_LOW_Y; y++) {
         int dy = y - ARM_PIVOT;
         gfx_hline(x0, y, w, INK);
-        gfx_dither(x0, y, w, 1, FELT_DK, 0);
+        dither(x0, y, w, 1, FELT_DK, 0);
         for (int k = 4; k >= 0; k--) {
             int rr = RING[k] * RING[k] - dy * dy;
             if (rr <= 0) continue;
@@ -268,10 +270,10 @@ static void armWall() {
             if (n > w) n = w;
             switch (k) {
                 case 4: gfx_hline(x0, y, n, FELT_DK); break;
-                case 3: gfx_dither(x0, y, n, 1, FELT, 0); break;
+                case 3: dither(x0, y, n, 1, FELT, 0); break;
                 case 2: gfx_hline(x0, y, n, FELT); break;
-                case 1: gfx_dither(x0, y, n, 1, FELT_LT, 1); break;
-                default: gfx_hline(x0, y, n, FELT_LT); gfx_dither(x0, y, n, 1, FELT, 0); break;
+                case 1: dither(x0, y, n, 1, FELT_LT, 1); break;
+                default: gfx_hline(x0, y, n, FELT_LT); dither(x0, y, n, 1, FELT, 0); break;
             }
         }
     }
@@ -309,13 +311,13 @@ void window(const Slots &g, const View &v, uint32_t frame, bool full) {
         armWall();
         fillRound(C_BODY_W, ARM_PIVOT - 8, 9, 16, 2, SILVER);
         gfx_hline(C_BODY_W, ARM_PIVOT - 7, 8, WHITE);
-        gfx_dither(C_BODY_W, ARM_PIVOT + 1, 9, 7, NAVY, 0);                 // the mount, lit from above
+        dither(C_BODY_W, ARM_PIVOT + 1, 9, 7, NAVY, 0);                 // the mount, lit from above
         gfx_fillRect(C_BODY_W + 6, ARM_PIVOT + 5, 3, 3, NAVY);
         gfx_rect(C_BODY_W - 1, ARM_PIVOT - 8, 10, 16, INK);
         // The body's edge falls into shadow where the mount joins it.
-        gfx_dither(C_BODY_W - 5, ARM_PIVOT - 20, 3, 40, NAVY, 0);
+        dither(C_BODY_W - 5, ARM_PIVOT - 20, 3, 40, NAVY, 0);
         gfx_fillRect(C_BODY_W - 4, ARM_PIVOT - 9, 2, 18, NAVY);
-        gfx_dither(C_BODY_W - 5, ARM_PIVOT - 9, 3, 18, SILVER, 1);
+        dither(C_BODY_W - 5, ARM_PIVOT - 9, 3, 18, SILVER, 1);
         int ky = ARM_TOP + (ARM_BOTTOM - ARM_TOP) * v.arm / 64;
         // The arm swings toward you through the middle of its travel: the knob grows.
         int kd = ky > ARM_PIVOT ? ky - ARM_PIVOT : ARM_PIVOT - ky, kr = kd < 9 ? 7 : (kd < 20 ? 6 : 5);
@@ -419,7 +421,7 @@ static const uint8_t PAY_ROWS[M_COUNT] = {C_COUNT + 2, F_COUNT, S_COUNT + 1};
 
 int payScrollMax(const Slots &g) { return PAY_ROWS[g.machine] * PAY_ROW - (PAY_BOT - PAY_TOP); }
 
-// text35 does not clip: a line shows only while it is wholly inside the list.
+// A line shows only while it is wholly inside the list (never cut in half).
 static void ptext(int x, int y, const char *t, uint8_t c, bool right = false) {
     if (y < PAY_TOP || y + 5 > PAY_BOT) return;
     if (right) right35(x, y, t, c); else text35(x, y, t, c);

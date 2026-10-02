@@ -8,6 +8,13 @@
 
 namespace mach {
 
+// The felt (FELT_DK, FELT, FELT_LT), one per machine, in Machine's order
+// (game/Slots.h): the casino's green, DRAGON FORTUNE's maroon, jade and
+// orange, or SWEET's pink, mint and lilac (each machine's symbols are drawn
+// for its own). The sketch gives them to pal::setThemes() once.
+enum Theme : uint8_t { GREEN, FORTUNE, SWEET, THEME_COUNT };
+extern const uint16_t THEMES[THEME_COUNT][3];
+
 constexpr int8_t LINE_NONE = -1, LINE_ALL = 25;
 
 enum ReelState : uint8_t { STOPPED, SPINNING, LANDING };
