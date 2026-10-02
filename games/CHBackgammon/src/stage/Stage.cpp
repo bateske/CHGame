@@ -9,7 +9,7 @@
 #include "../ai/Ai.h"
 #include "../table/Table.h"
 #include "../fx/Fx.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../assets/Assets.h"
 
 namespace stage {

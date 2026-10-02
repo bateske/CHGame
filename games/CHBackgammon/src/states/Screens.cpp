@@ -6,7 +6,7 @@
 #include "Screens.h"
 #include "../gfx/Font.h"
 #include "../fx/Fx.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../table/Table.h"
 #include "../ai/Ai.h"
 #include "../ai/Net.h"

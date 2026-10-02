@@ -6,7 +6,7 @@ Agent-facing notes for continuing work on this game. Rules, controls and build s
 
 - Imported from https://github.com/bateske/CHBackgammon at commit 80cf126 (2026-10-01). Develop here now, not in the old repo.
 - Release build (`CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly`, core 0.2.4, CHGfx 1.3.0): flash 49,268 of 50,944 B (1,676 spare), static RAM 16,924 of 18,416 B (1,492 spare).
-- Save pages: `python ../../tools/check_size.py build/release` reports the image as 49,524 B. Both A/B save pages (0xF500/0xF600) need the image to stay at or below 50,432 B, so the real margin is about 900 B. Treat flash as full.
+- Save pages: `python ../../tools/check_size.py build/release` reports the image as 49,524 B. Both A/B save pages (0xF500/0xF600) need the image to stay at or below 50,432 B, so the real margin was about 900 B at import. On the CHGame library's sound engine (2026-10-02) the image is 50,152 B: 280 B left. Treat flash as full.
 - Verification as of 2026-10-01: simulator only. `python tools/check.py` passes. It runs the host tests (UBSan, rules against a naive reference, whole matches, the CPU), runs every script twice with identical frames, checks that the network's evaluation is bit-identical in the simulator and on the host, and compiles the release build.
 - It has never run on the board. Frame times, CPU thinking time, sound and saving on the hardware are all unmeasured.
 
