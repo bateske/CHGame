@@ -5,8 +5,8 @@
 // The rules are in src/rules, the CPU's search in src/ai, the game's flow and
 // the dealer's lines in src/game, and everything you see and hear in
 // src/render, src/stage and src/states.
-#include "config.h"
 #include <CHGame.h>
+#include "config.h"
 #include "src/Frame.h"
 
 void setup() {

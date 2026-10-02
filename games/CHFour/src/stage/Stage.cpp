@@ -470,7 +470,7 @@ bool render(uint32_t frame, uint32_t ui) {
     return true;
 }
 
-#if CHF4_DEBUG
+#if CHGAME_DEBUG
 void showEnding(uint8_t who) {
     winnerSide = who;
     endFace = E_SMILE;

@@ -12,7 +12,6 @@
 #include "../game/Game.h"
 #include "../stage/Stage.h"
 #include "../save/Save.h"
-#include "../debug/Debug.h"
 #include "../assets/Assets.h"
 #ifdef CHSIM
 #include <sim.h>
@@ -49,7 +48,7 @@ static const char *const OPP_LINE[game::LEVELS] = {
     "A GENTLE\nGAME TO\nWARM UP.", "A PROPER\nCHALLENGE.\nGOOD LUCK!", "MY VERY\nBEST PLAY.\nGOOD LUCK!"};
 static const uint8_t OPP_FACE[game::LEVELS] = {table::E_SMILE, table::E_NORMAL, table::E_RAISED};
 
-#if CHF4_DEBUG
+#if CHGAME_DEBUG
 // The CPU's last think (debug W): how long, and its longest slice of a tick.
 static uint32_t thinkAt, thinkMs, sliceUs;
 static bool wasThinking;
@@ -346,13 +345,13 @@ static void playUpdate() {
             if (stage::ready() && game::humanToMove()) playInput();
             break;
     }
-#if CHF4_DEBUG
+#if CHGAME_DEBUG
     bool th = game::cpuThinking();
     uint32_t t0 = micros();
     if (th && !wasThinking) { thinkAt = millis(); sliceUs = 0; }
 #endif
     game::update(stage::busy());            // the CPU thinks a little in here
-#if CHF4_DEBUG
+#if CHGAME_DEBUG
     if (th && micros() - t0 > sliceUs) sliceUs = micros() - t0;
     if (wasThinking && !game::cpuThinking()) thinkMs = millis() - thinkAt;
     wasThinking = game::cpuThinking();
@@ -462,7 +461,7 @@ static void optionsRender(uint32_t frame) {
 // ---------------------------------------------------------------------------
 // Debug protocol hooks (tools/chsim/chdrive.py 'say')
 // ---------------------------------------------------------------------------
-#if CHF4_DEBUG
+#if CHGAME_DEBUG
 //   G <mode> <level> <first> <seed>   start a game (mode 0 against the dealer, 1 two players)
 //   M <mode> <level> <first> <moves>  ... from a position: the columns played so far, 1..7 (M 0 2 0 4435)
 //   D <column>                        the person to move drops a disc in column 1..7
@@ -589,7 +588,7 @@ void begin() {
     if (opt.level >= game::LEVELS) opt.level = 0;
     if (opt.first > 2) opt.first = 0;
     applyOptions();
-#if CHF4_DEBUG
+#if CHGAME_DEBUG
     dbg::hook = debugHook;
 #endif
     enter(Scr::Title);

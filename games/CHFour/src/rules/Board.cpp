@@ -1,6 +1,6 @@
 #pragma GCC optimize("O2")       // the CPU's search lives in these few functions
 #include "Board.h"
-#include "../RamFunc.h"
+#include <chgame/RamFunc.h>
 
 namespace c4 {
 

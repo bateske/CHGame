@@ -1,6 +1,6 @@
 #pragma GCC optimize("O2")
 #include "Ai.h"
-#include "../RamFunc.h"
+#include <chgame/RamFunc.h>
 
 namespace ai {
 

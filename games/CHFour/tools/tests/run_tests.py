@@ -11,6 +11,8 @@ ROOT = HERE.parent.parent
 sys.path.insert(0, str(HERE.parents[3] / "tools" / "chsim"))  # CHCasino/tools/chsim (find_cxx)
 from chsim import find_cxx  # noqa: E402
 
+LIB = HERE.parents[3] / "platform" / "libraries" / "CHGame" / "src"   # chgame/RamFunc.h
+
 # The pure-logic sources, compiled beside the tests as they are.
 SOURCES = [HERE / "test_four.cpp", ROOT / "src" / "rules" / "Board.cpp", ROOT / "src" / "ai" / "Ai.cpp",
            ROOT / "src" / "game" / "Game.cpp", ROOT / "src" / "game" / "Taunt.cpp"]
@@ -22,7 +24,7 @@ def main():
     cmd = find_cxx() + ["-std=gnu++17", "-O2", "-Wall", "-Wextra", "-Wno-unused-parameter",
                         "-Wno-unused-function", "-Wno-unused-variable", "-Wno-unknown-pragmas",
                         "-fsanitize=undefined", "-fno-sanitize-recover=undefined",
-                        "-DCHTEST", "-DCHSIM", *[str(s) for s in SOURCES], "-o", str(exe)]
+                        "-DCHTEST", "-DCHSIM", f"-I{LIB}", *[str(s) for s in SOURCES], "-o", str(exe)]
     r = subprocess.run(cmd, capture_output=True, text=True)
     if r.returncode:
         sys.stderr.write(r.stdout + r.stderr)
