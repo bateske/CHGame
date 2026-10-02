@@ -50,13 +50,13 @@ Opponents and flash priorities:
 
 ## Open items
 
-- Awaiting the owner: building with `-DCHGFX_ISR_IN_SRAM` (its SRAM paid for by moving the `text35x2` RAMFUNC to flash); the pacing constants (`SEARCH_MS`, `BURST_MS`, `BOB_MS`) were deliberately left unchanged after the faster CHGfx 1.3 build.
+- Awaiting the owner: building with `-DCHGFX_ISR_IN_SRAM` (its SRAM is there now: the CHGame library draws `text35x2` from flash, which freed ~300 B); the pacing constants (`SEARCH_MS`, `BURST_MS`, `BOB_MS`) were deliberately left unchanged after the faster CHGfx 1.3 build.
 - Twice a scripted device move was refused because the game had gone to the title mid-script. Not reproducible; possibly buttons pressed on the board during the run.
 
 ## Gotchas
 
-- RAM is the scarcer budget (544 B). Every RAMFUNC costs SRAM as well as flash. Game RAMFUNCs go through `src/RamFunc.h` (`.gnu.linkonce.r.chch.<name>`); each needs its own name.
-- CHGfx 1.3: only `gfx_fillEllipse` (and the staged palette) were adopted. Rounded rects, dither, `sprite4`, `spriteRot`, shake, `copyRow`, the 3x5 font / `text35` / `text35x2` / `Mask.cpp` stay game code because CHGfx's versions measured bigger or slower. Per-item table in `docs/CHGfx-notes.md`; measure before swapping any of them.
+- RAM is the scarcer budget (840 B free since the move to the CHGame library). Every RAMFUNC costs SRAM as well as flash. Game RAMFUNCs go through `src/RamFunc.h` (`.gnu.linkonce.r.chch.<name>`); each needs its own name.
+- CHGfx 1.3: only `gfx_fillEllipse` (and the staged palette) were adopted. Rounded rects, dither, `sprite4`, `spriteRot`, shake, `copyRow` (`src/iso/Iso.cpp`), the 3x5 font / `text35` / `text35x2` / masks stay off CHGfx because its versions measured bigger or slower. All but `copyRow` (and the palette, the `fx::` maths and the input) are the CHGame library's now (`platform/libraries/CHGame`, `<CHGame.h>`), not game code. Per-item table in `docs/CHGfx-notes.md`; measure before swapping any of them.
 - Measured on the board (CHGfx 1.3 debug builds): full redraw 6.0 ms normal, 5.6 map, 7.8 zoomed; whip-zoom frames 6.1 ms average, 8.6 worst; GRANDMASTER 9.2-9.3 s a move with bursts and bobs (raw search ~7 s, ~1,700 nodes/s). Scripts: `tools/scripts/device_render.txt`, `device_think.txt`.
 - Stack: main peaks ~1,552 of 2,048 B. Frames drawn from inside the search run on `Frame.cpp`'s own 1 KB stack (peak ~640 B).
 - Chip facts found here (more in `../../docs/performance.md`): flash code ~5 cycles an instruction, SRAM code ~2; newlib's `memmove` is a byte loop in flash; an async full flush costs ~5 ms of CPU; pieces take ~5 ms (~1.2 us per sprite run); `sprite4` needs separate 1:1 and scaled loops (register pressure); a packed-nibble sprite format was tried and reverted.

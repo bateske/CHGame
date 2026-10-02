@@ -26,7 +26,7 @@ ROOT = HERE.parent
 GEN = HERE / "art" / "gen"
 PREVIEW = ROOT / "build" / "assets"
 
-# Palette (src/gfx/Palette.cpp), RGB444.
+# Palette (pal::HOUSE, platform/libraries/CHGame/src/chgame/Palette.cpp), RGB444.
 PALETTE = [0x000, 0xFFF, 0x042, 0x173, 0x4B5, 0xBBC, 0xE12, 0x702,
            0xFC2, 0x741, 0x26E, 0x125, 0xFB8, 0x6EF, 0xF0F, 0xFC2]
 INK, WHITE, SILVER, BLUE, CYAN, GOLD, WOOD = 0, 1, 5, 10, 13, 8, 9
