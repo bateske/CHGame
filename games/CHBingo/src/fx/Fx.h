@@ -1,8 +1,8 @@
-// Motion and sparkle: a particle pool, pop-up banners, floating "+$15"
-// texts and screen shake (easing and randomness are in Ease.h).
+// Sparkle: a particle pool, pop-up banners and floating "+$15" texts, on
+// top of the CHGame library's fx:: (easing, integer sine, randomness and the
+// screen shake).
 #pragma once
-#include <stdint.h>
-#include "Ease.h"
+#include <CHGame.h>
 
 namespace fx {
 
@@ -20,7 +20,6 @@ void holdBanner(bool on);            // keep the banner up (before it blinks out
 bool bannerActive();
 
 void floatText(const char *text, int x, int y, uint8_t colour);
-void shake(uint8_t frames, uint8_t amplitude);
 
 // Vertical extent of everything transient on screen (particles, floats,
 // banner, shake). Returns false if nothing is moving.
@@ -32,7 +31,6 @@ void update();                      // once per logic tick
 void drawParticles(uint8_t dust = 2);
 void drawBanner();
 void drawFloats();
-void applyShake(int y0, int y1);    // post-process rows y0..y1 of the framebuffer
 extern const uint8_t RAIN[5];        // the casino rainbow: red, gold, green, cyan, blue
 
 }  // namespace fx

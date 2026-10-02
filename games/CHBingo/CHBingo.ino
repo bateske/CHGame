@@ -6,9 +6,7 @@
 // Frame loop: logic runs while the previous frame is still going out over
 // DMA; drawing waits for it (one framebuffer), then the new frame is sent.
 #include "config.h"
-#include <CHGfx.h>
-#include "src/CHGame.h"
-#include "src/gfx/Palette.h"
+#include <CHGame.h>
 #include "src/states/Screens.h"
 #include "src/save/Save.h"
 #include "src/debug/Debug.h"
@@ -16,7 +14,6 @@
 #if CHBN_DEBUG
 #ifdef CHSIM
 #include <string.h>
-#include "src/gfx/Fmt.h"
 uint64_t sim_hostNanos();
 // Q: calibration for chdrive's cal - host ns for the primitives the CHGfx
 // benchmark measured on the board (benchmark-results.txt), so the

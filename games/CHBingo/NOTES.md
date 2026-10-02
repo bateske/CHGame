@@ -23,7 +23,7 @@ Made by the owner:
 - Only one and a half cards are visible, so play is swiping. A card holding a called, undaubed number gets a rainbow outline.
 - The player races a hall of rivals; the twists are power-ups and a progressive jackpot.
 - Depth everywhere: shaded panels, cards, daubs and pips, plus drop shadows.
-  - Panels are layers of one rounded shape: the shadow follows the corners, the outline is one colour and the rims follow the curve (`panel()` in `src/gfx/Draw.cpp`).
+  - Panels are layers of one rounded shape: the shadow follows the corners, the outline is one colour and the rims follow the curve (`panelLit()` in the CHGame library, `platform/libraries/CHGame/src/chgame/Draw.cpp`).
   - The owner dislikes jagged edges and shadows that ignore the contour.
   - Ball shadows are a single shrinking line.
 - Title:

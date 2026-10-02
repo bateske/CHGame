@@ -1,10 +1,8 @@
 #pragma GCC optimize("Os")
 #include <Arduino.h>
-#include <CHGfx.h>
+#include <CHGame.h>
 #include "../config.h"
 #include "Frame.h"
-#include "CHGame.h"
-#include "gfx/Palette.h"
 #include "states/Screens.h"
 #include "stage/Stage.h"
 #include "debug/Debug.h"

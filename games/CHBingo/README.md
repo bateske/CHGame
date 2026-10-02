@@ -43,8 +43,9 @@ You need the Arduino IDE (2.x) or `arduino-cli`, and:
 1. **The CHGame board package, 0.2.4 or later**: see [Installing](../../README.md#installing)
    in the repository's README.
 2. **The CHGfx library, 1.3.0**, in this repository at
-   [`platform/libraries/CHGfx`](../../platform/libraries/CHGfx). Copy it into your
-   sketchbook's `libraries/` folder.
+   [`platform/libraries/CHGfx`](../../platform/libraries/CHGfx), and **the CHGame
+   library** at [`platform/libraries/CHGame`](../../platform/libraries/CHGame).
+   Copy both into your sketchbook's `libraries/` folder.
 3. **This game's folder**, `games/CHBingo` of this repository (keep the name `CHBingo`).
 
 Pick *Tools > Optimize > Smallest + LTO* and *Tools > USB > Upload only*
@@ -165,10 +166,9 @@ C++ compiler for the simulator and tests (zig, clang++ or g++ on the PATH,
     config.h             build switches
     src/game/Bingo.*     the rules: no graphics, no sound, host-tested
     src/fx/Presenter.*   events to motion: the caller, the carousel, the wins
-    src/fx/Fx.*, Ease.*  particles, banners, floating text, easing
+    src/fx/Fx.*          particles, banners, floating text
     src/render/          the wall (Table), the cards, the buy-in and the bar (Cards)
     src/states/          title, play, pause, options, stats, broke
-    src/gfx/             palette, drawing, the 3x5 font, outlined lettering
     src/audio/           the piezo sequencer and its effects
     src/save/            the two flash pages
     src/debug/           the serial protocol

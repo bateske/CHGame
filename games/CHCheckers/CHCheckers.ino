@@ -7,8 +7,7 @@
 // The same frame runs from inside the CPU's search (see src/Frame.h), so the
 // game keeps moving while the engine thinks.
 #include "config.h"
-#include <CHGfx.h>
-#include "src/CHGame.h"
+#include <CHGame.h>
 #include "src/Frame.h"
 
 void setup() {

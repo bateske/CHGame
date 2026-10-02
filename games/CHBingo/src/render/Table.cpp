@@ -1,14 +1,10 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask and CHGfx)
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library and CHGfx)
 // The wall band, from CHBlackjack's render/Table.cpp, with a board of the
 // last balls where its shoe was.
-#include <CHGfx.h>
+#include <CHGame.h>
 #include <string.h>
 #include "Table.h"
 #include "Layout.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Fmt.h"
-#include "../gfx/Palette.h"
-#include "../gfx/Remap.h"
 #include "../game/Bingo.h"
 #include "Cards.h"
 #include "../assets/Assets.h"
@@ -70,7 +66,7 @@ void rail() {
 
 void plaque(int32_t purse, int32_t pot, uint8_t flash) {
     int x = PLAQUE_X, y = PLAQUE_Y;
-    panel(x, y, PLAQUE_W, PLAQUE_H, 3, INK, GOLD);
+    panelLit(x, y, PLAQUE_W, PLAQUE_H, 3, INK, GOLD);
     text35(x + 4, y + 3, "PURSE", FELT_LT);
     char buf[12];
     fmtMoney(buf, purse);
@@ -87,7 +83,7 @@ void plaque(int32_t purse, int32_t pot, uint8_t flash) {
 
 void tote(const uint8_t *balls, uint8_t n) {
     int x = TOTE_X, y = TOTE_Y;
-    panel(x, y, TOTE_W, TOTE_H, 3, INK, GOLD);
+    panelLit(x, y, TOTE_W, TOTE_H, 3, INK, GOLD);
     for (uint8_t i = 0; i < 5 && i < n; i++) {
         uint8_t b = balls[n - 1 - i];
         char s[4];
@@ -101,7 +97,7 @@ void tote(const uint8_t *balls, uint8_t n) {
 
 void speechBubble(const char *src, int typed, bool big) {
     int x = BUBBLE_X, y = BUBBLE_Y, w = BUBBLE_W, h = BUBBLE_H;
-    panel(x, y, w, h, 4, WHITE, INK);
+    panelLit(x, y, w, h, 4, WHITE, INK);
     // Tail toward the caller's mouth.
     for (int i = 0; i < 5; i++) {
         gfx_hline(x - 5 + i, y + 22 + i, 6 - i, WHITE);

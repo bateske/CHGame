@@ -1,15 +1,12 @@
 #pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Iso)
 #include <string.h>
-#include <CHGfx.h>
+#include <CHGame.h>
 #include <Arduino.h>
 #include "../../config.h"
 #include "Stage.h"
 #include "../game/Match.h"
 #include "../engine/Engine.h"
 #include "../iso/Iso.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Palette.h"
-#include "../gfx/Fmt.h"
 #include "../fx/Fx.h"
 #include "../audio/Audio.h"
 #include "../assets/Assets.h"
