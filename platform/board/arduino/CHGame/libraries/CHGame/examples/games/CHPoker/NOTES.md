@@ -49,10 +49,10 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 - The debug protocol is the CHGame library's (`chgame/Debug.h`, on with `CHGAME_DEBUG`; its hello is `CHPK <version>`). This game's `tools/chsim/chdrive.py` (on the shared `tools/chsim/chdrivelib.py`) adds the ops `waitturn`, `playto P`, `table` and `cal` (with `cal` first, `perf` prints estimated device render times).
 - CPU tuning is the `Level` table at the top of `src/game/Ai.cpp`: samples, noise, slack, bet/raise thresholds, first-street fold floor, bluff, slow-play, fear, position.
   - Tuned targets: ROOKIE calls about 60%, PRO folds about 2/3, SHARK raises about as often as it calls.
-  - Rerun `run_tests.py` after any change.
+  - Rerun `chgame test` after any change.
 - CPU thinking runs a fixed number of play-outs, only on a frame's first logic tick. Keep it that way: it keeps the table animating and lockstep scripts deterministic.
 - The royal flush and the four sevens in `tools/scripts/gameplay.txt` and `showcase.txt` come from stacked decks. Everything else in them is the CPUs playing, so a CPU tuning change alters the README GIF: record it again.
-- Art: `tools/assets.py` packs local copies in `tools/art/` (CHBlackjack's card art, CHChess's glove, and `logo.txt`, "Poker" in the letters of PPOT's BlackJack logo); it does not read the sibling games. Credit Press Play On Tape as NOTICE does.
+- Art: `tools/assets.py` packs `logo.txt` from `tools/art/` ("Poker" in the letters of PPOT's BlackJack logo) and CHBlackjack's card art and CHChess's glove from the shared `tools/art/common/` at the repository root; it does not read the sibling games. Credit Press Play On Tape as NOTICE does.
 - Compiler: the simulator and tests need `CHSIM_CXX` set, or zig/clang++/g++ on PATH (see the root CLAUDE.md).
 
 ## How it fits

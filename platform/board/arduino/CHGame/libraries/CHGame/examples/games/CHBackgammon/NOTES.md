@@ -16,7 +16,7 @@ Agent-facing notes for continuing work on this game. Rules and controls are in [
 - Chosen: a top-down view with the whole board always visible. A 2x punch-in whip zoom is kept for the big moments only.
 - Chosen: the default is a single game without the cube. Match play (MATCH TO 3/5/7) with the doubling cube, Crawford and the game's own match equity table (`tools/train/met.py`) is opt-in on the setup screen.
 - Chosen: at the end of a turn the glove goes to the dice. A picks them up and passes the turn; B takes the last move back. Nothing is final until the dice are up.
-- Chosen: the game has its own slab-serif display font (`tools/art/font.txt`) for the logo, banners and headings, like Blackjack's title lettering.
+- Chosen: the game has its own slab-serif display font (drawn here; now the shared `tools/art/common/font.txt`, used by CHCrossword, CHFour and CHWords too) for the logo, banners and headings, like Blackjack's title lettering.
   - The logo uses a plain lower-case 'o'.
   - Rejected: a checker as the logo's 'o'.
   - Rejected: a dark red (WINE) drop shadow on display-font lettering.
@@ -132,7 +132,7 @@ Agent-facing notes for continuing work on this game. Rules and controls are in [
   the checker for the close-ups. A still board is not redrawn: the frame is
   sent again, so the palette effects (the shimmering targets, the outlines,
   the lettering's shimmer) keep moving for free.
-* **The lettering** is a slab serif drawn for the game (`tools/art/font.txt`,
+* **The lettering** is a slab serif drawn for the game (the shared `tools/art/common/font.txt`,
   capitals and figures 11 pixels high, a few lower-case letters for the
   logo): 600 bytes of packed bits, drawn through CHBlackjack's mask code
   for the outlined, gradient-filled logo, banners and headings, and plain
@@ -163,8 +163,8 @@ Everything can be checked on a PC (Python 3 with `pip install -r ../../../../../
     chgame upload       # build and upload the release
     chgame audio out/audio     # the sound effects as WAV
 
-- `tools/check.py`: the host tests; each script in `tools/scripts` run in the simulator twice (the frames must be identical; `--quick` runs each once); the network's evaluation the same in the simulator as on the host; the device build compiled and sized (`--no-device` skips it). `--compare A B` compares two runs' images (the simulator's against the board's).
-- `tools/tests/run_tests.py`: the rules against the reference implementation, the step-by-step validator (every way of playing a turn ends on a legal position, and can never get stuck), the dice (chi-square), hundreds of whole matches through the game's own calls with take-backs, doubles, takes, passes, the Crawford rule, save and reload, the notation, the cube's judgement, and the CPU (always legal, the same choice however its thinking is sliced; its incremental evaluation the same as a fresh one).
+- `chgame check`: the host tests; each script in `tools/scripts` run in the simulator twice (the frames must be identical; `--quick` runs each once); the network's evaluation the same in the simulator as on the host; the device build compiled and sized (`--no-device` skips it). `--compare A B` compares two runs' images (the simulator's against the board's).
+- `chgame test`: the rules against the reference implementation, the step-by-step validator (every way of playing a turn ends on a legal position, and can never get stuck), the dice (chi-square), hundreds of whole matches through the game's own calls with take-backs, doubles, takes, passes, the Crawford rule, save and reload, the notation, the cube's judgement, and the CPU (always legal, the same choice however its thinking is sliced; its incremental evaluation the same as a fresh one).
 - Scripts: `say X <side> <position>` sets up a position (`w 6:5 8:3 r 24:2 ..`: each side's points and counts; `say V <side> <opponent> <position>` against the CPU), `say G <mode> <level> <seed> [length]` starts a game (mode 0 against the CPU, 1 two players), `say C <length> <white> <red> <cube> <owner> <crawford>` sets the match, `say D 6431` stacks the next rolls, `move 13 7` walks the glove with D-pad presses and picks up and sets down, `waitturn` waits for your turn, `auto` plays on for you, `snap` and `rec` take pictures, `cal` and `perf` estimate the device's render time. `showcase.txt` and the others are tests now: only `gameplay.txt` makes a README picture.
 - Training: `python tools/train/train.py train out/net.bin --games 600000` trains a network from nothing; `bench int:tools/train/net.bin heur` plays two players against each other (`random`, `pips`, `heur`, `float:<file>`, `int:<file>`, and the game's own opponents `ai0:` `ai1:` `ai2:`); `export tools/train/net.bin src/ai/NetData.cpp` writes the tables; `race src/ai/RaceData.cpp` fits the race table. `python tools/train/met.py src/ai/MetData.cpp` works out the match equity table.
 - `chgame upload --debug` adds the serial protocol (screenshots, injected input, lockstep); the debug build is lean (Gotchas). `tools/scripts/device_render.txt` and `device_think.txt` measure the render time and the CPU on the board.

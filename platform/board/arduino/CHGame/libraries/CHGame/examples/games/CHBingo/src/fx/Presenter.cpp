@@ -352,8 +352,8 @@ static void wallBand(const Bingo &g, uint8_t expr) {
 }
 
 bool render(const Bingo &g, uint32_t frame) {
-#ifdef FORCE_FULL
-    forceAll = true;                                        // tools/chsim/diffdrive.py's reference build
+#ifdef CHSIM_FORCE_FULL
+    forceAll = true;                                        // the redraw check's reference build (chgame redraw)
 #endif
     uint8_t expr = exprFor(face);
     if (bubOn && bubChars < bubLen && ((frame >> 2) & 1)) expr = table::E_TALK;

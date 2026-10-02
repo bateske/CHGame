@@ -53,8 +53,8 @@ To put it on the handheld, see [Installing](../../../../../../../../../README.md
 ## Developer notes
 
 - **Rules first, show after.** `src/game/Slots.cpp` settles a spin in one call (stops, wins, features) and has no graphics in it; `src/fx/Presenter.cpp` replays the result as reels, banners and coins while the rules wait. The host tests link the rules alone.
-- **Generated reel strips.** `tools/strips.py` lays out `src/game/Strips.h` from symbol counts with a fixed seed, and `tools/tests/run_tests.py` measures the returns quoted above for exactly those strips.
-- **Three bands, redrawn only when needed.** The play screen is top, reels and bottom, each redrawn only when what it shows changed or something moved across it. `tools/chsim/diffdrive.py` runs the game beside a build that redraws everything every frame and reports any stale pixel.
+- **Generated reel strips.** `tools/strips.py` lays out `src/game/Strips.h` from symbol counts with a fixed seed, and `chgame test` measures the returns quoted above for exactly those strips.
+- **Three bands, redrawn only when needed.** The play screen is top, reels and bottom, each redrawn only when what it shows changed or something moved across it. `chgame redraw` runs the game beside a build that redraws everything every frame and reports any stale pixel.
 - **A palette per machine.** The art uses the series' 16 colours; `mach::THEMES` in `src/render/Machine.cpp`, handed to the library's `pal::setThemes()` in `CHSlots.ino`, swaps the three felt greens for maroon, jade and orange on DRAGON FORTUNE and pink, mint and lilac on SWEET.
 - **Tunes under the effects.** The three `audio::Melody` tunes in `src/audio/Sounds.cpp` are one line of notes each, looped by the CHGame library beneath the sound effects.
 - More in [NOTES.md](NOTES.md): design decisions, sizes, tests, the script commands and open items.

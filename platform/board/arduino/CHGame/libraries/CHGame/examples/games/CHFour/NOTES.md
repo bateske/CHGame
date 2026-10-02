@@ -13,7 +13,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 
 - Name: FOUR IN A ROW. Never "Connect Four" (a Hasbro trademark), in the game or the docs.
 - Modes: 1P vs the dealer (ROOKIE / SHARK / THE BOSS, W-L-D record saved) and 2P pass-and-play. No betting.
-- Opponent: CHBlackjack's dealer sprite, unchanged and not recoloured (`tools/art/dealer.png`, `faces.png`, byte-identical to CHBlackjack's). Rejected: a new villain character.
+- Opponent: CHBlackjack's dealer sprite, unchanged and not recoloured (`dealer.png` and `faces.png` in the shared `tools/art/common/`, CHBlackjack's files). Rejected: a new villain character.
 - Persona: courteous to the max, professional, a friendly coach. Commentary stays, but specific to the position in front of the player; he congratulates a win and encourages another try after a loss. No taunting. (The villain voice of the first build was rejected.)
 - Ending: whip-zoom on the winning four, then one quiet full-screen scene for both results - gold banner GOOD GAME when the player wins, TRY AGAIN when the player loses - plus his typed line. Rejected as over the top: sunburst, rainbow, confetti.
 - Table: depth plus one interesting ambient element, without going overboard. Kept: marquee bulbs on the rail; a circular green gradient (all the felt shades in rings from the centre). Rejected: a coffee cup, a gold printed circle, any cigarette (CHBlackjack's about-screen smoke was liked, but not with a cigarette).
@@ -54,5 +54,5 @@ Everything can be checked on a PC (Python 3 with Pillow, and a C++ compiler for 
     chgame size --top 20
 
 - Scripts: `say M 0 2 0 4435` sets up a position against THE BOSS, `col 4` walks your disc to a column and drops it, `snap` and `rec` take pictures. The same scripts run on the device with a debug build (`chgame run --device SCRIPT OUTDIR`).
-- Art is in `tools/art`: `dealer.png` and `faces.png` (the seven expressions, 24x18 each), `font.txt`, `sides.txt` (each side's colours).
+- Art: `sides.txt` (each side's colours) in `tools/art`; `dealer.png` and `faces.png` (the seven expressions, 24x18 each) and `font.txt` in the shared `tools/art/common/` at the repository root (`tools/artlib.py` resolves them; a copy in `tools/art/` would take precedence).
 - The dealer is CHBlackjack's sprite: the body, a face patch, and each other expression as the pixels that differ.

@@ -95,7 +95,7 @@ Everything can be checked on a PC (Python 3 with `pip install -r ../../../../../
     chgame audio out/audio   # the effects and the title's tune to WAV
 
 - Host tests (`tools/tests/test_checkers.cpp`): move counts from the opening against the published numbers (7, 49, 302, 1469, 7361, 36768, 179740); every rule combination against a second, naive move generator written in the test; hand-made positions for each rule; both kinds of draw; 2,000 random games through the same calls the pad makes, with undo and save/load on the way; the CPU.
-- `tools/check.py` runs every script in `tools/scripts` twice and compares the frames. `--quick` runs each once, `--no-device` skips the device compile.
+- `chgame check` runs every script in `tools/scripts` twice and compares the frames. `--quick` runs each once, `--no-device` skips the device compile.
 - Scripts: `say X <32 cells> <w|b> <rules>` sets a position up, `auto N` plays N of your moves with the pad (the game picks them, the script walks the glove), `goto SQ` walks the glove to a square, `waitturn` runs until it is your move, `board` prints the board; `snap` and `rec` take pictures. The header of `tools/chsim/chdrive.py` lists them.
 - `gameplay.txt` records the README's clips (`01_title` ... `05_sweep`) at `rec start 4`; one opening move is all that fits beside the three showpieces under 1 MB, because the camera's dive changes every pixel. `showcase.txt` records the same showpieces (and a flying king and the CPU's turn) as separate GIFs, as a test only.
 - On the board: `chgame run --device SCRIPT OUTDIR` (a debug build, uploaded and driven the same way). What is still to do there is under *Open items*.

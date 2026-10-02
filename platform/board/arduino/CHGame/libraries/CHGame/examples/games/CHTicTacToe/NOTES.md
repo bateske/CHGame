@@ -6,7 +6,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 
 - Imported from https://github.com/bateske/CHTicTacToe at commit db8274c (2026-10-01); develop here now, not in the old repo.
 - Release build (FQBN `CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly`, core 0.2.4, CHGfx 1.3.0): flash 49,265 of 50,944 B (1,679 spare); the image is 49,644 B, 788 B under the 50,432 B line that keeps both save pages (2026-10-02, with the debug protocol, saving and RAMFUNC from the CHGame library too: chgame/Debug.h, chgame/Save.h; earlier that day the library's sound engine saved 316 B over the game's own sequencer, and its shared core 688 B over the game's own copies, which left 80 B), static RAM 14,580 of 18,416 B (3,836 spare). Trust check_size over any older figure.
-- Verification: simulator and host tests only, as of 2026-10-01 (not re-run since the import): `tools/tests/run_tests.py` (rules, dealer, match flow); scripts smoke, endings, save, iso, hover, perf, showcase, gameplay all deterministic with no BUG lines; `tools/chsim/diffdrive.py` on tools/scripts/diff_iso.txt with 0 stale frames. There is no tools/check.py here: run those plus `chgame build` by hand.
+- Verification: simulator and host tests only, as of 2026-10-01 (not re-run since the import): `chgame test` (rules, dealer, match flow); scripts smoke, endings, save, iso, hover, perf, showcase, gameplay all deterministic with no BUG lines; `chgame redraw` on tools/scripts/diff_iso.txt with 0 stale frames. There is no chgame check here: run those plus `chgame build` by hand.
 - Never run on a CHGame: frame times (simulator estimates: full iso frame ~7 ms, glove move ~5-6 ms), the dealer's thinking time and every sound are unchecked.
 
 ## Design decisions
@@ -42,11 +42,11 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 - Iso D-pad: the nearest cell in the pressed screen direction, scored `along + 3 * |perp|` (src/game/Match.cpp).
 - Debug hooks (CHTicTacToe.ino): `R seed`, `J <T|G|P|W|L|O|S> [table]`, `C cell [arg]`, `H cell` (the dealer's next move), `M purse`, `D 0..2` dealer level, `V ticks` BLITZ clock, `E 1|0` (a non-lean device debug build writes saves only after `E 1`), `Q` simulator calibration.
 - The README's one GIF, docs/gameplay.gif, is made by `chgame gif` from tools/scripts/gameplay.txt (clips 01_title, 02_classic, 03_vanish, 04_ultimate, 05_cat in out/gameplay). showcase.txt is kept as a test and records its clips into the folder it is given (use out/showcase, not docs/).
-- Simulator: `../../../../../../../../../tools/chsim/chsim.py` (shared; this game's tools/chsim/chdrive.py and diffdrive.py import it). Set `CHSIM_CXX` or have zig/clang++/g++ on PATH (see root CLAUDE.md). Size report: `../../../../../../../../../tools/check_size.py` (`tools/device.py build` runs it).
+- Simulator: `../../../../../../../../../tools/chsim/chsim.py` (shared; this game's tools/chsim/chdrive.py imports it). Set `CHSIM_CXX` or have zig/clang++/g++ on PATH (see root CLAUDE.md). Size report: `../../../../../../../../../tools/check_size.py` (`tools/device.py build` runs it).
 
 ## Development
 
-Everything can be checked on a PC (Python 3 with Pillow, and a C++ compiler for the host builds: root CLAUDE.md). There is no tools/check.py here.
+Everything can be checked on a PC (Python 3 with Pillow, and a C++ compiler for the host builds: root CLAUDE.md). `chgame check` runs it all.
 
     chgame test [table]   # the rules, the dealer, the match flow
     chgame sim
@@ -60,7 +60,7 @@ Everything can be checked on a PC (Python 3 with Pillow, and a C++ compiler for 
     chgame size
     chgame audio out/audio   # the effects as WAV files
 
-- `run_tests.py table` prints the dealer's results against a random player at every table and level.
+- `chgame test table` prints the dealer's results against a random player at every table and level.
 - Scripts (tools/scripts): `smoke` (every screen and table), `endings`, `save`, `iso`, `hover`, `perf`, `showcase` (a clip per feature), `gameplay` (the README GIF), `diff_iso` (for diffdrive). They use the common commands (`wait`, `tap`, `snap`, `rec`, `gif`, `say`, `perf`, `cal`) and the debug hooks listed under Gotchas: `say J P 4` jumps to table 5's play screen, `say H 8` fixes the dealer's next move, `say C 4` plays a cell.
 - In the Arduino IDE: *Tools > Optimize > Smallest + LTO* and *Tools > USB > Upload only* (the game has no use for USB Serial), with CHGfx and the CHGame library from platform/board/arduino/CHGame/libraries in the sketchbook.
 - Saving: options, statistics and the run (purse, table, stake, streak) in the last two flash pages, every five games and on leaving.

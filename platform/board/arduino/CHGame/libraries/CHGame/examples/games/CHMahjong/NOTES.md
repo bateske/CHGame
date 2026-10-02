@@ -19,7 +19,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
   - UP/DOWN use CHChess's nearest-in-direction rule.
   - LEFT/RIGHT step through the free tiles in reading order.
   - Reason: the pure directional rule left some tiles unreachable. A host test proves every free tile can be reached.
-- Chosen: the cursor is both the lifted tile with an FX_B outline and CHChess's glove (`tools/art/hand.png`).
+- Chosen: the cursor is both the lifted tile with an FX_B outline and CHChess's glove (the shared `tools/art/common/hand.png`).
 - Chosen: chips with streak scoring. The constants are in `src/game/Board.h` (`PAIR_PAYS`, `STREAK_FRAMES`, `HINT_COST`, `SHUFFLE_COST`, `CLEAR_BONUS`, `PAR_SECS`, `MAX_SHUFFLES`).
 - Rejected: a true isometric view (the genre uses the oblique view, and iso hides tiles at 128 px). Built instead: the hold-B 2x close-up, plus Options VIEW FULL/CLOSE.
 - Rejected: grey (SILVER) blocked tiles. Every tile is white with no blocked cue, and the glove shows which tiles are free. The reference look is GNOME Mahjongg.
@@ -81,7 +81,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 
 ## Development
 
-Everything can be checked on a PC (Python 3 with Pillow, and a C++ compiler for the host builds: root CLAUDE.md). There is no `tools/check.py` here yet.
+Everything can be checked on a PC (Python 3 with Pillow, and a C++ compiler for the host builds: root CLAUDE.md). `chgame check` runs it all.
 
     chgame test     # the board: layouts, deals, matching, saves, the cursor
     chgame sim

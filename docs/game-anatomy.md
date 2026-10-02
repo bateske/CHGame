@@ -68,7 +68,7 @@ game has:
 - `assets.py` and `art/`, the art pipeline;
 - `scripts/*.txt` for `chsim/chdrive.py` (the shared driver,
   `tools/chsim/chdrivelib.py`, plus the game's own script commands);
-- `tests/` with `run_tests.py`;
+- `tests/` (the host tests' sources; `tools/game.py` lists them);
 - `game.py` (the game's description for the shared tools: its host tests, its scripts' needs);
 - often `check.py`.
 

@@ -8,10 +8,10 @@ Agent-facing notes for continuing work on this game. Rules and controls are in [
 - Release build (`CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly`, core 0.2.4, CHGfx 1.3.0): flash 36,468 of 50,944 B (14,476 spare), static RAM 15,208 of 18,416 B (3,208 spare).
 - Save pages: `../../../../../../../../../tools/check_size.py` reports the image as 36,724 B, so both A/B save pages fit with about 13.7 KB to spare. This game has real flash room.
 - Verification as of 2026-10-01: simulator only. These all passed:
-  - `tools/tests/run_tests.py`: rules, races against the hall, money, power-ups, jackpot odds, round set-up against `tools/tests/ref_bingo.py`; about 1.24M checks.
+  - `chgame test`: rules, races against the hall, money, power-ups, jackpot odds, round set-up against `tools/tests/ref_bingo.py`; about 1.24M checks.
   - `tools/tests/sim_save.py`: save mid-round, power-cycle, continue.
-  - `tools/chsim/diffdrive.py` on `tools/scripts/diff/diff_soak.txt`: 0 stale pixels.
-- There is no `tools/check.py` in this game.
+  - `chgame redraw` on `tools/scripts/diff/diff_soak.txt`: 0 stale pixels.
+- `chgame check` runs the host tests, every script twice, the redraw check, the save test and the device build.
 - It has never run on the board. Render times, pacing, sound and saving on hardware are unmeasured.
 
 ## Design decisions
@@ -88,7 +88,7 @@ Everything can be checked on a PC (Python 3 with `pip install -r ../../../../../
     chgame build [--debug]                            # also upload, run --device SCRIPT OUTDIR, shot OUT.png
     chgame size     # flash and RAM from the map
 
-- `run_tests.py` covers the lines, the cards, the race against the hall over thousands of rounds (a player who daubs everything wins exactly when one of their cards is first or level), the money, the power-ups, the buttons, saving a round, the jackpot's odds, and the round set-up against an independent Python model.
+- `chgame test` covers the lines, the cards, the race against the hall over thousands of rounds (a player who daubs everything wins exactly when one of their cards is first or level), the money, the power-ups, the buttons, saving a round, the jackpot's odds, and the round set-up against an independent Python model.
 - Scripts (`tools/scripts`): `smoke.txt` is every screen and a round as screenshots, `perf.txt` estimates render times, `showcase.txt` records the buy-in, swiping, both banners and a rival's win as separate GIFs (a test now, written to its output folder, not `docs/`), `gameplay.txt` records the README's clips (`01_title` ... `06_rival`). `say R 21` seeds the round, `say J P` jumps to the buy-in, `say H n` sets the call a rival wins on, `say W` makes a bingo, `say I 1` forces the rare banner; the full list is at the top of `CHBingo.ino`. The same scripts run on the device with a debug build.
 - The device build wants *Optimize: Smallest + LTO* and *USB: Upload only* (the game has no use for USB Serial); `tools/device.py build` sets both.
 - Render times estimated from the simulator: a slide across the cards about 7 ms a frame, a daub with its splat about 8 ms, the title about 5 ms. None measured on the board.

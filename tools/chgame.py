@@ -118,25 +118,27 @@ def cmd_shot(a, sketch):
 
 
 def cmd_check(a, sketch):
-    tool = game_tool(sketch, "check.py")
-    if tool is None:
-        raise SystemExit(f"{sketch.name}: no tools/check.py")
-    return py(tool, *a.rest, cwd=sketch)
+    import check
+    rest = list(a.rest)
+    if "--compare" in rest:
+        i = rest.index("--compare")
+        rest[i + 1:i + 3] = [str(where(sketch, p, must_exist=True)) for p in rest[i + 1:i + 3]]
+    return check.main(sketch, rest)
 
 
 def cmd_test(a, sketch):
-    tool = game_tool(sketch, "tests", "run_tests.py")
-    if tool is None:
-        print(f"{sketch.name}: host tests: none")
-        return 0
-    return py(tool, *a.rest, cwd=sketch)
+    import hosttests
+    return hosttests.main(sketch, list(a.rest))
 
 
 def cmd_redraw(a, sketch):
-    tool = game_tool(sketch, "chsim", "diffdrive.py")
-    if tool is None:
-        raise SystemExit(f"{sketch.name}: no redraw check (tools/chsim/diffdrive.py)")
-    return py(tool, *a.rest, cwd=sketch)
+    import diffdrive                   # chgame redraw (tools/chsim is on sys.path)
+    rest = list(a.rest)
+    if len(rest) < 2:
+        raise SystemExit("usage: chgame redraw SCRIPT OUTDIR [TICKS]")
+    rest[0] = str(where(sketch, rest[0], must_exist=True))
+    rest[1] = str(where(sketch, rest[1]))
+    return diffdrive.main(sketch, rest)
 
 
 def cmd_gif(a, sketch):
@@ -159,7 +161,8 @@ def cmd_audio(a, sketch):
 
 
 def cmd_uploader(a, _sketch):
-    return subprocess.run([sys.executable, str(paths.UPLOADER), *a.rest]).returncode
+    from chgame_upload.cli import main as uploader_main
+    return uploader_main(list(a.rest))
 
 
 def cmd_pack(a, _sketch):

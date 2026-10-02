@@ -1,5 +1,5 @@
 """An independent model of the round set-up in src/game/Bingo.cpp: the
-generator, the draw, the cards and the call a rival wins on. run_tests.py
+generator, the draw, the cards and the call a rival wins on. chgame test
 compares its lines with the game's `--dump`."""
 
 M = 0xFFFFFFFF

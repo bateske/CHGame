@@ -11,9 +11,9 @@ Agent-facing notes for continuing work on this game. Rules and controls are in [
 - The debug protocol (`chgame/Debug.h`, `CHGAME_DEBUG`), the flash save record (`chgame/Save.h`; `src/save/Save.cpp` says only what the record holds, byte for byte the old layout) and RAMFUNC are the library's too since 2026-10-02, and `tools/chsim/chdrive.py` is the shared `tools/chsim/chdrivelib.py` plus this game's `board`, `waitturn` and `cal`. Image 49,612 -> 49,664 B (the library's `audio::setOn()` out of line, about +14 B; its save code, about +30 B), static RAM 15,052 B unchanged; frames unchanged.
 - Save pages: `../../../../../../../../../tools/check_size.py` reports the image as 49,664 B. Both A/B save pages need the image to stay at or below 50,432 B (0xF500 and 0xF600, the CHGame library's `chgame/Save.cpp`), so the margin is only about 768 B. Treat flash as full: any feature needs a cut first. LTO inlining makes small additions cost more than they look.
 - Verification as of 2026-10-01: simulator only.
-  - `tools/tests/run_tests.py` checks every rule, then plays 5,000 seeded games (CPUs and random "humans") checking that the books balance, houses stay even and every game ends, and prints a tuning table.
+  - `chgame test` checks every rule, then plays 5,000 seeded games (CPUs and random "humans") checking that the books balance, houses stay even and every game ends, and prints a tuning table.
   - The scripts in `tools/scripts` play through in the simulator.
-  - There is no `tools/check.py` here, so no automated run-twice determinism check.
+  - `chgame check` runs every script twice (the frames must be identical).
 - Status: complete and played through in the simulator. It has never run on the board: frame timing (pace, render profile) and the sound are unchecked.
 
 ## Design decisions
@@ -71,7 +71,7 @@ Agent-facing notes for continuing work on this game. Rules and controls are in [
   - The protocol owns `? S K L N P B`, and also `T` in a `CHGAME_PROFILE=1` build, where it shadows the game's token command `T`.
 - `CHBW_LEAN` is `#ifndef`-guarded: `-DCHBW_LEAN=0` forces a full device debug build, which won't fit without a temporary cut.
 - Art:
-  - `tools/art/sprites.txt` holds the sprites as palette letters. A `tools/art/<name>.png` replaces its sprite, and `chips.png`, `icon_chest.png`, `icon_jail.png` and `token_banana.png` already do, so editing those four in `sprites.txt` has no effect.
+  - `tools/art/sprites.txt` holds the sprites as palette letters. A `tools/art/<name>.png` replaces its sprite, and `chips.png`, `icon_chest.png`, `icon_jail.png` and `token_banana.png` (shared with CHSnakes: `tools/art/common/` at the repository root) already do, so editing those four in `sprites.txt` has no effect.
   - `python tools/sheet.py export` / `import [SHEET]` round-trips an indexed PNG. Colours are matched by value, and FX_B cannot be used in sprites because it is the transparent colour. An edited sheet saved elsewhere imports with `python tools/sheet.py import <path>`. Wide sprites (LOGO) get a row of their own.
   - Go To Jail is `ICON_JAIL` with SILVER turned RED, and the Community Chest deck is `CARD_DECK` with GOLD turned BLUE.
   - `python tools/lookdev.py` renders a contact sheet of the board at each zoom and tile treatment.

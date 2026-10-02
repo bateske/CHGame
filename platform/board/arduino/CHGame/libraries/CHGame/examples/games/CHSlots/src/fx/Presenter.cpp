@@ -489,8 +489,8 @@ void update(const Slots &g) {
 static uint32_t mixSig(uint32_t h, uint32_t x) { return (h ^ x) * 16777619u; }
 
 void render(const Slots &g, uint32_t frame) {
-#ifdef CHSL_FORCE_FULL
-    force = true;
+#ifdef CHSIM_FORCE_FULL
+    force = true;                                           // the redraw check's reference build (chgame redraw)
 #endif
     bool classic = g.machine == M_CLASSIC, three = g.machine != M_FORTUNE;
     int midY = three ? C_TOP_H : F_TOP_H, lowY = three ? C_LOW_Y : F_LOW_Y;

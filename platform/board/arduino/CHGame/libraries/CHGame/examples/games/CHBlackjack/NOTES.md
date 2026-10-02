@@ -9,7 +9,7 @@ Agent-facing notes for continuing work on this game. Rules and controls are in [
 - Save pages: `../../../../../../../../../tools/check_size.py` reports the image as 45,812 B, so both A/B save pages fit with about 4.6 KB to spare.
   - A build with the IDE defaults (no LTO, USB Serial) still cleared both pages when last measured, by about 60 B (see "How it fits" below). Any growth breaks that, so re-measure when the game grows.
 - Verification as of 2026-10-01: this is the most device-proven game here.
-  - Host tests: `tools/tests/run_tests.py` covers the rules, every payout, PPOT bug regressions and a 16,000-hand fuzz.
+  - Host tests: `chgame test` covers the rules, every payout, PPOT bug regressions and a 16,000-hand fuzz.
   - Simulator scripts in `tools/scripts`.
   - On the board, `device.py run` scripts run in lockstep, and the screenshots match the simulator's.
   - `pace.txt` gave about 300 frames per 5 s with no late frames.
@@ -51,8 +51,8 @@ Agent-facing notes for continuing work on this game. Rules and controls are in [
   - From CHGfx 1.3 directly: ellipses and `copyRow`.
   - The shake is the library's `fx::applyShake()` without a fill: the rows and columns the move uncovers shift in place. The earlier `gfx_scroll` shake left them as they were; that edge is the only pixel difference (`sc_double_bust`'s `h_bust`).
 - Generated files, don't hand-edit:
-  - `src/assets/Assets.cpp` comes from `python tools/assets.py`. The first run clones PPOT's repository into `tools/.cache/ppot` (gitignored), pinned to a commit, so it needs git and network. `tools/art/dealer.png` must use palette colours only.
-  - `src/audio/Music.cpp` comes from `python tools/make_music.py`.
+  - `src/assets/Assets.cpp` comes from `python tools/assets.py`. The first run clones PPOT's repository into `tools/.cache/ppot` (gitignored), pinned to a commit, so it needs git and network. `tools/art/common/dealer.png` (the shared copy, at the repository root) must use palette colours only.
+  - `src/audio/Music.cpp` comes from `python tools/make_music.py` (the songs; the composer is the repository's `tools/music/composer.py`).
 - Debug builds:
   - Every `CHGAME_DEBUG` build, the simulator included, has no music scores (`Music.cpp` is under `#if !CHGAME_DEBUG`). Listen with `chgame audio out/audio` or a release build.
   - Device debug builds (`CHBJ_LEAN`) also drop the credits page; `-DCHBJ_FULL` forces it back in.
@@ -101,8 +101,8 @@ Everything except timing and sound can be checked on a PC (Python 3 with `pip in
     chgame run --device tools/scripts/sc_split.txt out/   # the same script on the board, in lockstep
     chgame size --top 20
 
-- There is no `tools/check.py` here: the checks are the host tests and running the scripts (twice gives identical pictures).
+- `chgame check` runs the host tests, every script twice (identical pictures) and the device build.
 - Scripts: `say J <T|P|W|L|O|S|C>` jumps to a screen (P is a new game on a fresh table), `say D 26,8,25,46` stacks the deck with the next cards to be dealt, `say R 7` seeds the shoe; `snap`, `gif` and `rec` take pictures. `chdrive.py` flags drawing into the framebuffer while a flush is still converting it.
 - `gameplay.txt` records the README's clips (title, a blackjack, split and double, a bust, the win screen). `showcase.txt` and the `sc_*.txt` scripts are tests of the same scenes; `pace.txt` checks real-time frame pacing on the device (about 300 frames per 5 s, no late frames).
 - A `--debug` device build keeps USB Serial and adds the library's serial protocol (`chgame/Debug.h`); it leaves out the music and the credits page (see Gotchas).
-- `tools/assets.py` rebuilds `src/assets/` from Press Play On Tape's art (cloned into `tools/.cache/`, pinned to a commit) and the hand-drawn pieces in `tools/art/` (text sheets, and `dealer.png`).
+- `tools/assets.py` rebuilds `src/assets/` from Press Play On Tape's art (cloned into `tools/.cache/`, pinned to a commit) and the hand-drawn pieces: the text sheets in `tools/art/`, and `dealer.png` and the card art (`court`, `pip9`, `pip13`, `ranks`) in the shared `tools/art/common/` at the repository root.

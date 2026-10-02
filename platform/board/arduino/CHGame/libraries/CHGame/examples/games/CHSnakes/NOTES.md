@@ -55,7 +55,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 - Snakes are procedural bead chains pushed by a travelling sine wave. Only the head (`SNAKE_HEAD`, `SNAKE_HEAD_OPEN`) is art, and its `FELT_LT`/`FELT` pixels become each snake's two colours.
 - Art round trip:
   - `python tools/sheet.py export`, edit `tools/art/sheet.png` (indexed palette), then `python tools/sheet.py import`.
-  - The import writes each changed sprite to `tools/art/<name>.png`, which from then on overrides that sprite's letters in `tools/art/sprites.txt`. `token_banana.png` already does.
+  - The import writes each changed sprite to `tools/art/<name>.png`, which from then on overrides that sprite's letters in `tools/art/sprites.txt`. `token_banana.png` already does (it is the shared one in the repository's `tools/art/common/`; a copy in `tools/art/` would take precedence).
 - `CHSN_LEAN` is on for every device debug build (`CHGAME_DEBUG` on the board): no saving and no options screen.
   - It is the same switch as in CHBoardwalk, whose framework this game started from, although this game has room to spare: a full debug build is 39,940 B (2026-10-02).
   - To test saving on the board, build debug with `-DCHSN_LEAN=0` too (the macro is `#ifndef`-guarded): `tools/device.py` has no option for it, so use `arduino-cli compile` with `--build-property "build.extra_flags=-DCHGAME_DEBUG=1 -DCHSN_LEAN=0"` (plus the FQBN and `--library` paths in the root CLAUDE.md).

@@ -664,6 +664,9 @@ bool render(const Match &m, const Casino &c, uint32_t frame) {
                 fx::activeRows(lo, hi) || fx::bannerActive();
     bool motion = moving || wasMoving || moved || clk != clockSig;
     wasMoving = moving;
+#ifdef CHSIM_FORCE_FULL
+    full = full || motion;                                  // the redraw check's reference build (chgame redraw)
+#endif
     if (!full && !motion) return false;
     dirty = moved = false;
     clockSig = clk;

@@ -7,7 +7,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 - Imported from https://github.com/bateske/CHCraps at commit fa1fd77 (2026-10-01); develop here now, not in the old repo.
 - Release build (`opt=oslto,rtlib=nano,periph=game,usb=uploadonly`, core 0.2.4, CHGfx 1.3.0): flash 49,776 of 50,944 B (1,168 spare), static RAM 15,520 of 18,416 B (2,896 spare).
 - The image (`../../../../../../../../../tools/check_size.py`'s `image:` line; 50,032 B when last measured) is only ~400 B under the 50,432 B that keeps both A/B save pages (0xF500 and 0xF600, the CHGame library's `chgame/Save.cpp`). Past 0xF500 saving drops to one page; past 0xF600 it switches off.
-- Verification: simulator only. `tools/tests/run_tests.py` (every bet against an independent oracle, exact house edges, dice physics, zone reachability), `tools/tests/sim_save.py` (save mid-hand, debug `V` reboot and continue, the broke case), and the chdrive scripts in `tools/scripts`. There is no `tools/check.py` in this game.
+- Verification: simulator only. `chgame test` (every bet against an independent oracle, exact house edges, dice physics, zone reachability), `tools/tests/sim_save.py` (save mid-hand, debug `V` reboot and continue, the broke case), and the chdrive scripts in `tools/scripts`. There is no `chgame check` in this game.
 - As of 2026-10-01 it has never run on the device: frame times unmeasured, sound unheard.
 
 ## Design decisions
@@ -33,7 +33,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 
 - Flash is effectively full while both save pages are kept. Tactics already in use: chips and pucks are span sprites (the CHGame library's `sprite4`) recoloured by remap tables (drawn from CHBlackjack's chip, made by `tools/assets.py`); all 24 die orientations come from one walk of quarter turns stored in a 24-bit constant (`labelDie`, `WALK` 0x288A28 in `src/cam/Dice3D.cpp`); the dice share the game's sine table; no music.
 - Device debug builds get `CHCR_LEAN` automatically (`config.h`): no saving, no Options or Stats. `-DCHCR_FULL` forces the whole game into a debug build (check it fits).
-- Dice3D: integer Euler-angle cubes and a tilting pinhole camera; physics steps once per 60 Hz tick, so the dice keep their speed if a frame is slow. The throw is pre-simulated deterministically and the dice relabelled afterwards: any physics change moves where they land, so rerun `run_tests.py` after touching it.
+- Dice3D: integer Euler-angle cubes and a tilting pinhole camera; physics steps once per 60 Hz tick, so the dice keep their speed if a frame is slow. The throw is pre-simulated deterministically and the dice relabelled afterwards: any physics change moves where they land, so rerun `chgame test` after touching it.
 - Drawing: the table redraws only the bands (wall, felt, bar) that changed or that something moving touched; the dice cam redraws everything each frame, so that is where frame time goes.
 - Debug hooks (listed above the hook in `src/states/Screens.cpp`): `R` seed, `F` force rolls, `J` jump to a screen, `M` purse, `V` reboot (reload from flash), `E` set a bet, `X` point, `C` cursor zone, `Z` D-pad route, `H` state, `Q` (simulator) calibration. New hook letters must avoid the protocol's own: `? S K L N P T B`.
 - chdrive extras: `goto ZONE` walks the cursor with real D-pad taps on the game's planned route; `idle` waits out the dice cam and the payout.
