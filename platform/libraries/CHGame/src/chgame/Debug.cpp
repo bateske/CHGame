@@ -223,6 +223,11 @@ void waitInput() {
 }
 
 void poll() {
+    // A held game command runs once the game lets go, before the frame ack.
+    if (held && held[0] && !holdBusy(held[0])) {
+        runHook(held);
+        held[0] = 0;
+    }
     if (ackPending && arduboy.lockstep == 0) {
         ackPending = false;
         char buf[20];
@@ -240,10 +245,6 @@ void poll() {
         } else {
             len = 0;    // binary noise: drop the line
         }
-    }
-    if (held && held[0] && !holdBusy(held[0])) {
-        runHook(held);
-        held[0] = 0;
     }
 }
 
