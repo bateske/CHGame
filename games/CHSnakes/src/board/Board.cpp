@@ -1,11 +1,8 @@
 #pragma GCC optimize("Os")   // cold code: size over speed (the spans are RAMFUNCs)
 #include <string.h>
-#include <CHGfx.h>
+#include <CHGame.h>
 #include "Board.h"
 #include "../game/Layout.h"
-#include "../gfx/Palette.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Fmt.h"
 #include "../fx/Fx.h"
 #include "../assets/Assets.h"
 #include "../RamFunc.h"

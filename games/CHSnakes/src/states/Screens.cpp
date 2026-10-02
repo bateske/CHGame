@@ -1,14 +1,9 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask)
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library)
 #include <Arduino.h>
 #include <string.h>
-#include <CHGfx.h>
+#include <CHGame.h>
 #include "../../config.h"
 #include "Screens.h"
-#include "../CHGame.h"
-#include "../gfx/Palette.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Mask.h"
-#include "../gfx/Fmt.h"
 #include "../fx/Fx.h"
 #include "../audio/Audio.h"
 #include "../board/Board.h"
@@ -134,7 +129,7 @@ static void title35(const char *text, int y) {
     maskText35(m, 0, 0, text, 3);
     uint8_t ramp[20];
     for (int i = 0; i < 20; i++) ramp[i] = i < 3 ? FX_B : (i < 13 ? GOLD : WOOD);
-    maskDraw(m, 64 - w / 2, y, INK, WINE, ramp);
+    maskDraw(m, 64 - w / 2, y, 0, INK, WINE, ramp);
 }
 
 static void centred35(int y, const char *s, uint8_t c) { text35(64 - text35Width(s) / 2, y, s, c); }
@@ -155,10 +150,7 @@ static bool menuNav(uint8_t n) {
     return arduboy.justPressed(A_BUTTON);
 }
 
-static void panel(int y, int h) {
-    fillRound(14, y, 100, h, 3, NAVY);
-    roundRect(14, y, 100, h, 3, GOLD);
-}
+static void menuPanel(int y, int h) { panel(14, y, 100, h, 3, NAVY, GOLD); }
 
 // ---------------------------------------------------------------------------
 // Title: the game playing itself behind the lettering.
@@ -217,7 +209,7 @@ static void logo(const uint8_t *bits, uint8_t w, uint8_t h, int y) {
     maskBlit1(m, bits, w, h);
     uint8_t ramp[LOGO_SNAKES_H];
     for (int i = 0; i < h; i++) ramp[i] = i * 14 < 3 * h ? FX_B : (i * 14 < 10 * h ? GOLD : WOOD);
-    maskDraw(m, 64 - w / 2, y, INK, WINE, ramp);
+    maskDraw(m, 64 - w / 2, y, 0, INK, WINE, ramp);
 }
 
 static void titleRender(uint32_t frame) {
@@ -377,7 +369,7 @@ static void drawResult(uint32_t frame) {
     for (uint8_t i = 0; i < n; i++)
         for (uint8_t j = (uint8_t)(i + 1); j < n; j++)
             if (st.pos[order[j]] > st.pos[order[i]]) { uint8_t s = order[i]; order[i] = order[j]; order[j] = s; }
-    panel(14, 102);
+    menuPanel(14, 102);
     buf[0] = 'P'; buf[1] = (char)('1' + st.winner); fmtStr(buf + 2, " WINS!");
     centred2(18, buf, FX_B);
     int grow = fx::ease(fx::OUT_CUBIC, t > 60 ? 60 : t, 60);
@@ -417,7 +409,7 @@ static void playRender(uint32_t frame) {
     if (overlay == PAUSE) {
         char buf[20];
         fmtInt(fmtStr(fmtStr(buf, st.mode == ARCADE ? "ARCADE" : "CLASSIC"), "  ROUND "), rounds());
-        panel(30, 62);
+        menuPanel(30, 62);
         centred35(34, buf, GOLD);
         for (uint8_t i = 0; i < 3; i++) {
             int y = 46 + i * 14;
