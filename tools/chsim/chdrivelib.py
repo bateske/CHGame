@@ -298,7 +298,12 @@ class Driver:
                 label = " ".join(args)
                 print(f"perf {label}: {line}" if label else line)
             elif op == "prof":
-                print(self.cmd("T", "PROF"))
+                # (a build without CHGAME_PROFILE answers ERR)
+                self.t.send("T")
+                line = self.expect(("PROF", "ERR"))
+                if line.startswith("ERR"):
+                    raise SystemExit("no profiler in this build (CHGAME_PROFILE=1)")
+                print(line)
             else:
                 raise SystemExit(f"bad script line: {raw}")
         if snaps:
