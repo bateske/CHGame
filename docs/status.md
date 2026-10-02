@@ -10,30 +10,33 @@
 - **Simulator / Device:** what has been verified where. Every game has
   `chgame check` (host tests, every script twice, the device build; its
   `tools/game.py` adds the rest). Each game's `NOTES.md` has the details
-  and its open items.
+  and its open items. The Device column is the
+  session of 2026-10-02 ([hardware-2026-10-02.md](hardware-2026-10-02.md)):
+  debug builds driven by script, with each game's render times and stack
+  there. No release build has been played through yet.
 
 | Game | Image | Save room | RAM | Simulator | Device |
 |---|---|---|---|---|---|
-| CHBackgammon | 50,296 | 136 | 16,892 | `chgame check` | never run |
-| CHBingo | 36,388 | 14,044 | 14,912 | `chgame check`, sim_save, redraw | never run |
-| CHBlackjack | 45,640 | 4,792 | 15,436 | `chgame check` | **runs; render times measured** (the last art-only commit not re-run) |
-| CHBoardwalk | 49,732 | 700 | 15,052 | `chgame check` | never run |
-| CHCheckers | 42,232 | 8,200 | 17,108 | `chgame check` | never run |
-| CHChess | 48,832 | 1,600 | 17,544 | `chgame check` | **runs; render and think times, stack measured** |
-| CHCraps | 49,940 | 492 | 15,568 | `chgame check`, sim_save | never run |
-| CHCrossword | 50,416 | 16 | 17,276 | `chgame check` (incl. FAT card images) | never run |
-| CHDominoes | 42,796 | 7,636 | 16,864 | `chgame check` | never run |
-| CHFour | 36,792 | 13,640 | 16,348 | `chgame check` | never run |
-| CHMahjong | 48,580 | 1,852 | 17,812 | `chgame check` | an early build ran well; current build not run |
-| CHPoker | 48,544 | 1,888 | 15,500 | `chgame check` | never run |
-| CHRoulette | 49,916 | 516 | 16,072 | `chgame check`, ball tests, redraw | never run |
-| CHSlots | 47,664 | 2,768 | 14,916 | `chgame check`, redraw | never run |
-| CHSnakes | 37,272 | 13,160 | 15,360 | `chgame check` | **debug build runs the title; title render time and stack measured** (2026-10-02) |
-| CHSolitaire | 30,876 | 19,556 | 16,188 | `chgame check` | never run |
-| CHTicTacToe | 49,712 | 720 | 14,580 | `chgame check`, redraw | never run |
-| CHWords | 50,388 | 44 | 15,788 | `chgame check` (incl. the SD dictionary) | never run |
-| CHWordWheel | 50,380 | 52 | 14,956 | `chgame check` (incl. the SD bank), redraw | never run |
-| CHYacht | 44,100 | 6,332 | 15,260 | `chgame check`, sim_save | never run |
+| CHBackgammon | 50,296 | 136 | 16,892 | `chgame check` | debug build: `gameplay` ran; render times and stack measured |
+| CHBingo | 36,388 | 14,044 | 14,912 | `chgame check`, sim_save, redraw | debug build: `gameplay` and `perf` ran; 5 of 6 clips equal the simulator's |
+| CHBlackjack | 45,640 | 4,792 | 15,436 | `chgame check` | **runs; render times measured**; debug build: `gameplay` ran, every clip equal to the simulator's |
+| CHBoardwalk | 49,732 | 700 | 15,052 | `chgame check` | debug build: `gameplay` and `perf` ran |
+| CHCheckers | 42,232 | 8,200 | 17,108 | `chgame check` | debug build: `perf` ran; `gameplay` needs a command the lean build lacks |
+| CHChess | 48,832 | 1,600 | 17,544 | `chgame check` | **runs; render and think times, stack measured**; `gameplay` needs a command the lean build lacks |
+| CHCraps | 49,940 | 492 | 15,568 | `chgame check`, sim_save | debug build: `perf` ran (23 ms worst); `gameplay` needs a command the lean build lacks |
+| CHCrossword | 50,416 | 16 | 17,276 | `chgame check` (incl. FAT card images) | debug build: `gameplay` and `perf` ran |
+| CHDominoes | 42,796 | 7,636 | 16,864 | `chgame check` | debug build: `gameplay` and `perf` ran |
+| CHFour | 36,792 | 13,640 | 16,348 | `chgame check` | debug build: `gameplay`, `perf` and `ui` ran; the release build starts |
+| CHMahjong | 48,580 | 1,852 | 17,812 | `chgame check` | debug build: starts, part of `perf` ran; the scripts need a command the lean build lacks |
+| CHPoker | 48,544 | 1,888 | 15,500 | `chgame check` | debug build: `gameplay` and `perf` ran |
+| CHRoulette | 49,916 | 516 | 16,072 | `chgame check`, ball tests, redraw | debug build: `gameplay` and `perf` ran; 4 of 5 clips equal the simulator's |
+| CHSlots | 47,664 | 2,768 | 14,916 | `chgame check`, redraw | debug build: `gameplay` and `perf` ran (24 ms worst); every clip equal to the simulator's |
+| CHSnakes | 37,272 | 13,160 | 15,360 | `chgame check` | **debug build runs the title; title render time and stack measured** (2026-10-02); the release build was played briefly |
+| CHSolitaire | 30,876 | 19,556 | 16,188 | `chgame check` | debug build: `gameplay` ran, most of `perf` |
+| CHTicTacToe | 49,712 | 720 | 14,580 | `chgame check`, redraw | debug build: `gameplay` and `perf` ran; every clip equal to the simulator's |
+| CHWords | 50,388 | 44 | 15,788 | `chgame check` (incl. the SD dictionary) | debug build: four of `gameplay`'s clips; the CPU's `auto` outlasts the driver |
+| CHWordWheel | 50,380 | 52 | 14,956 | `chgame check` (incl. the SD bank), redraw | debug build: `gameplay` and `perf` ran; 4 of 5 clips equal the simulator's |
+| CHYacht | 44,100 | 6,332 | 15,260 | `chgame check`, sim_save | debug build: `gameplay` and `perf` ran; every clip equal to the simulator's |
 
 When the games were brought into this repository, every simulator script (211), host
 test, audio preview, redraw check and release build was re-run and compared
@@ -57,12 +60,15 @@ uninitialised count (its `save` script's frames changed from run to run, and
 the simulator usually crashed), and CHCrossword's debug STATE line
 overflowed its buffer late in a puzzle.
 
-**The first device session for each game should cover:**
-- frame times (debug build, `perf` scripts);
+**Still owed on the board, for each game** (the scripted debug-build runs
+of 2026-10-02 covered frame times and stack):
+- the release build played from the SD menu;
 - CPU thinking time where there is a CPU;
 - the sound by ear;
 - saving across a power cycle;
-- for the SD games, a real card. CHSd has never read one on a board.
+- for the SD games, their files on a real card. The bootloader's C fork of
+  CHSd reads the card for the menu; the library itself has not been seen
+  to read a game's file on a board.
 
 ## The bootloader with the SD game menu
 
@@ -70,18 +76,12 @@ overflowed its buffer late in a puzzle.
 
 | | Verified | Device |
 |---|---|---|
-| Menu bootloader (release, 12,032 B) | PC suite (`test/native/run_tests.py`): flash/SD/panel models, every package error, power cuts at every flash operation of an install and of an upload, all 21 real packages installed in turn, 26 pinned menu frames (three colour themes) | **never run**; [HARDWARE.md](../platform/bootloader/HARDWARE.md) has the steps |
+| Menu bootloader (release, 12,032 B) | PC suite (`test/native/run_tests.py`): flash/SD/panel models, every package error, power cuts at every flash operation of an install and of an upload, all 21 real packages installed in turn, 26 pinned menu frames (three colour themes) | **installed and checked on 2026-10-01** ([RESULTS](../platform/bootloader/test/hil/RESULTS-2026-10-01.md)); on 2026-10-02 written from the Arduino side over USB (*Burn Bootloader*, programmer CHGame USB), to and from the 0.2.4 and no-menu bootloaders |
 | Card builder (`tools/sdcard/mkcard.py`) | all 20 games and CHSDtoUSB built and packed; payloads equal the release images above | |
 
-The first device session follows HARDWARE.md:
-- **HW1:** the menu as a program, under the current bootloader.
-- **HW2a:** the new code without the menu.
-- **HW2b:** the menu bootloader.
-- **HW3:** the matrix.
-
-Its open questions are the SD clock that real cards take (12 MHz is
-assumed), the panel's colour order, install time, and the CHSd timings on
-real cards.
+What that run left open (a fragmented card, a second card, install times)
+is at the end of its results. [HARDWARE.md](../platform/bootloader/HARDWARE.md)
+has the steps for another board.
 
 ## Known issues
 
@@ -107,6 +107,22 @@ last one's record. [sd-menu.md](sd-menu.md) says so to players.
 
 ### Other
 
+- **The USB serial port could go mute (fixed 2026-10-02).** The core's
+  `CDC_flush()` armed a packet before it set the busy flag; an interrupt
+  between the two left the flag set for good and every later write was
+  dropped. On the board it showed as debug-protocol scripts that stopped
+  answering at a different step each run (12 of the first 34 runs of the
+  hardware session). Release games have no serial path. The fix is in
+  `platform/board`, so it reaches a build with the next board package.
+- **A debug build could stop at its first frame (fixed 2026-10-02).** The
+  library's `dbg::begin()` painted the stack, for the `P` command's
+  high-water mark, up to 64 B below one of its own locals. With LTO it is
+  inlined into `main()`, whose frame reaches further down, so the paint
+  went into `main()`'s saved values. CHSnakes' debug build faulted on it,
+  with the title's first note left sounding; every game's debug build had
+  the same code. It paints up to the stack pointer now, and a fault
+  silences the piezo. Release builds and the simulator never ran it.
+
 - **One tooling for the twenty games (2026-10-02).** One entry point,
   `chgame` (`pip install -e .`), replaced the twenty `tools/run.py` and
   `tools/device.py`; `chgame check`, `test`, `redraw` and the save tests
@@ -125,6 +141,7 @@ last one's record. [sd-menu.md](sd-menu.md) says so to players.
   (by 140 B), lean variants included, since the core's crash handler and
   the library's protocol grew; their release builds are unaffected. Their
   device scripts need a trim first (a screen or a table behind `<PFX>_LEAN`).
+  The hardware session of 2026-10-02 ran both before those fixes were in.
 - **The games are the CHGame library's examples (2026-10-02).** `games/`
   and `utilities/CHSDtoUSB` moved to
   `platform/board/arduino/CHGame/libraries/CHGame/examples/games/`
