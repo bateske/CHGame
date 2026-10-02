@@ -4,13 +4,13 @@
 #include "../config.h"
 #include "Frame.h"
 #include "states/Screens.h"
-#include "debug/Debug.h"
 #include "audio/Sounds.h"
 
 namespace frame {
 
 void begin() {
-    dbg::paintStack();
+    dbg::begin("CHCW " CHCW_VERSION);     // the debug protocol's hello (CHGAME_DEBUG builds)
+    audio::begin(SOUNDS, (uint8_t)Sfx::COUNT, false);
     pal::init();
     screens::begin();
 }

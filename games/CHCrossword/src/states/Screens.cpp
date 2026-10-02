@@ -12,7 +12,6 @@
 #include "../pack/Pack.h"
 #include "../stage/Stage.h"
 #include "../save/Save.h"
-#include "../debug/Debug.h"
 #include "../assets/Assets.h"
 #ifdef CHSIM
 #include <sim.h>
@@ -97,9 +96,7 @@ static void persist(bool withGame) {
 }
 
 static void applyOptions() {
-    // (begin() again rather than setOn(): one call site for the library's
-    // start-up code keeps the image under the two save pages' limit.)
-    audio::begin(SOUNDS, (uint8_t)Sfx::COUNT, opt.sound != 0);
+    audio::setOn(opt.sound != 0);
     pal::setTheme(opt.felt);
     stage::stepAll = opt.skip != 0;
     stage::viewClose = opt.view != 0;
@@ -334,7 +331,7 @@ static void titleRender(uint32_t frame) {
         stage::bigText(x, y, text, on ? FX_B : WHITE, on ? WOOD : FELT_LT, INK);
         if (on) sprite4(HAND_SIDE, x - HAND_SIDE[0] - 3 + ((frame >> 4) & 1), y - 2);
     }
-    fx::drawParticles(2);
+    fx::drawParticles();
 }
 
 // ---------------------------------------------------------------------------
@@ -611,7 +608,7 @@ static void playRender(uint32_t frame) {
         }
         if (newBest && resultT > 90) centred35(103, "NEW BEST!", FX_A);
         centred35(110, "A NEXT   B MENU", SILVER);
-        fx::drawParticles(2);
+        fx::drawParticles();
     }
 }
 
@@ -683,7 +680,7 @@ static void optionsRender(uint32_t frame) {
 // ---------------------------------------------------------------------------
 // Debug protocol hooks (tools/chsim/chdrive.py 'say')
 // ---------------------------------------------------------------------------
-#if CHCW_DEBUG
+#if CHGAME_DEBUG
 //   G <i> [pack]        start puzzle i of a pack (0, the built-in one, by default)
 //   H                   STATE scr=<T|S|P|O> ov=<overlay> cur=<cell> down=<0|1> board=<0|1> key=<k>
 //                       score= streak= locked= words= solved= sec= n= busy= jp=<the jackpot word>
@@ -808,7 +805,7 @@ void begin() {
     applyOptions();
     pack::select(0);
     lastPack = pack::id();
-#if CHCW_DEBUG
+#if CHGAME_DEBUG
     dbg::hook = debugHook;
 #endif
     enter(Scr::Title);

@@ -33,7 +33,6 @@ void burst(Kind k, int x, int y, uint8_t n, int speed, uint8_t colour) {
         int a = (int)(i * 256 / n) + rndRange(0, 12);
         int sp = speed / 2 + rndRange(0, speed / 2 + 1);
         int vy = (isin(a) * sp) >> 8;
-        if (k == DUST) vy /= 2;                           // puffs spread along the floor
         spawn(k, x, y, (isin(a + 64) * sp) >> 8, vy, (uint8_t)rndRange(20, 40), colour);
     }
 }
@@ -53,13 +52,12 @@ static void updateParticles() {
         switch (p.kind) {
             case CONFETTI: if (p.age & 1) p.vy += 2; if (p.vy > 24) p.vy = 24;
                            p.vx = (int8_t)(p.vx * 15 / 16); break;
-            case DUST:     p.vx = (int8_t)(p.vx * 7 / 8); p.vy = (int8_t)(p.vy * 7 / 8); break;
             default:       p.vy += (p.age & 3) == 0; break;
         }
     }
 }
 
-void drawParticles(uint8_t dust) {
+void drawParticles() {
     for (auto &p : parts) {
         if (!p.life) continue;
         int x = p.x >> 4, y = p.y >> 4;
@@ -77,11 +75,6 @@ void drawParticles(uint8_t dust) {
             case STAR:
                 gfx_hline(x - 1, y, 3, c); gfx_vline(x, y - 1, 3, c);
                 break;
-            case DUST: {                                  // a puff, down to a speck, centred
-                int s = p.life > 10 ? dust : (p.life > 4 || (p.life & 1)) ? (dust + 1) / 2 : 0;
-                gfx_fillRect(x - s / 2, y - s / 2, s, s, c);
-                break;
-            }
         }
     }
 }
@@ -134,10 +127,7 @@ void drawBanner() {
         int g = r - off;                                                // row of the letters
         switch (bannerStyle) {
             case B_RAINBOW: ramp[r] = RAIN[(((r + 8) / 2) + t / 3) % 5]; break;
-            case B_GOLD:    ramp[r] = g < 3 ? FX_B : (g < 8 ? GOLD : WOOD); break;
-            case B_RED:     ramp[r] = g < 3 ? WHITE : (g < 9 ? RED : WINE); break;
-            case B_CYAN:    ramp[r] = g < 3 ? WHITE : CYAN; break;
-            default:        ramp[r] = g < 6 ? WHITE : SILVER; break;
+            default:        ramp[r] = g < 3 ? FX_B : (g < 8 ? GOLD : WOOD); break;   // B_GOLD
         }
     }
     uint8_t outline = bannerStyle == B_RAINBOW ? FX_A : INK;

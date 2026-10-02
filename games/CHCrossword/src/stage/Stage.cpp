@@ -715,7 +715,7 @@ bool render(uint32_t frame) {
     drawBoard(frame);
     drawClue();
     drawFloats();
-    fx::drawParticles(2);
+    fx::drawParticles();
     fx::drawBanner();
     return true;
 }
