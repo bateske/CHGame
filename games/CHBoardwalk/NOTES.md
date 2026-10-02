@@ -6,7 +6,10 @@ Agent-facing notes for continuing work on this game. Rules, controls and build s
 
 - Imported from https://github.com/bateske/CHBoardwalk at commit a99a4f8 (2026-10-01). Develop here now, not in the old repo.
 - Release build (`CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly`, core 0.2.4, CHGfx 1.3.0): flash 49,600 of 50,944 B (1,344 spare), static RAM 15,404 of 18,416 B (3,012 spare).
-- Save pages: `../../tools/check_size.py` reports the image as 49,856 B. Both A/B save pages need the image to stay at or below 50,432 B, so the margin is only about 576 B. Treat flash as full: any feature needs a cut first. LTO inlining makes small additions cost more than they look.
+- On the CHGame library since 2026-10-02 (`platform/libraries/CHGame`, `<CHGame.h>`): the input, palette, drawing, 3x5 font, masks, fx maths, shake and formatting that were `src/CHGame.*` and `src/gfx/` are the library's; `src/fx/Fx.*` keeps the game's particles, banners and floating texts. The same frames on every repeatable script; image 49,884 -> 49,712 B, static RAM 15,404 -> 15,100 B (the doubled 3x5 text runs from flash).
+- Sound on the library's engine (`chgame/Audio.h`) since 2026-10-02: `src/audio/Sounds.*` holds the effect tables (3-byte steps: 20 Hz / 2 ms units, so a pitch moves up to 10 Hz and an odd length gains 1 ms; LOSE's 700 ms sweep is two steps), Tick/Tock are `audio::SOFT`, and the bid blip keeps its rule (refused over priority 2+). The preview is the shared `python ../../tools/audio/preview.py . out/audio`. Image 49,676 -> 49,612 B, static RAM 15,100 -> 15,052 B; frames unchanged.
+- The debug protocol (`chgame/Debug.h`, `CHGAME_DEBUG`), the flash save record (`chgame/Save.h`; `src/save/Save.cpp` says only what the record holds, byte for byte the old layout) and RAMFUNC are the library's too since 2026-10-02, and `tools/chsim/chdrive.py` is the shared `tools/chsim/chdrivelib.py` plus this game's `board`, `waitturn` and `cal`. Image 49,612 -> 49,664 B (the library's `audio::setOn()` out of line, about +14 B; its save code, about +30 B), static RAM 15,052 B unchanged; frames unchanged.
+- Save pages: `../../tools/check_size.py` reports the image as 49,664 B. Both A/B save pages need the image to stay at or below 50,432 B (0xF500 and 0xF600, the CHGame library's `chgame/Save.cpp`), so the margin is only about 768 B. Treat flash as full: any feature needs a cut first. LTO inlining makes small additions cost more than they look.
 - Verification as of 2026-10-01: simulator only.
   - `tools/tests/run_tests.py` checks every rule, then plays 5,000 seeded games (CPUs and random "humans") checking that the books balance, houses stay even and every game ends, and prints a tuning table.
   - The scripts in `tools/scripts` play through in the simulator.
@@ -47,7 +50,7 @@ Agent-facing notes for continuing work on this game. Rules, controls and build s
 ## Open items
 
 - Device test: pace, render profile, sound by ear.
-- `tools/scripts/save.txt` is not deterministic in the simulator: two runs of the same build draw different `title_still_continue` and `continued` frames (found while verifying the move into CHCasino; the original repo behaves the same). The other scripts repeat exactly. Find what reads host time or uninitialised state around SAVE + QUIT / CONTINUE before trusting pixel comparisons of that script.
+- Fixed 2026-10-02: `tools/scripts/save.txt` used to draw different frames from run to run and usually crash the simulator. `screens::newGame()` left `Setup::deal` uninitialised, so `game::start()` dealt a stack byte's worth of deeds per player and wrote past its 28-entry `deeds[]` (found with valgrind on a `-O0 -g -mcpu=baseline` simulator build). On the board the same garbage could deal the wrong number of deeds. `Setup s = {}` fixes it; every script now repeats exactly.
 - The owner's art redraw through `tools/sheet.py`. The sheet has 20 sprites, including the fruit, CHIPS, CARD_DECK, the corner icons and LOGO.
 - Arcade rules the implementer chose and reported, not explicitly confirmed by the owner (only payday was):
   - Building on most of a group (2 of 3, or both of a pair).
@@ -56,16 +59,16 @@ Agent-facing notes for continuing work on this game. Rules, controls and build s
   - 4 deeds each with two players.
   - Default 20 rounds.
   - CPUs not offering deeds.
-- Device debug builds are always `CHBW_LEAN` (no options screen, no saving). A full debug build overflowed by about 0.8 KB.
+- Device debug builds (`CHGAME_DEBUG` on the board) are always `CHBW_LEAN` (no options screen, no saving). A full debug build overflowed by about 0.8 KB.
 
 ## Gotchas
 
 - Running the showcase script into `docs/` also writes `docs/result.png` (the script's `snap result`) and `docs/sheet.png` (chdrive's contact sheet). Delete both before committing.
 - The simulator's `cal`/`perf` render estimate is host time and swings by ±50% from run to run under load. It is useless for small differences.
-- Debug protocol:
+- Debug protocol (the CHGame library's `chgame/Debug.h`):
   - The game's commands are listed above `debugHook()` in `src/states/Screens.cpp`.
   - `G D A $ E T H` work on the board; `J V X F Q` are simulator-only.
-  - The protocol owns `? S K L N P B`, and also `T` in a `CHBW_PROFILE=1` build, where it shadows the game's token command `T`.
+  - The protocol owns `? S K L N P B`, and also `T` in a `CHGAME_PROFILE=1` build, where it shadows the game's token command `T`.
 - `CHBW_LEAN` is `#ifndef`-guarded: `-DCHBW_LEAN=0` forces a full device debug build, which won't fit without a temporary cut.
 - Art:
   - `tools/art/sprites.txt` holds the sprites as palette letters. A `tools/art/<name>.png` replaces its sprite, and `chips.png`, `icon_chest.png`, `icon_jail.png` and `token_banana.png` already do, so editing those four in `sprites.txt` has no effect.
@@ -75,5 +78,5 @@ Agent-facing notes for continuing work on this game. Rules, controls and build s
 - Board geometry: a 13x13 iso lattice with a ring 2 cells deep (tiles 1x2 cells, corners 2x2). The art is native at tileH 5 and the whip zoom goes to 10.
 - `src/game` is pure logic and host-tested. A rule change needs the tests updated.
   - Tuning table at import (all CPUs, two seats): bust by closing time about 21% at cap 20 and about 42% at cap 30, with 16-19 houses on the board.
-- Saves use magic "CHBW", `VERSION` 1, in `src/save/Save.cpp`. CONTINUE resumes as the turn began. The pages are shared with every other CHGame game; bump `VERSION` on any change to the `Record` layout.
+- Saves use magic "CHBW", `VERSION` 1, in `src/save/Save.cpp` (the record and the pages are the CHGame library's, `chgame/Save.h`; the header's flag byte is "a game is saved"). CONTINUE resumes as the turn began. The pages are shared with every other CHGame game; bump `VERSION` on any change to the `Data` layout.
 - Shared tools: the simulator is `../../tools/chsim/chsim.py` (game-side driver: `tools/chsim/chdrive.py`). Set `CHSIM_CXX` or have zig/clang++/g++ on PATH (see root CLAUDE.md).

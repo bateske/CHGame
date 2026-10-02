@@ -1,14 +1,11 @@
 #pragma GCC optimize("Os", "no-ipa-sra")   // cold code: size over speed (hot pixel loops live in Draw/Mask)
 #include <Arduino.h>
 #include <string.h>
-#include <CHGfx.h>
+#include <CHGame.h>
 #include "../../config.h"
 #include "Stage.h"
-#include "../gfx/Palette.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Fmt.h"
 #include "../fx/Fx.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../assets/Assets.h"
 
 namespace stage {
@@ -64,7 +61,7 @@ static const uint8_t WIDE_W[5] = {0x1F, 0x08, 0x04, 0x08, 0x1F};
 // A small letter (1..26) centred on column x.
 static void letter(int x, int y, uint8_t v, uint8_t ink) {
     if (v == 13 || v == 23) glyph(x - 2, y, v == 13 ? WIDE_M : WIDE_W, 5, ink);
-    else glyph(x - 1, y, FONT35['A' + v - 1 - FONT35_FIRST], 3, ink);
+    else glyph(x - 1, y, glyph35((char)('A' + v - 1)), 3, ink);
 }
 
 // A large letter (the close-up's and the keys'), centred in w pixels from
@@ -369,7 +366,7 @@ void update() {
     // The tiles are laid out, a diagonal at a time, as a puzzle starts.
     if (dealT) {
         dealT--;
-        if ((dealT & 3) == 0) audio::note((uint16_t)(2600 - dealT * 12), 12);
+        if ((dealT & 3) == 0) audio::note((uint16_t)(2600 - dealT * 12), 12, 2);
     }
     // The camera whips between the whole grid and the close-up in a few
     // ticks, held on the cursor; at rest it pans after the cursor.
@@ -406,7 +403,7 @@ void update() {
             fx::burst(fx::SPARK, x + zs / 2, y + zs / 2, 3, 14, FX_B);
             if (!l.cross) {
                 uint8_t s = (uint8_t)(k + game::multiplier() - 1);
-                audio::note(SCALE[s > 11 ? 11 : s], 60);
+                audio::note(SCALE[s > 11 ? 11 : s], 60, 2);
             }
         }
         l.t++;
@@ -588,7 +585,7 @@ static void drawGrid(uint32_t frame) {
         int bob = (bobT >> 4) & 1, h = HAND[1], tip = zs > cs ? 3 : 1;
         x += (zs - 1) / 2 - HAND_TIP;
         if (y + tip - h - 1 >= 0) sprite4(HAND, x, y + tip - h - bob);
-        else sprite4(HAND, x, y + zs - 1 - tip + bob, nullptr, -256);
+        else sprite4(HAND, x, y + zs - 1 - tip + bob, nullptr, 256, SPR_FLIP_V);
     }
 }
 
@@ -718,7 +715,7 @@ bool render(uint32_t frame) {
     drawBoard(frame);
     drawClue();
     drawFloats();
-    fx::drawParticles(2);
+    fx::drawParticles();
     fx::drawBanner();
     return true;
 }

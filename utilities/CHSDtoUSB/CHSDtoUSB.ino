@@ -380,7 +380,7 @@ void loop() {
         if (pressed(PIN_BTN_B)) {
             if (!bDown) { bDown = true; bHeld = now; }
         } else bDown = false;
-        // B held 1 s, or START held 3 s as in every CHCasino game: back to the
+        // B held 1 s, or START held 3 s as in every CHGame game: back to the
         // SD game menu. With the menu bootloader any reset without a request
         // shows the menu. (Uploads still reach the bootloader through the
         // 1200-baud touch.)

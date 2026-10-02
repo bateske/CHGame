@@ -147,12 +147,12 @@ builds (set `CHSIM_CXX`, or have `zig`, `clang++` or `g++` on the path).
     python tools/assets.py              # art -> src/assets (previews in build/assets)
     python tools/device.py upload       # build and upload the release
 
-`tools/scripts/*.txt` drive the game through its debug protocol
-(`src/debug/Debug.h`; the game's own commands are listed above the hook in
-`src/states/Screens.cpp`): `say M 0 2 0 4435` sets up a position against
-THE BOSS, `col 4` walks your disc to a column and drops it, `snap` and
-`rec` take pictures. The same scripts run on the device with a debug build
-(`python tools/device.py run SCRIPT OUTDIR`).
+`tools/scripts/*.txt` drive the game through the CHGame library's debug
+protocol (`chgame/Debug.h`; the game's own commands are listed above the
+hook in `src/states/Screens.cpp`): `say M 0 2 0 4435` sets up a position
+against THE BOSS, `col 4` walks your disc to a column and drops it, `snap`
+and `rec` take pictures. The same scripts run on the device with a debug
+build (`python tools/device.py run SCRIPT OUTDIR`).
 
 The art is in `tools/art`: `dealer.png` and `faces.png` (the seven
 expressions, 24x18 each), `font.txt`, `sides.txt` (each side's colours).

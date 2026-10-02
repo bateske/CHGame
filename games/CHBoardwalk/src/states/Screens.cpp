@@ -1,23 +1,17 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask)
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library)
 #include <Arduino.h>
 #include <string.h>
-#include <CHGfx.h>
+#include <CHGame.h>
 #include "../../config.h"
 #include "Screens.h"
-#include "../CHGame.h"
-#include "../gfx/Palette.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Mask.h"
-#include "../gfx/Fmt.h"
 #include "../fx/Fx.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../iso/Iso.h"
 #include "../game/Game.h"
 #include "../stage/Stage.h"
 #include "../render/MapView.h"
 #include "../assets/Assets.h"
 #include "../save/Save.h"
-#include "../debug/Debug.h"
 #ifdef CHSIM
 #include <sim.h>
 #endif
@@ -134,7 +128,7 @@ static void title35(const char *text, int y) {
     maskText35(m, 0, 0, text, 3);
     uint8_t ramp[20];
     for (int i = 0; i < 20; i++) ramp[i] = i < 3 ? FX_B : (i < 13 ? GOLD : WOOD);
-    maskDraw(m, 64 - w / 2, y, INK, WINE, ramp);
+    maskDraw(m, 64 - w / 2, y, 0, INK, WINE, ramp);
 }
 
 static void centred35(int y, const char *s, uint8_t c) { text35(64 - text35Width(s) / 2, y, s, c); }
@@ -222,7 +216,7 @@ static void logo(int y) {
     maskBlit1(m, LOGO, LOGO_W, LOGO_H);
     uint8_t ramp[LOGO_H];
     for (int i = 0; i < LOGO_H; i++) ramp[i] = i < 2 ? FX_B : (i < 11 ? GOLD : WOOD);
-    maskDraw(m, 64 - LOGO_W / 2, y, INK, WINE, ramp);
+    maskDraw(m, 64 - LOGO_W / 2, y, 0, INK, WINE, ramp);
 }
 
 static void titleRender(uint32_t frame) {
@@ -241,7 +235,7 @@ static void titleRender(uint32_t frame) {
 static const char *const SEAT[5] = {"EMPTY", "PLAYER", "CPU EASY", "CPU FAIR", "CPU SHARK"};
 
 static void newGame() {
-    Setup s;
+    Setup s = {};                    // deal 0: the usual number of deeds
     memcpy(s.kind, opt.seat, SEATS);
     s.roundCap = (uint8_t)(opt.rounds * 10);
     s.seed = seedNow();
@@ -698,7 +692,7 @@ static void optionsRender(uint32_t frame) {
 // ---------------------------------------------------------------------------
 // Debug protocol hooks (tools/chsim/chdrive.py 'say')
 // ---------------------------------------------------------------------------
-#if CHBW_DEBUG
+#if CHGAME_DEBUG
 //   G <k0> <k1> <k2> <k3> <rounds> <seed>   start a game (kinds: 0 empty, 1 human, 2-4 CPU)
 //   D <d1> <d2>                             the next roll
 //   A <deck> <card>                         the card on top of a deck (0 Chance, 1 Chest)
@@ -770,23 +764,6 @@ static bool debugHook(char cmd, const char *args) {
             stage::reset();
             return true;
         }
-        case 'Q': {
-            // Calibration for the cost estimate: host ns for the primitives
-            // the CHGfx benchmark measured on the board (benchmark-results.txt).
-            static uint8_t spr[8 * 16];
-            memset(spr, 0x3F, sizeof spr);
-            uint64_t t0, r[5];
-            t0 = sim_hostNanos(); for (int i = 0; i < 200; i++) gfx_clear((uint8_t)i); r[0] = (sim_hostNanos() - t0) / 200;
-            t0 = sim_hostNanos(); for (int i = 0; i < 20000; i++) gfx_hline(0, i & 127, 128, (uint8_t)i); r[1] = (sim_hostNanos() - t0) / 20000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 2000; i++) gfx_blit(spr, i & 63, i & 63, 16, 16, 15); r[2] = (sim_hostNanos() - t0) / 2000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 1000; i++) gfx_text(0, i & 63, "ABCDEFGHIJKLMNOPQRSTUVWX", 1); r[3] = (sim_hostNanos() - t0) / 1000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 1000; i++) gfx_fillCircle(64, 64, 30, (uint8_t)i); r[4] = (sim_hostNanos() - t0) / 1000;
-            char cal[96], *q2 = fmtStr(cal, "CAL");
-            for (int k = 0; k < 5; k++) { *q2++ = ' '; q2 = fmtInt(q2, (int32_t)r[k]); }
-            fmtStr(q2, "\n");
-            dbg::print(cal);
-            return true;
-        }
 #endif
     }
     return false;
@@ -811,9 +788,9 @@ void begin() {
     save::load(opt, stats, hasGame);
     if (!opt.rounds || opt.rounds > 6) opt.rounds = 2;
     applyOptions();
-#if CHBW_DEBUG
+#if CHGAME_DEBUG
     dbg::hook = debugHook;
-    dbg::holdGame = settling;
+    dbg::holdWhile(settling);
 #endif
     enter(Scr::Title);
 }

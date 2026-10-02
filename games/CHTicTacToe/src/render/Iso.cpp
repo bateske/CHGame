@@ -1,8 +1,6 @@
 #pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw and CHGfx)
-#include <CHGfx.h>
+#include <CHGame.h>
 #include "Iso.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Palette.h"
 #include "../assets/Assets.h"
 
 namespace iso {
@@ -182,7 +180,7 @@ void shadow(const uint8_t *a, int x, int y, int lift) {
 void stand(const uint8_t *a, int x, int y, int lift, const uint8_t *remap, bool withShadow, bool mirror) {
     const uint8_t *p = anchor(a);
     if (withShadow) shadow(a, x, y, lift);
-    sprite4(a, x - (mirror ? a[0] - 1 - p[0] : p[0]), y - p[1] - lift, remap, mirror ? -256 : 256);
+    sprite4(a, x - (mirror ? a[0] - 1 - p[0] : p[0]), y - p[1] - lift, remap, 256, mirror ? SPR_FLIP_H : 0);
 }
 
 const uint8_t *spin(const uint8_t *a, uint8_t step, bool &mirror) {

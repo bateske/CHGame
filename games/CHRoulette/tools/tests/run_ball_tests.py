@@ -16,7 +16,8 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
-SOURCES = [HERE / "test_ball.cpp", ROOT / "src" / "wheel" / "Ball.cpp", ROOT / "src" / "fx" / "Ease.cpp"]
+LIB = HERE.parents[3] / "platform" / "libraries" / "CHGame" / "src"   # the CHGame library
+SOURCES = [HERE / "test_ball.cpp", ROOT / "src" / "wheel" / "Ball.cpp", LIB / "chgame" / "Ease.cpp"]
 EXE = HERE / "build" / "test_ball.exe"
 
 
@@ -27,7 +28,7 @@ def cxx():
         work = ROOT.parents[2] / "CH32Sound" / ".work" / "zig"
         for z in sorted(work.glob("zig-*/zig.exe")) + sorted(work.glob("zig-*/zig")):
             return [str(z), "c++"]
-    sys.path.insert(0, str(HERE.parents[3] / "tools" / "chsim"))  # CHCasino/tools/chsim (find_cxx)
+    sys.path.insert(0, str(HERE.parents[3] / "tools" / "chsim"))  # the repository's tools/chsim (find_cxx)
     from chsim import find_cxx  # noqa: E402
     return find_cxx()
 
@@ -36,7 +37,7 @@ def build():
     EXE.parent.mkdir(exist_ok=True)
     cmd = cxx() + ["-std=gnu++17", "-O2", "-Wall", "-Wextra", "-Wno-unknown-pragmas",
                    "-fsanitize=undefined",
-                   "-fno-sanitize-recover=undefined", "-DCHTEST",
+                   "-fno-sanitize-recover=undefined", "-DCHTEST", f"-I{LIB}",
                    *[str(s) for s in SOURCES], "-o", str(EXE)]
     r = subprocess.run(cmd, capture_output=True, text=True)
     if r.returncode:

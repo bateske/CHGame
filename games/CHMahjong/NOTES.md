@@ -6,7 +6,7 @@ Agent-facing notes for continuing work here; rules, controls and build are in RE
 
 - Imported from https://github.com/bateske/CHMahjong at commit 481dfdf (2026-10-01); develop here now, not in the old repo.
 - Release build (CHGame core 0.2.4, CHGfx 1.3.0, `opt=oslto,rtlib=nano,periph=game,usb=uploadonly`): flash 48,108 of 50,944 B (2,836 spare), static RAM 18,084 of 18,416 B (332 spare). RAM is the tight budget, not flash.
-- Save pages: `../../tools/check_size.py` reports the image as 48,364 B, 256 B more than the compile's flash figure. Both A/B pages (0xF500, 0xF600) fit while the image is at most 50,432 B, so the margin is 2,068 B. Past that, `src/save/Save.cpp` saves to page B only.
+- Save pages: `../../tools/check_size.py` reports the image as 48,364 B, 256 B more than the compile's flash figure. Both A/B pages (0xF500, 0xF600) fit while the image is at most 50,432 B, so the margin is 2,068 B. Past that, the CHGame library's saving (`chgame/Save.cpp`) uses page B only.
 - Simulator-verified (as of 2026-10-01):
   - `python tools/tests/run_tests.py` passes: 10,000 deals per layout cleared, golden deal hashes, every free tile reachable by the cursor.
   - Scripts `ui`, `match`, `clear`, `stuck`, `save` and `showcase` run clean in `tools/chsim/chdrive.py --sim`. They also ran clean once with the simulator built under UBSan.
@@ -47,7 +47,7 @@ Agent-facing notes for continuing work here; rules, controls and build are in RE
 
 ## Gotchas
 
-- RAM has 332 B spare. The hot blitters are `RAMFUNC` (`src/gfx/Tile.cpp`, `Draw.cpp`, `Mask.cpp`, `src/fx/Fx.cpp`), so their code counts against static RAM; the tile blitters alone take about 1.26 KB. Debug builds have less spare RAM still.
+- RAM has 604 B spare (release, since the move to the CHGame library and its sound engine: 17,812 of 18,416 B). The hot blitters run from SRAM (`RAMFUNC` in `src/gfx/Tile.cpp`; the CHGame library's sprite, 3x5 text, mask and shake loops), so their code counts against static RAM; the tile blitters alone take about 1.26 KB. Device debug builds have less spare RAM still (17,996 B, 420 B spare, since the debug protocol, saving and RAMFUNC moved to the CHGame library on 2026-10-02).
 - Device debug builds don't fit with everything:
   - `config.h` turns on `CHMJ_LEAN`, which drops the EASY faces; `-DCHMJ_FULL` overrides it.
   - The simulator and release builds keep everything.
@@ -57,7 +57,7 @@ Agent-facing notes for continuing work here; rules, controls and build are in RE
   - The `GOLDEN` hashes in `tools/tests/test_board.cpp` guard the deal.
   - If a layout or the deal generator changes them, bump `VERSION` in `src/save/Save.cpp` (magic "CHMJ").
   - Deal generation runs a few pairs per frame and must give the same result however the work is split.
-- Palette: felt themes swap only `FELT_DK` and `FELT`. `FELT_LT` is the bamboo ink and stays green in every theme (`src/gfx/Palette.cpp`).
+- Palette: felt themes swap only `FELT_DK` and `FELT`. `FELT_LT` is the bamboo ink and stays green in every theme (the felt table in `src/Frame.cpp`, given to the CHGame library's `pal::setThemes`).
 - Some names clash with Arduino macros, and only on the device build: `bit` and `FLASH` here, `sq`, `map` and `word` in other games. Compile for the device early, not just the simulator.
 - Simulator `perf`/`cal` numbers are host time scaled by a calibration, so they are noisy on a busy host.
 - UBSan: the UBSan run above used a per-object build with `-fsanitize=undefined`. The one-shot build in the shared `../../tools/chsim/chsim.py` has no sanitizer option and would not link with it.

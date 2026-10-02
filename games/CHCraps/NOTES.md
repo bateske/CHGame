@@ -6,7 +6,7 @@ Agent-facing notes for continuing work here; rules, controls and build are in RE
 
 - Imported from https://github.com/bateske/CHCraps at commit fa1fd77 (2026-10-01); develop here now, not in the old repo.
 - Release build (`opt=oslto,rtlib=nano,periph=game,usb=uploadonly`, core 0.2.4, CHGfx 1.3.0): flash 49,776 of 50,944 B (1,168 spare), static RAM 15,520 of 18,416 B (2,896 spare).
-- The image (`../../tools/check_size.py`'s `image:` line; README quotes 50,032 B) is only ~400 B under the 50,432 B that keeps both A/B save pages (`PAGE_A` 0xF500, `PAGE_B` 0xF600 in `src/save/Save.cpp`). Past 0xF500 saving drops to one page; past 0xF600 it switches off.
+- The image (`../../tools/check_size.py`'s `image:` line; README quotes 50,032 B) is only ~400 B under the 50,432 B that keeps both A/B save pages (0xF500 and 0xF600, the CHGame library's `chgame/Save.cpp`). Past 0xF500 saving drops to one page; past 0xF600 it switches off.
 - Verification: simulator only. `tools/tests/run_tests.py` (every bet against an independent oracle, exact house edges, dice physics, zone reachability), `tools/tests/sim_save.py` (save mid-hand, debug `V` reboot and continue, the broke case), and the chdrive scripts in `tools/scripts`. There is no `tools/check.py` in this game.
 - As of 2026-10-01 it has never run on the device: frame times unmeasured, sound unheard.
 
@@ -18,21 +18,20 @@ Agent-facing notes for continuing work here; rules, controls and build are in RE
 - Chosen: CHBlackjack's dealer works the table as the stickman and calls every roll.
 - Chosen: keep the lit ON puck - a white disc showing the point number in the 3x5 font, pinned to the number box.
 - Chosen: the dice show pips whenever they are on screen. The result is repainted at the back-wall hit, choosing the labelling that changes the fewest faces.
-- Chosen: music only if flash is left once the game is complete; there is none (`src/audio/Audio.h` says so).
+- Chosen: music only if flash is left once the game is complete; there is none (`src/audio/Sounds.h` says so).
 - Architecture to keep: the rules settle the whole roll in `Craps::throwDice()` (a result per spot); the presenter (`src/fx/Presenter.cpp`) only replays it - call, losers swept, pays, home, come moves. Money has already moved, so a save mid-show is always consistent.
 
 ## Open items
 
 - First device run. Simulator estimates put the dice cam's shake and the result + banner at 9-15 ms a frame, over the ~8 ms drawing budget for 60 fps. Measure on the board (`python tools/device.py run tools/scripts/perf.txt OUTDIR`) before optimising.
-- Listen to the sound effects on the piezo (`tools/audio/preview.py` renders them to WAV meanwhile).
+- Listen to the sound effects on the piezo (`python ../../tools/audio/preview.py . out/audio` renders them to WAV meanwhile).
 - Known issue (logged, not fixed; see ../../docs/status.md): CHYacht uses this game's save magic `0x52434843` "CHCR" with the same
   version 1, so after playing one, the other accepts its save. The fix is a new magic in CHYacht.
 - Music: deferred until flash allows (it does not now).
-- `config.h`'s comment says `CHCR_LEAN` leaves out "music, the attract demo"; the code actually stubs saving (`src/save/Save.cpp`) and the Options and Stats pages (`src/states/Screens.cpp`). Fix the comment when next touching it.
 
 ## Gotchas
 
-- Flash is effectively full while both save pages are kept. Tactics already in use: chips and pucks are `gfx_sprite4` span sprites recoloured by remap tables (drawn from CHBlackjack's chip, made by `tools/assets.py`); all 24 die orientations come from one walk of quarter turns stored in a 24-bit constant (`labelDie`, `WALK` 0x288A28 in `src/cam/Dice3D.cpp`); the dice share the game's sine table; no music.
+- Flash is effectively full while both save pages are kept. Tactics already in use: chips and pucks are span sprites (the CHGame library's `sprite4`) recoloured by remap tables (drawn from CHBlackjack's chip, made by `tools/assets.py`); all 24 die orientations come from one walk of quarter turns stored in a 24-bit constant (`labelDie`, `WALK` 0x288A28 in `src/cam/Dice3D.cpp`); the dice share the game's sine table; no music.
 - Device debug builds get `CHCR_LEAN` automatically (`config.h`): no saving, no Options or Stats. `-DCHCR_FULL` forces the whole game into a debug build (check it fits).
 - Dice3D: integer Euler-angle cubes and a tilting pinhole camera; physics steps once per 60 Hz tick, so the dice keep their speed if a frame is slow. The throw is pre-simulated deterministically and the dice relabelled afterwards: any physics change moves where they land, so rerun `run_tests.py` after touching it.
 - Drawing: the table redraws only the bands (wall, felt, bar) that changed or that something moving touched; the dice cam redraws everything each frame, so that is where frame time goes.

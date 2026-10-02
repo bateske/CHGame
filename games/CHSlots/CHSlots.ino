@@ -12,21 +12,20 @@
 //
 // Frame loop: logic runs while the previous frame is still going out over
 // DMA; drawing waits for it (one framebuffer), then the new frame is sent.
+#include <CHGame.h>
 #include "config.h"
-#include <CHGfx.h>
-#include "src/CHGame.h"
-#include "src/gfx/Palette.h"
+#include "src/render/Machine.h"
 #include "src/states/Screens.h"
-#include "src/debug/Debug.h"
 
 void setup() {
     arduboy.boot();
-    dbg::paintStack();
+    dbg::begin("CHSL " CHSL_VERSION);     // the debug protocol's hello (CHGAME_DEBUG builds)
     gfx_begin(GFX_DIV2, GFX_12BPP);
     pal::init();
+    pal::setThemes(mach::THEMES, mach::THEME_COUNT);    // each machine's felt
     screens::begin();
     arduboy.setFrameRate(CHSL_FPS);
-#if CHSL_DEBUG
+#if CHGAME_DEBUG
     dbg::hook = screens::debugCommand;
 #endif
 }

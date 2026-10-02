@@ -183,7 +183,8 @@ C++ compiler (zig, clang++ or g++ on the PATH, `pip install ziglang`, or
   `zoom.txt` (the close-up, and a pair taken in it), `perf.txt` (render
   cost at both sizes).
 * `python tools/device.py upload [--debug]` - build and upload (`--debug`
-  adds the serial protocol for screenshots, injected input and lockstep);
+  adds the CHGame library's serial protocol, `chgame/Debug.h`, for
+  screenshots, injected input and lockstep);
   `python tools/device.py run tools/scripts/device_render.txt out/device`
   measures what a frame costs to draw on the board.
 * **The classic faces:** `python tools/faces.py` writes
@@ -207,8 +208,9 @@ C++ compiler (zig, clang++ or g++ on the PATH, `pip install ziglang`, or
   that, then `python tools/assets.py`.
 * **The title:** `tools/art/logo.txt`, a `#` for each pixel of the
   lettering; the title screen tints it as CHBlackjack's logo.
-* `python tools/assets.py` packs the art, `python tools/audio/preview.py
-  out/` renders the sound effects to WAV.
+* `python tools/assets.py` packs the art, `python ../../tools/audio/preview.py
+  . out/audio` renders the sound effects to WAV (their tables are in
+  `src/audio/Sounds.cpp`).
 
 ## License
 

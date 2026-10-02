@@ -1,16 +1,13 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask)
-#include <CHGfx.h>
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library)
+#include <CHGame.h>
 #include <string.h>
 #include "Stage.h"
 #include "../render/Layout.h"
 #include "../render/CardArt.h"
 #include "../render/Bar.h"
 #include "../game/Hand.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Fmt.h"
-#include "../gfx/Palette.h"
 #include "../fx/Fx.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../assets/Assets.h"
 
 namespace stage {
@@ -497,7 +494,10 @@ void update(const Table &t, uint32_t frame) {
             int32_t step = d / 4;
             if (!step) step = d > 0 ? 1 : -1;
             dispStack[s] += step;
-            if (d > 0 && s == YOU && (dispStack[s] & 3) == 0) audio::blip((uint16_t)(3000 + ((dispStack[s] * 7) & 511)), 8);
+            // A tick of the count, never over any other sound (the library's
+            // blip would cut off a priority-0 effect or another blip).
+            if (d > 0 && s == YOU && (dispStack[s] & 3) == 0 && !audio::playing())
+                audio::blip((uint16_t)(3000 + ((dispStack[s] * 7) & 511)), 8);
         }
         if (stackFlash[s]) stackFlash[s]--;
         if (actT[s]) actT[s]--;

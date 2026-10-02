@@ -1,9 +1,9 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask and CHGfx)
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library and CHGfx)
 // Derived from Press-Play-On-Tape/Blackjack (Apache-2.0),
 // PlayGameState_Play.cpp / _Utils.cpp / _Buttons.cpp. Modified 2026 for
 // CHGame by bateske (see Round.h and NOTICE).
 #include "Round.h"
-#include "../CHGame.h"
+#include <chgame/Input.h>   // the button masks only, so the rules build on the PC for the host tests
 
 // Frames at 60 fps; PPOT dealt a card every 15.
 enum : uint16_t {

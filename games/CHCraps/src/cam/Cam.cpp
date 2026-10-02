@@ -1,12 +1,10 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask and CHGfx)
-#include <CHGfx.h>
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library and CHGfx)
+#include <CHGame.h>
 #include <string.h>
 #include "Cam.h"
 #include "Dice3D.h"
 #include "../fx/Fx.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Palette.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../render/Chips.h"
 
 namespace cam {
@@ -218,7 +216,7 @@ static void background() {
     // and the shake would otherwise leave their pixels there).
     int sky = capY < 0 ? 0 : (capY > 128 ? 128 : capY), room = botY < 0 ? 0 : (botY > 128 ? 128 : botY);
     for (int y = 0; y < room; y++) gfx_copyRow(y, row, 0, GFX_W);
-    gfx_dither(0, 0, 128, sky / 2, INK, 0);
+    dither(0, 0, 128, sky / 2, INK, 0);
     // The back rail and its rubber.
     gfx_fillRect(xl - 2, capY, xr - xl + 4, topY - capY, WOOD);
     gfx_hline(xl - 2, capY, xr - xl + 4, GOLD);
@@ -252,7 +250,7 @@ static void background() {
     // of equal depth are level on screen).
     int fy = botY < 0 ? 0 : botY;
     gfx_fillRect(0, fy, 128, 128 - fy, FELT);
-    gfx_dither(0, fy, 128, 3, FELT_DK, 0);
+    dither(0, fy, 128, 3, FELT_DK, 0);
     static const int16_t PRINT_Z[3] = {28, 36, 96};
     for (uint8_t i = 0; i < 3; i++) {
         int32_t z = (int32_t)PRINT_Z[i] << 8;
@@ -342,7 +340,7 @@ bool render(uint32_t frame) {
     plate();
     if (ph == SHAKE || ph == WHIP_IN) powerBar(frame);
     if (ph == RESULT && showSum && t > 6) sumPlate();
-    fx::applyShake(0, 127);                             // uncovered edges black, not smeared
+    fx::applyShake(0, 127, INK);                        // uncovered edges black, not smeared
     return true;
 }
 

@@ -32,7 +32,7 @@ Made by the owner:
   - Render profile with `say Y`. The simulator's estimate of about 14 ms max when zoomed is unreliable.
   - CPU speed with `say W` (ms, nodes). This sets the level node budgets and `SIM_US_PER_POLL` in `src/Frame.cpp`, which currently guesses about 6,000 nodes/s.
   - Stack high-water marks with `perf`, the frame stack included.
-  - Sound and the title tune by ear.
+  - Sound and the title tune by ear (`python ../../tools/audio/preview.py . out/audio` renders them on the PC).
   - No `device_*.txt` scripts exist yet; `check.py` already skips that name pattern. On the board only `G`, `M`, `W` and `Y` exist among the game's commands, so device scripts must start games with `say G` and play with `say M` or the pad.
 - Choices approved only as plan assumptions, which the owner has not yet seen on screen:
   - Must-jump UI: the D-pad still visits every piece; pieces that can't jump say MUST JUMP and buzz; the ones that can are ringed. In the middle of a chain a single continuation plays itself and B is refused (KEEP JUMPING).
@@ -57,7 +57,8 @@ Made by the owner:
 - Debug protocol:
   - The game's commands are documented above `debugHook()` in `src/states/Screens.cpp`.
   - `J Q R H A V X` are simulator-only. Positions are set up with `say X <32 cells> <w|b> <rules>`, and chdrive's `auto N` relies on `A`.
-  - Device debug builds are `CHCK_LEAN` (no saving, no options screen or its credits); `-DCHCK_FULL` overrides that.
+  - The protocol itself is the CHGame library's (`chgame/Debug.h`, on in `CHGAME_DEBUG` builds); `dbg::holdWhile(searching)` holds the game's commands while the CPU searches, and `dbg::frameStack()` reports the frame stack's high-water mark as `fstk=` in P (board only).
+  - Device debug builds are `CHCK_LEAN` (no saving, no Options or Rules screen: Setup's RULES row steps through the rule sets instead); `-DCHCK_FULL` overrides that.
 - Art scale goes in whole multiples: `iso::ascale()`/`sized()` for art (2x from tileH 8, 1x on the flat map) and `zoomed()` for things painted on the board.
 - `tools/sheet.py`:
   - The MASTER row holds the art. The WHITE/BLACK rows are the palette swaps (`tools/art/sides.txt`).

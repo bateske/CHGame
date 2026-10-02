@@ -9,27 +9,16 @@
 
 #define CHF4_VERSION     "0.1"
 
-// Serial debug protocol: screenshots, input injection, lockstep, perf.
-// Off in normal builds. tools/device.py turns it on with
-// --build-property build.extra_flags, and leaves USB at "Serial" for it.
-#ifndef CHF4_DEBUG
-#ifdef CHSIM
-#define CHF4_DEBUG       1       // the simulator is driven through the protocol
-#else
-#define CHF4_DEBUG       0
-#endif
-#endif
+// The CHGame library's switches: CHGAME_DEBUG (the serial debug protocol:
+// screenshots, input injection, lockstep, perf; always on in the simulator,
+// on the board only in `tools/device.py build --debug`) and CHGAME_PROFILE.
+#include <chgame/Config.h>
 
 // A build without saving and the options and setup screens (the sister
 // games' device debug builds need it to fit the ~2 KB protocol and USB
 // Serial; this one has the room, so debug builds are the whole game).
 #ifndef CHF4_LEAN
 #define CHF4_LEAN        0
-#endif
-
-// Section profiler (dbg::prof + the T command). Opt-in: costs flash.
-#ifndef CHF4_PROFILE
-#define CHF4_PROFILE     0
 #endif
 
 // Frame rate the game logic is paced for.

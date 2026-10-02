@@ -1,15 +1,11 @@
 #pragma GCC optimize("Os")   // cold code: size over speed (the tile loop lives in gfx/Tile)
 #include <Arduino.h>
 #include <string.h>
-#include <CHGfx.h>
+#include <CHGame.h>
 #include "Stage.h"
-#include "../CHGame.h"
-#include "../gfx/Palette.h"
-#include "../gfx/Draw.h"
 #include "../gfx/Tile.h"
-#include "../gfx/Fmt.h"
 #include "../fx/Fx.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../game/Board.h"
 #include "../game/Nav.h"
 #include "../assets/Assets.h"
@@ -119,7 +115,6 @@ static const uint8_t DROP_FRAMES = 60, FALL = 6;     // the deal: tiles land ove
 // side, hides the face of the one under it completely, so only that one's
 // side is drawn: 56 of the turtle's 144, to begin with.
 static uint8_t over[board::MAX_TILES];
-static const uint8_t RM_ID[16] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
 
 static inline bool has(const uint8_t *s, uint8_t i) { return (s[i >> 3] >> (i & 7)) & 1; }
 static inline void mark(uint8_t *s, uint8_t i) { s[i >> 3] |= (uint8_t)(1u << (i & 7)); }
@@ -831,7 +826,7 @@ bool render(uint32_t frame, uint32_t ui) {
     return true;
 }
 
-#if CHMJ_DEBUG
+#if CHGAME_DEBUG
 // Device render profile (debug Y command): microseconds per section.
 void profile(uint32_t *us) {
     uint32_t t = micros();

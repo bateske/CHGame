@@ -6,16 +6,14 @@
 // Frame loop: logic runs at a fixed 60 Hz while the previous frame is still
 // going out over DMA; drawing waits for it (one framebuffer), then the new
 // frame is sent.
+#include <CHGame.h>
 #include "config.h"
-#include <CHGfx.h>
-#include "src/CHGame.h"
-#include "src/gfx/Palette.h"
 #include "src/states/Screens.h"
-#include "src/audio/Audio.h"
-#include "src/debug/Debug.h"
+#include "src/audio/Sounds.h"
 
 void setup() {
     arduboy.boot();
+    dbg::begin("CHSO " CHSO_VERSION);     // the debug protocol's hello (CHGAME_DEBUG builds)
     gfx_begin(GFX_DIV2, GFX_12BPP);
     pal::init();
     screens::begin();

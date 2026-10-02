@@ -6,7 +6,7 @@ namespace music {
 
 // Debug builds (the test protocol: tools/device.py --debug, and the simulator) leave the scores
 // out - the protocol needs the flash, and the tests never listen.
-#if !CHRL_DEBUG
+#if !CHGAME_DEBUG
 static const uint8_t TITLE[304] = {
   0x90,0x58,0x91,0x54,0x00,0x8A,0x81,0x00,0x96,0x80,0x00,0x0C,0x90,0x57,0x91,0x58,0x00,0x8A,0x80,0x81,
   0x00,0x0C,0x90,0x58,0x00,0x8A,0x80,0x00,0x0C,0x90,0x5B,0x91,0x5B,0x00,0x8A,0x81,0x00,0x96,0x80,0x00,
@@ -51,7 +51,7 @@ static const uint8_t BROKE[164] = {
 
 void get(uint8_t song, bool loop, const uint8_t *&data, size_t &n) {
     (void)loop;
-#if !CHRL_DEBUG
+#if !CHGAME_DEBUG
     switch (song) {
         case 0: data = TITLE; n = sizeof TITLE; return;
         case 1: data = VICTORY; n = sizeof VICTORY; return;

@@ -5,9 +5,8 @@
 // and the full one on the SD card) in src/dict and src/sd, the CPU in
 // src/ai, the game's flow in src/game, and everything you see and hear in
 // src/stage and src/states.
+#include <CHGame.h>
 #include "config.h"
-#include <CHGfx.h>
-#include "src/CHGame.h"
 #include "src/Frame.h"
 
 void setup() {

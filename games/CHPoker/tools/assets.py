@@ -26,7 +26,8 @@ OUT_H = ROOT / "src" / "assets" / "Assets.h"
 OUT_C = ROOT / "src" / "assets" / "Assets.cpp"
 PREVIEW = ROOT / "build" / "assets"
 
-# Must match src/gfx/Palette.cpp.
+# Must match the CHGame library's pal::HOUSE
+# (platform/libraries/CHGame/src/chgame/Palette.cpp).
 PALETTE = [0x000, 0xFFF, 0x042, 0x173, 0x4B5, 0xBBC, 0xE12, 0x702,
            0xFC2, 0x741, 0x26E, 0x125, 0xFB8, 0x6EF, 0xF0F, 0xFC2]
 # Letters used in tools/art/*.txt. '.' = transparent.
@@ -126,8 +127,9 @@ def pack_span1(bits):
 
 def pack_span4(img, trans=TRANSPARENT):
     """Colour image -> w, h, then per row: n, then n bytes of (len-1)<<4 | colour
-    (sprite4 in src/gfx/Draw.cpp). Transparent runs use colour 15, which is
-    skipped, so the art never draws FX_B. Trailing transparency is implicit."""
+    (sprite4 in the CHGame library's chgame/Draw.cpp). Transparent runs use
+    colour 15, which is skipped, so the art never draws FX_B. Trailing
+    transparency is implicit."""
     h, w = len(img), len(img[0])
     out = [w, h]
     for row in img:

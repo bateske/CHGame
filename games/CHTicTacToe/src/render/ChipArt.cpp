@@ -1,7 +1,6 @@
 #pragma GCC optimize("Os")   // cold code: size over speed
-#include <CHGfx.h>
+#include <CHGame.h>
 #include "ChipArt.h"
-#include "../gfx/Palette.h"
 
 namespace art {
 

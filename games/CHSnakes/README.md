@@ -141,8 +141,9 @@ C++ compiler (zig, clang++ or g++ on the PATH, `pip install ziglang`, or
   a square (the list is in `src/states/Screens.cpp`). `cal` and `perf`
   estimate the device's render time. `gameplay.txt` is the clip at the top.
 * `python tools/device.py upload [--debug]` - build and upload (`--debug`
-  adds the serial protocol for screenshots, injected input and lockstep;
-  it leaves out the options screen and saving).
+  adds the CHGame library's serial protocol, `chgame/Debug.h`, for
+  screenshots, injected input and lockstep; it leaves out the options
+  screen and saving).
 * **Changing the board:** the ladders and snakes are one table in
   `src/game/Layout.cpp`. `python tools/lookdev.py` renders it at each size;
   `python tools/turns.py` prints the SHARK's table for it (into
@@ -151,8 +152,8 @@ C++ compiler (zig, clang++ or g++ on the PATH, `pip install ziglang`, or
   `tools/art/sheet.png`, an indexed PNG on the game's palette with every
   sprite in a labelled cell. Edit it, then `python tools/sheet.py import`
   writes what changed to `tools/art/` and rebuilds the assets.
-* `python tools/assets.py` packs the art, `python tools/audio/preview.py
-  out/` renders the sound effects to WAV.
+* `python tools/assets.py` packs the art, `python ../../tools/audio/preview.py
+  . out/audio` renders the sound effects to WAV.
 
 ## License
 

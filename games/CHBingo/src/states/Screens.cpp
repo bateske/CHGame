@@ -1,28 +1,21 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask and CHGfx)
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library and CHGfx)
 // Screens after CHBlackjack's (which follow Press Play On Tape's
 // GameStateTypes): title, play, options, statistics and the broke screen,
 // with a pause menu over play.
 #include <Arduino.h>
-#include <CHGfx.h>
+#include <CHGame.h>
 #include <string.h>
 #include "../../config.h"
 #include "Screens.h"
-#include "../CHGame.h"
 #include "../game/Bingo.h"
 #include "../fx/Presenter.h"
 #include "../fx/Fx.h"
 #include "../render/Cards.h"
 #include "../render/Layout.h"
 #include "../render/Table.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Fmt.h"
-#include "../gfx/Mask.h"
-#include "../gfx/Palette.h"
-#include "../gfx/Remap.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../save/Save.h"
 #include "../assets/Assets.h"
-#include "../debug/Debug.h"
 
 namespace screens {
 
@@ -41,8 +34,8 @@ static uint32_t staticSig = 0;             // last drawn state of a still screen
 static bool titleReady = false;            // the title's still parts are drawn
 static int16_t mgx16, mgy16;               // the menu glove (Q4); mgy16 0 = it appears in place
 
-// Options "SOUND|ON|OFF" (all-zero is the default) -> audio mode.
-static uint8_t soundMode(uint8_t opt) { return opt ? 0 : 2; }
+// Options "SOUND|ON|OFF" (all-zero is the default): sound is on unless OFF.
+static bool soundOn(uint8_t opt) { return opt == 0; }
 
 // The play screen only redraws what changed; anything drawn over it from
 // outside (the pause menu) has to force a full redraw.
@@ -87,7 +80,7 @@ static void enter(Scr s) {
 
 void begin() {
     save::load(game, hasGame);
-    audio::begin(soundMode(game.opt.sound));
+    audio::begin(SOUNDS, (uint8_t)Sfx::COUNT, soundOn(game.opt.sound));
     enter(Scr::Title);
 }
 
@@ -100,7 +93,7 @@ static void seedOnce() {
 // ---------------------------------------------------------------------------
 // Debug hooks
 // ---------------------------------------------------------------------------
-#if CHBN_DEBUG
+#if CHGAME_DEBUG
 void debugSeed(uint32_t s) { game.seed(s); seeded = true; }
 void debugJump(char c) {
     // Scripted tests start from a known animation clock, so a board that has
@@ -322,7 +315,7 @@ static void titleRender(uint32_t frame) {
         int y = y0 + i * PITCH;
         bool sel = i == menuSel;
         int w = gfx_textWidth(buf);
-        if (sel) { panel(64 - w / 2 - 6, y - 2, w + 12, 11, 3, NAVY, FX_B); selX = 64 - w / 2 - 7; }
+        if (sel) { panelLit(64 - w / 2 - 6, y - 2, w + 12, 11, 3, NAVY, FX_B); selX = 64 - w / 2 - 7; }
         centred57(y, buf, sel ? GOLD : WHITE);
     }
     menuGlove(selX - 1, y0 + menuSel * PITCH + 3, frame);
@@ -377,7 +370,7 @@ static void playUpdate() {
 
 // Every number, in its letter's column: lit once it has been called.
 static void calledBoard() {
-    panel(12, 6, 104, 116, 4, INK, GOLD);
+    panelLit(12, 6, 104, 116, 4, INK, GOLD);
     bool live = game.inPlay();
     for (int c = 0; c < 5; c++) {
         int x = 22 + c * 19;
@@ -403,7 +396,7 @@ static void playRender(uint32_t frame) {
     if (!paused) return;
     dither(0, 0, 128, 128, INK, 0);
     if (board) { calledBoard(); return; }
-    panel(24, 28, 80, 67, 4, NAVY, GOLD);
+    panelLit(24, 28, 80, 67, 4, NAVY, GOLD);
     centred57(33, "PAUSED", GOLD);
     static const char *const P[PAUSE_ITEMS] = {"RESUME", "CALLED", "OPTIONS", "SAVE & QUIT"};
     for (int i = 0; i < PAUSE_ITEMS; i++) {
@@ -449,7 +442,7 @@ static void optionsUpdate() {
         uint8_t n = (uint8_t)(optField(OPT_TEXT[optSel], 0, tmp) - 1);
         uint8_t *f = (uint8_t *)&game.opt + optSel;
         *f = (uint8_t)((*f + n + d) % n);
-        if (optSel == O_SOUND) audio::setMode(soundMode(*f));
+        if (optSel == O_SOUND) audio::setOn(soundOn(*f));
         audio::sfx(Sfx::Chip);
     }
     if ((arduboy.justPressed(A_BUTTON) && optSel == O_BACK) || arduboy.justPressed(B_BUTTON)) {

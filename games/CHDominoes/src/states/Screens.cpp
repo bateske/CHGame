@@ -1,22 +1,17 @@
 #pragma GCC optimize("Os", "no-ipa-sra")   // cold code: size over speed (hot pixel loops live in Draw/Mask)
 #include <Arduino.h>
 #include <string.h>
-#include <CHGfx.h>
+#include <CHGame.h>
 #include "../../config.h"
 #include "Screens.h"
-#include "../CHGame.h"
-#include "../gfx/Palette.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Mask.h"
-#include "../gfx/Fmt.h"
+#include "../gfx/Font.h"
 #include "../fx/Fx.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../table/Table.h"
 #include "../ai/Ai.h"
 #include "../game/Match.h"
 #include "../stage/Stage.h"
 #include "../save/Save.h"
-#include "../debug/Debug.h"
 #include "../assets/Assets.h"
 #ifdef CHSIM
 #include <sim.h>
@@ -112,7 +107,7 @@ static void heading(const char *text, int y) {
     maskFont(m, 0, 0, text);
     uint8_t r[FONT_H + 2];
     for (int i = 0; i < FONT_H + 2; i++) r[i] = i < 3 ? FX_B : (i < 8 ? GOLD : WOOD);
-    maskDraw(m, 64 - w / 2, y, INK, INK, r);
+    maskDraw(m, 64 - w / 2, y, 0, INK, -1, r);
     fontHalf(64 - w / 2, y, text, nullptr, 1, WOOD);
 }
 
@@ -196,7 +191,6 @@ static Faller fallers[FALLERS + 1];  // the last: the meteor
 static uint8_t fallerImg[FALLERS + 1][table::TILE_IMG];
 static bool meteorOn, railKept;
 static uint16_t meteorIn;
-static const uint8_t RM_ID[16] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
 
 static int menuTop(uint8_t n) { return 128 - n * 14 - 4; }
 
@@ -291,7 +285,7 @@ static void titleRender(uint32_t frame) {
         maskBlit1(m, LOGO, LOGO_W, LOGO_H);
         uint8_t r[LOGO_H];
         for (int i = 0; i < LOGO_H; i++) r[i] = i < 7 ? FX_B : (i < 12 ? GOLD : WOOD);
-        maskDraw(m, 64 - LOGO_W / 2, 7, INK, INK, r);
+        maskDraw(m, 64 - LOGO_W / 2, 7, 0, INK, -1, r);
         railKept = true;
     }
     gfx_setClip(0, RAIL + 1, 128, 127 - RAIL);
@@ -617,7 +611,7 @@ static void optionsRender(uint32_t frame) {
 // ---------------------------------------------------------------------------
 // Debug protocol hooks (tools/chsim/chdrive.py 'say')
 // ---------------------------------------------------------------------------
-#if CHDM_DEBUG
+#if CHGAME_DEBUG
 //   G <mode> <level> <seed> <game> <target>   start a match (mode 0 vs CPU, 1 two players; game 0 DRAW,
 //                                    1 ALL FIVES; target in points)
 //   D <tiles>                        the next deal: "66 65 ..", seven for side 0, seven for side 1,
@@ -698,25 +692,6 @@ static bool debugHook(char cmd, const char *args) {
             stage::unchoose();
             return match::play(m.tile, m.arm);
         }
-#ifdef CHSIM
-        case 'Q': {
-            // Calibration for chdrive's `cal`: host ns for the primitives the
-            // CHGfx benchmark measured on the board (benchmark-results.txt).
-            static uint8_t spr[8 * 16];
-            memset(spr, 0x3F, sizeof spr);
-            uint64_t t0, r[5];
-            t0 = sim_hostNanos(); for (int i = 0; i < 200; i++) gfx_clear((uint8_t)i); r[0] = (sim_hostNanos() - t0) / 200;
-            t0 = sim_hostNanos(); for (int i = 0; i < 20000; i++) gfx_hline(0, i & 127, 128, (uint8_t)i); r[1] = (sim_hostNanos() - t0) / 20000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 2000; i++) gfx_blit(spr, i & 63, i & 63, 16, 16, 15); r[2] = (sim_hostNanos() - t0) / 2000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 1000; i++) gfx_text(0, i & 63, "ABCDEFGHIJKLMNOPQRSTUVWX", 1); r[3] = (sim_hostNanos() - t0) / 1000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 1000; i++) gfx_fillCircle(64, 64, 30, (uint8_t)i); r[4] = (sim_hostNanos() - t0) / 1000;
-            p = fmtStr(buf, "CAL");
-            for (int k = 0; k < 5; k++) { *p++ = ' '; p = fmtInt(p, (int32_t)r[k]); }
-            fmtStr(p, "\n");
-            dbg::print(buf);
-            return true;
-        }
-#endif
     }
     return false;
 }
@@ -731,7 +706,7 @@ void begin() {
     opt.target = 0;
     save::load(opt, stats, hasGame);
     applyOptions();
-#if CHDM_DEBUG
+#if CHGAME_DEBUG
     dbg::hook = debugHook;
 #endif
     enter(Scr::Title);

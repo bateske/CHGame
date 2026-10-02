@@ -192,7 +192,7 @@ void Slots::spin() {
 }
 
 void Slots::evalClassic() {
-#if CHSL_DEBUG || defined(CHTEST)
+#if CHGAME_DEBUG || defined(CHTEST)
     if (feature == 5) { res.grid[0][1] = C_CLOVER; res.grid[1][1] = C_HORSESHOE; feature = 0; }    // the wheel
 #endif
     uint8_t a = res.grid[0][1], b = res.grid[1][1], c = res.grid[2][1];
@@ -242,7 +242,7 @@ void Slots::evalSweet() {
 
 void Slots::evalFortune() {
     Result &r = res;
-#if CHSL_DEBUG || defined(CHTEST)
+#if CHGAME_DEBUG || defined(CHTEST)
     if (feature) {
         switch (feature) {
             case 1: r.grid[0][1] = r.grid[2][0] = r.grid[4][2] = F_GONG; break;

@@ -8,8 +8,10 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
-sys.path.insert(0, str(HERE.parents[3] / "tools" / "chsim"))  # CHCasino/tools/chsim (find_cxx)
+sys.path.insert(0, str(HERE.parents[3] / "tools" / "chsim"))  # the repository's tools/chsim (find_cxx)
 from chsim import find_cxx  # noqa: E402
+
+LIB = HERE.parents[3] / "platform" / "libraries" / "CHGame" / "src"   # chgame/Config.h (by way of config.h)
 
 # Each test: its source and the game sources it covers (all graphics-free).
 TESTS = {
@@ -21,7 +23,7 @@ def run(name, sources):
     exe = HERE / "build" / f"{name}.exe"
     exe.parent.mkdir(exist_ok=True)
     cmd = find_cxx() + ["-std=gnu++17", "-O1", "-Wall", "-Wextra", "-Wno-unused-parameter", "-Wno-unknown-pragmas",
-                        "-fsanitize=undefined", "-fno-sanitize-recover=undefined", "-DCHTEST",
+                        "-fsanitize=undefined", "-fno-sanitize-recover=undefined", "-DCHTEST", f"-I{LIB}",
                         str(HERE / f"{name}.cpp")] + [str(ROOT / s) for s in sources] + ["-o", str(exe)]
     r = subprocess.run(cmd, capture_output=True, text=True)
     if r.returncode:

@@ -1,56 +1,9 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask and CHGfx)
-#include <CHGfx.h>
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library and CHGfx)
+#include <CHGame.h>
 #include <string.h>
 #include "Fx.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Mask.h"
-#include "../gfx/Palette.h"
 
 namespace fx {
-
-// ---------------------------------------------------------------------------
-// Curves: 17-point Q8 tables, linearly interpolated.
-// ---------------------------------------------------------------------------
-static const int16_t CURVES[5][17] = {
-    {0, 16, 32, 48, 64, 80, 96, 112, 128, 144, 160, 176, 192, 208, 224, 240, 256},
-    {0, 45, 84, 119, 148, 173, 194, 210, 224, 235, 242, 248, 252, 254, 256, 256, 256},
-    {0, 69, 126, 173, 209, 237, 257, 271, 278, 281, 281, 277, 272, 267, 261, 258, 256},
-    {0, 3, 11, 24, 40, 59, 81, 104, 128, 152, 175, 197, 216, 232, 245, 253, 256},
-    {0, 8, 30, 68, 121, 189, 248, 215, 196, 193, 204, 231, 249, 240, 246, 253, 256},
-};
-
-int ease(Ease e, int t, int n) {
-    if (n <= 0 || t >= n) return 256;
-    if (t <= 0) return 0;
-    int p = (t << 8) / n;                    // 0..255
-    int i = p >> 4, f = p & 15;
-    const int16_t *c = CURVES[e];
-    return c[i] + (((c[i + 1] - c[i]) * f) >> 4);
-}
-
-static const uint8_t SIN[65] = {
-    0, 6, 13, 19, 25, 31, 38, 44, 50, 56, 62, 68, 74, 80, 86, 92, 98, 104, 109, 115, 121, 126,
-    132, 137, 142, 147, 152, 157, 162, 167, 172, 177, 181, 185, 190, 194, 198, 202, 206, 209,
-    213, 216, 220, 223, 226, 229, 231, 234, 237, 239, 241, 243, 245, 247, 248, 250, 251, 252,
-    253, 254, 255, 255, 255, 255, 255};
-
-int isin(int a) {
-    a &= 255;
-    int q = a >> 6, i = a & 63;
-    int v;
-    switch (q) {
-        case 0: v = SIN[i]; break;
-        case 1: v = SIN[64 - i]; break;
-        case 2: v = -SIN[i]; break;
-        default: v = -SIN[64 - i]; break;
-    }
-    return v;
-}
-
-static uint32_t seed = 0x1234567u;
-uint32_t rnd() { seed ^= seed << 13; seed ^= seed >> 17; seed ^= seed << 5; return seed; }
-void reseed() { seed = 0x1234567u; }
-int rndRange(int lo, int hi) { return hi > lo ? lo + (int)(rnd() % (uint32_t)(hi - lo)) : lo; }
 
 // ---------------------------------------------------------------------------
 // Particles
@@ -179,7 +132,7 @@ void drawBanner() {
 }
 
 // ---------------------------------------------------------------------------
-// Floating text and shake
+// Floating text
 // ---------------------------------------------------------------------------
 struct Float { int16_t x, y; uint8_t t, colour; char text[8]; };
 static Float floats[4];
@@ -202,23 +155,9 @@ void drawFloats() {
     }
 }
 
-static uint8_t shakeT, shakeAmp;
-
-void shake(uint8_t frames, uint8_t amp) { shakeT = frames; shakeAmp = amp; }
-
-void applyShake(int y0, int y1, int fill) {
-    if (!shakeT) return;
-    int a = (shakeAmp * shakeT + 9) / 10;
-    if (a < 1) a = 1;
-    int dy = (shakeT & 1) ? a : -a;
-    // 2 px sideways. gfx_scroll copies words from SRAM; memmove here is a
-    // byte loop in flash (CHGfx measured 6.3 ms against 1.0 for 118 rows).
-    gfx_scroll(y0, y1 - y0 + 1, (shakeT & 2) ? 2 : -2, dy, fill);
-}
-
 bool activeRows(int &lo, int &hi) {
     lo = 999; hi = -1;
-    if (shakeT) { lo = 0; hi = 127; return true; }
+    if (shaking()) { lo = 0; hi = 127; return true; }
     for (auto &p : parts) if (p.life) { int y = p.y >> 4; if (y - 2 < lo) lo = y - 2; if (y + 3 > hi) hi = y + 3; }
     for (auto &f : floats) if (f.t) { int y = f.y - (50 - f.t) / 2; if (y - 1 < lo) lo = y - 1; if (y + 7 > hi) hi = y + 7; }
     if (bannerFrames) { if (bannerCy - 18 < lo) lo = bannerCy - 18; if (bannerCy + 18 > hi) hi = bannerCy + 18; }
@@ -229,14 +168,14 @@ void clear() {
     memset(parts, 0, sizeof parts);
     memset(floats, 0, sizeof floats);
     bannerFrames = 0;
-    shakeT = 0;
+    shakeStop();
 }
 
 void update() {
     updateParticles();
     if (bannerFrames) { bannerFrames--; bannerT++; }
     for (auto &f : floats) if (f.t) f.t--;
-    if (shakeT) shakeT--;
+    shakeTick();
 }
 
 }  // namespace fx

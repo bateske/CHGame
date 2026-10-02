@@ -1,11 +1,9 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask and CHGfx)
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library and CHGfx)
 // The wall, dealer and rail are CHBlackjack's (render/Table.cpp).
-#include <CHGfx.h>
+#include <CHGame.h>
 #include <string.h>
 #include "Wall.h"
 #include "Layout.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Palette.h"
 #include "../assets/Assets.h"
 
 namespace wall {
@@ -23,9 +21,9 @@ void backdrop(int rows) {
 }
 
 void dealer(uint8_t expr, uint8_t look, int x, int y) {
-    gfx_sprite4(DEALER, x, y);
+    sprite4(DEALER, x, y);
     int fx = x + (FACE_X - DEALER_X), fy = y + (FACE_Y - DEALER_Y);
-    gfx_sprite4(FACE_NORMAL, fx, fy);
+    sprite4(FACE_NORMAL, fx, fy);
     if (expr > E_TALK) expr = E_NORMAL;
     if (expr) {
         for (uint16_t i = FACE_EDIT_AT[expr - 1]; i < FACE_EDIT_AT[expr]; i++) {

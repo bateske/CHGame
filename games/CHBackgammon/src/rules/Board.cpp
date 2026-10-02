@@ -1,10 +1,10 @@
 #pragma GCC optimize("Os", "no-ipa-sra")
 #include <string.h>
 #include "Board.h"
-#include "../RamFunc.h"
+#include <chgame/RamFunc.h>
 
 // The CPU calls the step functions and the enumerator tens of thousands of
-// times a move, so they run from SRAM (RamFunc.h): about twice as fast as
+// times a move, so they run from SRAM (chgame/RamFunc.h): about twice as fast as
 // from flash on this chip.
 
 namespace bg {

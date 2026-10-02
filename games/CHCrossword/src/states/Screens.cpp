@@ -1,22 +1,17 @@
 #pragma GCC optimize("Os", "no-ipa-sra")   // cold code: size over speed (hot pixel loops live in Draw/Mask)
 #include <Arduino.h>
 #include <string.h>
-#include <CHGfx.h>
+#include <CHGame.h>
 #include "../../config.h"
 #include "Screens.h"
-#include "../CHGame.h"
-#include "../gfx/Palette.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Mask.h"
-#include "../gfx/Fmt.h"
+#include "../gfx/Font.h"
 #include "../fx/Fx.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../game/Puzzle.h"
 #include "../game/Game.h"
 #include "../pack/Pack.h"
 #include "../stage/Stage.h"
 #include "../save/Save.h"
-#include "../debug/Debug.h"
 #include "../assets/Assets.h"
 #ifdef CHSIM
 #include <sim.h>
@@ -87,7 +82,7 @@ static void enter(Scr s) {
 // Save the options and the records, and the puzzle in play if there is one.
 static void persist(bool withGame) {
     gfx_wait();                      // save builds its page in the chunk scratch
-    game::Record r;
+    game::Record r = {};             // (zeroed: the save holds every byte, padding too)
     if (withGame) {
         game::save(r);
         r.packId = pack::id();
@@ -127,7 +122,7 @@ static void heading(const char *text, int y) {
     maskFont(m, 0, 0, text);
     uint8_t r[FONT_H + 2];
     for (int i = 0; i < FONT_H + 2; i++) r[i] = i < 3 ? FX_B : (i < 8 ? GOLD : WOOD);
-    maskDraw(m, 64 - w / 2, y, INK, INK, r);
+    maskDraw(m, 64 - w / 2, y, 0, INK, -1, r);
 }
 
 static void centred35(int y, const char *s, uint8_t c) { text35(64 - text35Width(s) / 2, y, s, c); }
@@ -284,7 +279,7 @@ static void titleUpdate() {
         if (phase == TITLE_TYPE[i]) audio::sfx(Sfx::Key);
         if (phase == TITLE_LOCK[i]) {
             fx::burst(fx::SPARK, x, y, 6, 18, FX_B);
-            audio::note((uint16_t)(1047 + i * 190), 60);
+            audio::note((uint16_t)(1047 + i * 190), 60, 2);
         }
     }
     if (phase == 122 || phase == 214) audio::sfx(Sfx::Coin);
@@ -336,7 +331,7 @@ static void titleRender(uint32_t frame) {
         stage::bigText(x, y, text, on ? FX_B : WHITE, on ? WOOD : FELT_LT, INK);
         if (on) sprite4(HAND_SIDE, x - HAND_SIDE[0] - 3 + ((frame >> 4) & 1), y - 2);
     }
-    fx::drawParticles(2);
+    fx::drawParticles();
 }
 
 // ---------------------------------------------------------------------------
@@ -486,7 +481,7 @@ static uint8_t pauseItems(uint8_t *items) {
 static void playUpdate() {
     if (overlay == PAUSE) {
         uint8_t items[5], n = pauseItems(items), was = sel;
-        if (arduboy.justPressed(B_BUTTON) || arduboy.justPressed(START_BUTTON)) {
+        if (arduboy.justPressed(B_BUTTON | START_BUTTON)) {
             overlay = NONE;
             stage::invalidate();
             return;
@@ -510,19 +505,20 @@ static void playUpdate() {
         if (resultT < 250) resultT++;
         stage::invalidate();
         // The score counts up, ticking.
-        if (resultT < 30 && (resultT & 3) == 0) audio::note((uint16_t)(1500 + resultT * 60), 24);
+        if (resultT < 30 && (resultT & 3) == 0) audio::note((uint16_t)(1500 + resultT * 60), 24, 2);
         // The stars come in one at a time.
         for (uint8_t i = 0; i < result.stars; i++)
             if (resultT == 40 + i * 14) {
                 audio::sfx(Sfx::Star);
                 fx::burst(fx::STAR, 46 + i * 18, 93, 8, 30, GOLD);
             }
-        if (resultT > 30 && arduboy.justPressed(A_BUTTON)) {
+        // A: on to the next puzzle in the list; B: back to the title.
+        if (resultT > 30 && arduboy.justPressed(A_BUTTON | B_BUTTON)) {
+            bool next = arduboy.justPressed(A_BUTTON);
             audio::sfx(Sfx::Select);
-            if (playing + 1 < pack::puzzles()) { listSel = (uint8_t)(playing + 1); }
-            go(Scr::Select);
+            if (next && playing + 1 < pack::puzzles()) listSel = (uint8_t)(playing + 1);
+            go(next ? Scr::Select : Scr::Title);
         }
-        if (resultT > 30 && arduboy.justPressed(B_BUTTON)) { audio::sfx(Sfx::Select); go(Scr::Title); }
         stage::update();
         return;
     }
@@ -612,7 +608,7 @@ static void playRender(uint32_t frame) {
         }
         if (newBest && resultT > 90) centred35(103, "NEW BEST!", FX_A);
         centred35(110, "A NEXT   B MENU", SILVER);
-        fx::drawParticles(2);
+        fx::drawParticles();
     }
 }
 
@@ -684,7 +680,7 @@ static void optionsRender(uint32_t frame) {
 // ---------------------------------------------------------------------------
 // Debug protocol hooks (tools/chsim/chdrive.py 'say')
 // ---------------------------------------------------------------------------
-#if CHCW_DEBUG
+#if CHGAME_DEBUG
 //   G <i> [pack]        start puzzle i of a pack (0, the built-in one, by default)
 //   H                   STATE scr=<T|S|P|O> ov=<overlay> cur=<cell> down=<0|1> board=<0|1> key=<k>
 //                       score= streak= locked= words= solved= sec= n= busy= jp=<the jackpot word>
@@ -696,7 +692,7 @@ static void optionsRender(uint32_t frame) {
 //   X <0|1>             (simulator) put the card in / pull it out
 //   Q                   (simulator) time the calibration primitives
 static bool debugHook(char cmd, const char *args) {
-    char buf[120], *p;
+    char buf[160], *p;              // (a late-game STATE line is ~125 characters)
     switch (cmd) {
         case 'G': {
             uint8_t i = (uint8_t)dbg::parseNum(args, 10), pk = (uint8_t)dbg::parseNum(args, 10);
@@ -779,23 +775,6 @@ static bool debugHook(char cmd, const char *args) {
         case 'X':
             sim_cardEject(*args == '1');
             return true;
-        case 'Q': {
-            // Calibration for chdrive's `cal`: host ns for the primitives the
-            // CHGfx benchmark measured on the board (benchmark-results.txt).
-            static uint8_t spr[8 * 16];
-            memset(spr, 0x3F, sizeof spr);
-            uint64_t t0, r[5];
-            t0 = sim_hostNanos(); for (int i = 0; i < 200; i++) gfx_clear((uint8_t)i); r[0] = (sim_hostNanos() - t0) / 200;
-            t0 = sim_hostNanos(); for (int i = 0; i < 20000; i++) gfx_hline(0, i & 127, 128, (uint8_t)i); r[1] = (sim_hostNanos() - t0) / 20000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 2000; i++) gfx_blit(spr, i & 63, i & 63, 16, 16, 15); r[2] = (sim_hostNanos() - t0) / 2000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 1000; i++) gfx_text(0, i & 63, "ABCDEFGHIJKLMNOPQRSTUVWX", 1); r[3] = (sim_hostNanos() - t0) / 1000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 1000; i++) gfx_fillCircle(64, 64, 30, (uint8_t)i); r[4] = (sim_hostNanos() - t0) / 1000;
-            p = fmtStr(buf, "CAL");
-            for (int k = 0; k < 5; k++) { *p++ = ' '; p = fmtInt(p, (int32_t)r[k]); }
-            fmtStr(p, "\n");
-            dbg::print(buf);
-            return true;
-        }
 #endif
     }
     return false;
@@ -809,7 +788,7 @@ void begin() {
     applyOptions();
     pack::select(0);
     lastPack = pack::id();
-#if CHCW_DEBUG
+#if CHGAME_DEBUG
     dbg::hook = debugHook;
 #endif
     enter(Scr::Title);

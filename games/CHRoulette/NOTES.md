@@ -6,7 +6,7 @@ Agent-facing notes for continuing work here; rules, controls and build are in RE
 
 - Imported from https://github.com/bateske/CHRoulette at commit d8c2f67 (2026-10-01); develop here now, not in the old repo.
 - Release build (CHGame core 0.2.4, CHGfx 1.3.0, `opt=oslto,rtlib=nano,periph=game,usb=uploadonly`): flash 49,540 of 50,944 B (1,404 spare), static RAM 16,084 of 18,416 B (2,332 spare).
-- Save pages: `../../tools/check_size.py` reports the image as 49,796 B, 256 B more than the compile's flash figure. Both A/B pages (0xF500, 0xF600) fit while the image is at most 50,432 B, so only 636 B of headroom remain. Past that, `src/save/Save.cpp` saves to page B only. Flash is the wall.
+- Save pages: `../../tools/check_size.py` reports the image as 49,796 B, 256 B more than the compile's flash figure. Both A/B pages (0xF500, 0xF600) fit while the image is at most 50,432 B, so only 636 B of headroom remain. Past that, the CHGame library's `chgame/Save.cpp` saves to page B only. Flash is the wall.
 - Simulator-verified (as of 2026-10-01):
   - The game plays end to end: betting, whip, spin, payout, save/continue.
   - `python tools/tests/run_tests.py` passes: rules against the independent `ref_roulette.py` model, navigation, limits, the spin flow, a money-conservation fuzz.
@@ -48,7 +48,7 @@ The design specs are in `docs/design/*.md`. Where they conflict, `critique.md` d
 
 ## Gotchas
 
-- Every `CHRL_DEBUG` build has no music scores (`Music.cpp`), and that includes the simulator. Audition the tunes with `python tools/audio/preview.py out/`.
+- Every `CHGAME_DEBUG` build has no music scores (`Music.cpp`), and that includes the simulator; its `playSong()` is empty, so the library's score player is left out too (about 0.5 KB). Audition the tunes with `python ../../tools/audio/preview.py . out/audio` (the shared preview: the CHGame library's engine with `src/audio/Sounds.cpp` and `Music.cpp`).
 - Device debug builds (`CHRL_LEAN`) also drop the credits page and use `title35` lettering on the win/broke screens instead of PPOT's bitmaps. `-DCHRL_FULL` forces a full device debug build.
 - Device debug builds write flash only after a script sends `say E 1`, because the save pages are shared with the release build and the other games.
   - `architecture.md` §1.2 calls this hook `Y`; the code uses `E`.
@@ -62,5 +62,5 @@ The design specs are in `docs/design/*.md`. Where they conflict, `critique.md` d
   - The solver dry-runs the spin and turns the rotor by whole pockets so the ball lands there.
   - After any change to `Ball.cpp` or `PACE`, rerun `run_ball_tests.py`, which checks every pocket lands within its time window. `tools/spin_preview.py` traces one spin to a GIF.
 - The wheel ring's map comes from `tools/wheel.py` (`src/assets/WheelMap.*`).
-- `gfx_chunkScratch()` (1 KB) is shared by three users: the wheel's per-frame colour table (`src/wheel/WheelArt.cpp`), Mask lettering (`src/gfx/Mask.cpp`) and `save::store()`. Only one may hold it at a time, and only between `gfx_wait()` and the next flush.
+- `gfx_chunkScratch()` (1 KB) is shared by three users: the wheel's per-frame colour table (`src/wheel/WheelArt.cpp`), Mask lettering (the CHGame library's `chgame/Mask.cpp`) and `save::store()`. Only one may hold it at a time, and only between `gfx_wait()` and the next flush.
 - Compiler: the simulator and tests need `CHSIM_CXX` set, or zig/clang++/g++ on PATH (see the root CLAUDE.md).

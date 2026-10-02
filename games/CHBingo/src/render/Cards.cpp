@@ -1,11 +1,8 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask and CHGfx)
-#include <CHGfx.h>
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library and CHGfx)
+#include <CHGame.h>
 #include "Cards.h"
 #include "Layout.h"
 #include "../game/Bingo.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Fmt.h"
-#include "../gfx/Palette.h"
 
 namespace cards {
 
@@ -51,7 +48,7 @@ void draw(const Bingo &g, uint8_t k, int x, const Look &look) {
     gfx_fillRect(x + 2, y + 2, 5 * CELL_W, HEAD_H, head);
     gfx_hline(x + 2, y + 2, 5 * CELL_W, LIGHTER[head]);
     for (int c = 0; c < 5; c++)
-        glyph(x + 2 + c * CELL_W + 5, y + 3, FONT35[glyph35("BINGO"[c])], 3, dbl ? FX_B : LETTER_COL[c]);
+        glyph(x + 2 + c * CELL_W + 5, y + 3, glyph35("BINGO"[c]), 3, dbl ? FX_B : LETTER_COL[c]);
     // The cells: a white and silver checker, sunk a pixel under the header;
     // a raised blot on each daubed one, lit top left, shaded underneath.
     const uint8_t *card = g.cards[k];
@@ -104,7 +101,7 @@ void buyIn(const Bingo &g) {
     *fmtStr(p, n == 1 ? " CARD" : " CARDS") = 0;
     int w = gfx_textWidth(buf);
     const int py = BUY_Y + 20;
-    panel(64 - w / 2 - 14, py, w + 28, 11, 3, NAVY, FX_B);
+    panelLit(64 - w / 2 - 14, py, w + 28, 11, 3, NAVY, FX_B);
     gfx_text(64 - w / 2, py + 2, buf, GOLD);
     text35(64 - w / 2 - 10, py + 3, "<", n > 1 ? WHITE : BLUE);
     text35(64 + w / 2 + 7, py + 3, ">", n < most ? WHITE : BLUE);
@@ -138,7 +135,7 @@ void bar(const Bingo &g, bool frozen) {
     static const char *const POWER[4] = {"", "B:WILD", "B:FREEZE", "B:2X POT"};
     const char *label = buying ? "A:BUY IN" : frozen ? "FROZEN" : POWER[g.power <= POWER_KINDS ? g.power : 0];
     if (label[0]) {
-        panel(58, BAR_Y + 2, 38, 13, 3, INK, frozen ? CYAN : FX_B);
+        panelLit(58, BAR_Y + 2, 38, 13, 3, INK, frozen ? CYAN : FX_B);
         text35(77 - text35Width(label) / 2, BAR_Y + 6, label, frozen ? CYAN : FX_B);
     } else {
         text35(60, BAR_Y + 3, "POWER", SILVER);

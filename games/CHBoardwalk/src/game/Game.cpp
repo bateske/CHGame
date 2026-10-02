@@ -62,7 +62,7 @@ static void shuffle(uint8_t *a, uint8_t n) {
     }
 }
 
-#if CHBW_DEBUG || defined(CHTEST)
+#if CHGAME_DEBUG || defined(CHTEST)
 static uint8_t forced[8], nForced;
 void forceDice(uint8_t d1, uint8_t d2) {
     if (nForced + 2 <= 8) { forced[nForced++] = d1; forced[nForced++] = d2; }

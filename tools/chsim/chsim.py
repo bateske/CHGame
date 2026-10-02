@@ -2,26 +2,44 @@
 
     python tools/chsim/chsim.py build <sketch dir> [-D NAME=VAL ...]   -> prints the .exe path
 
-This is CHCasino's shared simulator: every game in games/ builds with it.
+This is the repository's shared simulator: every game in games/ builds with it,
+and so does any other sketch on the CHGame library.
 
 Compiles the sketch's .ino and every .cpp/.c under its src/ folder, CHGfx's
 portable code (every src/*.cpp except CHGfx.cpp, unmodified: drawing,
-extras, text effects, palette), and the host shims in host/, where
-chgfx_host.cpp stands in for CHGfx.cpp.
+extras, text effects, palette), the CHGame library (every .cpp under its
+src/), and the host shims in host/, where chgfx_host.cpp stands in for
+CHGfx.cpp.
 
 A game may add shims of its own in <sketch>/tools/chsim/host/ (the SD games
 keep CHSd's pretend card there): its .cpp files are compiled too, and one
 with the same name as a shared shim replaces it. Its headers come first on
 the include path, so a header there must not share a name with one here.
 
-CHGfx is $CHSIM_CHGFX (its src folder) if set, else CHCasino's own copy in
+CHGfx is $CHSIM_CHGFX (its src folder) if set, else the repository's own copy in
 platform/libraries/CHGfx, else the Arduino sketchbook's libraries/CHGfx, or
 libraries/CHGfx* (a GitHub zip installs as CHGfx-main). The sketchbook is
 $CHSIM_SKETCHBOOK, else what `arduino-cli config get directories.user`
-reports, else ~/Documents/Arduino (~/Arduino on Linux).
+reports, else ~/Documents/Arduino (~/Arduino on Linux). The CHGame library
+is found the same way: $CHSIM_CHGAME (its src folder), else
+platform/libraries/CHGame, else the sketchbook's libraries/CHGame.
 
 Compiler: $CHSIM_CXX (e.g. "zig c++"), else zig on the PATH, else the
 ziglang pip package (`pip install ziglang`), else clang++ or g++.
+$CHSIM_FLAGS are added after the usual flags. A memory check of a game
+(out-of-bounds writes, uninitialised reads), with valgrind:
+
+    CHSIM_FLAGS="-O0 -g -fno-sanitize=undefined -mcpu=baseline" \
+    CHSIM_WRAP="valgrind -q --error-exitcode=9" \
+        python tools/chsim/chdrive.py --sim . tools/scripts/<s>.txt out/<s>
+
+(-mcpu=baseline: zig otherwise targets this PC's CPU, whose newest
+instructions valgrind may not know; zig's -O0 also turns UBSan on, which
+the -fno-sanitize keeps out of the way.) chdrive runs the simulator under
+$CHSIM_WRAP when it is set. A report of an uninitialised value in
+save::read() is a game's struct padding copied into its save: harmless
+(the CRC covers the bytes as stored), though zeroing the struct first
+silences it.
 
 The executable is <sketch>/tools/chsim/build/<name>/sim.exe.
 """
@@ -32,8 +50,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-HERE = Path(__file__).resolve().parent                  # CHCasino/tools/chsim
+HERE = Path(__file__).resolve().parent                  # tools/chsim
 VENDORED_CHGFX = HERE.parents[1] / "platform" / "libraries" / "CHGfx" / "src"
+VENDORED_CHGAME = HERE.parents[1] / "platform" / "libraries" / "CHGame" / "src"
 
 
 def sketchbook():
@@ -69,6 +88,18 @@ def chgfx_dir():
     return d
 
 
+def chgame_dir():
+    """The CHGame library's src folder: $CHSIM_CHGAME, else this repository's
+    platform/libraries/CHGame, else the sketchbook's libraries/CHGame."""
+    env = os.environ.get("CHSIM_CHGAME")
+    d = Path(env) if env else VENDORED_CHGAME
+    if not (d / "CHGame.h").exists():
+        d = sketchbook() / "libraries" / "CHGame" / "src"
+    if not (d / "CHGame.h").exists():
+        raise SystemExit(f"the CHGame library was not found at {d}: set CHSIM_CHGAME")
+    return d
+
+
 def find_cxx():
     env = os.environ.get("CHSIM_CXX")
     if env:
@@ -91,6 +122,7 @@ def build(sketch, defines=(), out=None):
     sketch = Path(sketch).resolve()
     name = sketch.name
     chgfx = chgfx_dir()
+    chgame = chgame_dir()
     game = sketch / "tools" / "chsim"
     bdir = game / "build" / name
     bdir.mkdir(parents=True, exist_ok=True)
@@ -115,6 +147,7 @@ def build(sketch, defines=(), out=None):
     srcs = [unit]
     srcs += sorted(p for p in (sketch / "src").rglob("*") if p.suffix in (".cpp", ".c"))
     srcs += sorted(p for p in chgfx.glob("*.cpp") if p.name != "CHGfx.cpp")
+    srcs += sorted(p for p in chgame.rglob("*") if p.suffix in (".cpp", ".c"))
     srcs += [shims[n] for n in sorted(shims)]
     exe = Path(out) if out else bdir / "sim.exe"
     cmd = find_cxx() + [
@@ -122,9 +155,10 @@ def build(sketch, defines=(), out=None):
         "-DCHSIM", "-DCH32X035", "-DARDUINO=10800",
     ]
     cmd += [f"-I{d}" for d in (own, HERE / "host") if d.is_dir()]
-    cmd += [f"-I{sketch}", f"-I{chgfx}"]
+    cmd += [f"-I{sketch}", f"-I{chgfx}", f"-I{chgame}"]
     for d in defines:
         cmd.append(f"-D{d}")
+    cmd += os.environ.get("CHSIM_FLAGS", "").split()      # after the defaults, so they win
     cmd += [str(s) for s in srcs] + ["-o", str(exe)]
     # zig treats .c as C; everything here is compiled as C++ on purpose.
     r = subprocess.run(cmd, capture_output=True, text=True)

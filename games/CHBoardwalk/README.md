@@ -172,8 +172,8 @@ C++ compiler (zig, clang++ or g++ on the PATH, `pip install ziglang`, or
   rebuilds the assets. Details at the top of `tools/sheet.py`.
   `python tools/lookdev.py` renders a contact sheet of the board at each
   zoom and in each tile treatment.
-* `python tools/assets.py` packs the art, `python tools/audio/preview.py
-  out/` renders the sound effects to WAV.
+* `python tools/assets.py` packs the art, `python ../../tools/audio/preview.py
+  . out/audio` renders the sound effects to WAV.
 
 ## License
 

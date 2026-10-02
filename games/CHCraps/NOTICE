@@ -16,7 +16,9 @@ licensed under the Apache License, Version 2.0, by way of CHBlackjack
     recoloured and retouched (tools/art/dealer.png), plus expressions drawn
     for CHBlackjack. tools/assets.py builds them into src/assets/Assets.cpp
     from the original's assets/ PNGs.
-  * The 3x5 font (src/gfx/Draw.cpp, FONT35), extended with a few symbols.
+  * The 3x5 font (the CHGame library's
+    platform/libraries/CHGame/src/chgame/Draw.cpp, FONT35), extended with
+    a few symbols.
 
 New for this game: the rules, the dice cam and its 3D dice, the craps
 layout, the "Craps" title lettering, the chips' and puck's sprites (drawn

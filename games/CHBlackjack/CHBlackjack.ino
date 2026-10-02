@@ -7,14 +7,11 @@
 //
 // Frame loop: logic runs while the previous frame is still going out over
 // DMA; drawing waits for it (one framebuffer), then the new frame is sent.
+#include <CHGame.h>
 #include "config.h"
-#include <CHGfx.h>
-#include "src/CHGame.h"
-#include "src/gfx/Palette.h"
 #include "src/states/Screens.h"
-#include "src/debug/Debug.h"
 
-#if CHBJ_DEBUG
+#if CHGAME_DEBUG
 // Game commands for the debug protocol (tools/chsim/chdrive.py 'say').
 //   R <seed>          reseed the shoe
 //   D <c1,c2,...>     stack the next cards dealt (0..51)
@@ -37,11 +34,12 @@ static bool debugHook(char cmd, const char *args) {
 
 void setup() {
     arduboy.boot();
+    dbg::begin("CHBJ " CHBJ_VERSION);     // the debug protocol's hello (CHGAME_DEBUG builds)
     gfx_begin(GFX_DIV2, GFX_12BPP);
     pal::init();
     screens::begin();
     arduboy.setFrameRate(CHBJ_FPS);
-#if CHBJ_DEBUG
+#if CHGAME_DEBUG
     dbg::hook = debugHook;
 #endif
 }
@@ -60,7 +58,6 @@ void loop() {
         screens::update();
     } while (++ticks < 3 && arduboy.nextFrame());
     pal::commit();                  // staged by CHGfx: lands with the next flush
-    dbg::markWaitStart();
     gfx_wait();
     dbg::markRenderStart();
     screens::render(arduboy.frameCount);

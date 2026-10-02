@@ -1,24 +1,18 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask/Tile)
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library and gfx/Tile)
 #include <Arduino.h>
 #include <string.h>
-#include <CHGfx.h>
+#include <CHGame.h>
 #include "../../config.h"
 #include "Screens.h"
-#include "../CHGame.h"
-#include "../gfx/Palette.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Mask.h"
 #include "../gfx/Tile.h"
-#include "../gfx/Fmt.h"
 #include "../fx/Fx.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../game/Board.h"
 #include "../game/Layouts.h"
 #include "../game/Nav.h"
 #include "../stage/Stage.h"
 #include "../save/Save.h"
 #include "../assets/Assets.h"
-#include "../debug/Debug.h"
 #ifdef CHSIM
 #include <sim.h>
 #endif
@@ -103,7 +97,7 @@ static void title35(const char *text, int y, uint8_t scale, uint8_t top, uint8_t
     maskText35(m, 0, 0, text, scale);
     uint8_t ramp[32];
     for (int i = 0; i < h + 2 && i < 32; i++) ramp[i] = i < scale ? top : (i < lowFrom ? mid : low);
-    maskDraw(m, 64 - w / 2, y, INK, shadow, ramp);
+    maskDraw(m, 64 - w / 2, y, 0, INK, shadow, ramp);
 }
 
 // Embossed: the text over its own shade.
@@ -127,16 +121,8 @@ static bool menuNav(uint8_t n) {
 
 static uint32_t seedNow() { return micros() * 2654435761u ^ arduboy.frameCount; }
 
-// "4:32"
-static char *fmtTime(char *p, uint16_t s) {
-    if (s > 5999) s = 5999;
-    p = fmtInt(p, s / 60);
-    *p++ = ':';
-    *p++ = (char)('0' + s % 60 / 10);
-    *p++ = (char)('0' + s % 10);
-    *p = 0;
-    return p;
-}
+// "4:32", at most "99:59"
+static char *fmtClock(char *p, uint16_t s) { return fmtTime(p, s > 5999 ? 5999 : s); }
 
 static void newDeal() {
     stage::deal(opt.layout, seedNow());
@@ -331,7 +317,7 @@ static void titleRender(uint32_t frame) {
         maskBlit1(m, LOGO, LOGO_W, LOGO_H);
         uint8_t ramp[LOGO_H];
         for (int i = 0; i < LOGO_H; i++) ramp[i] = i < 3 ? FX_B : (i < 12 ? GOLD : WOOD);
-        maskDraw(m, 64 - LOGO_W / 2, 4, INK, WINE, ramp);
+        maskDraw(m, 64 - LOGO_W / 2, 4, 0, INK, WINE, ramp);
         centred35(26, "~SOLITAIRE~", CYAN);
     }
     if (drawBot) {
@@ -404,7 +390,7 @@ static void setupRender(uint32_t frame) {
         p = fmtStr(buf, "BEST ");
         p = fmtMoney(p, stats.bestChips[l]);
         p = fmtStr(p, "  ");
-        fmtTime(p, stats.bestSecs[l]);
+        fmtClock(p, stats.bestSecs[l]);
         centred35(90, buf, GOLD);
     } else centred35(90, "NOT CLEARED YET", SILVER);
     menuItem(104, "BEGIN", sel == 1, frame);
@@ -536,7 +522,7 @@ static void playRender(uint32_t frame) {
         panel(80, 44);
         centred2(84, "CLEARED!", FX_B);
         char buf[28], *p = fmtStr(buf, "TIME ");
-        p = fmtTime(p, board::secs());
+        p = fmtClock(p, board::secs());
         p = fmtStr(p, "   WON ");
         fmtMoney(p, board::chips);
         centred35(99, buf, WHITE);
@@ -618,7 +604,7 @@ static void optionsRender(uint32_t frame) {
 // ---------------------------------------------------------------------------
 // Debug protocol hooks (tools/chsim/chdrive.py 'say')
 // ---------------------------------------------------------------------------
-#if CHMJ_DEBUG
+#if CHGAME_DEBUG
 //   G <layout> <seed>      deal a table and go to it
 //   M <a> <b>              take the pair of tiles a and b
 //   A                      take a pair (the first there is); ERR if there is none
@@ -732,23 +718,6 @@ static bool debugHook(char cmd, const char *args) {
             dbg::print(buf);
             return true;
         }
-        case 'Q': {
-            // Calibration for chdrive's `cal`: host ns for the primitives the
-            // CHGfx benchmark measured on the board (benchmark-results.txt).
-            static uint8_t spr[8 * 16];
-            memset(spr, 0x3F, sizeof spr);
-            uint64_t t0, r[5];
-            t0 = sim_hostNanos(); for (int i = 0; i < 200; i++) gfx_clear((uint8_t)i); r[0] = (sim_hostNanos() - t0) / 200;
-            t0 = sim_hostNanos(); for (int i = 0; i < 20000; i++) gfx_hline(0, i & 127, 128, (uint8_t)i); r[1] = (sim_hostNanos() - t0) / 20000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 2000; i++) gfx_blit(spr, i & 63, i & 63, 16, 16, 15); r[2] = (sim_hostNanos() - t0) / 2000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 1000; i++) gfx_text(0, i & 63, "ABCDEFGHIJKLMNOPQRSTUVWX", 1); r[3] = (sim_hostNanos() - t0) / 1000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 1000; i++) gfx_fillCircle(64, 64, 30, (uint8_t)i); r[4] = (sim_hostNanos() - t0) / 1000;
-            p = fmtStr(buf, "CAL");
-            for (int k = 0; k < 5; k++) { *p++ = ' '; p = fmtInt(p, (int32_t)r[k]); }
-            fmtStr(p, "\n");
-            dbg::print(buf);
-            return true;
-        }
 #endif
     }
     return false;
@@ -762,7 +731,7 @@ void begin() {
     save::load(opt, stats, hasGame);
     if (opt.layout >= board::LAYOUTS) opt.layout = 0;
     applyOptions();
-#if CHMJ_DEBUG
+#if CHGAME_DEBUG
     dbg::hook = debugHook;
 #endif
     enter(Scr::Title);

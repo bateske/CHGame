@@ -45,8 +45,6 @@ void rail(uint32_t frame);                         // ... with a row of bulbs ch
 // The dealer with his top-left at (x, y); look: 0 left, 1 centre, 2 right.
 // big: at twice the size (the endings).
 void dealer(uint8_t expr, uint8_t look, int x = DEALER_X, int y = DEALER_Y, bool big = false);
-// A rounded box: fill, then its edge.
-void panel(int x, int y, int w, int h, uint8_t r, uint8_t fill, uint8_t edge);
 // Lines of 3x5 text centred on cx, the block's first row at y, of which the
 // first `typed` characters are drawn (the typewriter).
 void typedText(int cx, int y, const char *text, int typed, uint8_t colour);

@@ -1,13 +1,12 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask and CHGfx)
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library and CHGfx)
 // Screens derived from Press-Play-On-Tape/Blackjack (Apache-2.0):
 // SplashScreenState, TitleScreenState, GameWinState, GameLoseState and the
 // Game loop. Modified 2026 for CHGame by bateske: colour, animation, music,
 // options, statistics, saving, a pause menu and an attract-mode demo.
-#include <CHGfx.h>
+#include <CHGame.h>
 #include <string.h>
 #include "../../config.h"
 #include "Screens.h"
-#include "../CHGame.h"
 #include "../game/Round.h"
 #include "../fx/Presenter.h"
 #include "../fx/Fx.h"
@@ -15,14 +14,9 @@
 #include "../render/CardArt.h"
 #include "../render/Layout.h"
 #include "../render/Table.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Fmt.h"
-#include "../gfx/Mask.h"
-#include "../gfx/Palette.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../save/Save.h"
 #include "../assets/Assets.h"
-#include "../debug/Debug.h"
 
 namespace screens {
 
@@ -76,7 +70,7 @@ static void enter(Scr s) {
             break;
         case Scr::Title:
             demo = false; paused = false; menuSel = 0;
-            audio::music(Song::Title, true);
+            playSong(Song::Title, true);
             break;
         case Scr::Play:
             audio::stopMusic();
@@ -90,11 +84,11 @@ static void enter(Scr s) {
             lastPhase = game.phase;
             break;
         case Scr::Win:
-            audio::music(Song::Victory, false);
+            playSong(Song::Victory, false);
             audio::led(audio::LED_PARTY);
             break;
         case Scr::Lose:
-            audio::music(Song::Broke, true);
+            playSong(Song::Broke, true);
             break;
         default:
             break;
@@ -107,7 +101,8 @@ void begin() {
     (void)ok;
     art::fourColour = game.opt.fourColour;
     pal::setTheme(game.opt.theme);
-    audio::begin(soundMode(game.opt.sound));
+    audio::begin(SOUNDS, (uint8_t)Sfx::COUNT, false);
+    sound::setMode(soundMode(game.opt.sound));
     enter(Scr::Splash);
 }
 
@@ -141,10 +136,10 @@ static void seedOnce() {
 // ---------------------------------------------------------------------------
 static void feltBackdrop() {
     gfx_clear(FELT);
-    gfx_dither(0, 0, 128, 6, FELT_DK, 0);
-    gfx_dither(0, 122, 128, 6, FELT_DK, 1);
-    gfx_dither(0, 0, 6, 128, FELT_DK, 0);
-    gfx_dither(122, 0, 6, 128, FELT_DK, 1);
+    dither(0, 0, 128, 6, FELT_DK, 0);
+    dither(0, 122, 128, 6, FELT_DK, 1);
+    dither(0, 0, 6, 128, FELT_DK, 0);
+    dither(122, 0, 6, 128, FELT_DK, 1);
     gfx_rect(2, 2, 124, 124, GOLD);
 }
 
@@ -254,7 +249,7 @@ static void titleUpdate() {
 static void titleRender(uint32_t frame) {
     feltBackdrop();
     // Spotlight.
-    gfx_dither(24, 30, 80, 44, FELT_LT, 0);
+    dither(24, 30, 80, 44, FELT_LT, 0);
     // Logo: the top rows use FX_B, so the palette makes it shimmer with no redraw.
     Mask m = maskBegin(104, 14);
     maskBlit1(m, LOGO, 104, 14);
@@ -368,7 +363,7 @@ static void playUpdate() {
         return;
     }
     if (!demo && (pressed & START_BUTTON)) { paused = true; pauseSel = 0; audio::sfx(Sfx::Select); return; }
-    if (pressed & SELECT_BUTTON) { audio::mute(!audio::muted()); toast(audio::muted() ? "SOUND OFF" : "SOUND ON"); }
+    if (pressed & SELECT_BUTTON) { sound::mute(!sound::muted()); toast(sound::muted() ? "SOUND OFF" : "SOUND ON"); }
     if ((pressed & B_BUTTON) && game.phase != Phase::InitBet) present::dismissBubble();
 
     game.update(pressed & ~START_BUTTON, rep, present::busy());
@@ -397,7 +392,7 @@ static void playRender(uint32_t frame) {
         centred57(52, "DEMO", FX_A);
     }
     if (paused) {
-        gfx_dither(0, 0, 128, 128, INK, 0);
+        dither(0, 0, 128, 128, INK, 0);
         panel(24, 34, 80, 56, 4, NAVY, GOLD);
         centred57(39, "PAUSED", GOLD);
         static const char *const P[3] = {"RESUME", "OPTIONS", "SAVE & QUIT"};
@@ -447,7 +442,7 @@ static void optionsUpdate() {
         *f = (uint8_t)((*f + n + d) % n);
         switch (optSel) {
             case O_RULES: if (*f != before) game.resetShoe(); break;
-            case O_SOUND: audio::setMode(soundMode(*f)); break;
+            case O_SOUND: sound::setMode(soundMode(*f)); break;
             case O_FELT: pal::setTheme(*f); break;
             case O_DECK: art::fourColour = *f; break;
         }
@@ -559,9 +554,9 @@ static void creditsRender(uint32_t frame) {
         creditsReady = true;
         const int top = lay::RAIL_Y + lay::RAIL_H;
         gfx_fillRect(0, top, 128, 128 - top, FELT);
-        gfx_dither(0, top, 6, 128, FELT_DK, 0);           // the lamplight falls off
-        gfx_dither(122, top, 6, 128, FELT_DK, 1);
-        gfx_dither(0, 122, 128, 6, FELT_DK, 1);
+        dither(0, top, 6, 128, FELT_DK, 0);           // the lamplight falls off
+        dither(122, top, 6, 128, FELT_DK, 1);
+        dither(0, 122, 128, 6, FELT_DK, 1);
         ppotLogo(64 - PPOT_LOGO_W / 2, 51, true);         // printed on the felt
         art::chipStack(16, 80, 25 * 3 + 10 * 2, 6);
         art::chipStack(112, 80, 100 + 25 * 2 + 5, 6);

@@ -86,7 +86,7 @@ def main():
              '#include "Music.h"', '#include "../../config.h"', "", "namespace music {", "",
              "// Debug builds (the test protocol: tools/device.py --debug, and the simulator) leave the scores",
              "// out - the protocol needs the flash, and the tests never listen.",
-             "#if !CHWW_DEBUG"]
+             "#if !CHGAME_DEBUG"]
     names = []
     for name, song in SONGS.items():
         data = compile_song(song, loops[name])
@@ -98,7 +98,7 @@ def main():
     lines.append("")
     lines.append("void get(uint8_t song, bool loop, const uint8_t *&data, size_t &n) {")
     lines.append("    (void)loop;")
-    lines.append("#if !CHWW_DEBUG")
+    lines.append("#if !CHGAME_DEBUG")
     lines.append("    switch (song) {")
     for i, (name, n) in enumerate(names):
         lines.append(f"        case {i}: data = {name}; n = sizeof {name}; return;")

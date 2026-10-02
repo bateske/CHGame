@@ -39,8 +39,9 @@ You need the Arduino IDE (2.x) or `arduino-cli`, and:
 1. **The CHGame board package, 0.2.4 or later**: see [Installing](../../README.md#installing)
    in the repository's README.
 2. **The CHGfx library, 1.3.0**, in this repository at
-   [`platform/libraries/CHGfx`](../../platform/libraries/CHGfx). Copy it into your
-   sketchbook's `libraries/` folder.
+   [`platform/libraries/CHGfx`](../../platform/libraries/CHGfx), and **the CHGame
+   library** at [`platform/libraries/CHGame`](../../platform/libraries/CHGame).
+   Copy both into your sketchbook's `libraries/` folder.
 3. **This game's folder**, `games/CHRoulette` of this repository (keep the name `CHRoulette`).
 
 The game needs **link-time optimisation** to fit the 50,944-byte
@@ -153,12 +154,14 @@ C++ compiler for the simulator and tests (zig, clang++ or g++ on the PATH,
   runs a script on the game and on a copy that redraws everything every
   frame, and reports any pixel the incremental redraws left stale.
 * `python tools/device.py upload [--debug]` - build and upload (`--debug`
-  adds the serial protocol for screenshots, injected input and lockstep).
+  adds the CHGame library's serial protocol, `chgame/Debug.h`, for
+  screenshots, injected input and lockstep).
 * `python tools/assets.py` packs the art in `tools/art/` (it checks the
   croupier, his faces and the glove come out byte-identical to
   CHBlackjack's and CHChess's), `python tools/wheel.py` makes the wheel's
   map and previews, `python tools/make_music.py` the tunes,
-  `python tools/audio/preview.py out/` renders them to WAV.
+  `python ../../tools/audio/preview.py . out/audio` renders them and the
+  effects to WAV.
 * `tools/mockup.py` drew the design mockups (`docs/design/` has the specs).
 
 ## Files
@@ -168,13 +171,12 @@ C++ compiler for the simulator and tests (zig, clang++ or g++ on the PATH,
     src/game/               the rules (Roulette), the betting spots, the glove's
                             navigation, the wheels' orders - no graphics, host-tested
     src/wheel/              the ball and its solver; the wheel's drawing
-    src/fx/                 the presenter (events -> motion), particles, banners, easing
+    src/fx/                 the presenter (events -> motion), particles, banners, floating text
     src/render/             the wall and croupier, the felt layout, chips, the action bar
-    src/gfx/                palette, primitives, outlined lettering, numbers
+    src/gfx/Remap.*         the glove's colour remaps
     src/states/Screens.*    title, play, options, stats, won, broke
-    src/audio/              sound sequencer and music
-    src/save/               flash save pages
-    src/debug/              serial debug protocol (debug builds only)
+    src/audio/              the effects (Sounds.*) and the music's scores (Music.*)
+    src/save/Save.*         what a save holds (the CHGame library keeps it in flash)
     src/assets/             generated art and the wheel's map
     tools/                  simulator, tests, asset pipeline, wheel generator, music, device tools
 

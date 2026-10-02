@@ -34,8 +34,9 @@ You need the Arduino IDE (2.x) or `arduino-cli`, and:
    in the repository's README.
 
 2. **The CHGfx library, 1.3.0**, in this repository at
-   [`platform/libraries/CHGfx`](../../platform/libraries/CHGfx). Copy it into your
-   sketchbook's `libraries/` folder.
+   [`platform/libraries/CHGfx`](../../platform/libraries/CHGfx), and **the CHGame
+   library** at [`platform/libraries/CHGame`](../../platform/libraries/CHGame).
+   Copy both into your sketchbook's `libraries/` folder.
 
 3. **This game's folder**, `games/CHBlackjack` of this repository (the name must
    match `CHBlackjack.ino`; cloning the repository does that for you).
@@ -113,8 +114,8 @@ statistics, or press A for the credits:
   2.9 KB.
   Getting there meant building everything at -Os, dropping `snprintf`
   (3.5 KB with 64-bit division), replacing `pinMode` with register writes
-  (2 KB of pin tables), writing a 1.8 KB sound sequencer instead of the
-  6.5 KB CHGameSound library, and storing dealer expressions as pixel edits.
+  (2 KB of pin tables), writing a 1.8 KB sound sequencer (now the CHGame
+  library's `chgame/Audio`) instead of the 6.5 KB CHGameSound library, and storing dealer expressions as pixel edits.
   `python ../../tools/check_size.py build/release` prints the budget.
 * **Code runs from flash with 3 wait states**, so a function call per pixel
   costs 2-3 us. Hot loops (glyphs, spans, remapped sprites) run from SRAM,
@@ -136,7 +137,8 @@ statistics, or press A for the credits:
 * **Saving without EEPROM:** the CHGame bootloader erases only the pages a
   new sketch occupies, so the two pages below its metadata page (0xF500,
   0xF600) survive re-uploads. Records carry a sequence number and CRC, and
-  alternate between the two pages so a power cut mid-save loses nothing.
+  alternate between the two pages so a power cut mid-save loses nothing
+  (the CHGame library's `chgame/Save.h`).
 * **Music on one pin:** a piezo plays one note at a time, so the scores have
   two renderings - Lead (the melody; other voices only fill its rests) and
   Arpeggio (voices take 6 ms turns). Notes change pitch at the end of a
@@ -160,8 +162,8 @@ folder instead).
   contact sheet. It flags drawing into the framebuffer while a flush is
   still converting it. `tools/scripts/showcase.txt` makes the GIFs above.
 * `python tools/device.py upload [--debug]` - build and upload, with the
-  settings above. `--debug` keeps USB Serial and adds a serial protocol
-  (`src/debug/Debug.h`) for screenshots, injected input and frame-by-frame
+  settings above. `--debug` keeps USB Serial and adds the CHGame library's
+  serial protocol (`chgame/Debug.h`) for screenshots, injected input and frame-by-frame
   lockstep; debug builds leave out the music and the credits page, which
   the tests never need.
 * `python tools/device.py run tools/scripts/sc_split.txt out/` - the same
@@ -172,8 +174,8 @@ folder instead).
   Tape's art (cloned into `tools/.cache/`, pinned to a commit) and the
   hand-drawn pieces in `tools/art/` (text sheets, and `dealer.png`, which
   must use palette colours only).
-* `python tools/make_music.py` - the scores; `python tools/audio/preview.py
-  out/` renders every tune and effect to WAV from the real sequencer code.
+* `python tools/make_music.py` - the scores; `python ../../tools/audio/preview.py
+  . out/audio` renders every tune and effect to WAV from the real sequencer code.
 
 ## Files
 
@@ -181,13 +183,11 @@ folder instead).
     config.h                build switches
     src/game/Round.*        the rules and PPOT's ViewState flow (no graphics)
     src/fx/Presenter.*      events -> motion; band-level redraw
-    src/fx/Fx.*             easing, particles, banners, floating text, shake
+    src/fx/Fx.*             particles, banners, floating text
     src/render/*            table, cards and chips, action bar, layout
-    src/gfx/*               palette, primitives, masks (outlined text), numbers
     src/states/Screens.*    splash, title, play, options, stats, credits, win, lose
-    src/audio/*             sound sequencer and music
-    src/save/*              flash save pages
-    src/debug/*             serial debug protocol (debug builds only)
+    src/audio/*             sound effects and music scores
+    src/save/*              what a save holds (the CHGame library keeps it in flash)
     src/assets/*            generated art (tools/assets.py)
     tools/                  simulator, tests, asset pipeline, music, device tools
 

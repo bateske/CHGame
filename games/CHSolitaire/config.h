@@ -9,26 +9,15 @@
 
 #define CHSO_VERSION     "0.1"
 
-// Serial debug protocol: screenshots, input injection, lockstep, perf.
-// Off in normal builds. tools/device.py turns it on with
-// --build-property build.extra_flags, and leaves USB at "Serial" for it.
-#ifndef CHSO_DEBUG
-#ifdef CHSIM
-#define CHSO_DEBUG       1       // the simulator is driven through the protocol
-#else
-#define CHSO_DEBUG       0
-#endif
-#endif
+// The CHGame library's switches: CHGAME_DEBUG (the serial debug protocol:
+// screenshots, input injection, lockstep, perf; always on in the simulator,
+// on the board only in `tools/device.py build --debug`) and CHGAME_PROFILE.
+#include <chgame/Config.h>
 
 // A device debug build that leaves out saving, for when the ~2 KB protocol
 // no longer fits beside it. Not needed so far: opt in with -DCHSO_LEAN=1.
 #ifndef CHSO_LEAN
 #define CHSO_LEAN        0
-#endif
-
-// Section profiler (dbg::prof + the T command). Opt-in: costs flash.
-#ifndef CHSO_PROFILE
-#define CHSO_PROFILE     0
 #endif
 
 // Frame rate the game logic is paced for.

@@ -1,15 +1,12 @@
 #pragma GCC optimize("Os")
 #include <Arduino.h>
-#include <CHGfx.h>
+#include <CHGame.h>
 #include "../config.h"
 #include "Frame.h"
-#include "CHGame.h"
-#include "gfx/Palette.h"
 #include "states/Screens.h"
 #include "stage/Stage.h"
-#include "debug/Debug.h"
 #include "engine/Engine.h"
-#include "audio/Audio.h"
+#include "audio/Sounds.h"
 #ifdef CHSIM
 #include <sim.h>
 #endif
@@ -64,11 +61,10 @@ static void onFrameStack(void (*fn)()) { fn(); }
 #endif
 
 void begin() {
-#if CHCK_DEBUG && !defined(CHSIM)
-    dbg::frameStackLo = frameStack;
-    dbg::frameStackHi = frameStack + 256;
+#ifndef CHSIM
+    dbg::frameStack(frameStack, frameStack + 256);  // P's fstk= (CHGAME_DEBUG builds)
 #endif
-    dbg::paintStack();
+    audio::begin(SOUNDS, (uint8_t)Sfx::COUNT, false);   // on once the options are read
     pal::init();
     screens::begin();
     eng::pollHook = thinkPoll;
@@ -101,7 +97,7 @@ static void thinkFrame();
 void thinkPoll() { onFrameStack(thinkFrame); }
 
 static void thinkFrame() {
-#if CHCK_DEBUG
+#if CHGAME_DEBUG
     if (arduboy.lockstep >= 0) {
         static uint8_t polls;
         dbg::poll();

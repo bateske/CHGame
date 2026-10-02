@@ -40,26 +40,26 @@ Agent-facing notes for continuing work on this game. Rules, controls and build s
 
 - Flash:
   - Every hand-written `.cpp` uses `#pragma GCC optimize("Os")`.
-  - No `snprintf`: it is 3.5 KB with 64-bit division; use `src/gfx/Fmt.*`.
+  - No `snprintf`: it is 3.5 KB with 64-bit division; use the CHGame library's `fmt*` (`chgame/Fmt.h`).
   - No `pinMode`: its pin tables are about 2 KB; write the registers.
-  - The game has its own 1.8 KB sound sequencer, not CHGameSound.
+  - Sound is the CHGame library's piezo sequencer (`chgame/Audio.h`), not CHGameSound; `src/audio/Sounds.*` holds the effect tables, `playSong` and the two sound switches (the options' mode and SELECT's mute, `sound::`).
   - The README's "How it fits" has the budget breakdown. Measure with `python ../../tools/check_size.py build/release` after every change.
 - Big outlined lettering (Mask: a 1 bpp mask, grown for the outline, painted in up to three layers) costs about 5-10 ms per word on the board. Draw it once, on still screens or static layers, never every frame.
 - The credits page draws its felt once and redraws only the wall band: 3.3 ms a frame measured on CHGfx 1.2.
-- CHGfx 1.3 usage:
-  - From the library: `sprite4` spans (court and face art are converted in `tools/assets.py`), dither, ellipses, `gfx_scroll` for the shake, and `copyRow`.
-  - Kept local: the rounded rects plus `panel()`, `remapRect` (CHGfx's `gfx_remapRect` costs more SRAM, see `src/gfx/Draw.cpp`), the 3x5 font/`text35`, and the Mask banners.
-  - The only pixel difference from the 1.2 build is the shake's uncovered edges.
+- Libraries:
+  - The CHGame library (`<CHGame.h>`, `platform/libraries/CHGame`) gives the input core, the palette, the rounded rects and `panel()`, `remapRect`, `sprite4` spans (court and face art are converted in `tools/assets.py`), dither, the 3x5 font/`text35`, the Mask banners, `fx::` easing, sine, randomness and the shake, and the `fmt*` number formatting. The game's own effects (particles, banners, floating texts) stay in `src/fx/Fx.cpp`.
+  - From CHGfx 1.3 directly: ellipses and `copyRow`.
+  - The shake is the library's `fx::applyShake()` without a fill: the rows and columns the move uncovers shift in place. The earlier `gfx_scroll` shake left them as they were; that edge is the only pixel difference (`sc_double_bust`'s `h_bust`).
 - Generated files, don't hand-edit:
   - `src/assets/Assets.cpp` comes from `python tools/assets.py`. The first run clones PPOT's repository into `tools/.cache/ppot` (gitignored), pinned to a commit, so it needs git and network. `tools/art/dealer.png` must use palette colours only.
   - `src/audio/Music.cpp` comes from `python tools/make_music.py`.
 - Debug builds:
-  - Every `CHBJ_DEBUG` build, the simulator included, has no music scores (`Music.cpp` is under `#if !CHBJ_DEBUG`). Listen with `python tools/audio/preview.py out/audio` or a release build.
+  - Every `CHGAME_DEBUG` build, the simulator included, has no music scores (`Music.cpp` is under `#if !CHGAME_DEBUG`). Listen with `python ../../tools/audio/preview.py . out/audio` or a release build.
   - Device debug builds (`CHBJ_LEAN`) also drop the credits page; `-DCHBJ_FULL` forces it back in.
   - Announce device uploads, and put a release build back afterwards: a debug build looks like a game without its music.
 - Profiling:
-  - chdrive's `prof` sends the protocol's `T`, which answers only in a build made with `CHBJ_PROFILE=1`. In the simulator, use `chdrive.py --sim . -D CHBJ_PROFILE=1 ...`; `device.py` has no switch for it.
+  - chdrive's `prof` sends the protocol's `T`, which answers only in a build made with `CHGAME_PROFILE=1` (the CHGame library's protocol, `chgame/Debug.h`; without it `T` gets `ERR` and `prof` waits for ever). In the simulator, use `chdrive.py --sim . -D CHGAME_PROFILE=1 ...`; `device.py` has no switch for it.
   - The simulator's PERF line reports `pcrnd`, the host-measured render time.
   - Scripts: `prof.txt`, `prof_hand.txt`, `perf_free.txt` and `pace.txt` (device).
-- Saves use magic "CHBJ" in pages shared with every other CHGame game. A build that grows into the pages falls back to one page, then to none (Stats says SAVING UNAVAILABLE).
+- Saves use magic "CHBJ" in pages shared with every other CHGame game, kept by the CHGame library (`chgame/Save.cpp`). The record (`src/save/Save.cpp`) is byte for byte the one from before the library: the old header's u16 version 1 reads as the library's version 1 with flag 0, and "a game in progress" stays in the data. A build that grows into the pages falls back to one page, then to none (Stats says SAVING UNAVAILABLE).
 - Shared tools: the simulator is `../../tools/chsim/chsim.py` (game-side driver: `tools/chsim/chdrive.py`). Set `CHSIM_CXX` or have zig/clang++/g++ on PATH (see root CLAUDE.md).

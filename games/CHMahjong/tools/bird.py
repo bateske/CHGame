@@ -20,7 +20,7 @@ from PIL import Image
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 SCALE = 5
-# The sheet's colours -> the game's palette (names as in src/gfx/Palette.h).
+# The sheet's colours -> the game's palette (names as in the CHGame library's chgame/Palette.h).
 COLOURS = {
     (0, 0, 0): "k", (49, 45, 44): "k",                   # outline, dark streaks
     (107, 77, 57): "b", (132, 101, 85): "b",             # browns -> WOOD

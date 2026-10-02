@@ -1,12 +1,11 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask and CHGfx)
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library and CHGfx)
 // Screens after CHBlackjack's (src/states/Screens.cpp) by way of CHCraps:
 // fades between them, the options list, statistics, the pause menu and the
 // endings.
-#include <CHGfx.h>
+#include <CHGame.h>
 #include <string.h>
 #include "../../config.h"
 #include "Screens.h"
-#include "../CHGame.h"
 #include "../game/Yacht.h"
 #include "../cam/Cam.h"
 #include "../cam/Dice3D.h"
@@ -16,16 +15,11 @@
 #include "../render/Chips.h"
 #include "../render/Layout.h"
 #include "../render/Wall.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Fmt.h"
-#include "../gfx/Mask.h"
-#include "../gfx/Palette.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../save/Save.h"
 #include "../assets/Assets.h"
-#include "../debug/Debug.h"
 
-#if CHYD_DEBUG && defined(CHSIM)
+#if CHGAME_DEBUG && defined(CHSIM)
 uint64_t sim_hostNanos();
 #endif
 
@@ -131,8 +125,8 @@ static void applyOptions() {
 void begin() {
     if (!save::load(game, hasGame)) game.newPurse();
     game.mix(micros() * 2654435761u);
+    audio::begin(SOUNDS, (uint8_t)Sfx::COUNT, !game.opt.sound);
     applyOptions();
-    audio::begin(!game.opt.sound);
     titleDiceInit();
     enter(Scr::Title);
 }
@@ -142,10 +136,10 @@ void begin() {
 // ---------------------------------------------------------------------------
 static void feltBackdrop() {
     gfx_clear(FELT);
-    gfx_dither(0, 0, 128, 6, FELT_DK, 0);
-    gfx_dither(0, 122, 128, 6, FELT_DK, 1);
-    gfx_dither(0, 0, 6, 128, FELT_DK, 0);
-    gfx_dither(122, 0, 6, 128, FELT_DK, 1);
+    dither(0, 0, 128, 6, FELT_DK, 0);
+    dither(0, 122, 128, 6, FELT_DK, 1);
+    dither(0, 0, 6, 128, FELT_DK, 0);
+    dither(122, 0, 6, 128, FELT_DK, 1);
     gfx_rect(2, 2, 124, 124, GOLD);
 }
 
@@ -270,7 +264,7 @@ static void titleRender(uint32_t frame) {
     if (sig != staticSig) { staticSig = sig; titleStatic(frame); }
     // The spotlight and its dice, every frame.
     gfx_fillRect(SPOT_X, SPOT_Y, SPOT_W, SPOT_H, FELT);
-    gfx_dither(SPOT_X + 4, SPOT_Y + 2, SPOT_W - 8, SPOT_H - 4, FELT_LT, 0);
+    dither(SPOT_X + 4, SPOT_Y + 2, SPOT_W - 8, SPOT_H - 4, FELT_LT, 0);
     gfx_setClip(SPOT_X, SPOT_Y, SPOT_W, SPOT_H);
     d3::Look look{RED, RED, WINE, WHITE, SILVER, INK};
     art::dieColours(0, look.light, look.dark, look.pip);
@@ -470,7 +464,7 @@ static void playRender(uint32_t frame) {
     if (paused || toastT) redrawAll();
     present::render(game, frame);
     if (paused) {
-        gfx_dither(0, 0, 128, 128, INK, 0);
+        dither(0, 0, 128, 128, INK, 0);
         panel(20, 30, 88, 62, 4, NAVY, GOLD);
         centred57(35, "PAUSED", GOLD);
         static const char *const P[4] = {"RESUME", "OPTIONS", "SOUND", "SAVE & QUIT"};
@@ -775,7 +769,7 @@ void render(uint32_t frame) {
 // ---------------------------------------------------------------------------
 // Debug protocol (tools/chsim/chdrive.py 'say')
 // ---------------------------------------------------------------------------
-#if CHYD_DEBUG
+#if CHGAME_DEBUG
 //   R <seed>             the dice from a fixed seed (timing no longer mixed in)
 //   F <a> <b> <c> <d> <e>   force the next roll's five dice (up to 4 queued)
 //   J <T|P|C|2|3|4|O|S|E|L>   jump: title, play solo, vs dealer, party of 2..4,
@@ -856,24 +850,6 @@ bool debugCommand(char cmd, const char *args) {
             dbg::print(buf);
             return true;
         }
-#ifdef CHSIM
-        case 'Q': {
-            static uint8_t spr[8 * 16];
-            memset(spr, 0x3F, sizeof spr);
-            uint64_t t0, r[5];
-            t0 = sim_hostNanos(); for (int i = 0; i < 200; i++) gfx_clear((uint8_t)i); r[0] = (sim_hostNanos() - t0) / 200;
-            t0 = sim_hostNanos(); for (int i = 0; i < 20000; i++) gfx_hline(0, i & 127, 128, (uint8_t)i); r[1] = (sim_hostNanos() - t0) / 20000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 2000; i++) gfx_blit(spr, i & 63, i & 63, 16, 16, 15); r[2] = (sim_hostNanos() - t0) / 2000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 1000; i++) gfx_text(0, i & 63, "ABCDEFGHIJKLMNOPQRSTUVWX", 1); r[3] = (sim_hostNanos() - t0) / 1000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 1000; i++) gfx_fillCircle(64, 64, 30, (uint8_t)i); r[4] = (sim_hostNanos() - t0) / 1000;
-            p = fmtStr(buf, "CAL");
-            for (int k = 0; k < 5; k++) { *p++ = ' '; p = fmtInt(p, (int32_t)r[k]); }
-            fmtStr(p, "\n");
-            dbg::print(buf);
-            redrawAll();
-            return true;
-        }
-#endif
     }
     return false;
 }

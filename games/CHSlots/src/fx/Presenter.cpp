@@ -1,16 +1,12 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask and CHGfx)
-#include <CHGfx.h>
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library and CHGfx)
+#include <CHGame.h>
 #include <string.h>
 #include "../../config.h"
 #include "Presenter.h"
 #include "Fx.h"
 #include "../render/Layout.h"
 #include "../render/Machine.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Fmt.h"
-#include "../gfx/Mask.h"
-#include "../gfx/Palette.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 
 namespace present {
 
@@ -88,7 +84,7 @@ void reset(const Slots &g) {
     rain = 0;
     todoFree = todoHold = todoFinale = false;
     todoWheel = 0;
-    audio::music(Song::None);
+    playSong(Song::None);
     fx::clear();
     invalidate();
 }
@@ -160,7 +156,7 @@ static void next(const Slots &g) {
         uint16_t to = (uint16_t)(49152u - (wheelSeg * 2 + 1) * (65536u / (WHEEL_SEGS * 2)));
         wheelTurn = 4 * 65536u + (uint16_t)(to - v.wheelAngle);
         v.wheelOn = true;
-        audio::music(Song::Wheel);
+        playSong(Song::Wheel);
         return;
     }
     if (todoFree) {
@@ -235,7 +231,7 @@ void spin(const Slots &g) {
         t = (uint8_t)(t + gap);
         if (teasing(g, i)) { anticMask |= (uint8_t)(2u << i); t = (uint8_t)(t + (fast ? 20 : 40)); }
     }
-    if (g.freeLeft || g.res.wasFree) audio::music(Song::Free);
+    if (g.freeLeft || g.res.wasFree) playSong(Song::Free);
 }
 
 void hurry() {
@@ -335,7 +331,7 @@ static void wheelUpdate(const Slots &g) {
     // A click for every wedge that passes the pointer.
     if ((uint32_t)before * WHEEL_SEGS >> 16 != (uint32_t)v.wheelAngle * WHEEL_SEGS >> 16) audio::blip(2600, 6);
     if (pt < WHEEL_N) return;
-    audio::music(Song::None);
+    playSong(Song::None);
     v.wheelLit = true;
     phase = PAY; pt = 0;
     winTo = v.shownWin + g.res.wheelPay;
@@ -464,7 +460,7 @@ void update(const Slots &g) {
                 do { l = (int8_t)(l >= LINES ? 0 : l + 1); } while (l < LINES && !g.res.lineCount[l]);
                 v.line = l;
             }
-            if (!g.freeLeft && !g.holding) audio::music(Song::None);
+            if (!g.freeLeft && !g.holding) playSong(Song::None);
             break;
     }
     if (rain) {
@@ -554,7 +550,7 @@ void render(const Slots &g, uint32_t frame) {
             for (uint8_t i = 0; i < 18; i++) ramp[i] = i < 6 ? WHITE : (i < 11 ? FX_B : GOLD);       // (wood would vanish on the plate)
             maskDraw(m, 64 - w / 2, 73, GOLD, -1, -1, ramp);
         }
-        fx::applyShake(0, 127);
+        fx::applyShake(0, 127, INK);
     }
 }
 

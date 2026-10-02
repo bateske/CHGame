@@ -9,33 +9,22 @@
 
 #define CHWW_VERSION     "0.1"
 
-// Serial debug protocol: screenshots, input injection, lockstep, perf.
-// Off in normal builds (it costs ~2 KB and needs USB Serial).
-// tools/device.py turns it on with --build-property build.extra_flags.
-#ifndef CHWW_DEBUG
-#ifdef CHSIM
-#define CHWW_DEBUG       1       // the simulator is driven through the protocol
-#else
-#define CHWW_DEBUG       0
-#endif
-#endif
+// The CHGame library's switches: CHGAME_DEBUG (the serial debug protocol:
+// screenshots, input injection, lockstep, perf; always on in the simulator,
+// on the board only in `tools/device.py build --debug`) and CHGAME_PROFILE.
+#include <chgame/Config.h>
 
 // Debug builds carry the protocol, so they leave out things the tests never
-// need: every CHWW_DEBUG build, the simulator included, has no music score
+// need: every CHGAME_DEBUG build, the simulator included, has no music score
 // (src/audio/Music.cpp, from tools/make_music.py), and device debug builds
 // (CHWW_LEAN) also drop the Setup, Options and Stats screens - the podiums
 // are set with the protocol's W command - unless built with -DCHWW_FULL,
 // which does not fit. Saving and the SD bank stay. Release builds keep
 // everything.
-#if CHWW_DEBUG && !defined(CHSIM) && !defined(CHWW_FULL)
+#if CHGAME_DEBUG && !defined(CHSIM) && !defined(CHWW_FULL)
 #define CHWW_LEAN        1
 #else
 #define CHWW_LEAN        0
-#endif
-
-// Section profiler (dbg::prof + the T command). Opt-in: costs flash.
-#ifndef CHWW_PROFILE
-#define CHWW_PROFILE     0
 #endif
 
 // Logic runs at a fixed 60 Hz; drawing catches up as it can.

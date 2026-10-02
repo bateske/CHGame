@@ -39,7 +39,7 @@ def prepare():
     if (REPO / "tools" / "chsim" / "host").is_dir():  # the game's own sim shims (CHSd's card)
         shutil.copytree(REPO / "tools" / "chsim" / "host", proj / "tools" / "chsim" / "host")
     sys.path.insert(0, str(REPO / "tools" / "chsim"))  # this game's chdrive.py
-    sys.path.insert(0, str(REPO.parents[1] / "tools" / "chsim"))  # CHCasino/tools/chsim: chsim.py, fbimage.py
+    sys.path.insert(0, str(REPO.parents[1] / "tools" / "chsim"))  # the repository's tools/chsim: chsim.py, fbimage.py
     from chsim import build
     a = build(proj, [], out=WORK / "simA.exe")
     b = build(proj, ["FORCE_FULL"], out=WORK / "simB.exe")

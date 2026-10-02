@@ -77,8 +77,8 @@ otherwise anywhere.
 
 ## Building
 
-Needs the CHGame board package 0.2.4+ and the CHGfx 1.3 library (this repository
-carries both in [`platform/`](../../platform)).
+Needs the CHGame board package 0.2.4+, the CHGfx 1.3 library and the CHGame
+library (this repository carries all three in [`platform/`](../../platform)).
 
 ```
 python tools/device.py build            # release image + size report
@@ -98,8 +98,8 @@ python tools/chsim/chdrive.py --sim . tools/scripts/look.txt out/look
 
 The simulator needs a C++ compiler (`CHSIM_CXX`, zig, clang++ or g++).
 Scripts in `tools/scripts` drive the game through its serial debug protocol
-(see `src/debug/Debug.h` and the command list at the end of
-`src/states/Screens.cpp`); the same scripts run on the board with `--device`.
+(the CHGame library's `chgame/Debug.h`; the game's commands are listed at
+the end of `src/states/Screens.cpp`); the same scripts run on the board with `--device`.
 
 ## Credits
 

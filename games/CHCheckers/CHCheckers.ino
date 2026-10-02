@@ -6,13 +6,13 @@
 // DMA; drawing waits for it (one framebuffer), then the new frame is sent.
 // The same frame runs from inside the CPU's search (see src/Frame.h), so the
 // game keeps moving while the engine thinks.
+#include <CHGame.h>
 #include "config.h"
-#include <CHGfx.h>
-#include "src/CHGame.h"
 #include "src/Frame.h"
 
 void setup() {
     arduboy.boot();
+    dbg::begin("CHCK " CHCK_VERSION);     // the debug protocol's hello (CHGAME_DEBUG builds)
     gfx_begin(GFX_DIV2, GFX_12BPP);
     frame::begin();
     arduboy.setFrameRate(CHCK_FPS);

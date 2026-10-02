@@ -1,22 +1,17 @@
 #pragma GCC optimize("Os", "no-ipa-sra")   // cold code: size over speed (hot pixel loops live in Draw/Mask)
 #include <Arduino.h>
 #include <string.h>
-#include <CHGfx.h>
+#include <CHGame.h>
+#include "../gfx/Font.h"
 #include "../../config.h"
 #include "Screens.h"
-#include "../CHGame.h"
-#include "../gfx/Palette.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Mask.h"
-#include "../gfx/Fmt.h"
 #include "../fx/Fx.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../render/Table.h"
 #include "../ai/Ai.h"
 #include "../game/Game.h"
 #include "../stage/Stage.h"
 #include "../save/Save.h"
-#include "../debug/Debug.h"
 #include "../assets/Assets.h"
 #ifdef CHSIM
 #include <sim.h>
@@ -53,7 +48,7 @@ static const char *const OPP_LINE[game::LEVELS] = {
     "A GENTLE\nGAME TO\nWARM UP.", "A PROPER\nCHALLENGE.\nGOOD LUCK!", "MY VERY\nBEST PLAY.\nGOOD LUCK!"};
 static const uint8_t OPP_FACE[game::LEVELS] = {table::E_SMILE, table::E_NORMAL, table::E_RAISED};
 
-#if CHF4_DEBUG
+#if CHGAME_DEBUG
 // The CPU's last think (debug W): how long, and its longest slice of a tick.
 static uint32_t thinkAt, thinkMs, sliceUs;
 static bool wasThinking;
@@ -130,7 +125,7 @@ static void heading(const char *text, int y) {
     maskFont(m, 0, 0, text);
     uint8_t r[FONT_H + 2];
     for (int i = 0; i < FONT_H + 2; i++) r[i] = i < 3 ? FX_B : (i < 8 ? GOLD : WOOD);
-    maskDraw(m, 64 - w / 2, y, INK, INK, r);
+    maskDraw(m, 64 - w / 2, y, 0, INK, -1, r);
 }
 
 static void centred35(int y, const char *s, uint8_t c) { text35(64 - text35Width(s) / 2, y, s, c); }
@@ -350,13 +345,13 @@ static void playUpdate() {
             if (stage::ready() && game::humanToMove()) playInput();
             break;
     }
-#if CHF4_DEBUG
+#if CHGAME_DEBUG
     bool th = game::cpuThinking();
     uint32_t t0 = micros();
     if (th && !wasThinking) { thinkAt = millis(); sliceUs = 0; }
 #endif
     game::update(stage::busy());            // the CPU thinks a little in here
-#if CHF4_DEBUG
+#if CHGAME_DEBUG
     if (th && micros() - t0 > sliceUs) sliceUs = micros() - t0;
     if (wasThinking && !game::cpuThinking()) thinkMs = millis() - thinkAt;
     wasThinking = game::cpuThinking();
@@ -374,14 +369,14 @@ static void playRender(uint32_t frame) {
     char buf[40], *p;
     bool vsCpu = game::setup.mode == game::VS_CPU;
     if (overlay == PAUSE) {
-        table::panel(10, 60, 108, 50, 3, NAVY, GOLD);
+        panel(10, 60, 108, 50, 3, NAVY, GOLD);
         for (uint8_t i = 0; i < 3; i++) {
             int y = 66 + i * 14;
             if (i == sel) fillRound(14, y - 3, 100, 16, 3, INK);
             centred2(y, PAUSE_ITEM[i], i == sel ? FX_B : WHITE);
         }
     } else if (overlay == RESULT) {
-        table::panel(10, 95, 108, 31, 3, NAVY, GOLD);
+        panel(10, 95, 108, 31, 3, NAVY, GOLD);
         uint8_t w = game::winner, lv = game::setup.level;
         const char *head = w == c4::NOBODY ? "A DRAW" : vsCpu ? (w == game::YOU ? "YOU WIN!" : "YOU LOSE")
                          : w == c4::RED ? "RED WINS" : "GOLD WINS";
@@ -466,7 +461,7 @@ static void optionsRender(uint32_t frame) {
 // ---------------------------------------------------------------------------
 // Debug protocol hooks (tools/chsim/chdrive.py 'say')
 // ---------------------------------------------------------------------------
-#if CHF4_DEBUG
+#if CHGAME_DEBUG
 //   G <mode> <level> <first> <seed>   start a game (mode 0 against the dealer, 1 two players)
 //   M <mode> <level> <first> <moves>  ... from a position: the columns played so far, 1..7 (M 0 2 0 4435)
 //   D <column>                        the person to move drops a disc in column 1..7
@@ -562,23 +557,6 @@ static bool debugHook(char cmd, const char *args) {
             stage::setCursor(ai::chosen());
             return game::drop(ai::chosen());
         }
-        case 'Q': {
-            // Calibration for chdrive's `cal`: host ns for the primitives the
-            // CHGfx benchmark measured on the board (benchmark-results.txt).
-            static uint8_t spr[8 * 16];
-            memset(spr, 0x3F, sizeof spr);
-            uint64_t t0, r[5];
-            t0 = sim_hostNanos(); for (int i = 0; i < 200; i++) gfx_clear((uint8_t)i); r[0] = (sim_hostNanos() - t0) / 200;
-            t0 = sim_hostNanos(); for (int i = 0; i < 20000; i++) gfx_hline(0, i & 127, 128, (uint8_t)i); r[1] = (sim_hostNanos() - t0) / 20000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 2000; i++) gfx_blit(spr, i & 63, i & 63, 16, 16, 15); r[2] = (sim_hostNanos() - t0) / 2000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 1000; i++) gfx_text(0, i & 63, "ABCDEFGHIJKLMNOPQRSTUVWX", 1); r[3] = (sim_hostNanos() - t0) / 1000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 1000; i++) gfx_fillCircle(64, 64, 30, (uint8_t)i); r[4] = (sim_hostNanos() - t0) / 1000;
-            p = fmtStr(buf, "CAL");
-            for (int k = 0; k < 5; k++) { *p++ = ' '; p = fmtInt(p, (int32_t)r[k]); }
-            fmtStr(p, "\n");
-            dbg::print(buf);
-            return true;
-        }
 #endif
     }
     return false;
@@ -593,7 +571,7 @@ void begin() {
     if (opt.level >= game::LEVELS) opt.level = 0;
     if (opt.first > 2) opt.first = 0;
     applyOptions();
-#if CHF4_DEBUG
+#if CHGAME_DEBUG
     dbg::hook = debugHook;
 #endif
     enter(Scr::Title);

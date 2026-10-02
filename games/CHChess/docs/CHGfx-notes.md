@@ -7,6 +7,11 @@ well. These are the places where the game had to build its own tools,
 with suggestions for what could move into the library. They are roughly
 in order of value.
 
+Since these notes were written, the game's drawing, 3x5 font, masks and
+palette (`src/gfx/`) have moved into the CHGame library
+(`platform/libraries/CHGame/src/chgame/`); the paths below are where they
+were then.
+
 ## What worked and should stay
 
 * **The 4 bpp framebuffer with a palette converted on every flush.**

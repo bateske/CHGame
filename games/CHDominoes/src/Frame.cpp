@@ -1,19 +1,18 @@
 #pragma GCC optimize("Os", "no-ipa-sra")
 #include <Arduino.h>
-#include <CHGfx.h>
+#include <CHGame.h>
 #include "../config.h"
 #include "Frame.h"
-#include "CHGame.h"
-#include "gfx/Palette.h"
+#include "gfx/Colours.h"
 #include "states/Screens.h"
-#include "debug/Debug.h"
-#include "audio/Audio.h"
+#include "audio/Sounds.h"
 
 namespace frame {
 
 void begin() {
-    dbg::paintStack();
-    pal::init();
+    dbg::begin("CHDM " CHDM_VERSION);     // the debug protocol's hello (CHGAME_DEBUG builds)
+    audio::begin(SOUNDS, (uint8_t)Sfx::COUNT, false);   // on once the options are read
+    pal::init(COLOURS);
     screens::begin();
 }
 

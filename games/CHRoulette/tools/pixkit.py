@@ -3,9 +3,9 @@
 A 128x128 framebuffer of palette indices with Python versions of the
 primitives the game uses: CHGfx's hline/rect/ellipse/dither and text,
 and the game's own fillRound/roundRect/panel, text35/text35x2, the
-outlined-letter masks and the banner. The 3x5 font is parsed out of
-src/gfx/Draw.cpp (or CHChess's while the game has none), so the two can't
-drift apart.
+outlined-letter masks and the banner. The 3x5 font is parsed out of the
+CHGame library (platform/libraries/CHGame/src/chgame/Draw.cpp), so the two
+can't drift apart.
 """
 import math
 import re
@@ -42,35 +42,31 @@ def rgb(c444):
 # Fonts
 # ---------------------------------------------------------------------------
 def _font35():
-    for src in (GAME / "src/gfx/Draw.cpp", WORKSPACE / "CHChess/src/gfx/Draw.cpp"):
-        if src.exists():
-            text = src.read_text(encoding="utf-8")
-            break
-    body = text[text.index("FONT35[][3]"):]
+    """The CHGame library's 3x5 font: one glyph (3 column bytes) per
+    character from '!' to 'z', blank where there is none."""
+    src = HERE.parents[2] / "platform/libraries/CHGame/src/chgame/Draw.cpp"
+    text = re.sub(r"//[^\n]*", "", src.read_text(encoding="utf-8"))
+    body = text[text.index("FONT35[FONT35_LAST - FONT35_FIRST + 1][3]"):]
     body = body[:body.index("};")]
     glyphs = [tuple(int(v, 16) for v in g)
               for g in re.findall(r"\{(0x[0-9A-Fa-f]+),(0x[0-9A-Fa-f]+),(0x[0-9A-Fa-f]+)\}", body)]
-    idx = text[text.index("IDX35[91]"):]
-    idx = idx[idx.index("{") + 1:idx.index("};")]
-    idx = re.sub(r"//[^\n]*", "", idx)
-    table = [int(v) for v in re.findall(r"-?\d+", idx)]
-    assert len(table) == 91, len(table)
-    return glyphs, table
+    assert len(glyphs) == ord("z") - ord("!") + 1, len(glyphs)
+    return glyphs
 
 
-FONT35, IDX35 = _font35()
+FONT35 = _font35()
 
 
 def glyph35(ch):
     o = ord(ch)
-    return IDX35[o - 32] if 32 <= o <= 122 else -1
+    return o - 33 if 33 <= o <= 122 else -1
 
 
 def _font57():
     """CHGfx's 5x7 font, from the installed library (found as the simulator
     finds it: $CHSIM_CHGFX, or the Arduino sketchbook's libraries)."""
     import sys
-    sys.path.insert(0, str(HERE.parents[2] / "tools" / "chsim"))  # CHCasino/tools/chsim
+    sys.path.insert(0, str(HERE.parents[2] / "tools" / "chsim"))  # the repository's tools/chsim
     from chsim import chgfx_dir  # noqa: E402
     text = (chgfx_dir() / "CHGfx_font.h").read_text(encoding="utf-8")
     body = text[text.index("chgfx_font5x7"):]
@@ -357,7 +353,7 @@ RM_ALERT[WHITE], RM_ALERT[SILVER], RM_ALERT[GOLD], RM_ALERT[WOOD] = RED, WINE, R
 
 
 # ---------------------------------------------------------------------------
-# Masks: big outlined, shadowed, gradient lettering (gfx/Mask.cpp)
+# Masks: big outlined, shadowed, gradient lettering (the CHGame library's chgame/Mask.cpp)
 # ---------------------------------------------------------------------------
 class Mask:
     def __init__(self, w, h):

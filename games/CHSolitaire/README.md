@@ -146,13 +146,14 @@ C++ compiler (zig, clang++ or g++ on the PATH, `pip install ziglang`, or
   play, `say O <i> <v>` sets an option, `say C <pile> <cards>` puts the
   glove on a pile.
 * `python tools/device.py upload [--debug]` - build and upload (`--debug`
-  adds the serial protocol for screenshots, injected input and lockstep;
+  adds the CHGame library's serial protocol, `chgame/Debug.h`, for screenshots, injected input and lockstep;
   `device.py run SCRIPT OUTDIR` runs a script on the board).
 * `python tools/assets.py` packs the art in `tools/art/`: the cards, the
   glove, the title lettering (`logo.txt`, as `#` and `.`) and the card
   backs (`backs/*.txt`, 15x21 in palette letters; a PNG of the same name in
   the game's 16 colours overrides one).
-  `python tools/audio/preview.py out/` renders the sound effects to WAV.
+  `python ../../tools/audio/preview.py . out/audio` renders the sound
+  effects to WAV.
 
 ## Files
 
@@ -162,8 +163,10 @@ C++ compiler (zig, clang++ or g++ on the PATH, `pip install ziglang`, or
     src/stage/Stage.*      the glove, cards in motion, the table, the cascade
     src/render/*           the card and its backs, layout
     src/states/Screens.*   title, play, deck, options, stats
-    src/gfx/*, src/fx/*    palette, primitives, lettering, effects
-    src/audio/*, src/save/*, src/debug/*
+    src/fx/*               particles, banners, floating texts (palette,
+                           primitives and lettering: the CHGame library)
+    src/audio/*            the sound effects (the CHGame library plays them)
+    src/save/Save.*        what a save holds (the CHGame library keeps it in flash)
     tools/                 simulator, tests, asset pipeline, device tools
 
 ## License

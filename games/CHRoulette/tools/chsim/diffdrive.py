@@ -45,7 +45,7 @@ def prepare():
     assert old in s
     p.write_text(s.replace(old, old + "#ifdef FORCE_FULL\n    forceAll = true; wheelFull = true;\n#endif\n", 1))
     sys.path.insert(0, str(REPO / "tools" / "chsim"))  # this game's chdrive.py
-    sys.path.insert(0, str(REPO.parents[1] / "tools" / "chsim"))  # CHCasino/tools/chsim: chsim.py, fbimage.py
+    sys.path.insert(0, str(REPO.parents[1] / "tools" / "chsim"))  # the repository's tools/chsim: chsim.py, fbimage.py
     from chsim import build
     a = build(proj, [], out=WORK / "simA.exe")
     b = build(proj, ["FORCE_FULL"], out=WORK / "simB.exe")

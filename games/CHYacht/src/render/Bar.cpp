@@ -1,13 +1,10 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask and CHGfx)
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library and CHGfx)
 // CHBlackjack's button bar (render/Bar.cpp, after Press-Play-On-Tape/
 // Blackjack's drawButtons), cut down to the purse and one big button.
-#include <CHGfx.h>
+#include <CHGame.h>
 #include "Bar.h"
 #include "Layout.h"
 #include "Chips.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Fmt.h"
-#include "../gfx/Palette.h"
 
 namespace bar {
 

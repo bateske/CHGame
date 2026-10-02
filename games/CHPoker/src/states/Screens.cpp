@@ -1,16 +1,11 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask)
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library)
 #include <Arduino.h>
 #include <string.h>
-#include <CHGfx.h>
+#include <CHGame.h>
 #include "../../config.h"
 #include "Screens.h"
-#include "../CHGame.h"
-#include "../gfx/Palette.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Mask.h"
-#include "../gfx/Fmt.h"
 #include "../fx/Fx.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../game/Table.h"
 #include "../game/Hand.h"
 #include "../render/CardArt.h"
@@ -18,7 +13,6 @@
 #include "../render/Bar.h"
 #include "../stage/Stage.h"
 #include "../save/Save.h"
-#include "../debug/Debug.h"
 #ifdef CHSIM
 #include <sim.h>
 #endif
@@ -37,7 +31,7 @@ static bool seeded;
 
 enum Overlay : uint8_t { NONE, PAUSE, RANKS };
 static Overlay overlay;
-#if CHPK_DEBUG
+#if CHGAME_DEBUG
 static uint32_t thinkAt, thinkLast, thinkMax;       // a CPU's think, wall time (debug W)
 #endif
 
@@ -99,7 +93,7 @@ static void title35(const char *text, int y, uint8_t scale, uint8_t top, uint8_t
     maskText35(m, 0, 0, text, scale);
     uint8_t ramp[32];
     for (int i = 0; i < h + 2 && i < 32; i++) ramp[i] = i < scale ? top : (i < lowFrom ? mid : low);
-    maskDraw(m, 64 - w / 2, y, INK, shadow, ramp);
+    maskDraw(m, 64 - w / 2, y, 0, INK, shadow, ramp);
 }
 
 static void centred35(int y, const char *s, uint8_t c) { text35(64 - text35Width(s) / 2, y, s, c); }
@@ -200,7 +194,7 @@ static void titleRender(uint32_t frame) {
         maskBlit1(m, LOGO, LOGO_W, LOGO_H, 2);
         uint8_t ramp[LOGO_H * 2];
         for (int i = 0; i < LOGO_H * 2; i++) ramp[i] = i < 4 ? FX_B : (i < 23 ? GOLD : WOOD);
-        maskDraw(m, 64 - LOGO_W, 8, INK, WINE, ramp);
+        maskDraw(m, 64 - LOGO_W, 8, 0, INK, WINE, ramp);
     }
     centred35(41, "HOLD'EM - DRAW - OMAHA - STUD", CYAN);
     // A royal flush in spades, dropped in one card at a time, each turning
@@ -331,11 +325,11 @@ static void playUpdate(bool firstTick) {
     static const uint8_t DIRS = UP_BUTTON | DOWN_BUTTON | LEFT_BUTTON | RIGHT_BUTTON;
     for (uint8_t b = 1; b; b <<= 1) if ((DIRS & b) && arduboy.repeat(b)) rep |= b;
     if (overlay) rep = 0;
-#if CHPK_DEBUG
+#if CHGAME_DEBUG
     bool wasThinking = table.phase == Phase::Think;
 #endif
     table.update(pressed, rep, stage::busy(), firstTick);
-#if CHPK_DEBUG
+#if CHGAME_DEBUG
     bool thinking = table.phase == Phase::Think;
     if (thinking && !wasThinking) thinkAt = millis();
     if (!thinking && wasThinking) {
@@ -549,7 +543,7 @@ static void endRender(uint32_t frame) {
 // ---------------------------------------------------------------------------
 // Debug protocol hooks (tools/chsim/chdrive.py 'say')
 // ---------------------------------------------------------------------------
-#if CHPK_DEBUG
+#if CHGAME_DEBUG
 //   G <game> <level> <buyin> <seed>    sit down at a table
 //   D <c1,c2,...>                      stack the next cards dealt (0..51 = rank*4+suit)
 //   $ <amount>                         set the purse
@@ -598,24 +592,6 @@ static bool debugHook(char cmd, const char *args) {
         }
 #ifdef CHSIM
         case 'Z': begin(); return true;          // "power cycle": reload the save, back to the title
-        case 'Q': {
-            // Calibration for chdrive's `cal`: host ns for the primitives the
-            // CHGfx benchmark measured on the board (benchmark-results.txt).
-            static uint8_t spr[8 * 16];
-            memset(spr, 0x3F, sizeof spr);
-            uint64_t t0, r[5];
-            t0 = sim_hostNanos(); for (int i = 0; i < 200; i++) gfx_clear((uint8_t)i); r[0] = (sim_hostNanos() - t0) / 200;
-            t0 = sim_hostNanos(); for (int i = 0; i < 20000; i++) gfx_hline(0, i & 127, 128, (uint8_t)i); r[1] = (sim_hostNanos() - t0) / 20000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 2000; i++) gfx_blit(spr, i & 63, i & 63, 16, 16, 15); r[2] = (sim_hostNanos() - t0) / 2000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 1000; i++) gfx_text(0, i & 63, "ABCDEFGHIJKLMNOPQRSTUVWX", 1); r[3] = (sim_hostNanos() - t0) / 1000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 1000; i++) gfx_fillCircle(64, 64, 30, (uint8_t)i); r[4] = (sim_hostNanos() - t0) / 1000;
-            char buf[96], *p = fmtStr(buf, "CAL");
-            for (int k = 0; k < 5; k++) { *p++ = ' '; p = fmtInt(p, (int32_t)r[k]); }
-            fmtStr(p, "\n");
-            dbg::print(buf);
-            stage::invalidate();
-            return true;
-        }
 #endif
         case 'H': {
             char b[64], *p = fmtStr(b, "TABLE ");
@@ -641,9 +617,9 @@ void begin() {
     if (table.purse < minBuyIn(ROOKIE)) table.newPurse();
     buyIn = maxBuyIn(table.opt.level) / 2;
     clampBuyIn();
-    audio::begin(true);
+    audio::begin(SOUNDS, (uint8_t)Sfx::COUNT, true);
     applyOptions();
-#if CHPK_DEBUG
+#if CHGAME_DEBUG
     dbg::hook = debugHook;
 #endif
     enter(Scr::Title);

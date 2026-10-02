@@ -39,7 +39,7 @@ void demo();
 void renderScene(uint32_t frame);
 // The setup screen's wall: the dealer saying `text`.
 void renderWall(uint32_t frame, const char *text, uint8_t face);
-#if CHF4_DEBUG
+#if CHGAME_DEBUG
 void showEnding(uint8_t winner);     // straight to an ending (the debug protocol)
 #endif
 

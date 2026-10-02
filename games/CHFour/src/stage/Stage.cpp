@@ -1,16 +1,13 @@
 #pragma GCC optimize("Os", "no-ipa-sra")   // cold code: size over speed (hot pixel loops live in Draw/Mask)
 #include <string.h>
-#include <CHGfx.h>
+#include <CHGame.h>
 #include <Arduino.h>
 #include "../../config.h"
 #include "Stage.h"
 #include "../game/Game.h"
 #include "../render/Table.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Palette.h"
-#include "../gfx/Fmt.h"
 #include "../fx/Fx.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../assets/Assets.h"
 
 namespace stage {
@@ -473,7 +470,7 @@ bool render(uint32_t frame, uint32_t ui) {
     return true;
 }
 
-#if CHF4_DEBUG
+#if CHGAME_DEBUG
 void showEnding(uint8_t who) {
     winnerSide = who;
     endFace = E_SMILE;

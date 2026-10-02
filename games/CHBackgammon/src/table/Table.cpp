@@ -1,12 +1,8 @@
 #pragma GCC optimize("Os", "no-ipa-sra")   // cold code: size over speed (the board's rows are a RAMFUNC)
-#include <CHGfx.h>
+#include <CHGame.h>
 #include "Table.h"
-#include "../gfx/Palette.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Mask.h"
-#include "../gfx/Fmt.h"
+#include "../gfx/Font.h"
 #include "../assets/Assets.h"
-#include "../RamFunc.h"
 
 namespace table {
 

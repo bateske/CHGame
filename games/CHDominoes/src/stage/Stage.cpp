@@ -1,20 +1,17 @@
 #pragma GCC optimize("Os", "no-ipa-sra")   // cold code: size over speed (hot pixel loops live in Draw)
 #include <string.h>
-#include <CHGfx.h>
+#include <CHGame.h>
 #include <Arduino.h>
 #include "../../config.h"
 #include "Stage.h"
 #include "../game/Match.h"
 #include "../table/Table.h"
 #include "../table/Layout.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Palette.h"
-#include "../gfx/Fmt.h"
 #include "../fx/Fx.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../assets/Assets.h"
 
-#if CHDM_DEBUG && defined(CHSIM)
+#if CHGAME_DEBUG && defined(CHSIM)
 uint64_t sim_hostNanos();
 #endif
 
@@ -26,7 +23,6 @@ using dom::NONE;
 // ---------------------------------------------------------------------------
 // Colour remaps
 // ---------------------------------------------------------------------------
-static const uint8_t RM_ID[16] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
 static const uint8_t RM_HIT[16] = {INK, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE,
                                    WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE};   // lit: a white flash
 static const uint8_t RM_ALERT[16] = {0, RED, 2, 3, 4, WINE, 6, 7, RED, WINE, 10, 11, 12, 13, 14, 15};   // the glove, denied
@@ -845,7 +841,7 @@ static void drawGlove(uint32_t frame) {
     int x = (int)(gx16 >> 4), y = (int)(gy16 >> 4);
     int bob = (fx::isin((int)(frame >> 3) * 40) * 2) >> 8;
     const uint8_t *rm = denyT & 4 ? RM_ALERT : RM_ID;
-    if (gloveBelow) sprite4(HAND, x - HAND_TIP, y + 1 - bob, rm, -256);    // turned over
+    if (gloveBelow) sprite4(HAND, x - HAND_TIP, y + 1 - bob, rm, 256, SPR_FLIP_V);    // turned over
     else sprite4(HAND, x - HAND_TIP, y - HAND[1] + bob - 1, rm, 256);
 }
 
@@ -914,7 +910,7 @@ bool render(uint32_t frame, uint32_t ui) {
     return true;
 }
 
-#if CHDM_DEBUG
+#if CHGAME_DEBUG
 // Render profile (debug Y command): per section, averaged over 64 draws of
 // the current scene - microseconds on the board; in the simulator, host
 // nanoseconds (scale by chdrive's `cal` ratio / 1000 for a device estimate).

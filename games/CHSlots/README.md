@@ -42,8 +42,9 @@ You need the Arduino IDE (2.x) or `arduino-cli`, and:
 1. **The CHGame board package, 0.2.4 or later**: see [Installing](../../README.md#installing)
    in the repository's README.
 2. **The CHGfx library, 1.3.0**, in this repository at
-   [`platform/libraries/CHGfx`](../../platform/libraries/CHGfx). Copy it into your
-   sketchbook's `libraries/` folder.
+   [`platform/libraries/CHGfx`](../../platform/libraries/CHGfx), and **the CHGame
+   library** at [`platform/libraries/CHGame`](../../platform/libraries/CHGame).
+   Copy both into your sketchbook's `libraries/` folder.
 3. **This game's folder**, `games/CHSlots` of this repository (keep the name `CHSlots`).
 
 The game is built with **link-time optimisation**, like the rest of the
@@ -170,7 +171,7 @@ simulator and tests (set `CHSIM_CXX`, e.g. to `zig c++`).
 | `python tools/device.py build [--debug]` | Compile for the board and check the size |
 | `python tools/assets.py [--export]` | Build `src/assets/` from the art, or write the sheet and palette |
 | `python tools/strips.py` | Regenerate the reel strips |
-| `python tools/audio/preview.py out/audio` | Render the sound effects and tunes to WAV |
+| `python ../../tools/audio/preview.py . out/audio` | Render the sound effects and tunes to WAV |
 
 `tools/scripts/showcase.txt` and `showcase_sweet.txt` make the captures in
 `docs/`; `screens.txt` snaps every screen once; `save.txt` checks
@@ -182,11 +183,10 @@ save, continue and the demo; `perf.txt` prints the frame-time estimates.
     config.h             build switches
     src/game/            the rules of the three machines, the reel strips
     src/fx/              the presenter, particles, banners, shake
-    src/render/          the cabinets, reels, wheel, paytables
+    src/render/          the cabinets, reels, wheel, paytables, each machine's felt
     src/states/          title, machine menu, play, options, stats, endings
-    src/audio/           sound effects and three tunes
-    src/save/            the save record (flash pages 0xF500 / 0xF600)
-    src/gfx/             palette, 3x5 font, lettering masks
+    src/audio/           sound effects and three tunes (the CHGame library plays them)
+    src/save/            what a save holds (the CHGame library keeps it in flash)
     tools/               art, asset and strip generators, simulator, tests
 
 ## License

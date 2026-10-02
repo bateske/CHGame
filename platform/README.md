@@ -9,6 +9,7 @@ here. The table's "Came from" column is history, not something to sync with.
 |---|---|---|---|---|
 | `board/arduino/CHGame/` | The CHGame Arduino board package: core, variant, linker scripts, bootloader binary, `boards.txt` / `platform.txt` | 0.2.4 | CH32SerialBoot tag `v0.2.4` (5de3006), folder `arduino/CHGame` | MIT (`board/LICENSE`, `board/THIRD-PARTY.md`) |
 | `board/docs/` | The board's docs: hardware pin map, flash/RAM map, boot flow, upload protocol, recovery, CH32X035 gotchas, building the bootloader | 0.2.4 | same tag, folder `docs` | MIT |
+| `libraries/CHGame/` | The CHGame library: `CHGame.h`, the one include of a sketch (buttons, pacing, palette, drawing, sound, saving, the debug protocol) | 0.1.0 | built here (2026-10-02) from the code the twenty games shared | Apache-2.0 (`LICENSE`, `NOTICE`) |
 | `libraries/CHGfx/` | The graphics library | 1.3.0 | CHGfx tag `1.3.0` (838bbb0) | MIT (+ font notices in its `LICENSE`) |
 | `libraries/CHSd/` | Read-only SD card + FAT16/32 library | 1.0.0 | never had a repository of its own | MIT |
 | `bootloader/` | The bootloader with the SD game menu: sources, PC test suite, built binaries, and the uploader's source (`host/py`) | 0.2.4 + the SD menu (BOOT_VERSION 2) | CH32SerialBoot tag `v0.2.4` (5de3006): `bootloader/`, `shared/`, `host/py/`, `test/` | MIT (+ BSD font, `bootloader/NOTICE`) |
@@ -22,8 +23,8 @@ CHGfx's `LICENSE`.
 ## Where this is going
 
 The board package is to carry everything: the core, the menu bootloader,
-one `CHGame` library (with CHGfx, CHSd and the sound core under it) and the
-casino games as examples, so that installing or updating "CHGame" in the
+the `CHGame` library (with CHGfx and CHSd under it) and the casino games as
+examples, so that installing or updating "CHGame" in the
 Boards Manager brings all of it at once.
 [../docs/roadmap.md](../docs/roadmap.md) lists the steps. Until they are
 done, the pieces are used as described below.
@@ -73,6 +74,19 @@ arduino-cli core install CHGame:ch32v@0.2.4
 - **Stale comments.** Several say the bootloader is 8 KB and the app starts
   at 0x2000 (`link_chgame_app.ld`, `chgame_map.h`); the code says 12 KB and
   0x3000.
+
+## CHGame (`libraries/CHGame/`)
+
+The library every game is built on; [its README](libraries/CHGame/README.md)
+is the reference and [../docs/chgame-library.md](../docs/chgame-library.md)
+the record of its decisions. Like CHGfx it is not in the board package yet:
+- `tools/device.py` passes `--library <repo>/platform/libraries/CHGame`;
+- the simulator compiles its `src/` unless `CHSIM_CHGAME` points elsewhere;
+- Arduino IDE users copy this folder into their sketchbook's `libraries/`.
+
+A change to it is a change to every game: rebuild all twenty (size), and
+compare their simulator frames (and, for `chgame/Audio`, the sound preview
+hashes: `tools/audio/preview.py`).
 
 ## CHGfx (`libraries/CHGfx/`)
 
@@ -138,7 +152,9 @@ differences from 0.2.4, building, testing and installing.
 
 ## Changes since the copies were taken
 
-- `board/`, `libraries/CHGfx/`: none.
+- `board/`: none.
+- `libraries/CHGfx/`: `library.properties` gives this repository's URL.
+- `libraries/CHGame/`: new.
 - `libraries/CHSd/`: `tools/vendor.py` and `tests/run_tests.py` point at
   `games/` and this folder depth, and the README describes this layout.
 - `bootloader/`: the SD menu work, listed in its README.

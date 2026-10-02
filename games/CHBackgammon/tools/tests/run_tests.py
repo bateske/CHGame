@@ -8,7 +8,8 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
-sys.path.insert(0, str(HERE.parents[3] / "tools" / "chsim"))  # CHCasino/tools/chsim (find_cxx)
+CHGAME = HERE.parents[3] / "platform" / "libraries" / "CHGame" / "src"   # the CHGame library
+sys.path.insert(0, str(HERE.parents[3] / "tools" / "chsim"))  # the repository's tools/chsim (find_cxx)
 from chsim import find_cxx  # noqa: E402
 
 # The pure-logic sources, compiled beside the tests as they are.
@@ -16,7 +17,7 @@ SOURCES = [HERE / "test_backgammon.cpp", ROOT / "src" / "rules" / "Board.cpp"]
 MATCH = [ROOT / "src" / "ai" / "Net.cpp", ROOT / "src" / "ai" / "NetData.cpp", ROOT / "src" / "ai" / "Race.cpp",
          ROOT / "src" / "ai" / "RaceData.cpp", ROOT / "src" / "ai" / "Ai.cpp", ROOT / "src" / "ai" / "Cube.cpp",
          ROOT / "src" / "ai" / "MetData.cpp", ROOT / "src" / "game" / "Match.cpp", ROOT / "src" / "game" / "Notation.cpp",
-         ROOT / "src" / "gfx" / "Fmt.cpp"]
+         CHGAME / "chgame" / "Fmt.cpp"]
 
 
 def main():
@@ -30,7 +31,7 @@ def main():
     cmd = find_cxx() + ["-std=gnu++17", "-O2", "-Wall", "-Wextra", "-Wno-unused-parameter",
                         "-Wno-unused-function", "-Wno-unused-variable", "-Wno-unknown-pragmas",
                         "-fsanitize=undefined", "-fno-sanitize-recover=undefined",
-                        "-DCHTEST", *flags, *srcs, "-o", str(exe)]
+                        "-DCHTEST", f"-I{CHGAME}", *flags, *srcs, "-o", str(exe)]
     r = subprocess.run(cmd, capture_output=True, text=True)
     if r.returncode:
         sys.stderr.write(r.stdout + r.stderr)

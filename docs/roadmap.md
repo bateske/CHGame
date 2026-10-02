@@ -20,9 +20,7 @@ done in order and checked.
 | Uploader source (`chgame-upload`) | `platform/bootloader/host/py` | in use |
 | Graphics | `platform/libraries/CHGfx` | 1.3.0 |
 | SD card / FAT | `platform/libraries/CHSd` | 1.0.0; never yet run against a real card on a board |
-| Buttons, frame pacing, exit to menu | `games/*/src/CHGame.h/.cpp` | identical in all 20 games |
-| Sound | `games/*/src/audio/` | the same sequencer in every game, each with its own effect list; some add `Music` |
-| Saving, debug protocol, `RamFunc.h` | `games/*/src/save`, `debug`, `RamFunc.h` | the same code, with per-game ids (save magic, handshake, section prefix) |
+| The `CHGame` library: buttons and pacing, palette, drawing, the 3x5 font, lettering, effects maths, sound, saving, the debug protocol, `RAMFUNC` | `platform/libraries/CHGame` | every game is built on it ([its README](../platform/libraries/CHGame/README.md)); not yet bundled in the board package |
 | Twenty games, one utility | `games/`, `utilities/CHSDtoUSB` | building; verification per game in [status.md](status.md) |
 | PC tools | `tools/`, per-game `tools/` | in use |
 
@@ -58,37 +56,50 @@ session in `platform/bootloader/HARDWARE.md` has passed.
 
 ### 3. One `CHGame` library
 
-A board package can bundle libraries (`libraries/` inside the platform
-folder, where `SPI`, `Wire` and `EEPROM` are now). The unified library goes
-there, with `CHGame.h` as its one include and the existing cores under it:
+**Done in this repository** (2026-10-02). `platform/libraries/CHGame` is
+the library, `#include <CHGame.h>` its one include, and all twenty games
+are built on it. What each game carried its own copy of is now the
+library's:
 
-| Layer | Source today | Notes for the move |
+| Layer | In the library | What was decided |
 |---|---|---|
-| Buttons, pacing, exit to menu | `games/*/src/CHGame.*` | Identical already. The `.cpp` differs only by a pragma. |
-| Graphics | `platform/libraries/CHGfx` | Keeps its own sources, tests and `extras/`. Its `library.properties` still gives the CH32SerialBoot URL. |
-| SD card | `platform/libraries/CHSd` | Once it is a library the board package provides, the three SD games no longer need generated copies, and `tools/vendor.py` goes away. The bootloader's C fork (`src/sd.c`, `fat.c`) remains. |
-| Sound | `games/*/src/audio` | The sequencer is shared; the effect and song tables are per game and stay with the game. |
-| Saving | `games/*/src/save` | Shared mechanism; the magic is per game and must stay unique. |
-| Debug protocol | `games/*/src/debug` | Shared protocol; the handshake id and hook are per game. The simulator and every `chdrive.py` depend on it. |
-| `RamFunc.h` | `games/*/src/RamFunc.h` | The section prefix is per game. |
+| Buttons, pacing, exit to menu | `chgame/Input` | as it was in every game |
+| Palette | `chgame/Palette` | one superset; a game passes its own colours or felts as data |
+| Drawing, the 3x5 font | `chgame/Draw` | one font for all: five games' `M` changed by a pixel; one `sprite4` superset |
+| Lettering | `chgame/Mask` | the CHBingo/CHCraps signature |
+| Effects maths | `chgame/Fx` | one `ease` table set; the CHFour family's moves a pixel here and there |
+| Number formatting | `chgame/Fmt` | the union of all variants |
+| Sound | `chgame/Audio` | one engine: 3-byte steps (20 Hz, 2 ms), priorities, soft and glide flags, semitone shifts, Playtune scores and one-voice melodies, the LED. Each game keeps its own effect tables (`src/audio/Sounds.cpp`) |
+| Saving | `chgame/Save` | the record every game wrote, byte for byte (old saves still load); each game keeps its magic and what it saves |
+| Debug protocol | `chgame/Debug`, `chgame/Config` | one protocol, on with `CHGAME_DEBUG`; CHBlackjack now gives the common answers |
+| `RAMFUNC` | `chgame/RamFunc` | `RAMFUNC(name)` for a sketch, `CHGAME_RAMFUNC` inside the library |
+| Frame loop | stays in each game | it is the part a reader should see; the shape is the same everywhere |
 
-Constraints that the move has to respect:
+Tools moved with it: one `tools/device.py`, one script driver
+(`tools/chsim/chdrivelib.py`, which each game's `chdrive.py` extends with
+its own commands), one sound preview (`tools/audio/preview.py`).
 
-- **Flash.** Most games are within 1 KB of full. A library build must not
-  cost bytes compared with the in-sketch copies; with `-flto` it should not,
-  but each game's size has to be measured before and after.
-- **Pixels.** The simulator frames of every game must be identical before
-  and after (CLAUDE.md rule 2). That is the test for this whole step.
-- **The simulator** (`tools/chsim/chsim.py`) compiles a game's `src/` plus
-  CHGfx. It has to learn where the library's sources are.
-- **Adapted copies.** Some games changed their copy of a shared module
-  (`gfx/`, `fx/`, and in places `audio/`). Only what is truly common moves;
-  [game-anatomy.md](game-anatomy.md) says which is which.
+How it was checked: every game's simulator frames before and after (all
+identical, except the deliberate one-pixel changes above, measured and
+listed in [unification.md](unification.md)); every sound effect
+millisecond by millisecond against the old engine; every save layout
+offset by offset; every game's size (each fits, both save pages kept);
+and every script once more under valgrind.
+
+**What is left for the board package:**
+
+- Bundle `CHGame` (and `CHGfx`, `CHSd`) in the platform's `libraries/`
+  folder, beside `SPI`, `Wire` and `EEPROM`. `tools/device.py` and the
+  simulator use the copies in `platform/libraries` until then.
+- With CHSd bundled, the three SD games no longer need generated copies
+  and `platform/libraries/CHSd/tools/vendor.py` goes away. The bootloader's
+  C fork (`src/sd.c`, `fat.c`) remains.
 
 ### 4. The games as examples
 
 The Arduino IDE lists a library's `examples/` folder under *File >
-Examples*. The games become the `CHGame` library's examples.
+Examples*. The library has one already, `examples/Hello` (the smallest
+complete sketch); the games become the rest.
 
 - A sketch opened from *Examples* is read-only and is copied to the
   sketchbook when saved. A game must build from that copy with nothing but
@@ -121,13 +132,12 @@ It is ours now:
 
 - Linux: `ch32yyxx.h` includes `core_riscv_cH32yyxx.h` (capital H).
 - Stale comments about an 8 KB bootloader and an app at 0x2000.
-- The names: the root `LICENSE` file is missing (the README states
-  Apache-2.0 for root files and `docs/`), and "CHCasino" remains in code
-  comments, `tools/NOTICE`, a variable in each `device.py` and the
-  bootloader's `casino` theme description. None of it affects a build.
+- The root `LICENSE` file is missing (the README states Apache-2.0 for root
+  files and `docs/`). (The working name "CHCasino" left the code and
+  comments on 2026-10-02.)
 
 ## Order
 
 1 and 2 give a release from this repository that matches what people have
-now plus the menu. 3 and 4 are the unification and depend on each other.
+now plus the menu. 3 is done but for the bundling, which goes with 4.
 5 and 6 can be done at any time.

@@ -4,7 +4,7 @@ Copyright 2026 bateske
 Based on CH32SerialBoot v0.2.4 (MIT, see LICENSE). Its third-party
 components are listed in THIRD-PARTY.md.
 
-The SD game menu adds code from two other parts of CHCasino, both MIT:
+The SD game menu adds code from two other parts of this repository (CHGame), both MIT:
 
 - src/sd.c and src/fat.c are C ports of CHSd 1.0.0
   (platform/libraries/CHSd). Its NOTICE says the SPI-mode block driver and

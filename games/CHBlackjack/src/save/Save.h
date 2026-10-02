@@ -1,21 +1,23 @@
 // Saving the purse, options and lifetime stats.
 //
-// The Arduboy keeps these in EEPROM. CHGame has no EEPROM, but its
-// bootloader only erases the flash pages a new sketch occupies, so the last
-// pages of the application region survive re-uploads (verified on hardware
-// with tools/probes/FlashProbe). Two pages are used in turn, each record
-// carrying a sequence number and a CRC, so a power cut mid-write can only
-// lose the newest save. If this sketch ever grows into those pages, saving
-// switches itself off rather than overwrite code.
+// The Arduboy keeps these in EEPROM. The CHGame library keeps the record in
+// flash instead (chgame/Save.h: two pages that survive re-uploads, used in
+// turn, a CRC, this game's own magic "CHBJ"; tools/probes/FlashProbe proved
+// on hardware that the pages survive); this is what goes in it and back out.
+//
+// A record holds the options, the lifetime stats and the purse with a
+// "game in progress" mark, so CONTINUE picks up the purse SAVE & QUIT left.
 #pragma once
-#include <stdint.h>
+#include <chgame/Save.h>
 
 class Round;
 
 namespace save {
 
-bool available();                   // false: image too big, or a write failed
+// (save::available(), false when the image is too big or a write failed,
+// is the library's.)
 bool load(Round &r, bool &hasGame); // options + stats always; purse if hasGame
+// Call after gfx_wait(): the page is built in CHGfx's chunk scratch.
 bool store(const Round &r, bool hasGame);
 
 }  // namespace save

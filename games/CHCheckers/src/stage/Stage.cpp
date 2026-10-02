@@ -1,17 +1,14 @@
 #pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Iso)
 #include <string.h>
-#include <CHGfx.h>
+#include <CHGame.h>
 #include <Arduino.h>
 #include "../../config.h"
 #include "Stage.h"
 #include "../game/Match.h"
 #include "../engine/Engine.h"
 #include "../iso/Iso.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Palette.h"
-#include "../gfx/Fmt.h"
 #include "../fx/Fx.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../assets/Assets.h"
 
 namespace stage {
@@ -1028,7 +1025,7 @@ bool render(uint32_t frame, uint32_t ui) {
     return true;
 }
 
-#if CHCK_DEBUG
+#if CHGAME_DEBUG
 // Device render profile (debug Y command): microseconds per section,
 // averaged over 8 draws of the current scene.
 static void profTable(uint32_t) { drawTable(); }

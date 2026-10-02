@@ -13,7 +13,8 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
-sys.path.insert(0, str(HERE.parents[3] / "tools" / "chsim"))  # CHCasino/tools/chsim (find_cxx)
+LIB = HERE.parents[3] / "platform" / "libraries" / "CHGame" / "src"   # config.h includes <chgame/Config.h>
+sys.path.insert(0, str(HERE.parents[3] / "tools" / "chsim"))  # the repository's tools/chsim (find_cxx)
 sys.path.insert(0, str(HERE.parent / "puzzles"))
 from chsim import find_cxx  # noqa: E402
 import cwformat as cw  # noqa: E402
@@ -57,7 +58,7 @@ def compile(exe, sources):
     cmd = find_cxx() + ["-std=gnu++17", "-O2", "-Wall", "-Wextra", "-Wno-unused-parameter",
                         "-Wno-unused-function", "-Wno-unused-variable", "-Wno-unknown-pragmas",
                         "-fsanitize=undefined", "-fno-sanitize-recover=undefined",
-                        "-DCHTEST", *[str(s) for s in sources], "-o", str(exe)]
+                        "-DCHTEST", "-I", str(LIB), *[str(s) for s in sources], "-o", str(exe)]
     r = subprocess.run(cmd, capture_output=True, text=True)
     if r.returncode:
         sys.stderr.write(r.stdout + r.stderr)

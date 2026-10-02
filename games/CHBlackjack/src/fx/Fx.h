@@ -1,20 +1,11 @@
-// Motion and sparkle: easing curves, a particle pool, pop-up banners,
-// floating "+$15" texts and screen shake. Integer maths only - soft-float
-// trig once cost a demo on this chip 8.5 KB of flash and half its frame rate.
+// Sparkle: a particle pool, pop-up banners and floating "+$15" texts. The
+// easing, sine, randomness and screen shake are the CHGame library's
+// (fx:: in chgame/Fx.h).
 #pragma once
 #include <stdint.h>
+#include <CHGame.h>
 
 namespace fx {
-
-enum Ease : uint8_t { LINEAR, OUT_CUBIC, OUT_BACK, IN_OUT, OUT_BOUNCE };
-// t in 0..n -> 0..256 (OUT_BACK/OUT_BOUNCE may overshoot).
-int ease(Ease e, int t, int n);
-int isin(int a);                    // a in 1/256 turns -> -256..256
-
-// Presentation-only randomness (never touches game outcomes).
-uint32_t rnd();
-int rndRange(int lo, int hi);
-void reseed();                      // debug: restart the sequence
 
 enum Kind : uint8_t { SPARK, CONFETTI, COIN, RAIN, STAR, DUST };
 void spawn(Kind k, int x, int y, int vx16, int vy16, uint8_t life, uint8_t colour);
@@ -28,7 +19,6 @@ void banner(const char *text, BannerStyle s, int cy, uint8_t frames = 70);
 bool bannerActive();
 
 void floatText(const char *text, int x, int y, uint8_t colour);
-void shake(uint8_t frames, uint8_t amplitude);
 
 // Vertical extent of everything transient on screen (particles, floats,
 // banner, shake). Returns false if nothing is moving.
@@ -39,6 +29,5 @@ void update();                      // once per frame
 void drawParticles();
 void drawBanner();
 void drawFloats();
-void applyShake(int y0, int y1);    // post-process rows y0..y1 of the framebuffer
 
 }  // namespace fx

@@ -1,10 +1,8 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask)
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library)
 // The big card derived from Press-Play-On-Tape/Blackjack (Apache-2.0),
 // PlayGameState_Render.cpp drawCard(), via CHBlackjack.
-#include <CHGfx.h>
+#include <CHGame.h>
 #include "CardArt.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Palette.h"
 #include "../game/Cards.h"
 #include "../assets/Assets.h"
 
@@ -104,7 +102,7 @@ void mini(int x, int y, uint8_t c, bool faceUp, int w, uint8_t edge) {
         glyph(ix, y + 2, TEN, 5, col);
     } else {
         char ch = r <= R9 ? (char)('2' + r) : "JQKA"[r - RJ];
-        glyph(ix + 1, y + 2, FONT35[glyph35(ch)], 3, col);
+        glyph(ix + 1, y + 2, glyph35(ch), 3, col);
     }
     glyph(ix, y + 8, SUIT_SMALL + suitOf(c) * 5, 5, col);
 }

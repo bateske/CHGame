@@ -1,16 +1,13 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask and CHGfx)
-#include <CHGfx.h>
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library and CHGfx)
+#include <CHGame.h>
 #include <string.h>
 #include "Stage.h"
 #include "ChipArt.h"
 #include "Iso.h"
 #include "../game/Text.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Fmt.h"
-#include "../gfx/Palette.h"
 #include "../gfx/Remap.h"
 #include "../fx/Fx.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../assets/Assets.h"
 
 namespace stage {
@@ -680,7 +677,7 @@ bool render(const Match &m, const Casino &c, uint32_t frame) {
         hi = nhi > bandHi ? nhi : bandHi;
         if (lo < 12) lo = 12;
         if (hi > 116) hi = 116;
-        if (lo < hi) drawRows(lo, hi);
+        if (lo < hi) gfx_setClip(0, lo, GFX_W, hi - lo);   // the library and CHGfx draw inside it
     }
     bandLo = (int16_t)nlo; bandHi = (int16_t)nhi;
 
@@ -741,7 +738,7 @@ bool render(const Match &m, const Casino &c, uint32_t frame) {
     fx::drawFloats();
     fx::drawBanner();
     fx::applyShake(BOARD_Y0, BOARD_Y1 - 1);
-    if (band) { drawRows(0, GFX_H); return true; }
+    if (band) { gfx_resetClip(); return true; }
     drawBars(m, c);
     (void)frame;
     return true;

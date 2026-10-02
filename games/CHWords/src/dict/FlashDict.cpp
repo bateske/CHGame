@@ -1,4 +1,4 @@
-#pragma GCC optimize("Os", "no-ipa-sra")
+#pragma GCC optimize("Os", "no-ipa-sra", "no-caller-saves")
 // The flash list's decoder. The format is tools/dict/build_dict.py's (its
 // decode() is the reference for this file): base words, sorted, front-coded
 // in blocks of DICT_BLOCK, each with the set of rules (add an S, drop the E
@@ -7,7 +7,7 @@
 #include <string.h>
 #include "Dict.h"
 #include "DictData.h"
-#include "../RamFunc.h"
+#include <chgame/RamFunc.h>
 
 namespace dict {
 

@@ -1,5 +1,5 @@
-#pragma GCC optimize("Os", "no-ipa-sra", "no-inline-functions-called-once", "no-jump-tables", "no-guess-branch-probability")   // cold code: size over speed (hot pixel loops live in Draw/Mask, WheelStrip and CHGfx)
-#include <CHGfx.h>
+#pragma GCC optimize("Os", "no-ipa-sra", "no-inline-functions-called-once", "no-jump-tables", "no-guess-branch-probability")   // cold code: size over speed (hot pixel loops live in the CHGame library, WheelStrip and CHGfx)
+#include <CHGame.h>
 #include <string.h>
 #include "Presenter.h"
 #include "Fx.h"
@@ -9,11 +9,7 @@
 #include "../render/Stage.h"
 #include "../render/Board.h"
 #include "../render/WheelStrip.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Fmt.h"
-#include "../gfx/Palette.h"
-#include "../audio/Audio.h"
-#include "../debug/Debug.h"
+#include "../audio/Sounds.h"
 
 namespace present {
 

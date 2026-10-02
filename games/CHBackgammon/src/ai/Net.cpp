@@ -1,7 +1,7 @@
 #pragma GCC optimize("Os", "no-ipa-sra")
 #include <string.h>
 #include "Net.h"
-#include "../RamFunc.h"
+#include <chgame/RamFunc.h>
 
 namespace net {
 

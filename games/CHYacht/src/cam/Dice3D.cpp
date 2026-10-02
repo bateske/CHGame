@@ -1,8 +1,7 @@
 #pragma GCC optimize("Os")   // cold code: size over speed (the fills it calls are the hot part)
 #include "Dice3D.h"
 #ifndef CHTEST
-#include <CHGfx.h>
-#include "../gfx/Draw.h"
+#include <CHGame.h>
 #include "../fx/Fx.h"
 #endif
 

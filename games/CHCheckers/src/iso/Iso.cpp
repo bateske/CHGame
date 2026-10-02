@@ -1,10 +1,7 @@
 #pragma GCC optimize("Os")   // cold code: size over speed (hot span loops are RAMFUNCs)
 #include <string.h>
-#include <CHGfx.h>
+#include <CHGame.h>
 #include "Iso.h"
-#include "../gfx/Palette.h"
-#include "../gfx/Draw.h"
-#include "../RamFunc.h"
 
 namespace iso {
 

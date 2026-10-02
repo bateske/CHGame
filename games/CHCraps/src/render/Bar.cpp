@@ -1,13 +1,11 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask and CHGfx)
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library and CHGfx)
 // CHBlackjack's button bar (render/Bar.cpp, after Press-Play-On-Tape/
 // Blackjack's drawButtons), cut down to a chip rack and one big button.
-#include <CHGfx.h>
+#include <CHGame.h>
 #include "Bar.h"
 #include "Layout.h"
 #include "Zones.h"
 #include "Chips.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Palette.h"
 
 namespace bar {
 
@@ -48,7 +46,7 @@ bool draw(uint8_t denom, int8_t cursor, bool rollOn, bool held, uint32_t frame) 
     gfx_text(r.x + r.w / 2 - gfx_textWidth(label) / 2, y + 3, label, tc);
     // Two little dice on the button.
     if (!held) { art::dieFace(r.x + 3, y + 3, 5, 5); art::dieFace(r.x + r.w - 8, y + 3, 5, 2); }
-    if (!rollOn) gfx_dither(r.x + 1, y + 1, r.w - 2, h - 2, INK, 0);
+    if (!rollOn) dither(r.x + 1, y + 1, r.w - 2, h - 2, INK, 0);
     return true;
 }
 

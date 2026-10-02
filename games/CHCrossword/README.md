@@ -212,8 +212,9 @@ ready for clues.
     python tools/device.py build [--debug] | upload | run SCRIPT OUTDIR
 
 (A `--debug` build for the board adds the serial debug protocol the scripts
-drive it through; to make room it carries only the first three built-in
-puzzles and leaves out saving and the options screen.)
+drive it through, the CHGame library's `chgame/Debug.h`; to make room it
+carries only the first three built-in puzzles and leaves out saving and the
+options screen.)
 
 The simulator needs a C++ compiler (`CHSIM_CXX`, zig, clang++ or g++) and
 Python with `pillow` (`tools/requirements.txt`). The host tests hold the game's decoder to the Python

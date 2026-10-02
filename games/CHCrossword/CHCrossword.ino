@@ -5,9 +5,8 @@
 // with more in packs on the SD card (src/pack, src/sd); the rules and the
 // score are in src/game, and everything you see and hear in src/stage and
 // src/states.
+#include <CHGame.h>
 #include "config.h"
-#include <CHGfx.h>
-#include "src/CHGame.h"
 #include "src/Frame.h"
 
 void setup() {

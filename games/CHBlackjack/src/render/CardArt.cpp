@@ -1,10 +1,8 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask and CHGfx)
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library and CHGfx)
 // Card rendering derived from Press-Play-On-Tape/Blackjack (Apache-2.0),
 // PlayGameState_Render.cpp drawCard(); rebuilt 2026 in colour for CHGame.
-#include <CHGfx.h>
+#include <CHGame.h>
 #include "CardArt.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Palette.h"
 #include "../game/Round.h"
 #include "../assets/Assets.h"
 
@@ -46,7 +44,7 @@ static void glyphRot(int x, int y, const uint8_t *cols, uint8_t n, uint8_t h, ui
 static void back(int x, int y, int w, int h) {
     fillRound(x, y, w, h, 2, WINE);
     if (w > 6) {
-        gfx_dither(x + 2, y + 2, w - 4, h - 4, RED, 0);
+        dither(x + 2, y + 2, w - 4, h - 4, RED, 0);
         gfx_rect(x + 2, y + 2, w - 4, h - 4, WHITE);
     }
     if (w >= 12) {
@@ -93,7 +91,7 @@ void card(int x, int y, uint8_t c, bool faceUp, int w, bool full) {
         uint8_t remap[16];
         for (uint8_t i = 0; i < 16; i++) remap[i] = i;
         remap[RED] = col == INK ? BLUE : col;            // robe in the suit colour
-        gfx_sprite4(COURT[r - 10], x + 7, y + 5, remap);
+        sprite4(COURT[r - 10], x + 7, y + 5, remap);
         glyph(x + 16, y + 20, SUIT_SMALL + s * 5, 5, col);
     } else {
         span1(x + 9, y + 11, PIP9 + PIP9_AT[s], col);

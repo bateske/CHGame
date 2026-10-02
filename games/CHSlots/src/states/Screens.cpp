@@ -1,27 +1,21 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask and CHGfx)
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library and CHGfx)
 // Screens after CHBlackjack's (src/states/Screens.cpp): fades between them,
 // the options list, statistics, the pause menu and the two endings. New
 // here: the machine menu, and the scrolling paytable (drawn by render/Machine.cpp).
-#include <CHGfx.h>
+#include <CHGame.h>
 #include <string.h>
 #include "../../config.h"
 #include "Screens.h"
-#include "../CHGame.h"
 #include "../game/Slots.h"
 #include "../fx/Presenter.h"
 #include "../fx/Fx.h"
 #include "../render/Layout.h"
 #include "../render/Machine.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Fmt.h"
-#include "../gfx/Mask.h"
-#include "../gfx/Palette.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../save/Save.h"
 #include "../assets/Assets.h"
-#include "../debug/Debug.h"
 
-#if CHSL_DEBUG && defined(CHSIM)
+#if CHGAME_DEBUG && defined(CHSIM)
 uint64_t sim_hostNanos();
 #endif
 
@@ -77,9 +71,9 @@ static void enter(Scr s) {
     fx::clear();
     pal::setDesaturate(0);
     pal::setMode(pal::CASINO);
-    pal::setTheme(s == Scr::Play ? game.machine : (uint8_t)pal::GREEN);     // pal::Theme follows Machine
+    pal::setTheme(s == Scr::Play ? game.machine : (uint8_t)mach::GREEN);    // mach::Theme follows Machine
     switch (s) {
-        case Scr::Title: paused = false; audio::music(Song::Title); break;
+        case Scr::Title: paused = false; playSong(Song::Title); break;
         case Scr::Floor: for (uint8_t k = 0; k < M_COUNT; k++) if (FLOOR[k] == game.machine) floorSel = k; break;
         case Scr::Play:
             if (!resumePlay) { game.fitBet(); present::reset(game); if (!demo) present::welcome(game); }
@@ -90,15 +84,15 @@ static void enter(Scr s) {
             wasBusy = false;
             showPays = false;
             break;
-        case Scr::Win: audio::music(Song::Title); audio::sfx(Sfx::Jackpot); audio::led(audio::LED_PARTY); break;
-        case Scr::Lose: audio::music(Song::None); audio::sfx(Sfx::Broke); break;
+        case Scr::Win: playSong(Song::Title); audio::sfx(Sfx::Jackpot); audio::led(audio::LED_PARTY); break;
+        case Scr::Lose: playSong(Song::None); audio::sfx(Sfx::Broke); break;
         default: break;
     }
 }
 
 static void applyOptions() {
     audio::setOn(!game.opt.sound);
-    audio::setMusicOn(!game.opt.music);
+    setMusicOn(!game.opt.music);
     present::setFast(game.opt.speed);
 }
 
@@ -107,8 +101,8 @@ void begin() {
     (void)ok;
     if (!hasGame) game.newGame();
     game.mix(micros() * 2654435761u);
+    audio::begin(SOUNDS, (uint8_t)Sfx::COUNT, !game.opt.sound);
     applyOptions();
-    audio::begin(!game.opt.sound);
     enter(Scr::Title);
 }
 
@@ -117,10 +111,10 @@ void begin() {
 // ---------------------------------------------------------------------------
 static void feltBackdrop() {
     gfx_clear(FELT);
-    gfx_dither(0, 0, 128, 6, FELT_DK, 0);
-    gfx_dither(0, 122, 128, 6, FELT_DK, 1);
-    gfx_dither(0, 0, 6, 128, FELT_DK, 0);
-    gfx_dither(122, 0, 6, 128, FELT_DK, 1);
+    dither(0, 0, 128, 6, FELT_DK, 0);
+    dither(0, 122, 128, 6, FELT_DK, 1);
+    dither(0, 0, 6, 128, FELT_DK, 0);
+    dither(122, 0, 6, 128, FELT_DK, 1);
     gfx_rect(2, 2, 124, 124, GOLD);
 }
 
@@ -139,7 +133,7 @@ static void centred35(int y, const char *s, uint8_t c) { text35(64 - text35Width
 static void centred57(int y, const char *s, uint8_t c) { gfx_text(64 - gfx_textWidth(s) / 2, y, s, c); }
 
 static void sym(uint8_t index, int x, int y, const uint8_t *remap = nullptr) {
-    gfx_sprite4(SYMBOLS + SYMBOL_AT[index], x, y, remap);
+    sprite4(SYMBOLS + SYMBOL_AT[index], x, y, remap);
 }
 
 // ---------------------------------------------------------------------------
@@ -228,7 +222,7 @@ static void titleRender(uint32_t frame) {
             int step = (int)(t * 5 + i * 37);
             for (int j = 0; j < 2; j++)
                 sym((uint8_t)((step / 26 + j + i) % C_COUNT), x + 1, Y + 5 + (step % 26) - j * 26);
-            gfx_dither(x, Y + 3, 24, 26, WHITE, (uint8_t)(frame & 1));
+            dither(x, Y + 3, 24, 26, WHITE, (uint8_t)(frame & 1));
         } else {
             int drop = (int)k - (150 + i * 15);
             sym(C_SEVEN, x + 1, Y + 5 + (drop < 6 ? 6 - drop : 0) - (drop >= 6 && drop < 9 ? 1 : 0));
@@ -425,7 +419,7 @@ static void playRender(uint32_t frame) {
         centred57(60, "DEMO", WHITE);
     }
     if (paused) {
-        gfx_dither(0, 0, 128, 128, INK, 0);
+        dither(0, 0, 128, 128, INK, 0);
         panel(20, 30, 88, 62, 4, NAVY, GOLD);
         centred57(35, "PAUSED", GOLD);
         static const char *const P[4] = {"RESUME", "MACHINES", "OPTIONS", "SAVE & QUIT"};
@@ -678,7 +672,7 @@ void render(uint32_t frame) {
 // ---------------------------------------------------------------------------
 // Debug protocol (tools/chsim/chdrive.py 'say')
 // ---------------------------------------------------------------------------
-#if CHSL_DEBUG
+#if CHGAME_DEBUG
 //   R <seed>             the reels from a fixed seed (timing no longer mixed in)
 //   F <s0> .. <s4>       force the next spin's stops
 //   G <n>                force a feature on the next Fortune spin: 1 free games,
@@ -738,24 +732,6 @@ bool debugCommand(char cmd, const char *args) {
             dbg::print(buf);
             return true;
         }
-#ifdef CHSIM
-        case 'Q': {
-            static uint8_t spr[8 * 16];
-            memset(spr, 0x3F, sizeof spr);
-            uint64_t t0, r[5];
-            t0 = sim_hostNanos(); for (int i = 0; i < 200; i++) gfx_clear((uint8_t)i); r[0] = (sim_hostNanos() - t0) / 200;
-            t0 = sim_hostNanos(); for (int i = 0; i < 20000; i++) gfx_hline(0, i & 127, 128, (uint8_t)i); r[1] = (sim_hostNanos() - t0) / 20000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 2000; i++) gfx_blit(spr, i & 63, i & 63, 16, 16, 15); r[2] = (sim_hostNanos() - t0) / 2000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 1000; i++) gfx_text(0, i & 63, "ABCDEFGHIJKLMNOPQRSTUVWX", 1); r[3] = (sim_hostNanos() - t0) / 1000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 1000; i++) gfx_fillCircle(64, 64, 30, (uint8_t)i); r[4] = (sim_hostNanos() - t0) / 1000;
-            p = fmtStr(buf, "CAL");
-            for (int k = 0; k < 5; k++) { *p++ = ' '; p = fmtInt(p, (int32_t)r[k]); }
-            fmtStr(p, "\n");
-            dbg::print(buf);
-            redrawAll();
-            return true;
-        }
-#endif
     }
     return false;
 }

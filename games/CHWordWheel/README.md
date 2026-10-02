@@ -78,9 +78,10 @@ draws from all 606.
    *Code > Download ZIP* and unzip it. The game is the folder `games/CHWordWheel`,
    already named like its `.ino` file (the Arduino IDE only opens a sketch
    whose folder has the same name).
-4. Add the **CHGfx library** (1.3.0). Copy the folder `platform/libraries/CHGfx`
-   from the download into the `libraries/` folder of your sketchbook (its
-   location is shown in *File > Preferences*).
+4. Add the **CHGfx library** (1.3.0) and the **CHGame library**. Copy the folders
+   `platform/libraries/CHGfx` and `platform/libraries/CHGame` from the download
+   into the `libraries/` folder of your sketchbook (its location is shown in
+   *File > Preferences*).
 5. Open `games/CHWordWheel/CHWordWheel.ino` in the IDE and set:
    - *Tools > Board*: **CHGame**
    - *Tools > Optimize*: **Smallest + LTO**. The game does not fit without it.
@@ -204,12 +205,13 @@ keeps your place, and CONTINUE starts that step again with a new puzzle.
 - `python tools/chsim/diffdrive.py tools/scripts/diff/diff_round.txt out/d 1` -
   compares the game against a build that redraws everything every frame.
 - `python tools/phrases/build_bank.py [--bytes N] [--curve]` - the banks.
-- `python tools/audio/preview.py out/audio` - every sound and the tune as
+- `python ../../tools/audio/preview.py . out/audio` - every sound and the tune as
   WAV files.
 - `python tools/mockup.py` - the layout mock-ups the screens were built from.
 - `python tools/device.py build|upload [--debug]` - the device build. (A
-  debug build carries the test protocol, and leaves out the Setup, Options
-  and Stats screens to make room for it.)
+  debug build carries the test protocol, the CHGame library's
+  `chgame/Debug.h`, and leaves out the Setup, Options and Stats screens to
+  make room for it.)
 
 ## License
 

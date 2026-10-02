@@ -53,8 +53,9 @@ You need the Arduino IDE (2.x) or `arduino-cli`, and:
 1. **The CHGame board package, 0.2.4 or later**: see [Installing](../../README.md#installing)
    in the repository's README.
 2. **The CHGfx library, 1.3.0**, in this repository at
-   [`platform/libraries/CHGfx`](../../platform/libraries/CHGfx). Copy it into your
-   sketchbook's `libraries/` folder.
+   [`platform/libraries/CHGfx`](../../platform/libraries/CHGfx), and **the CHGame
+   library** at [`platform/libraries/CHGame`](../../platform/libraries/CHGame).
+   Copy both into your sketchbook's `libraries/` folder.
 3. **This game's folder**, `games/CHTicTacToe` of this repository (keep the name `CHTicTacToe`).
 
 Pick *Tools > Optimize > Smallest + LTO* and *Tools > USB > Upload only*
@@ -142,7 +143,8 @@ are not offered, since they need a clock or a secret.
   and the winning line with no redraw.
 - **Saving**: options, statistics and the run (purse, table, stake,
   streak) in the last two flash pages, every five games and on leaving.
-- **Sound**: CHBlackjack's piezo sequencer, effects only (no music).
+- **Sound**: the CHGame library's piezo sequencer (from CHBlackjack's),
+  effects only (no music); the game's tables are in `src/audio/Sounds.cpp`.
 
 ## Development
 
@@ -160,7 +162,7 @@ are not offered, since they need a clock or a secret.
   `python tools/pieces.py` re-renders the iso pieces (overwriting the PNGs).
 - `python tools/chsim/diffdrive.py tools/scripts/diff_iso.txt out/diff 1`:
   band redraws against full redraws (0 stale frames expected).
-- `python tools/audio/preview.py out/audio`: the effects as WAV files.
+- `python ../../tools/audio/preview.py . out/audio`: the effects as WAV files.
 
 ## Files
 
@@ -168,8 +170,10 @@ are not offered, since they need a clock or a secret.
     src/game/         Rules (every table), Cpu (the dealer), Match (turns, toss, bids, clock), Text
     src/render/       Stage (the play screen), Iso (the isometric tables), Table (the dealer's wall), ChipArt
     src/states/       Screens: title, tables room, play, options, stats, win, broke
-    src/gfx, src/fx   palette, drawing, lettering, particles, banners
-    src/audio, src/save, src/debug
+    src/gfx, src/fx   sprite remaps, particles, banners, floating text (palette,
+                      drawing and lettering: the CHGame library)
+    src/audio         the sound effects (the CHGame library plays them)
+    src/save          what a save holds (the CHGame library keeps it in flash)
     tools/            assets, simulator, scripts, tests
 
 ## License

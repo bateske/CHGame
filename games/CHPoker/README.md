@@ -167,7 +167,8 @@ C++ compiler (zig, clang++ or g++ on the PATH, `pip install ziglang`, or
   `device.py run SCRIPT OUTDIR` runs a script on the board).
 * `python tools/assets.py` packs the art in `tools/art/` (cards, the glove,
   and `logo.txt`, the title's lettering as `#` and `.`);
-  `python tools/audio/preview.py out/` renders the sound effects to WAV.
+  `python ../../tools/audio/preview.py . out/audio` renders the sound effects
+  to WAV.
 
 ## Files
 
@@ -180,8 +181,10 @@ C++ compiler (zig, clang++ or g++ on the PATH, `pip install ziglang`, or
     src/stage/Stage.*      events -> motion; drawing the table
     src/render/*           cards and chips, the action bar, layout
     src/states/Screens.*   title, lobby, play, options, stats, the endings
-    src/gfx/*, src/fx/*    palette, primitives, lettering, effects
-    src/audio/*, src/save/*, src/debug/*
+    src/fx/*               particles, banners, floating texts (on the CHGame
+                           library's palette, drawing, lettering and fx::)
+    src/audio/Sounds.*     the sound effects (the CHGame library's engine)
+    src/save/Save.*        what a save holds (the CHGame library keeps it in flash)
     tools/                 simulator, tests, asset pipeline, device tools
 
 ## License

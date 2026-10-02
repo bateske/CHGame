@@ -1,22 +1,16 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask)
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library)
 #include <Arduino.h>
 #include <string.h>
-#include <CHGfx.h>
+#include <CHGame.h>
 #include "../../config.h"
 #include "Screens.h"
-#include "../CHGame.h"
-#include "../gfx/Palette.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Mask.h"
-#include "../gfx/Fmt.h"
 #include "../fx/Fx.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../board/Board.h"
 #include "../game/Game.h"
 #include "../stage/Stage.h"
 #include "../assets/Assets.h"
 #include "../save/Save.h"
-#include "../debug/Debug.h"
 #ifdef CHSIM
 #include <sim.h>
 #endif
@@ -134,7 +128,7 @@ static void title35(const char *text, int y) {
     maskText35(m, 0, 0, text, 3);
     uint8_t ramp[20];
     for (int i = 0; i < 20; i++) ramp[i] = i < 3 ? FX_B : (i < 13 ? GOLD : WOOD);
-    maskDraw(m, 64 - w / 2, y, INK, WINE, ramp);
+    maskDraw(m, 64 - w / 2, y, 0, INK, WINE, ramp);
 }
 
 static void centred35(int y, const char *s, uint8_t c) { text35(64 - text35Width(s) / 2, y, s, c); }
@@ -155,10 +149,7 @@ static bool menuNav(uint8_t n) {
     return arduboy.justPressed(A_BUTTON);
 }
 
-static void panel(int y, int h) {
-    fillRound(14, y, 100, h, 3, NAVY);
-    roundRect(14, y, 100, h, 3, GOLD);
-}
+static void menuPanel(int y, int h) { panel(14, y, 100, h, 3, NAVY, GOLD); }
 
 // ---------------------------------------------------------------------------
 // Title: the game playing itself behind the lettering.
@@ -217,7 +208,7 @@ static void logo(const uint8_t *bits, uint8_t w, uint8_t h, int y) {
     maskBlit1(m, bits, w, h);
     uint8_t ramp[LOGO_SNAKES_H];
     for (int i = 0; i < h; i++) ramp[i] = i * 14 < 3 * h ? FX_B : (i * 14 < 10 * h ? GOLD : WOOD);
-    maskDraw(m, 64 - w / 2, y, INK, WINE, ramp);
+    maskDraw(m, 64 - w / 2, y, 0, INK, WINE, ramp);
 }
 
 static void titleRender(uint32_t frame) {
@@ -377,7 +368,7 @@ static void drawResult(uint32_t frame) {
     for (uint8_t i = 0; i < n; i++)
         for (uint8_t j = (uint8_t)(i + 1); j < n; j++)
             if (st.pos[order[j]] > st.pos[order[i]]) { uint8_t s = order[i]; order[i] = order[j]; order[j] = s; }
-    panel(14, 102);
+    menuPanel(14, 102);
     buf[0] = 'P'; buf[1] = (char)('1' + st.winner); fmtStr(buf + 2, " WINS!");
     centred2(18, buf, FX_B);
     int grow = fx::ease(fx::OUT_CUBIC, t > 60 ? 60 : t, 60);
@@ -417,7 +408,7 @@ static void playRender(uint32_t frame) {
     if (overlay == PAUSE) {
         char buf[20];
         fmtInt(fmtStr(fmtStr(buf, st.mode == ARCADE ? "ARCADE" : "CLASSIC"), "  ROUND "), rounds());
-        panel(30, 62);
+        menuPanel(30, 62);
         centred35(34, buf, GOLD);
         for (uint8_t i = 0; i < 3; i++) {
             int y = 46 + i * 14;
@@ -505,7 +496,7 @@ static void optionsRender(uint32_t frame) {
 // ---------------------------------------------------------------------------
 // Debug protocol hooks (tools/chsim/chdrive.py 'say')
 // ---------------------------------------------------------------------------
-#if CHSN_DEBUG
+#if CHGAME_DEBUG
 //   G <k0> <k1> <k2> <k3> <mode> <seed>     start a game (kinds: 0 empty, 1 human, 2-4 CPU; mode 0 CLASSIC, 1 ARCADE)
 //   D <d1> <d2>                             the next dice (CLASSIC throws one: D 4 0)
 //   M <player> <square>                     a token
@@ -552,23 +543,6 @@ static bool debugHook(char cmd, const char *args) {
             board::numbers = c != 0;
             stage::invalidate();
             return true;
-        case 'Q': {
-            // Calibration for the cost estimate: host ns for the primitives
-            // the CHGfx benchmark measured on the board (benchmark-results.txt).
-            static uint8_t spr[8 * 16];
-            memset(spr, 0x3F, sizeof spr);
-            uint64_t t0, r[5];
-            t0 = sim_hostNanos(); for (int i = 0; i < 200; i++) gfx_clear((uint8_t)i); r[0] = (sim_hostNanos() - t0) / 200;
-            t0 = sim_hostNanos(); for (int i = 0; i < 20000; i++) gfx_hline(0, i & 127, 128, (uint8_t)i); r[1] = (sim_hostNanos() - t0) / 20000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 2000; i++) gfx_blit(spr, i & 63, i & 63, 16, 16, 15); r[2] = (sim_hostNanos() - t0) / 2000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 1000; i++) gfx_text(0, i & 63, "ABCDEFGHIJKLMNOPQRSTUVWX", 1); r[3] = (sim_hostNanos() - t0) / 1000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 1000; i++) gfx_fillCircle(64, 64, 30, (uint8_t)i); r[4] = (sim_hostNanos() - t0) / 1000;
-            char cal[96], *q2 = fmtStr(cal, "CAL");
-            for (int k = 0; k < 5; k++) { *q2++ = ' '; q2 = fmtInt(q2, (int32_t)r[k]); }
-            fmtStr(q2, "\n");
-            dbg::print(cal);
-            return true;
-        }
 #endif
     }
     return false;
@@ -590,9 +564,9 @@ void begin() {
     save::load(opt, stats, hasGame);
     if (opt.mode > ARCADE) opt.mode = ARCADE;
     applyOptions();
-#if CHSN_DEBUG
+#if CHGAME_DEBUG
     dbg::hook = debugHook;
-    dbg::holdGame = settling;
+    dbg::holdWhile(settling);
 #endif
     enter(Scr::Title);
 }

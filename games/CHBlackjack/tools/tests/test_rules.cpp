@@ -5,7 +5,7 @@
 #include <string.h>
 #include <initializer_list>
 #include "../../src/game/Round.h"
-#include "../../src/CHGame.h"
+#include <chgame/Input.h>
 
 static int fails = 0, checks = 0;
 #define CHECK(c) do { checks++; if (!(c)) { fails++; printf("FAIL %s:%d  %s\n", __FILE__, __LINE__, #c); } } while (0)

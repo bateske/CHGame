@@ -27,7 +27,8 @@ OUT_H = ROOT / "src" / "assets" / "Assets.h"
 OUT_C = ROOT / "src" / "assets" / "Assets.cpp"
 PREVIEW = ROOT / "build" / "assets"
 
-# Must match src/gfx/Palette.cpp.
+# Must match pal::HOUSE in the CHGame library
+# (platform/libraries/CHGame/src/chgame/Palette.cpp).
 PALETTE = [0x000, 0xFFF, 0x042, 0x173, 0x4B5, 0xBBC, 0xE12, 0x702,
            0xFC2, 0x741, 0x26E, 0x125, 0xFB8, 0x6EF, 0xF0F, 0xFC2]
 # Letters used in tools/art/*.txt. ' ' / '.' = transparent.
@@ -44,9 +45,9 @@ SIDES_HEADER = """# The palette swap that dresses the one chip as each side. The
 # (tools/art/chip.txt, chiptop.txt, or the .png beside them) is drawn in its
 # own tones - the MASTER row of tools/sheet.py's sheet - with an INK outline.
 # One line per art colour the swap changes: the art colour, then White's
-# colour, then Black's (names as in src/gfx/Palette.h). Colours not listed
-# stay as drawn. GOLD is the crown: it takes the face's colour here, and
-# stays gold on the chip that tops a king.
+# colour, then Black's (names as in the CHGame library's chgame/Palette.h).
+# Colours not listed stay as drawn. GOLD is the crown: it takes the face's
+# colour here, and stays gold on the chip that tops a king.
 #
 # tools/sheet.py import rewrites this from an edited sheet.
 """

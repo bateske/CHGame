@@ -1,12 +1,10 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask and CHGfx)
-#include <CHGfx.h>
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library and CHGfx)
+#include <CHGame.h>
 #include <string.h>
 #include "Cam.h"
 #include "Dice3D.h"
 #include "../fx/Fx.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Palette.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../render/Chips.h"
 
 namespace cam {
@@ -223,7 +221,7 @@ static void background() {
     // and the shake would otherwise leave their pixels there).
     int sky = capY < 0 ? 0 : (capY > 128 ? 128 : capY), room = botY < 0 ? 0 : (botY > 128 ? 128 : botY);
     for (int y = 0; y < room; y++) gfx_copyRow(y, row, 0, GFX_W);
-    gfx_dither(0, 0, 128, sky / 2, INK, 0);
+    dither(0, 0, 128, sky / 2, INK, 0);
     // The back wall: a wooden cap, then leather panels with a sheen along
     // the top, a seam between each and a brass stud at both ends of a seam.
     int h = botY - capY, span = xr - xl, cap = h / 6 + 1;
@@ -231,7 +229,7 @@ static void background() {
         gfx_fillRect(xl - 2, capY, span + 4, cap, WOOD);
         gfx_hline(xl - 2, capY, span + 4, GOLD);
         gfx_fillRect(xl, capY + cap, span, h - cap, WINE);
-        gfx_dither(xl, capY + cap, span, (h - cap) / 3, RED, 0);
+        dither(xl, capY + cap, span, (h - cap) / 3, RED, 0);
         gfx_hline(xl, botY - 1, span, INK);
         for (int i = 0; i <= 6; i++) {
             int x = xl + span * i / 6 - (i == 6);
@@ -245,7 +243,7 @@ static void background() {
     // The baize, darker in the wall's shadow, and its inlaid line.
     int fy = botY < 0 ? 0 : botY;
     gfx_fillRect(0, fy, 128, 128 - fy, FELT);
-    gfx_dither(0, fy, 128, 3, FELT_DK, 0);
+    dither(0, fy, 128, 3, FELT_DK, 0);
     const int32_t IX = S - (9 << 8), ZF = W - (10 << 8), ZN = 6 << 8;
     floorLine(-IX, ZF, IX, ZF);
     floorLine(-IX, ZN, IX, ZN);
@@ -327,7 +325,7 @@ bool render(uint32_t frame) {
     fx::drawFloats();
     plate();
     if (isHuman && (ph == SHAKE || ph == WHIP_IN)) powerBar(frame);
-    fx::applyShake(0, 127);                             // uncovered edges black, not smeared
+    fx::applyShake(0, 127, INK);                        // uncovered edges black, not smeared
     return true;
 }
 

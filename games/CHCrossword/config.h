@@ -9,28 +9,21 @@
 
 #define CHCW_VERSION     "0.1"
 
-// Serial debug protocol: screenshots, input injection, lockstep, perf.
-// Off in normal builds. tools/device.py turns it on with
-// --build-property build.extra_flags, and leaves USB at "Serial" for it.
-#ifndef CHCW_DEBUG
-#ifdef CHSIM
-#define CHCW_DEBUG       1       // the simulator is driven through the protocol
-#else
-#define CHCW_DEBUG       0
-#endif
-#endif
+// The CHGame library's switches: CHGAME_DEBUG (the serial debug protocol:
+// screenshots, input injection, lockstep, perf; always on in the simulator,
+// on the board only in `tools/device.py build --debug`) and CHGAME_PROFILE.
+#include <chgame/Config.h>
 
 // A device debug build carries the ~3 KB protocol and USB Serial, which the
 // whole game no longer leaves room for: CHCW_LEAN leaves saving, the
 // options screen and all but the first three built-in puzzles out of it
-// (puzzles are started with the protocol's G command). tools/device.py sets it for debug builds: -DCHCW_LEAN=1.
-#ifndef CHCW_LEAN
+// (puzzles are started with the protocol's G command). Release builds and
+// the simulator keep everything; -DCHCW_FULL forces a full device debug
+// build, which does not fit.
+#if CHGAME_DEBUG && !defined(CHSIM) && !defined(CHCW_FULL)
+#define CHCW_LEAN        1
+#else
 #define CHCW_LEAN        0
-#endif
-
-// Section profiler (dbg::prof + the T command). Opt-in: costs flash.
-#ifndef CHCW_PROFILE
-#define CHCW_PROFILE     0
 #endif
 
 // Frame rate the game logic is paced for.

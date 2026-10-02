@@ -1,16 +1,13 @@
-#pragma GCC optimize("Os", "no-ipa-sra")
+#pragma GCC optimize("Os", "no-ipa-sra", "no-caller-saves")
 #include <Arduino.h>
 #include <string.h>
-#include <CHGfx.h>
+#include <CHGame.h>
 #include "../../config.h"
 #include "Stage.h"
-#include "../CHGame.h"
-#include "../gfx/Palette.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Mask.h"
-#include "../gfx/Fmt.h"
+#include "../gfx/Font.h"
+#include "../gfx/Tiles.h"
 #include "../fx/Fx.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../ai/Ai.h"
 #include "../assets/Assets.h"
 
@@ -134,7 +131,7 @@ void newGame() {
 }
 
 void note(const char *text, uint8_t colour, uint8_t frames) {
-    strncpy(noteText, text, sizeof noteText - 1);
+    fmtStr(noteText, text);          // (the longest note is 28 characters)
     noteCol = colour;
     noteT = frames;
     dirty = true;
@@ -173,8 +170,7 @@ static void addFloat(int x, int y, const char *text, uint8_t colour) {
         f.y = (int16_t)y;
         f.t = 60;
         f.colour = colour;
-        strncpy(f.text, text, sizeof f.text - 1);
-        f.text[sizeof f.text - 1] = 0;
+        fmtStr(f.text, text);         // "+123", "3X WORD": 7 characters at most
         return;
     }
 }
@@ -305,7 +301,7 @@ void update() {
             dirty = true;
             if (animT % 4 == 0 && animT / 4 < l.main.len) {
                 uint8_t k = (uint8_t)(animT / 4);
-                audio::note(SCALE[k > 7 ? 7 : k], 50);
+                audio::note(SCALE[k > 7 ? 7 : k], 50, 2);
                 sparkle((uint8_t)(l.main.start + k * l.main.step), fx::SPARK, 3, FX_B);
             }
             if (++animT >= l.main.len * 4 + 6) {
@@ -330,7 +326,6 @@ void update() {
 // ---------------------------------------------------------------------------
 // Drawing
 // ---------------------------------------------------------------------------
-static const uint8_t RM_ID[16] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
 
 // The premium squares are set into the board, dark against the felt; the
 // tiles stand up off it, light. Letter premiums blue, word premiums red,
@@ -388,7 +383,7 @@ static void boardTile(int x, int y, int p, uint8_t v, uint8_t face, uint8_t ink,
         tileLetter(x, y + (f - 9) / 2, f, l, ink, face == SILVER ? NAVY : ink == WHITE ? SKIN : shadeOf(face), shadeOf(face));
     }
     else if (l == 13 || l == 23) glyph(x + (f - 5) / 2, y + (f - 5) / 2, l == 13 ? WIDE_M : WIDE_W, 5, ink);
-    else glyph(x + (f - 3) / 2, y + (f - 5) / 2, FONT35['A' + l - 1 - FONT35_FIRST], 3, ink);
+    else glyph(x + (f - 3) / 2, y + (f - 5) / 2, glyph35((char)('A' + l - 1)), 3, ink);
 }
 
 // A square with no tile: the felt, or a premium square set into it.
@@ -411,7 +406,7 @@ static void square(int x, int y, uint8_t cell) {
         text35(x + (s - 7) / 2, y + (s - 5) / 2, PREMIUM_TEXT[pr], PREMIUM_INK[pr]);
     } else {
         // Far off: just how many times over.
-        glyph(x + (s - 3) / 2, y + (s - 5) / 2, FONT35[(pr & 1 ? '2' : '3') - FONT35_FIRST], 3, PREMIUM_INK[pr]);
+        glyph(x + (s - 3) / 2, y + (s - 5) / 2, glyph35(pr & 1 ? '2' : '3'), 3, PREMIUM_INK[pr]);
     }
 }
 
@@ -534,8 +529,7 @@ static void drawHud() {
 
 static void plate(const char *s, uint8_t c, int y) {
     int w = text35Width(s);
-    fillRound(64 - w / 2 - 5, y, w + 10, 11, 3, NAVY);
-    roundRect(64 - w / 2 - 5, y, w + 10, 11, 3, GOLD);
+    panel(64 - w / 2 - 5, y, w + 10, 11, 3, NAVY, GOLD);
     text35(64 - w / 2, y + 3, s, c);
 }
 
@@ -558,8 +552,7 @@ static void drawCursor(uint32_t frame) {
 }
 
 static void drawPicker(uint32_t frame) {
-    fillRound(11, 26, 106, 66, 3, NAVY);
-    roundRect(11, 26, 106, 66, 3, GOLD);
+    panel(11, 26, 106, 66, 3, NAVY, GOLD);
     text35(64 - text35Width("THE BLANK IS...") / 2, 30, "THE BLANK IS...", GOLD);
     for (uint8_t i = 0; i < 26; i++) {
         int x = 15 + (i % 7) * 14, y = 39 + (i / 7) * 13;
@@ -581,7 +574,7 @@ static void drawFloats() {
             maskFont(m, 0, 0, f.text);
             uint8_t ramp[FONT_H + 2];
             for (int i = 0; i < FONT_H + 2; i++) ramp[i] = i < 4 ? FX_B : (i < 9 ? GOLD : WOOD);
-            maskDraw(m, x, y, INK, INK, ramp);
+            maskDraw(m, x, y, 0, INK, -1, ramp);
         } else {
             int w = text35Width(f.text), x = f.x - w / 2;
             if (x < 2) x = 2;

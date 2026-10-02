@@ -1,13 +1,9 @@
-#include <CHGfx.h>
+#include <CHGame.h>
 #include <string.h>
 #include "WheelStrip.h"
 #include "Layout.h"
-#include "../RamFunc.h"
 #include "../game/Show.h"
 #include "../game/Spin.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Fmt.h"
-#include "../gfx/Palette.h"
 
 namespace wheelstrip {
 

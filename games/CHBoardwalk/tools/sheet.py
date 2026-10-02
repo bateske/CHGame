@@ -70,28 +70,26 @@ def table_rgb(i):
 
 
 def font35():
-    """The game's 3x5 font (src/gfx/Draw.cpp), for the labels."""
-    src = re.sub(r"//[^\n]*", "", (ROOT / "src" / "gfx" / "Draw.cpp").read_text())
-    body = src[src.index("FONT35[][3] = {"):]
+    """The 3x5 font (the CHGame library's, in
+    platform/libraries/CHGame/src/chgame/Draw.cpp), for the labels: one glyph
+    (3 column bytes) per character from '!' to 'z'; blank = none."""
+    draw = ROOT.parents[1] / "platform" / "libraries" / "CHGame" / "src" / "chgame" / "Draw.cpp"
+    src = re.sub(r"//[^\n]*", "", draw.read_text())
+    body = src[src.index("FONT35[FONT35_LAST - FONT35_FIRST + 1][3] = {"):]
     body = body[:body.index("};")]
-    glyphs = [tuple(int(v, 16) for v in g) for g in re.findall(r"\{(0x[0-9A-Fa-f]+),(0x[0-9A-Fa-f]+),(0x[0-9A-Fa-f]+)\}", body)]
-    idx = src[src.index("IDX35[91] = {"):]
-    idx = [int(v) for v in re.findall(r"-?\d+", idx[idx.index("{") + 1:idx.index("};")])]
-    return glyphs, idx
+    return [tuple(int(v, 16) for v in g) for g in re.findall(r"\{(0x[0-9A-Fa-f]+),(0x[0-9A-Fa-f]+),(0x[0-9A-Fa-f]+)\}", body)]
 
 
 FONT = font35()
 
 
 def text(px, x, y, s, c):
-    glyphs, idx = FONT
     for ch in s:
-        g = idx[ord(ch) - 32] if 32 <= ord(ch) <= 122 else -1
-        if g >= 0:
-            for col in range(3):
-                for row in range(6):
-                    if glyphs[g][col] >> row & 1:
-                        px[x + col, y + row] = c
+        g = FONT[ord(ch) - 33] if 33 <= ord(ch) <= 122 else (0, 0, 0)
+        for col in range(3):
+            for row in range(6):
+                if g[col] >> row & 1:
+                    px[x + col, y + row] = c
         x += 4
 
 

@@ -1,22 +1,16 @@
 #pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask/Iso)
 #include <Arduino.h>
 #include <string.h>
-#include <CHGfx.h>
+#include <CHGame.h>
 #include "../../config.h"
 #include "Screens.h"
-#include "../CHGame.h"
-#include "../gfx/Palette.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Mask.h"
-#include "../gfx/Fmt.h"
 #include "../fx/Fx.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../iso/Iso.h"
 #include "../engine/Engine.h"
 #include "../game/Match.h"
 #include "../stage/Stage.h"
 #include "../save/Save.h"
-#include "../debug/Debug.h"
 #ifdef CHSIM
 #include <sim.h>
 #endif
@@ -42,7 +36,7 @@ enum Overlay : uint8_t { NONE, PAUSE, RESULT };
 static Overlay overlay;
 static uint8_t pendingAction;        // chosen from the pause menu while the CPU was thinking
 static bool statsCounted;
-#if CHCK_DEBUG
+#if CHGAME_DEBUG
 static uint32_t thinkMs;            // the CPU's last search, wall time (debug W)
 #endif
 
@@ -78,6 +72,15 @@ static uint16_t logoAt;              // when the title's lettering came down (0:
 static uint8_t demoStep;
 static uint16_t demoAt;
 
+// The title's tune, looping on every screen but Play. tune(true) starts it
+// from the top unless it is already playing; nothing plays with MUSIC off.
+static bool tuneOn;
+static void tune(bool play) {
+    if (play && tuneOn) return;
+    tuneOn = play && opt.music;
+    playSong(tuneOn ? Song::TITLE : Song::NONE);
+}
+
 static void enter(Scr s) {
     cur = s;
     stage::invalidate();
@@ -86,7 +89,7 @@ static void enter(Scr s) {
     fadeIn = 8;
     fx::clear();
     pal::setMode(pal::CASINO);
-    audio::tune(s != Scr::Play);
+    tune(s != Scr::Play);
     if (s == Scr::Title) {
         stage::setView(stage::NORMAL);
         titleBoard();
@@ -109,7 +112,8 @@ static void persist(bool withGame) {
 
 static void applyOptions() {
     audio::setOn(opt.sound != 0);
-    audio::setMusic(opt.music != 0);
+    audio::setMusic(opt.music ? audio::LEAD : audio::MUSIC_OFF);
+    if (!opt.music) tune(false);
     pal::setTheme(opt.felt);
     stage::setFast(opt.speed != 0);
 }
@@ -134,7 +138,7 @@ static void title35(const char *text, int y, uint8_t scale, uint8_t top, uint8_t
     maskText35(m, 0, 0, text, scale);
     uint8_t ramp[32];
     for (int i = 0; i < h + 2 && i < 32; i++) ramp[i] = i < scale ? top : (i < lowFrom ? mid : low);
-    maskDraw(m, 64 - w / 2, y, INK, shadow, ramp);
+    maskDraw(m, 64 - w / 2, y, 0, INK, shadow, ramp);
 }
 
 static void centred35(int y, const char *s, uint8_t c) { text35(64 - text35Width(s) / 2, y, s, c); }
@@ -550,11 +554,11 @@ static void playUpdate(bool thinking) {
             if (match::humanToMove() && !showing()) playInput();
             break;
     }
-#if CHCK_DEBUG
+#if CHGAME_DEBUG
     uint32_t t0 = millis();
 #endif
     match::update(showing());              // the CPU's search runs in here
-#if CHCK_DEBUG
+#if CHGAME_DEBUG
     if (millis() - t0 > 100) thinkMs = millis() - t0;
 #endif
     stage::update();
@@ -654,7 +658,7 @@ static void optionsUpdate() {
         uint8_t n = (uint8_t)(optField(optText(sel), 0, tmp) - 1);
         optSet(sel, (uint8_t)((optGet(sel) + n + d) % n));
         applyOptions();
-        audio::tune(true);
+        tune(true);
         audio::sfx(Sfx::Coin);
     }
     if ((arduboy.justPressed(A_BUTTON) && sel == back) || arduboy.justPressed(B_BUTTON)) {
@@ -694,7 +698,7 @@ static void optionsRender(uint32_t frame) {
 // ---------------------------------------------------------------------------
 // Debug protocol hooks (tools/chsim/chdrive.py 'say')
 // ---------------------------------------------------------------------------
-#if CHCK_DEBUG
+#if CHGAME_DEBUG
 //   G <mode> <humanBlack> <level> <seed> <rules>   start a game (mode 0 vs CPU, 1 two players)
 //   M <from> <to>                           play a hop (squares 0..63)
 //   J <T|S|O|R>                             jump to title/setup/options/rules
@@ -749,23 +753,6 @@ static bool debugHook(char cmd, const char *args) {
             if (!q) return false;
             static const Scr S[] = {Scr::Title, Scr::Setup, Scr::Options, Scr::Rules};
             enter(S[q - K]);
-            return true;
-        }
-        case 'Q': {
-            // Calibration for chdrive's cal/perf: host ns for the primitives
-            // the CHGfx benchmark measured on the board (benchmark-results.txt).
-            static uint8_t spr[8 * 16];
-            memset(spr, 0x3F, sizeof spr);
-            uint64_t t0, r[5];
-            t0 = sim_hostNanos(); for (int i = 0; i < 200; i++) gfx_clear((uint8_t)i); r[0] = (sim_hostNanos() - t0) / 200;
-            t0 = sim_hostNanos(); for (int i = 0; i < 20000; i++) gfx_hline(0, i & 127, 128, (uint8_t)i); r[1] = (sim_hostNanos() - t0) / 20000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 2000; i++) gfx_blit(spr, i & 63, i & 63, 16, 16, 15); r[2] = (sim_hostNanos() - t0) / 2000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 1000; i++) gfx_text(0, i & 63, "ABCDEFGHIJKLMNOPQRSTUVWX", 1); r[3] = (sim_hostNanos() - t0) / 1000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 1000; i++) gfx_fillCircle(64, 64, 30, (uint8_t)i); r[4] = (sim_hostNanos() - t0) / 1000;
-            char cal[96], *c = fmtStr(cal, "CAL");
-            for (int k = 0; k < 5; k++) { *c++ = ' '; c = fmtInt(c, (int32_t)r[k]); }
-            fmtStr(c, "\n");
-            dbg::print(cal);
             return true;
         }
         case 'R': {
@@ -870,9 +857,9 @@ void begin() {
     opt.rules = eng::R_FORCED;
     save::load(opt, stats, hasGame);
     applyOptions();
-#if CHCK_DEBUG
+#if CHGAME_DEBUG
     dbg::hook = debugHook;
-    dbg::holdGame = searching;
+    dbg::holdWhile(searching);
 #endif
     enter(Scr::Title);
 }

@@ -1,16 +1,12 @@
 #pragma GCC optimize("Os", "no-ipa-sra")   // cold code: size over speed (hot pixel loops live in Draw/Mask/Table)
 #include <Arduino.h>
 #include <string.h>
-#include <CHGfx.h>
+#include <CHGame.h>
 #include "../../config.h"
 #include "Screens.h"
-#include "../CHGame.h"
-#include "../gfx/Palette.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Mask.h"
-#include "../gfx/Fmt.h"
+#include "../gfx/Font.h"
 #include "../fx/Fx.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../table/Table.h"
 #include "../ai/Ai.h"
 #include "../ai/Net.h"
@@ -19,7 +15,6 @@
 #include "../game/Notation.h"
 #include "../stage/Stage.h"
 #include "../save/Save.h"
-#include "../debug/Debug.h"
 #include "../assets/Assets.h"
 #ifdef CHSIM
 #include <sim.h>
@@ -65,7 +60,7 @@ static const char *const OPP_LINE[match::LEVELS] = {
     "STILL LEARNING", "ITS BEST PLAY, EVERY ROLL", "LOOKS A ROLL AHEAD"};
 static const uint8_t LENGTHS[4] = {1, 3, 5, 7};
 
-#if CHBG_DEBUG
+#if CHGAME_DEBUG
 // The CPU's last think (debug W): how long, and its longest slice of a tick.
 static uint32_t thinkAt, thinkMs, sliceUs;
 static bool wasThinking;
@@ -137,7 +132,7 @@ static void heading(const char *text, int y) {
     maskFont(m, 0, 0, text);
     uint8_t r[FONT_H + 2];
     ramp(r);
-    maskDraw(m, 64 - w / 2, y, INK, INK, r);
+    maskDraw(m, 64 - w / 2, y, 0, INK, -1, r);
 }
 
 static void centred35(int y, const char *s, uint8_t c) { text35(64 - text35Width(s) / 2, y, s, c); }
@@ -552,13 +547,13 @@ static void playUpdate() {
     wasConfirm = confirm;
     if (asking && (match::humanToMove() || match::humanToConfirm()) && ai::step(64)) asked();
 #endif
-#if CHBG_DEBUG
+#if CHGAME_DEBUG
     bool th = match::cpuThinking();
     uint32_t t0 = micros();
     if (th && !wasThinking) { thinkAt = millis(); sliceUs = 0; }
 #endif
     match::update(stage::busy());          // the CPU thinks a little in here
-#if CHBG_DEBUG
+#if CHGAME_DEBUG
     if (th && micros() - t0 > sliceUs) sliceUs = micros() - t0;
     if (wasThinking && !match::cpuThinking()) thinkMs = millis() - thinkAt;
     wasThinking = match::cpuThinking();
@@ -705,7 +700,7 @@ static void optionsRender(uint32_t frame) {
 // ---------------------------------------------------------------------------
 // Debug protocol hooks (tools/chsim/chdrive.py 'say')
 // ---------------------------------------------------------------------------
-#if CHBG_DEBUG
+#if CHGAME_DEBUG
 //   G <mode> <level> <seed> [length] start a match (mode 0 vs CPU, 1 two players; length 1 by default)
 //   D <digits>                       the next rolls, a die a digit (D 6431)
 //   C <length> <white> <red> <cube> <owner> <crawford>   the match: its length and score; the cube
@@ -867,25 +862,6 @@ static bool debugHook(char cmd, const char *args) {
             dbg::print(buf);
             return true;
         }
-#ifdef CHSIM
-        case 'Q': {
-            // Calibration for chdrive's `cal`: host ns for the primitives the
-            // CHGfx benchmark measured on the board (benchmark-results.txt).
-            static uint8_t spr[8 * 16];
-            memset(spr, 0x3F, sizeof spr);
-            uint64_t t0, r[5];
-            t0 = sim_hostNanos(); for (int i = 0; i < 200; i++) gfx_clear((uint8_t)i); r[0] = (sim_hostNanos() - t0) / 200;
-            t0 = sim_hostNanos(); for (int i = 0; i < 20000; i++) gfx_hline(0, i & 127, 128, (uint8_t)i); r[1] = (sim_hostNanos() - t0) / 20000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 2000; i++) gfx_blit(spr, i & 63, i & 63, 16, 16, 15); r[2] = (sim_hostNanos() - t0) / 2000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 1000; i++) gfx_text(0, i & 63, "ABCDEFGHIJKLMNOPQRSTUVWX", 1); r[3] = (sim_hostNanos() - t0) / 1000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 1000; i++) gfx_fillCircle(64, 64, 30, (uint8_t)i); r[4] = (sim_hostNanos() - t0) / 1000;
-            p = fmtStr(buf, "CAL");
-            for (int k = 0; k < 5; k++) { *p++ = ' '; p = fmtInt(p, (int32_t)r[k]); }
-            fmtStr(p, "\n");
-            dbg::print(buf);
-            return true;
-        }
-#endif
     }
     return false;
 }
@@ -897,7 +873,7 @@ void begin() {
     opt.sound = 1;
     save::load(opt, stats, hasGame);
     applyOptions();
-#if CHBG_DEBUG
+#if CHGAME_DEBUG
     dbg::hook = debugHook;
 #endif
     enter(Scr::Title);

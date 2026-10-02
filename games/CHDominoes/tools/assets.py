@@ -26,7 +26,7 @@ OUT_H = ROOT / "src" / "assets" / "Assets.h"
 OUT_C = ROOT / "src" / "assets" / "Assets.cpp"
 PREVIEW = ROOT / "build" / "assets"
 
-# Must match src/gfx/Palette.cpp.
+# Must match COLOURS in src/gfx/Colours.cpp.
 PALETTE = [0x000, 0xFFF, 0x042, 0x173, 0x4B5, 0xBBC, 0xE12, 0x702,
            0xFC2, 0x741, 0x26E, 0x125, 0xEEE, 0x445, 0xF0F, 0xFC2]
 # Letters used in tools/art/*.txt. ' ' / '.' = transparent.
@@ -194,7 +194,7 @@ def main():
     defs.append(c_array("HAND", data))
     tip = [x for x, v in enumerate(hand[-1]) if v != TRANSPARENT]
     # (Turned over, for pointing at the far side from below, by drawing it
-    # with a negative scale: no second copy.)
+    # upside down, sprite4's SPR_FLIP_V: no second copy.)
     decls.append(f"extern const uint8_t HAND[{len(data)}];                            // span4, fingertip on the bottom row\n"
                  f"constexpr uint8_t HAND_TIP = {(tip[0] + tip[-1]) // 2};                           // its column")
     total += len(data)

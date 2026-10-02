@@ -1,10 +1,8 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask)
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library)
 // The card face derives from Press-Play-On-Tape/Blackjack (Apache-2.0),
 // PlayGameState_Render.cpp drawCard(), via CHBlackjack and CHPoker.
-#include <CHGfx.h>
+#include <CHGame.h>
 #include "CardArt.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Palette.h"
 #include "../game/Klondike.h"
 #include "../assets/Assets.h"
 

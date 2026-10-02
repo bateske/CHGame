@@ -1,18 +1,14 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw and Board)
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library and Board)
 #include <string.h>
-#include <CHGfx.h>
+#include <CHGame.h>
 #include <Arduino.h>
 #include "../../config.h"
 #include "Stage.h"
 #include "../game/Game.h"
 #include "../board/Board.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Palette.h"
-#include "../gfx/Fmt.h"
 #include "../fx/Fx.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../assets/Assets.h"
-#include "../debug/Debug.h"
 
 namespace stage {
 

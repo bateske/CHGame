@@ -14,13 +14,14 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
-sys.path.insert(0, str(HERE.parents[3] / "tools" / "chsim"))  # CHCasino/tools/chsim (find_cxx)
+LIB = HERE.parents[3] / "platform" / "libraries" / "CHGame" / "src"   # the CHGame library
+sys.path.insert(0, str(HERE.parents[3] / "tools" / "chsim"))  # the repository's tools/chsim (find_cxx)
 sys.path.insert(0, str(HERE))
 from chsim import find_cxx  # noqa: E402
 import ref_roulette  # noqa: E402
 
 SOURCES = [HERE / "test_rules.cpp", *sorted((ROOT / "src" / "game").glob("*.cpp")),
-           ROOT / "src" / "fx" / "Ease.cpp", ROOT / "src" / "assets" / "WheelMap.cpp"]
+           LIB / "chgame" / "Ease.cpp", ROOT / "src" / "assets" / "WheelMap.cpp"]
 
 
 def cxx():
@@ -36,7 +37,7 @@ def main():
     exe.parent.mkdir(exist_ok=True)
     cmd = cxx() + ["-std=gnu++17", "-O2", "-Wall", "-Wextra", "-Wno-unused-parameter",
                    "-Wno-unknown-pragmas", "-fsanitize=undefined", "-fno-sanitize-recover=undefined",
-                   "-DCHTEST", *[str(s) for s in SOURCES], "-o", str(exe)]
+                   "-DCHTEST", f"-I{LIB}", *[str(s) for s in SOURCES], "-o", str(exe)]
     r = subprocess.run(cmd, capture_output=True, text=True)
     if r.returncode:
         sys.stderr.write(r.stdout + r.stderr)

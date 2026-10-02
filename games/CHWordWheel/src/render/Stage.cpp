@@ -1,15 +1,13 @@
-#pragma GCC optimize("Os", "no-ipa-sra", "no-inline-functions-called-once", "no-jump-tables", "no-guess-branch-probability")   // cold code: size over speed (hot pixel loops live in Draw/Mask and CHGfx)
+#pragma GCC optimize("Os", "no-ipa-sra", "no-inline-functions-called-once", "no-jump-tables", "no-guess-branch-probability")   // cold code: size over speed (hot pixel loops live in the CHGame library and CHGfx)
 // The wall band, from CHBlackjack's render/Table.cpp by way of CHRoulette,
 // with the used-letter rack where their plaque and shoe were.
-#include <CHGfx.h>
+#include <CHGame.h>
 #include <string.h>
 #include "Stage.h"
 #include "Layout.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Palette.h"
-#include "../gfx/Remap.h"
 #include "../game/Puzzle.h"
 #include "../assets/Assets.h"
+#include "../gfx/Shapes.h"
 
 namespace stage {
 
@@ -54,7 +52,7 @@ void dealer(uint8_t expr, uint8_t look, bool alt, int x, int y) {
 void speechBubble(const char *src, int typed) {
     int x = RACK_X, y = RACK_Y, w = RACK_W, h = RACK_H;
     dropShadow(x, y, w, h);
-    panel(x, y, w, h, 4, WHITE, INK);
+    edgedRound(x, y, w, h, 4, WHITE, INK);
     // Tail toward the host's mouth.
     for (int i = 0; i < 5; i++) {
         gfx_hline(x - 5 + i, y + 22 + i, 6 - i, WHITE);
@@ -85,7 +83,7 @@ void speechBubble(const char *src, int typed) {
 void rack(uint32_t used, const char *status, const char *right, bool wild, bool flash) {
     int x = RACK_X, y = RACK_Y;
     dropShadow(x, y, RACK_W, RACK_H);
-    panel(x, y, RACK_W, RACK_H, 3, INK, GOLD);
+    edgedRound(x, y, RACK_W, RACK_H, 3, INK, GOLD);
     text35(x + 4, y + 3, status, FELT_LT);
     if (right[0]) text35(x + RACK_W - 4 - text35Width(right), y + 3, right, flash ? WHITE : GOLD);
     gfx_hline(x + 3, y + 10, RACK_W - 6, NAVY);

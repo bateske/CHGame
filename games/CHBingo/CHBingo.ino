@@ -5,38 +5,12 @@
 //
 // Frame loop: logic runs while the previous frame is still going out over
 // DMA; drawing waits for it (one framebuffer), then the new frame is sent.
+#include <CHGame.h>
 #include "config.h"
-#include <CHGfx.h>
-#include "src/CHGame.h"
-#include "src/gfx/Palette.h"
 #include "src/states/Screens.h"
 #include "src/save/Save.h"
-#include "src/debug/Debug.h"
 
-#if CHBN_DEBUG
-#ifdef CHSIM
-#include <string.h>
-#include "src/gfx/Fmt.h"
-uint64_t sim_hostNanos();
-// Q: calibration for chdrive's cal - host ns for the primitives the CHGfx
-// benchmark measured on the board (benchmark-results.txt), so the
-// simulator's render times can be read as device milliseconds.
-static void calibrate() {
-    static uint8_t spr[8 * 16];
-    memset(spr, 0x3F, sizeof spr);
-    uint64_t t0, r[5];
-    t0 = sim_hostNanos(); for (int i = 0; i < 200; i++) gfx_clear((uint8_t)i); r[0] = (sim_hostNanos() - t0) / 200;
-    t0 = sim_hostNanos(); for (int i = 0; i < 20000; i++) gfx_hline(0, i & 127, 128, (uint8_t)i); r[1] = (sim_hostNanos() - t0) / 20000;
-    t0 = sim_hostNanos(); for (int i = 0; i < 2000; i++) gfx_blit(spr, i & 63, i & 63, 16, 16, 15); r[2] = (sim_hostNanos() - t0) / 2000;
-    t0 = sim_hostNanos(); for (int i = 0; i < 1000; i++) gfx_text(0, i & 63, "ABCDEFGHIJKLMNOPQRSTUVWX", 1); r[3] = (sim_hostNanos() - t0) / 1000;
-    t0 = sim_hostNanos(); for (int i = 0; i < 1000; i++) gfx_fillCircle(64, 64, 30, (uint8_t)i); r[4] = (sim_hostNanos() - t0) / 1000;
-    char buf[96], *p = fmtStr(buf, "CAL");
-    for (int k = 0; k < 5; k++) { *p++ = ' '; p = fmtInt(p, (int32_t)r[k]); }
-    fmtStr(p, "\n");
-    dbg::print(buf);
-}
-#endif
-
+#if CHGAME_DEBUG
 // Game commands for the debug protocol (tools/chsim/chdrive.py 'say').
 //   R <seed>          reseed the rules' generator
 //   J <T|P|O|S|L>     jump to a screen (P: a new game at the buy-in)
@@ -72,9 +46,6 @@ static bool debugHook(char cmd, const char *args) {
             return true;
         }
         case 'E': save::allowWrites(args[0] == '1'); return true;
-#ifdef CHSIM
-        case 'Q': calibrate(); return true;
-#endif
         default: return screens::debugGame(cmd, dbg::parseNum(args, 10));
     }
 }
@@ -82,12 +53,12 @@ static bool debugHook(char cmd, const char *args) {
 
 void setup() {
     arduboy.boot();
-    dbg::paintStack();
+    dbg::begin("CHBN " CHBN_VERSION);     // the debug protocol's hello (CHGAME_DEBUG builds)
     gfx_begin(GFX_DIV2, GFX_12BPP);
     pal::init();
     screens::begin();
     arduboy.setFrameRate(CHBN_FPS);
-#if CHBN_DEBUG
+#if CHGAME_DEBUG
     dbg::hook = debugHook;
 #endif
 }

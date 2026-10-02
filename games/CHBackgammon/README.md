@@ -261,7 +261,7 @@ C++ compiler (zig, clang++ or g++ on the PATH, `pip install ziglang`, or
   that dresses the checker and the dice as each side. The display font is
   `tools/art/font.txt`, `#` and `.` per glyph; `python tools/font_preview.py`
   draws it as the game does.
-* `python tools/audio/preview.py out/audio` renders the sound effects to WAV.
+* `python ../../tools/audio/preview.py . out/audio` renders the sound effects to WAV.
 
 ## License
 

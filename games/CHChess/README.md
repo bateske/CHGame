@@ -152,7 +152,8 @@ C++ compiler (zig, clang++ or g++ on the PATH, `pip install ziglang`, or
   (squares 0 = a1 .. 63 = h8).
   `cal` and `perf` in a script estimate the device's render time.
 * `python tools/device.py upload [--debug]` - build and upload (`--debug`
-  adds the serial protocol for screenshots, injected input and lockstep).
+  adds the CHGame library's serial protocol, `chgame/Debug.h`, for
+  screenshots, injected input and lockstep).
 * **Editing the art:** `python tools/sheet.py export` writes
   `tools/art/sheet.png`, an indexed PNG on the game's palette (transparent
   background, swatch included): the pieces and glove as drawn (MASTER), the
@@ -163,7 +164,8 @@ C++ compiler (zig, clang++ or g++ on the PATH, `pip install ziglang`, or
   the assets. Details at the top of `tools/sheet.py`.
 * `python tools/pieces.py` renders the pieces, `python tools/assets.py`
   packs the art, `python tools/book.py N` cuts the opening book to N plies,
-  `python tools/audio/preview.py out/` renders the sound effects to WAV.
+  `python ../../tools/audio/preview.py . out/audio` renders the sound effects
+  to WAV.
 
 ## Notes for the platform
 
