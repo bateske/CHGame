@@ -5,8 +5,7 @@
 // Frame loop: logic runs while the previous frame is still going out over
 // DMA; drawing waits for it (one framebuffer), then the new frame is sent.
 #include "config.h"
-#include <CHGfx.h>
-#include "src/CHGame.h"
+#include <CHGame.h>
 #include "src/Frame.h"
 
 void setup() {

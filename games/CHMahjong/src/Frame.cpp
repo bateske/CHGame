@@ -1,18 +1,26 @@
 #pragma GCC optimize("Os")
 #include <Arduino.h>
-#include <CHGfx.h>
+#include <CHGame.h>
 #include "../config.h"
 #include "Frame.h"
-#include "CHGame.h"
-#include "gfx/Palette.h"
 #include "states/Screens.h"
 #include "debug/Debug.h"
 #include "audio/Audio.h"
 
 namespace frame {
 
+// The table's colours: FELT_DK and FELT only. FELT_LT stays green whatever
+// the table - it is the bamboo suit's ink.
+static const uint16_t FELTS[pal::THEME_COUNT][3] = {
+    {0x042, 0x173, 0x4B5},   // classic green
+    {0x024, 0x149, 0x4B5},   // blue
+    {0x401, 0x812, 0x4B5},   // red
+    {0x203, 0x517, 0x4B5},   // purple
+};
+
 void begin() {
     dbg::paintStack();
+    pal::setThemes(FELTS, pal::THEME_COUNT);
     pal::init();
     screens::begin();
 }

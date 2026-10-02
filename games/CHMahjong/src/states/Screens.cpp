@@ -1,15 +1,10 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask/Tile)
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library and gfx/Tile)
 #include <Arduino.h>
 #include <string.h>
-#include <CHGfx.h>
+#include <CHGame.h>
 #include "../../config.h"
 #include "Screens.h"
-#include "../CHGame.h"
-#include "../gfx/Palette.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Mask.h"
 #include "../gfx/Tile.h"
-#include "../gfx/Fmt.h"
 #include "../fx/Fx.h"
 #include "../audio/Audio.h"
 #include "../game/Board.h"
@@ -103,7 +98,7 @@ static void title35(const char *text, int y, uint8_t scale, uint8_t top, uint8_t
     maskText35(m, 0, 0, text, scale);
     uint8_t ramp[32];
     for (int i = 0; i < h + 2 && i < 32; i++) ramp[i] = i < scale ? top : (i < lowFrom ? mid : low);
-    maskDraw(m, 64 - w / 2, y, INK, shadow, ramp);
+    maskDraw(m, 64 - w / 2, y, 0, INK, shadow, ramp);
 }
 
 // Embossed: the text over its own shade.
@@ -127,16 +122,8 @@ static bool menuNav(uint8_t n) {
 
 static uint32_t seedNow() { return micros() * 2654435761u ^ arduboy.frameCount; }
 
-// "4:32"
-static char *fmtTime(char *p, uint16_t s) {
-    if (s > 5999) s = 5999;
-    p = fmtInt(p, s / 60);
-    *p++ = ':';
-    *p++ = (char)('0' + s % 60 / 10);
-    *p++ = (char)('0' + s % 10);
-    *p = 0;
-    return p;
-}
+// "4:32", at most "99:59"
+static char *fmtClock(char *p, uint16_t s) { return fmtTime(p, s > 5999 ? 5999 : s); }
 
 static void newDeal() {
     stage::deal(opt.layout, seedNow());
@@ -331,7 +318,7 @@ static void titleRender(uint32_t frame) {
         maskBlit1(m, LOGO, LOGO_W, LOGO_H);
         uint8_t ramp[LOGO_H];
         for (int i = 0; i < LOGO_H; i++) ramp[i] = i < 3 ? FX_B : (i < 12 ? GOLD : WOOD);
-        maskDraw(m, 64 - LOGO_W / 2, 4, INK, WINE, ramp);
+        maskDraw(m, 64 - LOGO_W / 2, 4, 0, INK, WINE, ramp);
         centred35(26, "~SOLITAIRE~", CYAN);
     }
     if (drawBot) {
@@ -404,7 +391,7 @@ static void setupRender(uint32_t frame) {
         p = fmtStr(buf, "BEST ");
         p = fmtMoney(p, stats.bestChips[l]);
         p = fmtStr(p, "  ");
-        fmtTime(p, stats.bestSecs[l]);
+        fmtClock(p, stats.bestSecs[l]);
         centred35(90, buf, GOLD);
     } else centred35(90, "NOT CLEARED YET", SILVER);
     menuItem(104, "BEGIN", sel == 1, frame);
@@ -536,7 +523,7 @@ static void playRender(uint32_t frame) {
         panel(80, 44);
         centred2(84, "CLEARED!", FX_B);
         char buf[28], *p = fmtStr(buf, "TIME ");
-        p = fmtTime(p, board::secs());
+        p = fmtClock(p, board::secs());
         p = fmtStr(p, "   WON ");
         fmtMoney(p, board::chips);
         centred35(99, buf, WHITE);

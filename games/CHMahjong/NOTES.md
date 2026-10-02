@@ -47,7 +47,7 @@ Agent-facing notes for continuing work here; rules, controls and build are in RE
 
 ## Gotchas
 
-- RAM has 332 B spare. The hot blitters are `RAMFUNC` (`src/gfx/Tile.cpp`, `Draw.cpp`, `Mask.cpp`, `src/fx/Fx.cpp`), so their code counts against static RAM; the tile blitters alone take about 1.26 KB. Debug builds have less spare RAM still.
+- RAM has 572 B spare (release, since the move to the CHGame library: 17,844 of 18,416 B). The hot blitters run from SRAM (`RAMFUNC` in `src/gfx/Tile.cpp`; the CHGame library's sprite, 3x5 text, mask and shake loops), so their code counts against static RAM; the tile blitters alone take about 1.26 KB. Debug builds have less spare RAM still.
 - Device debug builds don't fit with everything:
   - `config.h` turns on `CHMJ_LEAN`, which drops the EASY faces; `-DCHMJ_FULL` overrides it.
   - The simulator and release builds keep everything.
@@ -57,7 +57,7 @@ Agent-facing notes for continuing work here; rules, controls and build are in RE
   - The `GOLDEN` hashes in `tools/tests/test_board.cpp` guard the deal.
   - If a layout or the deal generator changes them, bump `VERSION` in `src/save/Save.cpp` (magic "CHMJ").
   - Deal generation runs a few pairs per frame and must give the same result however the work is split.
-- Palette: felt themes swap only `FELT_DK` and `FELT`. `FELT_LT` is the bamboo ink and stays green in every theme (`src/gfx/Palette.cpp`).
+- Palette: felt themes swap only `FELT_DK` and `FELT`. `FELT_LT` is the bamboo ink and stays green in every theme (the felt table in `src/Frame.cpp`, given to the CHGame library's `pal::setThemes`).
 - Some names clash with Arduino macros, and only on the device build: `bit` and `FLASH` here, `sq`, `map` and `word` in other games. Compile for the device early, not just the simulator.
 - Simulator `perf`/`cal` numbers are host time scaled by a calibration, so they are noisy on a busy host.
 - UBSan: the UBSan run above used a per-object build with `-fsanitize=undefined`. The one-shot build in the shared `../../tools/chsim/chsim.py` has no sanitizer option and would not link with it.
