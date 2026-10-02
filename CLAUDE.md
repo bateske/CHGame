@@ -6,11 +6,13 @@ SD libraries, twenty casino games that are the platform's examples, and the
 PC tools. It is the source of truth: the repositories the pieces came from
 (CH32SerialBoot, CHGfx, one per game) are frozen and are not synced with.
 The aim is one board package that delivers all of it, with one `CHGame.h`
-library; [docs/roadmap.md](docs/roadmap.md) says what is done and what is
-not, [docs/unification.md](docs/unification.md) measures how far apart the
-games' copies of the shared code are, and
-[docs/chgame-library.md](docs/chgame-library.md) is the library's design.
-Do not start that restructuring unless asked.
+library. The library exists (`platform/libraries/CHGame`, its
+[README](platform/libraries/CHGame/README.md)) and every game is built on
+it; bundling it in the board package is still to come.
+[docs/roadmap.md](docs/roadmap.md) says what is done and what is not,
+[docs/chgame-library.md](docs/chgame-library.md) why the library is as it
+is, and [docs/unification.md](docs/unification.md) what changed when the
+games moved onto it.
 
 Read [README.md](README.md) for the overview. This file is the working
 manual: setup, commands, limits, rules and gotchas. Each game also has a
@@ -42,8 +44,8 @@ changing that game.
 5. **The shared `tools/` serve all 20 games.** After changing anything in
    `tools/chsim` or `tools/*.py`, run several games' `tools/check.py` and
    compare sim frames against a run from before the change.
-6. **`platform/` holds the master copies** of the board package, CHGfx, CHSd
-   and the bootloader. Changes are made here, not sent anywhere else. Every
+6. **`platform/` holds the master copies** of the board package, the CHGame
+   library, CHGfx, CHSd and the bootloader. Changes are made here, not sent anywhere else. Every
    game builds on them, so a change needs all 20 games rebuilt (size) and
    their sim frames compared; record it in
    [platform/README.md](platform/README.md) (the bootloader's README lists
@@ -55,10 +57,10 @@ changing that game.
      fix to one belongs in the other too.
 7. **Credits stay exactly as each game's `NOTICE` and README give them.** Do
    not add names from upstream projects' credit lists.
-8. **Every game needs its own save magic, debug macro prefix and debug
-   handshake id.** All games share the same two flash save pages. The last
-   collisions were fixed on 2026-10-01 (docs/status.md); check a new game's
-   values against every other game's.
+8. **Every game needs its own save magic, debug handshake id and
+   `config.h` prefix.** All games share the same two flash save pages. The
+   last collisions were fixed on 2026-10-01 (docs/status.md); check a new
+   game's values against every other game's.
 
 ## Setup
 
@@ -87,10 +89,10 @@ Manager), then `pip install -r tools/requirements.txt ziglang`.
   capital H, which only resolves on case-insensitive file systems. Until the
   board package fixes it:
   `ln -s core_riscv_ch32yyxx.h ~/.arduino15/packages/CHGame/hardware/ch32v/0.2.4/cores/arduino/ch32/lib/core_riscv_cH32yyxx.h`.
-- **CHGfx needs no install.** `tools/device.py` compiles with
-  `--library <repo>/platform/libraries/CHGfx`, and the simulator uses the same
-  copy. With plain `arduino-cli compile`, add
-  `--library ../../platform/libraries/CHGfx` yourself.
+- **CHGfx and the CHGame library need no install.** `tools/device.py`
+  compiles with `--library` for both (`platform/libraries/CHGfx`,
+  `platform/libraries/CHGame`), and the simulator uses the same copies. With
+  plain `arduino-cli compile`, add both `--library` options yourself.
 - **The simulator's compiler:** `$CHSIM_CXX` (for example `"zig c++"` or a
   full path plus ` c++`), otherwise zig on the PATH, otherwise
   `python -m ziglang`, otherwise clang++ or g++.
@@ -110,10 +112,12 @@ Run from a game folder, `games/<Name>/`:
 | Run a script in the simulator | `python tools/chsim/chdrive.py --sim . tools/scripts/<s>.txt out/<s>` |
 | The same script on the board | `python tools/device.py run tools/scripts/<s>.txt out/<s>` (debug build + upload) |
 | Screenshot of a running debug build | `python tools/device.py shot out/shot.png` |
-| Sound effects to WAV | `python tools/audio/preview.py out/audio` (prints a hash per effect) |
+| Sound effects (and songs) to WAV | `python ../../tools/audio/preview.py . out/audio` (prints a hash per effect) |
 | Regenerate art | `python tools/assets.py` |
 | What fills the flash | `python ../../tools/check_size.py build/release --top 30` |
 | Redraw check (5 games) | `python tools/chsim/diffdrive.py <script> <outdir> [ticks]` |
+| Memory check (valgrind) | see `tools/chsim/chsim.py`'s docstring (`CHSIM_FLAGS`, `CHSIM_WRAP`) |
+| Any sketch (from the root) | `python tools/device.py --sketch <dir> build`, `python tools/chsim/chdrive.py --sim <dir> <script> <out>` |
 
 **The bootloader and the SD card** (from the repository root):
 
@@ -129,10 +133,11 @@ Run from a game folder, `games/<Name>/`:
 The release FQBN is
 `CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly`. A debug
 build drops `usb=uploadonly` and adds
-`--build-property build.extra_flags=-D<PFX>_DEBUG=1`. `<PFX>` is the game's
-four-letter prefix in `config.h`, for example `CHF4` for CHFour. Pass
-sketch-level defines only through `build.extra_flags`. It is empty on this
-platform. Never override `compiler.cpp.extra_flags`.
+`--build-property build.extra_flags=-DCHGAME_DEBUG=1` (the library's switch;
+a game's `config.h` derives its own, such as `<PFX>_LEAN`, from it). Pass
+sketch-level defines only through `build.extra_flags`: the library is
+compiled apart and sees nothing else. It is empty on this platform. Never
+override `compiler.cpp.extra_flags`.
 
 ## Limits
 
@@ -147,8 +152,8 @@ platform. Never override `compiler.cpp.extra_flags`.
 
 **Tactics that pay:**
 - `opt=oslto`.
-- `RAMFUNC(name)` (each game's `src/RamFunc.h`) for per-pixel loops. Every
-  RAMFUNC also costs RAM.
+- `RAMFUNC(name)` (the library's `chgame/RamFunc.h`; names must be unique
+  within a sketch) for per-pixel loops. Every RAMFUNC also costs RAM.
 - `#pragma GCC optimize("Os")`.
 - Word-sized loop counters.
 - Drawing static layers once instead of every frame.
@@ -159,12 +164,13 @@ platform. Never override `compiler.cpp.extra_flags`.
 ## The simulator (`tools/chsim`)
 
 `chsim.py build <sketch>` compiles the game's `.ino` and `src/` plus CHGfx's
-portable code for the PC. `host/chgfx_host.cpp` stands in for the SPI/DMA
+portable code and the CHGame library for the PC. `host/chgfx_host.cpp` stands in for the SPI/DMA
 part, and `host/main.cpp` runs the game in lockstep on virtual time.
 
-**How it is driven.** `chdrive.py` (one per game, because each adds its own
-commands) talks to the sim, or to a debug build on the board, over the
-game's serial debug protocol (`src/debug/Debug.h`):
+**How it is driven.** `chdrive.py` talks to the sim, or to a debug build on
+the board, over the library's serial debug protocol (`chgame/Debug.h`). The
+driver is `tools/chsim/chdrivelib.py`; each game's `tools/chsim/chdrive.py`
+extends it with the game's own script commands:
 
 | Command | Does |
 |---|---|
@@ -175,11 +181,13 @@ game's serial debug protocol (`src/debug/Debug.h`):
 | `N k` | run k frames |
 | `P` | perf |
 | `B` | reboot into the bootloader |
+| `Q` | (sim) time CHGfx's primitives, for `cal`/`perf` estimates |
 
-Anything else goes to the game's hook.
+Anything else goes to the game's hook (`dbg::hook`).
 
 **Scripts** in `tools/scripts/*.txt` are lists of `wait`, `tap`, `hold`,
-`snap`, `gif`, `rec` and the like (see the header of each `chdrive.py`).
+`snap`, `gif`, `rec` and the like (the header of `chdrivelib.py`, and each
+game's `chdrive.py` for its own).
 
 **What a run produces.** Screenshots and GIFs go to the output folder. A
 `BUG:` line on stderr, with exit code 3, means the game drew into rows
@@ -268,21 +276,20 @@ Each is in the game's `sdcard/` folder. See [docs/sd-card.md](docs/sd-card.md).
 
 ## Starting a new game
 
-Copy the closest existing game; the newest ones have the most complete
-tooling (`check.py`, `diffdrive.py`).
 [docs/getting-started.md](docs/getting-started.md) is the guide for
-developers coming from the Arduboy. Then:
-1. Rename the folder, `.ino`, `config.h` prefix (`<PFX>_DEBUG`,
-   `<PFX>_VERSION`), the debug handshake id (`Debug.cpp`, chdrive's `--id`
-   default), the save magic (`src/save/Save.cpp`) and the RAMFUNC section
-   prefix.
-2. Update `device.py`'s debug define.
-3. Keep `src/CHGame.*`, `debug/`, `save/` and `RamFunc.h` as they are unless
-   there is a reason; they are the shared core
-   ([docs/game-anatomy.md](docs/game-anatomy.md)). The core gives the game
-   the START-held-3-s exit to the menu.
-4. Keep that exit unless the game needs a long START hold for itself
-   (`arduboy.startExits = false` in `setup()`).
+developers coming from the Arduboy, and the library's `examples/Hello` the
+smallest complete sketch. For a full game, copy the closest existing one;
+the newest have the most complete tooling (`check.py`, `diffdrive.py`).
+Then:
+1. Rename the folder, the `.ino`, the `config.h` prefix (`<PFX>_VERSION`,
+   `<PFX>_LEAN` ...), the debug hello (`dbg::begin("<ID> " ...)`, and
+   `ident=` in `tools/chsim/chdrive.py`) and the save magic
+   (`save::magic("....")` in `src/save/Save.cpp`); check them against every
+   other game (rule 8).
+2. Give it its own sounds (`src/audio/Sounds.cpp`) and save data.
+3. Keep the START-held-3-s exit to the menu (the library's) unless the game
+   needs a long START hold for itself (`arduboy.startExits = false` in
+   `setup()`).
 
 ## Gotchas
 
@@ -296,8 +303,8 @@ developers coming from the Arduboy. Then:
 - **Git Bash heredocs mangle backslash escapes.** Write code containing
   `\n` with a file-writing tool, not a heredoc.
 - **The debug protocol costs flash** (~2 KB with USB Serial). Some games
-  have a `<PFX>_LEAN` switch that drops saving or screens from debug builds
-  so they fit. A device debug build is therefore not the whole game. Say so
+  have a `<PFX>_LEAN` switch (derived from `CHGAME_DEBUG`) that drops
+  saving or screens from device debug builds so they fit. A device debug build is therefore not the whole game. Say so
   if someone will be playing it.
 - **Sibling assets:** some `tools/assets.py` read another game's art (for
   example `../CHBlackjack/tools/art/dealer.png`) to check or share it. The

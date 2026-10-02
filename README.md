@@ -24,7 +24,8 @@ with no button presses, like an Arduino Leonardo.
 >
 > **Coming from the Arduboy?** [docs/getting-started.md](docs/getting-started.md)
 > maps the Arduboy2 calls to CHGame's, explains what happens behind the
-> scenes, and has a first sketch that builds today.
+> scenes, and walks through a first sketch. The CHGame library's
+> [README](platform/libraries/CHGame/README.md) is the reference.
 
 ## What this repository is for
 
@@ -35,9 +36,10 @@ The aim is the Arduboy model, with one repository instead of several:
   the uploader, the bootloaders, the libraries, and the casino games under
   *File > Examples*.
 - **One include.** A sketch includes `CHGame.h` and gets the buttons, frame
-  pacing, graphics, sound and SD card, with no per-sketch set-up of pins or
-  drivers. The graphics (CHGfx), SD (CHSd) and sound cores stay as separate
-  layers underneath it.
+  pacing, graphics, the house palette and drawing helpers, sound, saving and
+  the debug protocol the simulator drives it through, with no per-sketch
+  set-up of pins or drivers. The graphics (CHGfx) and SD (CHSd) libraries
+  stay as separate layers underneath it.
 - **One update.** A bug fix or a feature in any layer reaches everyone with
   the next board package release: core, libraries, bootloader and examples
   move together and are tested together.
@@ -54,19 +56,17 @@ yet is the packaging that makes the Boards Manager deliver all of it:
 |---|---|---|
 | Core, variant, toolchain, `chgame-upload` | `platform/board/` (0.2.4) | yes (0.2.4, from the old release URL) |
 | Bootloader with the SD game menu | `platform/bootloader/` | no: 0.2.4 ships the earlier bootloader without the menu |
-| `CHGame.h` (buttons, pacing, exit to menu) | a copy in each game's `src/` | no |
+| The CHGame library (`CHGame.h`: buttons, pacing, palette, drawing, sound, saving, debug protocol) | `platform/libraries/CHGame/`; every game is built on it | no: games build against the copy here |
 | CHGfx, the graphics library | `platform/libraries/CHGfx/` (1.3.0) | no: games build against the copy here |
 | CHSd, the SD/FAT reader | `platform/libraries/CHSd/` (1.0.0) | no: SD games carry a generated copy |
-| Sound (piezo sequencer, tunes) | a copy in each game's `src/audio/` | no |
 | The casino games as examples | `games/` | no |
 | PC tools | `tools/`, `platform/bootloader/host/` | `chgame-upload` only |
 
 [docs/roadmap.md](docs/roadmap.md) lists what the first release from this
 repository has to do to close that table.
-[docs/unification.md](docs/unification.md) measures how far the games'
-copies of the shared code are from one library, layer by layer, and
-[docs/chgame-library.md](docs/chgame-library.md) is the design of that
-library.
+[docs/chgame-library.md](docs/chgame-library.md) records why the library
+is as it is, and [docs/unification.md](docs/unification.md) how the
+games' twenty copies of their shared code became it.
 
 ## Installing
 
@@ -148,16 +148,18 @@ CHGame/
 │   ├── board/           the Arduino board package (core, variant, linker scripts) + the board's docs
 │   ├── bootloader/      the bootloader with the SD game menu: sources, PC test suite, binaries,
 │   │                    and the uploader's source (host/py)
+│   ├── libraries/CHGame/ the CHGame library (CHGame.h) and its Hello example
 │   ├── libraries/CHGfx/ the graphics library
 │   ├── libraries/CHSd/  the read-only SD/FAT library (source of the games' src/sd copies)
 │   └── hardware/        Rev 0 schematic and netlist
 ├── games/             the 20 casino games, one Arduino sketch each: the platform's examples
 ├── utilities/         helper sketches (CHSDtoUSB: the SD card as a USB drive)
-├── tools/             the PC tools shared by every game (the simulator, size report, serial,
-│                      chgpack.py for game packages, sdcard/mkcard.py for the whole card)
+├── tools/             the PC tools shared by every game (device.py, the simulator and script
+│                      driver, sound preview, size report, serial, chgpack.py for game
+│                      packages, sdcard/mkcard.py for the whole card)
 └── docs/              platform knowledge: hardware, performance, SD card, how a game is built,
-                       status, the roadmap to the first release, the CHGame library design and
-                       its assessment, and a getting-started guide for Arduboy developers
+                       status, the roadmap to the first release, the CHGame library's decisions
+                       and history, and a getting-started guide for Arduboy developers
 ```
 
 ## Quick start for development
@@ -172,7 +174,7 @@ pip.
 # 2. Python tools and a compiler for the simulator
 pip install -r tools/requirements.txt ziglang
 
-# 3. Build a game (from its folder) against this repository's CHGfx
+# 3. Build a game (from its folder) against this repository's libraries
 cd games/CHFour
 python tools/device.py build              # release build + size report
 python tools/check.py --no-device         # host tests + every sim script, twice (games that have check.py)
@@ -210,15 +212,26 @@ Its Tools menus matter for every game:
 
 Release FQBN: `CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly`.
 
-### `CHGame.h`: the device interface
+### The CHGame library: `platform/libraries/CHGame/`
 
-`CHGame.h/.cpp` is the Arduboy-flavoured front of the platform: buttons
-(`pollButtons()`, `pressed`, `justPressed`, auto-repeat), frame pacing
-(`nextFrame()`, lockstep for the simulator), and the START-held-3-s exit to
-the game menu. It is identical in all twenty games, each of which carries it
-in `src/`. It is to become the one header of the unified library, with the
-graphics, SD and sound layers below under it
-([docs/chgame-library.md](docs/chgame-library.md)).
+`#include <CHGame.h>` is the one include of a CHGame sketch. On top of
+CHGfx it gives:
+- `arduboy`: buttons (`pollButtons()`, `pressed`, `justPressed`,
+  auto-repeat), frame pacing (`nextFrame()`, lockstep for the simulator),
+  and the START-held-3-s exit to the game menu;
+- the house palette with fades, flashes and cycling colours; panels,
+  sprites, dithers and the 3x5 font; outlined, shadowed lettering; easing,
+  integer sine and screen shake; number formatting;
+- one sound engine for effects and music on the piezo, and the status LED;
+- saving in two flash pages past the end of the image (there is no EEPROM);
+- the serial debug protocol for screenshots, injected input and lockstep
+  frames: how the simulator and the script driver run a game;
+- `RAMFUNC`, which puts hot code in SRAM.
+
+It was built from the code the twenty games carried copies of, and every
+game is now built on it ([docs/unification.md](docs/unification.md)). Its
+[README](platform/libraries/CHGame/README.md) is the reference, and
+`examples/Hello` the smallest complete sketch.
 
 ### CHGfx: `platform/libraries/CHGfx/`
 
@@ -243,22 +256,6 @@ regenerate the copies with its `tools/vendor.py`; never edit a game's copy
 (see CLAUDE.md). CHSDtoUSB has its own faster, read-write SD driver, which
 is GPL-3.0 and stays inside that sketch.
 
-### Sound, saving and the rest of the shared core
-
-The games grew from one another, so each carries the same small core in its
-own `src/`, often adapted (see [docs/game-anatomy.md](docs/game-anatomy.md);
-[docs/unification.md](docs/unification.md) measures how far each copy has
-drifted):
-- `audio/`: the piezo sequencer for sound effects and tunes, and the status
-  LED.
-- `save/`: settings and saved games in two flash pages past the end of the
-  image. There is no EEPROM.
-- `debug/`: the serial debug protocol for screenshots, injected input and
-  lockstep frames. It is how the simulator and `chdrive.py` drive a game.
-- `RamFunc.h`: puts hot code in SRAM.
-- `gfx/`, `fx/`, `stage/`: the house style of fonts, masks, palette
-  effects, banners and particles.
-
 ### The bootloader and the SD game menu: `platform/bootloader/`
 
 The board's permanent bootloader (12 KB at 0x0000), with the game menu:
@@ -279,9 +276,15 @@ it; [docs/sd-menu.md](docs/sd-menu.md) is the players' guide and
 ### The PC tools: `tools/`
 
 The tools for working with the system outside the Arduino IDE:
-- the **PC simulator** (`tools/chsim`): it compiles a game's real code with
-  CHGfx's real drawing code for the PC, runs it deterministically, and
-  produces screenshots and GIFs;
+- **`device.py`**: builds, uploads and drives any sketch on the board (each
+  game's `tools/device.py` runs it on that game);
+- the **PC simulator** (`tools/chsim`): it compiles a sketch's real code
+  with CHGfx's and the library's for the PC, runs it deterministically, and
+  produces screenshots and GIFs; its **script driver** (`chdrivelib.py`,
+  which each game's `chdrive.py` extends with its own commands) runs the
+  same scripts in the simulator and on the board;
+- the **sound preview** (`audio/preview.py`): renders a game's effects and
+  songs to WAV from the real engine;
 - the flash/RAM **size report** (`check_size.py`);
 - the USB **serial** helper (`serialcap.py`);
 - the **game package** tool (`chgpack.py`): wraps any sketch's `.bin` as a
@@ -291,9 +294,8 @@ The tools for working with the system outside the Arduino IDE:
 - the **uploader** (`platform/bootloader/host/py`): the source of
   `chgame-upload`.
 
-Tools that each game has adapted stay with the game: the script driver
-`chdrive.py`, `device.py`, `check.py`, the tests, the audio preview and the
-asset pipeline. [tools/README.md](tools/README.md) classifies every tool in
+What is a game's own stays with it: its script commands (`chdrive.py`),
+`check.py`, the tests and the asset pipeline. [tools/README.md](tools/README.md) classifies every tool in
 the repository.
 
 ## Licences
@@ -306,6 +308,7 @@ Each folder carries its own licence:
 | `tools/` | Apache-2.0 (`tools/LICENSE`, `tools/NOTICE`) |
 | `platform/board/` | MIT (`platform/board/LICENSE`, `THIRD-PARTY.md`) |
 | `platform/bootloader/` | MIT (`LICENSE`, `THIRD-PARTY.md`, `NOTICE`: its 5x7 font is Adafruit glcdfont, BSD) |
+| `platform/libraries/CHGame/` | Apache-2.0 (`LICENSE`, `NOTICE`: the 3x5 font is Press Play On Tape's, by way of CHBlackjack) |
 | `platform/libraries/CHGfx/` | MIT; some fonts carry their own notices (in its `LICENSE`, e.g. the 3x5 font is Apache-2.0) |
 | `platform/libraries/CHSd/` | MIT |
 | `utilities/CHSDtoUSB/` | GPL-3.0 (its SD layer comes from sdfatlib) |
