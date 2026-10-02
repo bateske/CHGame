@@ -1,14 +1,9 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask)
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library)
 #include <Arduino.h>
 #include <string.h>
-#include <CHGfx.h>
+#include <CHGame.h>
 #include "../../config.h"
 #include "Screens.h"
-#include "../CHGame.h"
-#include "../gfx/Palette.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Mask.h"
-#include "../gfx/Fmt.h"
 #include "../fx/Fx.h"
 #include "../audio/Audio.h"
 #include "../game/Klondike.h"
@@ -122,7 +117,7 @@ static void title35(const char *text, int y, uint8_t scale, uint8_t top, uint8_t
     maskText35(m, 0, 0, text, scale);
     uint8_t ramp[32];
     for (int i = 0; i < h + 2 && i < 32; i++) ramp[i] = i < scale ? top : (i < lowFrom ? mid : low);
-    maskDraw(m, 64 - w / 2, y, INK, shadow, ramp);
+    maskDraw(m, 64 - w / 2, y, 0, INK, shadow, ramp);
 }
 
 static void centred35(int y, const char *s, uint8_t c) { text35(64 - text35Width(s) / 2, y, s, c); }
@@ -291,7 +286,7 @@ static void titleRender(uint32_t frame) {
         maskBlit1(m, LOGO, LOGO_W, LOGO_H, 1);
         uint8_t ramp[LOGO_H];
         for (int i = 0; i < LOGO_H; i++) ramp[i] = i < 5 ? FX_B : (i < 14 ? GOLD : WOOD);
-        maskDraw(m, 64 - LOGO_W / 2, 5, INK, WINE, ramp);
+        maskDraw(m, 64 - LOGO_W / 2, 5, 0, INK, WINE, ramp);
         memcpy(rail, gfx_fb, sizeof rail);
         railKept = true;
     }

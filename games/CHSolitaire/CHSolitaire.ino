@@ -7,9 +7,7 @@
 // going out over DMA; drawing waits for it (one framebuffer), then the new
 // frame is sent.
 #include "config.h"
-#include <CHGfx.h>
-#include "src/CHGame.h"
-#include "src/gfx/Palette.h"
+#include <CHGame.h>
 #include "src/states/Screens.h"
 #include "src/audio/Audio.h"
 #include "src/debug/Debug.h"
