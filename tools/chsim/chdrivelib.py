@@ -33,6 +33,7 @@ Script lines (# comments allowed):
 Buttons: A B UP DOWN LEFT RIGHT START SELECT
 """
 import argparse
+import os
 import subprocess
 import sys
 import threading
@@ -58,7 +59,9 @@ def mask_of(spec):
 
 class SimTransport:
     def __init__(self, exe):
-        self.p = subprocess.Popen([str(exe)], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+        # $CHSIM_WRAP runs it under another program (valgrind: see chsim.py).
+        wrap = os.environ.get("CHSIM_WRAP", "").split()
+        self.p = subprocess.Popen(wrap + [str(exe)], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                   stderr=subprocess.PIPE, bufsize=0)
         self.bugs = []
         threading.Thread(target=self._err, daemon=True).start()
@@ -341,7 +344,8 @@ def main(driver=Driver, ident=""):
             except Exception:
                 pass
         rc = t.close()
-    bugs = [b for b in getattr(t, "bugs", []) if b.startswith("BUG")]
+    # BUG: drawing into rows still going out; "==": valgrind's reports
+    bugs = [b for b in getattr(t, "bugs", []) if b.startswith(("BUG", "=="))]
     if bugs:
         raise SystemExit(f"{len(bugs)} simulator bug report(s)")
     print(f"ok: {a.outdir}")

@@ -26,6 +26,17 @@ platform/libraries/CHGame, else the sketchbook's libraries/CHGame.
 
 Compiler: $CHSIM_CXX (e.g. "zig c++"), else zig on the PATH, else the
 ziglang pip package (`pip install ziglang`), else clang++ or g++.
+$CHSIM_FLAGS are added after the usual flags. A memory check of a game
+(out-of-bounds writes, uninitialised reads), with valgrind:
+
+    CHSIM_FLAGS="-O0 -g -fno-sanitize=undefined -mcpu=baseline" \
+    CHSIM_WRAP="valgrind -q --error-exitcode=9" \
+        python tools/chsim/chdrive.py --sim . tools/scripts/<s>.txt out/<s>
+
+(-mcpu=baseline: zig otherwise targets this PC's CPU, whose newest
+instructions valgrind may not know; zig's -O0 also turns UBSan on, which
+the -fno-sanitize keeps out of the way.) chdrive runs the simulator under
+$CHSIM_WRAP when it is set.
 
 The executable is <sketch>/tools/chsim/build/<name>/sim.exe.
 """
@@ -144,6 +155,7 @@ def build(sketch, defines=(), out=None):
     cmd += [f"-I{sketch}", f"-I{chgfx}", f"-I{chgame}"]
     for d in defines:
         cmd.append(f"-D{d}")
+    cmd += os.environ.get("CHSIM_FLAGS", "").split()      # after the defaults, so they win
     cmd += [str(s) for s in srcs] + ["-o", str(exe)]
     # zig treats .c as C; everything here is compiled as C++ on purpose.
     r = subprocess.run(cmd, capture_output=True, text=True)
