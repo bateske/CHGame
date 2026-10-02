@@ -5,8 +5,8 @@ Agent-facing notes for continuing work here; rules, controls and build are in RE
 ## Snapshot
 
 - Imported from https://github.com/bateske/CHCrossword at commit 68c482e (2026-10-01); develop here now, not in the old repo.
-- Release build (`opt=oslto,rtlib=nano,periph=game,usb=uploadonly`, core 0.2.4, CHGfx 1.3.0): flash 49,914 of 50,944 B (1,030 spare), static RAM 17,308 of 18,416 B (1,108 spare) (2026-10-02, on the CHGame library).
-- Flash is full in practice: the image (`../../tools/check_size.py`'s `image:` line, 50,260 B) sits only 172 B under the 50,432 B that keeps both A/B save pages (0xF500/0xF600). Any new feature needs a cut first.
+- Release build (`opt=oslto,rtlib=nano,periph=game,usb=uploadonly`, core 0.2.4, CHGfx 1.3.0): flash 50,074 of 50,944 B (870 spare), static RAM 17,276 of 18,416 B (1,140 spare) (2026-10-02, on the CHGame library and its sound engine).
+- Flash is full in practice: the image (`../../tools/check_size.py`'s `image:` line, 50,420 B) sits only 12 B under the 50,432 B that keeps both A/B save pages (0xF500/0xF600). Any new feature needs a cut first.
 - Verification: simulator only. `python tools/check.py` passes: puzzle check, host tests (decoder vs the Python reference, rules and score, saving, FAT16/FAT32 card images with a read failure at every point), every script twice with identical frames, device compile and size.
 - As of 2026-10-01 it has never run on the device, and CHSd (its SD driver) has never read a real card in any game.
 
@@ -47,6 +47,7 @@ Agent-facing notes for continuing work here; rules, controls and build are in RE
 - Puzzle pipeline: `tools/puzzles/newgrid.py` fills a grid, clues are written into `tools/puzzles/src/*.txt`, `build_pack.py` checks them and regenerates `src/game/PuzzleData.cpp`. `tools/puzzles/cwformat.py` holds the reference decoder the host tests hold the game to: change the format in both.
 - The grid maker needs `wordfreq` (`pip install wordfreq`, or `pip install --target tools/puzzles/data/pylib wordfreq`; that folder is gitignored). `tools/puzzles/avoid.txt` is the curated block list of junk words: add to it rather than hand-editing fills.
 - Letters: `tools/tilefont.py` rasterizes DejaVu Serif Bold into `tools/art/tilefont.txt`; `tools/assets.py` packs the art into `src/assets/`.
+- Sound: the CHGame library's engine (`chgame/Audio.h`); the effect tables are `src/audio/Sounds.*` in `Sfx` order. A locking word's rising notes (and the deal, title and result ticks) are `audio::note(hz, ms, 2)`: they give way only to the fanfares. `applyOptions()` calls `audio::begin()` each time rather than `setOn()`: one call site for the library's start-up code saves 36 B. WAVs: `python ../../tools/audio/preview.py . out/audio`.
 - Debug hooks (above the hook in `src/states/Screens.cpp`): `G` start puzzle, `H` STATE line, `W` next word, `C` cursor, `Z` fill all but the last k words, `U` advance the clock, `J` jump, `X` and `Q` simulator only. chdrive extras: `state`, `expect`, `waitstate`, `type`, `solve [N]`, `wrong`, `mark`/`delta`, `solveto`, `solvemost`, `rec pause/resume`.
 - `tools/scripts/gameplay.txt` makes the README reel (`docs/gameplay.gif`).
 - Credits are exactly those in NOTICE (Press Play On Tape's 3x5 font, DejaVu, CHSd/HypeRunner, ENABLE and wordfreq as build-time aids); add no others. `src/sd` and `fatimg.py` are MIT, the rest Apache-2.0.

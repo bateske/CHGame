@@ -5,7 +5,7 @@
 #include "../../config.h"
 #include "Stage.h"
 #include "../fx/Fx.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../assets/Assets.h"
 
 namespace stage {
@@ -366,7 +366,7 @@ void update() {
     // The tiles are laid out, a diagonal at a time, as a puzzle starts.
     if (dealT) {
         dealT--;
-        if ((dealT & 3) == 0) audio::note((uint16_t)(2600 - dealT * 12), 12);
+        if ((dealT & 3) == 0) audio::note((uint16_t)(2600 - dealT * 12), 12, 2);
     }
     // The camera whips between the whole grid and the close-up in a few
     // ticks, held on the cursor; at rest it pans after the cursor.
@@ -403,7 +403,7 @@ void update() {
             fx::burst(fx::SPARK, x + zs / 2, y + zs / 2, 3, 14, FX_B);
             if (!l.cross) {
                 uint8_t s = (uint8_t)(k + game::multiplier() - 1);
-                audio::note(SCALE[s > 11 ? 11 : s], 60);
+                audio::note(SCALE[s > 11 ? 11 : s], 60, 2);
             }
         }
         l.t++;

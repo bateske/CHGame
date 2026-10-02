@@ -6,7 +6,7 @@
 #include "Screens.h"
 #include "../gfx/Font.h"
 #include "../fx/Fx.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../game/Puzzle.h"
 #include "../game/Game.h"
 #include "../pack/Pack.h"
@@ -97,7 +97,9 @@ static void persist(bool withGame) {
 }
 
 static void applyOptions() {
-    audio::setOn(opt.sound != 0);
+    // (begin() again rather than setOn(): one call site for the library's
+    // start-up code keeps the image under the two save pages' limit.)
+    audio::begin(SOUNDS, (uint8_t)Sfx::COUNT, opt.sound != 0);
     pal::setTheme(opt.felt);
     stage::stepAll = opt.skip != 0;
     stage::viewClose = opt.view != 0;
@@ -280,7 +282,7 @@ static void titleUpdate() {
         if (phase == TITLE_TYPE[i]) audio::sfx(Sfx::Key);
         if (phase == TITLE_LOCK[i]) {
             fx::burst(fx::SPARK, x, y, 6, 18, FX_B);
-            audio::note((uint16_t)(1047 + i * 190), 60);
+            audio::note((uint16_t)(1047 + i * 190), 60, 2);
         }
     }
     if (phase == 122 || phase == 214) audio::sfx(Sfx::Coin);
@@ -482,7 +484,7 @@ static uint8_t pauseItems(uint8_t *items) {
 static void playUpdate() {
     if (overlay == PAUSE) {
         uint8_t items[5], n = pauseItems(items), was = sel;
-        if (arduboy.justPressed(B_BUTTON) || arduboy.justPressed(START_BUTTON)) {
+        if (arduboy.justPressed(B_BUTTON | START_BUTTON)) {
             overlay = NONE;
             stage::invalidate();
             return;
@@ -506,19 +508,20 @@ static void playUpdate() {
         if (resultT < 250) resultT++;
         stage::invalidate();
         // The score counts up, ticking.
-        if (resultT < 30 && (resultT & 3) == 0) audio::note((uint16_t)(1500 + resultT * 60), 24);
+        if (resultT < 30 && (resultT & 3) == 0) audio::note((uint16_t)(1500 + resultT * 60), 24, 2);
         // The stars come in one at a time.
         for (uint8_t i = 0; i < result.stars; i++)
             if (resultT == 40 + i * 14) {
                 audio::sfx(Sfx::Star);
                 fx::burst(fx::STAR, 46 + i * 18, 93, 8, 30, GOLD);
             }
-        if (resultT > 30 && arduboy.justPressed(A_BUTTON)) {
+        // A: on to the next puzzle in the list; B: back to the title.
+        if (resultT > 30 && arduboy.justPressed(A_BUTTON | B_BUTTON)) {
+            bool next = arduboy.justPressed(A_BUTTON);
             audio::sfx(Sfx::Select);
-            if (playing + 1 < pack::puzzles()) { listSel = (uint8_t)(playing + 1); }
-            go(Scr::Select);
+            if (next && playing + 1 < pack::puzzles()) listSel = (uint8_t)(playing + 1);
+            go(next ? Scr::Select : Scr::Title);
         }
-        if (resultT > 30 && arduboy.justPressed(B_BUTTON)) { audio::sfx(Sfx::Select); go(Scr::Title); }
         stage::update();
         return;
     }
