@@ -75,7 +75,7 @@ void save(Record &r);
 bool load(const Record &r);
 
 // Scripts and tests (the simulator, the host tests, a device debug build).
-#if defined(CHSIM) || defined(CHTEST) || (defined(CHDM_DEBUG) && CHDM_DEBUG)
+#if defined(CHSIM) || defined(CHTEST) || (defined(CHGAME_DEBUG) && CHGAME_DEBUG)
 #define MATCH_SCRIPTED 1
 // The next deal: "66 65 31 ..": the first seven to side 0, the next seven to
 // side 1, then the boneyard in the order it will be drawn; the tiles not

@@ -11,7 +11,7 @@
 #include "../audio/Sounds.h"
 #include "../assets/Assets.h"
 
-#if CHDM_DEBUG && defined(CHSIM)
+#if CHGAME_DEBUG && defined(CHSIM)
 uint64_t sim_hostNanos();
 #endif
 
@@ -910,7 +910,7 @@ bool render(uint32_t frame, uint32_t ui) {
     return true;
 }
 
-#if CHDM_DEBUG
+#if CHGAME_DEBUG
 // Render profile (debug Y command): per section, averaged over 64 draws of
 // the current scene - microseconds on the board; in the simulator, host
 // nanoseconds (scale by chdrive's `cal` ratio / 1000 for a device estimate).

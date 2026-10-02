@@ -3,7 +3,6 @@
 #include <CHGame.h>
 #include "Table.h"
 #include "../gfx/Colours.h"
-#include "../RamFunc.h"
 
 namespace table {
 

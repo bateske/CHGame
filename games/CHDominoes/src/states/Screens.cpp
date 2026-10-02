@@ -12,7 +12,6 @@
 #include "../game/Match.h"
 #include "../stage/Stage.h"
 #include "../save/Save.h"
-#include "../debug/Debug.h"
 #include "../assets/Assets.h"
 #ifdef CHSIM
 #include <sim.h>
@@ -612,7 +611,7 @@ static void optionsRender(uint32_t frame) {
 // ---------------------------------------------------------------------------
 // Debug protocol hooks (tools/chsim/chdrive.py 'say')
 // ---------------------------------------------------------------------------
-#if CHDM_DEBUG
+#if CHGAME_DEBUG
 //   G <mode> <level> <seed> <game> <target>   start a match (mode 0 vs CPU, 1 two players; game 0 DRAW,
 //                                    1 ALL FIVES; target in points)
 //   D <tiles>                        the next deal: "66 65 ..", seven for side 0, seven for side 1,
@@ -726,7 +725,7 @@ void begin() {
     opt.target = 0;
     save::load(opt, stats, hasGame);
     applyOptions();
-#if CHDM_DEBUG
+#if CHGAME_DEBUG
     dbg::hook = debugHook;
 #endif
     enter(Scr::Title);

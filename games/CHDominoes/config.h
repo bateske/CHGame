@@ -9,27 +9,17 @@
 
 #define CHDM_VERSION     "0.1"
 
-// Serial debug protocol: screenshots, input injection, lockstep, perf.
-// Off in normal builds. tools/device.py turns it on with
-// --build-property build.extra_flags, and leaves USB at "Serial" for it.
-#ifndef CHDM_DEBUG
-#ifdef CHSIM
-#define CHDM_DEBUG       1       // the simulator is driven through the protocol
-#else
-#define CHDM_DEBUG       0
-#endif
-#endif
+// The CHGame library's switches: CHGAME_DEBUG (the serial debug protocol:
+// screenshots, input injection, lockstep, perf; always on in the simulator,
+// on the board only in `tools/device.py build --debug`) and CHGAME_PROFILE.
+#include <chgame/Config.h>
 
-// A build without saving, the options and setup screens and the hint
-// (games are started with the protocol's G command): for a device debug
-// build if the game should ever outgrow it. Off: everything fits.
+// A build without saving, the options and setup screens and the hint (the
+// title's ONE/TWO PLAYERS start a match on the defaults; tests start theirs
+// with the protocol's G command): for a device debug build if the game
+// should ever outgrow it. Off: everything fits, debug builds included.
 #ifndef CHDM_LEAN
 #define CHDM_LEAN        0
-#endif
-
-// Section profiler (dbg::prof + the T command). Opt-in: costs flash.
-#ifndef CHDM_PROFILE
-#define CHDM_PROFILE     0
 #endif
 
 // Frame rate the game logic is paced for.

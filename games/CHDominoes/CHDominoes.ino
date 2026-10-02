@@ -5,8 +5,8 @@
 // The rules are in src/rules, the CPU in src/ai, the match's flow in
 // src/game, where the tiles lie in src/table, and everything you see and
 // hear in src/table, src/stage and src/states.
-#include "config.h"
 #include <CHGame.h>
+#include "config.h"
 #include "src/Frame.h"
 
 void setup() {
