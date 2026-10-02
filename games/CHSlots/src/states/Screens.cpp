@@ -11,7 +11,7 @@
 #include "../fx/Fx.h"
 #include "../render/Layout.h"
 #include "../render/Machine.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../save/Save.h"
 #include "../assets/Assets.h"
 #include "../debug/Debug.h"
@@ -74,7 +74,7 @@ static void enter(Scr s) {
     pal::setMode(pal::CASINO);
     pal::setTheme(s == Scr::Play ? game.machine : (uint8_t)mach::GREEN);    // mach::Theme follows Machine
     switch (s) {
-        case Scr::Title: paused = false; audio::music(Song::Title); break;
+        case Scr::Title: paused = false; playSong(Song::Title); break;
         case Scr::Floor: for (uint8_t k = 0; k < M_COUNT; k++) if (FLOOR[k] == game.machine) floorSel = k; break;
         case Scr::Play:
             if (!resumePlay) { game.fitBet(); present::reset(game); if (!demo) present::welcome(game); }
@@ -85,15 +85,15 @@ static void enter(Scr s) {
             wasBusy = false;
             showPays = false;
             break;
-        case Scr::Win: audio::music(Song::Title); audio::sfx(Sfx::Jackpot); audio::led(audio::LED_PARTY); break;
-        case Scr::Lose: audio::music(Song::None); audio::sfx(Sfx::Broke); break;
+        case Scr::Win: playSong(Song::Title); audio::sfx(Sfx::Jackpot); audio::led(audio::LED_PARTY); break;
+        case Scr::Lose: playSong(Song::None); audio::sfx(Sfx::Broke); break;
         default: break;
     }
 }
 
 static void applyOptions() {
     audio::setOn(!game.opt.sound);
-    audio::setMusicOn(!game.opt.music);
+    setMusicOn(!game.opt.music);
     present::setFast(game.opt.speed);
 }
 
@@ -102,8 +102,8 @@ void begin() {
     (void)ok;
     if (!hasGame) game.newGame();
     game.mix(micros() * 2654435761u);
+    audio::begin(SOUNDS, (uint8_t)Sfx::COUNT, !game.opt.sound);
     applyOptions();
-    audio::begin(!game.opt.sound);
     enter(Scr::Title);
 }
 

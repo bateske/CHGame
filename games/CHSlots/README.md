@@ -171,7 +171,7 @@ simulator and tests (set `CHSIM_CXX`, e.g. to `zig c++`).
 | `python tools/device.py build [--debug]` | Compile for the board and check the size |
 | `python tools/assets.py [--export]` | Build `src/assets/` from the art, or write the sheet and palette |
 | `python tools/strips.py` | Regenerate the reel strips |
-| `python tools/audio/preview.py out/audio` | Render the sound effects and tunes to WAV |
+| `python ../../tools/audio/preview.py . out/audio` | Render the sound effects and tunes to WAV |
 
 `tools/scripts/showcase.txt` and `showcase_sweet.txt` make the captures in
 `docs/`; `screens.txt` snaps every screen once; `save.txt` checks
@@ -185,7 +185,7 @@ save, continue and the demo; `perf.txt` prints the frame-time estimates.
     src/fx/              the presenter, particles, banners, shake
     src/render/          the cabinets, reels, wheel, paytables, each machine's felt
     src/states/          title, machine menu, play, options, stats, endings
-    src/audio/           sound effects and three tunes
+    src/audio/           sound effects and three tunes (the CHGame library plays them)
     src/save/            the save record (flash pages 0xF500 / 0xF600)
     tools/               art, asset and strip generators, simulator, tests
 
