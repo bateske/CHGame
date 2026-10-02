@@ -235,7 +235,7 @@ static void titleRender(uint32_t frame) {
 static const char *const SEAT[5] = {"EMPTY", "PLAYER", "CPU EASY", "CPU FAIR", "CPU SHARK"};
 
 static void newGame() {
-    Setup s;
+    Setup s = {};                    // deal 0: the usual number of deeds
     memcpy(s.kind, opt.seat, SEATS);
     s.roundCap = (uint8_t)(opt.rounds * 10);
     s.seed = seedNow();

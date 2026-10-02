@@ -50,7 +50,7 @@ Agent-facing notes for continuing work on this game. Rules, controls and build s
 ## Open items
 
 - Device test: pace, render profile, sound by ear.
-- `tools/scripts/save.txt` is not deterministic in the simulator: two runs of the same build draw different `title_still_continue` and `continued` frames (found while verifying the move into CHCasino; the original repo behaves the same). The other scripts repeat exactly. Find what reads host time or uninitialised state around SAVE + QUIT / CONTINUE before trusting pixel comparisons of that script. Worse (2026-10-02, the same before and after the move onto the library's debug protocol and saving): in about five runs of six the simulator dies with SIGSEGV after `title_continue` (chdrive reports "simulator exited", exit code 1), and `title_still_continue` differs from run to run.
+- Fixed 2026-10-02: `tools/scripts/save.txt` used to draw different frames from run to run and usually crash the simulator. `screens::newGame()` left `Setup::deal` uninitialised, so `game::start()` dealt a stack byte's worth of deeds per player and wrote past its 28-entry `deeds[]` (found with valgrind on a `-O0 -g -mcpu=baseline` simulator build). On the board the same garbage could deal the wrong number of deeds. `Setup s = {}` fixes it; every script now repeats exactly.
 - The owner's art redraw through `tools/sheet.py`. The sheet has 20 sprites, including the fruit, CHIPS, CARD_DECK, the corner icons and LOGO.
 - Arcade rules the implementer chose and reported, not explicitly confirmed by the owner (only payday was):
   - Building on most of a group (2 of 3, or both of a pair).
