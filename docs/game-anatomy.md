@@ -21,15 +21,16 @@ which is small and recent.
 ## `src/`: the shared core, then the game
 
 These folders appear in most games. Each game owns its copy and may have
-changed it:
+changed it. [unification.md](unification.md) measures how far each copy has
+drifted, family by family:
 
 | | What it is | How shared |
 |---|---|---|
 | `CHGame.h/.cpp` | Arduboy-flavoured input and pacing: `pollButtons()` once a frame, then `pressed`/`justPressed`; `nextFrame()` with a microsecond accumulator (60.0 fps); auto-repeat; lockstep mode for the debug protocol. START held 3 s (180 polls) calls `exitToMenu()`, a plain reset back to the SD game menu; `startExits = false` turns that off. The simulator prints the exit and ends. | `CHGame.h` is identical in all 20; `.cpp` differs only by a pragma |
-| `RamFunc.h` | `RAMFUNC(name)` puts a function in SRAM through CHGfx 1.3's `.gnu.linkonce.r.<prefix>.<name>` section trick. | Same idea, own prefix |
-| `debug/Debug.h/.cpp` | The serial debug protocol (only in `<PFX>_DEBUG` builds): `?` handshake, `S` screenshot, `K` buttons, `L1`/`L0` lockstep, `N k` frames, `P` perf + stack high-water, `T` profile, `B` bootloader. The game's own commands go through `dbg::hook`, which the scripts use to set up positions or seeds. | Same protocol everywhere, own handshake id |
-| `save/Save.h/.cpp` | Options, statistics and a game in progress, in two flash pages (0xF500/0xF600) used in turn, each with a magic, a version, a sequence number and a CRC. Writes run from SRAM after `gfx_wait()`; saving switches off if the image grows into the pages. | From CHBlackjack, **own magic per game** |
-| `audio/Audio.h/.cpp` | CHBlackjack's piezo sequencer: effects are 3-byte step lists, plus `blip()` and the status LED. Some games add `Music` for tunes. | Same engine, own effect list |
+| `RamFunc.h` | `RAMFUNC(name)` puts a function in SRAM through CHGfx 1.3's `.gnu.linkonce.r.<prefix>.<name>` section trick. | Same mechanism, own prefix (CHCrossword reuses `chbg`; CHSlots and CHSolitaire share `chsl`) |
+| `debug/Debug.h/.cpp` | The serial debug protocol (only in `<PFX>_DEBUG` builds): `?` handshake, `S` screenshot, `K` buttons, `L1`/`L0` lockstep, `N k` frames, `P` perf + stack high-water, `T` profile, `B` bootloader. The game's own commands go through `dbg::hook`, which the scripts use to set up positions or seeds. | Same protocol, own handshake id; optional `holdGame`/`waitInput`; CHBlackjack answers `?`, `L` and `P` differently |
+| `save/Save.h/.cpp` | Options, statistics and a game in progress, in two flash pages (0xF500/0xF600) used in turn, each with a magic, a version, a sequence number and a CRC. Writes run from SRAM after `gfx_wait()`; saving switches off if the image grows into the pages. | Same engine, **own magic per game**; CHBlackjack's header differs |
+| `audio/Audio.h/.cpp` | CHBlackjack's piezo sequencer: effects are 3-byte step lists, plus `blip()` and the status LED. Some games add `Music` for tunes. | Same design, 14 engine variants (3- or 6-byte steps, soft pulse, music); own effect list |
 | `gfx/` | `Draw` (rounded panels, dithers, sprite helpers), `Fmt` (number formatting without `printf`), `Mask` (outlined lettering), `Palette` (palette modes and effects), sometimes `Remap`. | Lineages: Chess/Checkers, Backgammon/Four/Crossword, ... |
 | `fx/` | Banners, particles, coin fountains, easing; `Presenter` in the Blackjack lineage. | Similar |
 | `stage/` or `render/` | The play screen's presentation. The game logic emits events; the stage animates them and reports `busy()` until it has shown them, so the CPU and the rules wait for the animation. | Per game |

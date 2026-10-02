@@ -21,8 +21,8 @@ done in order and checked.
 | Graphics | `platform/libraries/CHGfx` | 1.3.0 |
 | SD card / FAT | `platform/libraries/CHSd` | 1.0.0; never yet run against a real card on a board |
 | Buttons, frame pacing, exit to menu | `games/*/src/CHGame.h/.cpp` | identical in all 20 games |
-| Sound | `games/*/src/audio/` | the same sequencer in every game, each with its own effect list; some add `Music` |
-| Saving, debug protocol, `RamFunc.h` | `games/*/src/save`, `debug`, `RamFunc.h` | the same code, with per-game ids (save magic, handshake, section prefix) |
+| Sound | `games/*/src/audio/` | one sequencer design, drifted into 14 engine variants (step format, soft pulse, music players); each game has its own effect list |
+| Saving, debug protocol, `RamFunc.h` | `games/*/src/save`, `debug`, `RamFunc.h` | the same mechanisms with per-game ids (save magic, handshake, section prefix); CHBlackjack's save header and debug answers differ |
 | Twenty games, one utility | `games/`, `utilities/CHSDtoUSB` | building; verification per game in [status.md](status.md) |
 | PC tools | `tools/`, per-game `tools/` | in use |
 
@@ -58,6 +58,16 @@ session in `platform/bootloader/HARDWARE.md` has passed.
 
 ### 3. One `CHGame` library
 
+[unification.md](unification.md) measures how far apart the games'
+copies of each layer are, and [chgame-library.md](chgame-library.md) is
+the design: the API of each module, its configuration, and the order of
+the move (tooling, then the identical code, then saving and debugging,
+then the house-style helpers, sound last). In short, buttons and pacing,
+`RamFunc`, `Fmt`, CHGfx and CHSd are ready to move as they are; saving,
+the debug protocol and the frame loop need small hooks; palette, drawing
+and banner helpers need two decisions (the 3x5 font, the `ease` table);
+sound needs a superset engine.
+
 A board package can bundle libraries (`libraries/` inside the platform
 folder, where `SPI`, `Wire` and `EEPROM` are now). The unified library goes
 there, with `CHGame.h` as its one include and the existing cores under it:
@@ -81,9 +91,15 @@ Constraints that the move has to respect:
   and after (CLAUDE.md rule 2). That is the test for this whole step.
 - **The simulator** (`tools/chsim/chsim.py`) compiles a game's `src/` plus
   CHGfx. It has to learn where the library's sources are.
-- **Adapted copies.** Some games changed their copy of a shared module
-  (`gfx/`, `fx/`, and in places `audio/`). Only what is truly common moves;
-  [game-anatomy.md](game-anatomy.md) says which is which.
+- **Adapted copies.** Every game changed its copy of some shared module.
+  Only what is truly common moves, as a superset that draws the same
+  pixels; [unification.md](unification.md) says which is which.
+- **Library code cannot see `config.h`.** Its switches become generic
+  build flags (`CHGAME_DEBUG`, `CHGAME_PROFILE`), and per-game values (the
+  debug id, the save magic, the effect tables) are passed at run time.
+- **Decisions before the helpers move:** the 3x5 font (five games draw `M`
+  differently), the `ease` table, and whether CHBlackjack keeps its own
+  save header and debug answers ([chgame-library.md](chgame-library.md#decisions-still-open)).
 
 ### 4. The games as examples
 

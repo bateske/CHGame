@@ -7,7 +7,10 @@ PC tools. It is the source of truth: the repositories the pieces came from
 (CH32SerialBoot, CHGfx, one per game) are frozen and are not synced with.
 The aim is one board package that delivers all of it, with one `CHGame.h`
 library; [docs/roadmap.md](docs/roadmap.md) says what is done and what is
-not. Do not start that restructuring unless asked.
+not, [docs/unification.md](docs/unification.md) measures how far apart the
+games' copies of the shared code are, and
+[docs/chgame-library.md](docs/chgame-library.md) is the library's design.
+Do not start that restructuring unless asked.
 
 Read [README.md](README.md) for the overview. This file is the working
 manual: setup, commands, limits, rules and gotchas. Each game also has a
@@ -266,7 +269,9 @@ Each is in the game's `sdcard/` folder. See [docs/sd-card.md](docs/sd-card.md).
 ## Starting a new game
 
 Copy the closest existing game; the newest ones have the most complete
-tooling (`check.py`, `diffdrive.py`). Then:
+tooling (`check.py`, `diffdrive.py`).
+[docs/getting-started.md](docs/getting-started.md) is the guide for
+developers coming from the Arduboy. Then:
 1. Rename the folder, `.ino`, `config.h` prefix (`<PFX>_DEBUG`,
    `<PFX>_VERSION`), the debug handshake id (`Debug.cpp`, chdrive's `--id`
    default), the save magic (`src/save/Save.cpp`) and the RAMFUNC section

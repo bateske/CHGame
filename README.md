@@ -21,6 +21,10 @@ with no button presses, like an Arduino Leonardo.
 > **For AI agents and new developers:** read [CLAUDE.md](CLAUDE.md) first.
 > It has the build, simulator and test commands, the rules of the codebase,
 > and the hardware limits.
+>
+> **Coming from the Arduboy?** [docs/getting-started.md](docs/getting-started.md)
+> maps the Arduboy2 calls to CHGame's, explains what happens behind the
+> scenes, and has a first sketch that builds today.
 
 ## What this repository is for
 
@@ -59,6 +63,10 @@ yet is the packaging that makes the Boards Manager deliver all of it:
 
 [docs/roadmap.md](docs/roadmap.md) lists what the first release from this
 repository has to do to close that table.
+[docs/unification.md](docs/unification.md) measures how far the games'
+copies of the shared code are from one library, layer by layer, and
+[docs/chgame-library.md](docs/chgame-library.md) is the design of that
+library.
 
 ## Installing
 
@@ -148,7 +156,8 @@ CHGame/
 ├── tools/             the PC tools shared by every game (the simulator, size report, serial,
 │                      chgpack.py for game packages, sdcard/mkcard.py for the whole card)
 └── docs/              platform knowledge: hardware, performance, SD card, how a game is built,
-                       status, and the roadmap to the first release
+                       status, the roadmap to the first release, the CHGame library design and
+                       its assessment, and a getting-started guide for Arduboy developers
 ```
 
 ## Quick start for development
@@ -209,7 +218,7 @@ Release FQBN: `CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadon
 the game menu. It is identical in all twenty games, each of which carries it
 in `src/`. It is to become the one header of the unified library, with the
 graphics, SD and sound layers below under it
-([docs/roadmap.md](docs/roadmap.md)).
+([docs/chgame-library.md](docs/chgame-library.md)).
 
 ### CHGfx: `platform/libraries/CHGfx/`
 
@@ -237,7 +246,9 @@ is GPL-3.0 and stays inside that sketch.
 ### Sound, saving and the rest of the shared core
 
 The games grew from one another, so each carries the same small core in its
-own `src/`, often adapted (see [docs/game-anatomy.md](docs/game-anatomy.md)):
+own `src/`, often adapted (see [docs/game-anatomy.md](docs/game-anatomy.md);
+[docs/unification.md](docs/unification.md) measures how far each copy has
+drifted):
 - `audio/`: the piezo sequencer for sound effects and tunes, and the status
   LED.
 - `save/`: settings and saved games in two flash pages past the end of the
