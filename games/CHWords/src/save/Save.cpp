@@ -1,4 +1,4 @@
-#pragma GCC optimize("Os", "no-ipa-sra")   // cold code: size over speed
+#pragma GCC optimize("Os", "no-ipa-sra", "no-caller-saves")   // cold code: size over speed
 #include <Arduino.h>
 #include <string.h>
 #include <stddef.h>

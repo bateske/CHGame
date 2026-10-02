@@ -1,4 +1,4 @@
-#pragma GCC optimize("Os", "no-ipa-sra")
+#pragma GCC optimize("Os", "no-ipa-sra", "no-caller-saves")
 #include <Arduino.h>
 #include <string.h>
 #include <CHGame.h>
@@ -7,7 +7,7 @@
 #include "../gfx/Font.h"
 #include "../gfx/Tiles.h"
 #include "../fx/Fx.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../ai/Ai.h"
 #include "../assets/Assets.h"
 
@@ -131,7 +131,7 @@ void newGame() {
 }
 
 void note(const char *text, uint8_t colour, uint8_t frames) {
-    strncpy(noteText, text, sizeof noteText - 1);
+    fmtStr(noteText, text);          // (the longest note is 28 characters)
     noteCol = colour;
     noteT = frames;
     dirty = true;
@@ -170,8 +170,7 @@ static void addFloat(int x, int y, const char *text, uint8_t colour) {
         f.y = (int16_t)y;
         f.t = 60;
         f.colour = colour;
-        strncpy(f.text, text, sizeof f.text - 1);
-        f.text[sizeof f.text - 1] = 0;
+        fmtStr(f.text, text);         // "+123", "3X WORD": 7 characters at most
         return;
     }
 }
@@ -302,7 +301,7 @@ void update() {
             dirty = true;
             if (animT % 4 == 0 && animT / 4 < l.main.len) {
                 uint8_t k = (uint8_t)(animT / 4);
-                audio::note(SCALE[k > 7 ? 7 : k], 50);
+                audio::note(SCALE[k > 7 ? 7 : k], 50, 2);
                 sparkle((uint8_t)(l.main.start + k * l.main.step), fx::SPARK, 3, FX_B);
             }
             if (++animT >= l.main.len * 4 + 6) {

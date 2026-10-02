@@ -1,4 +1,4 @@
-#pragma GCC optimize("Os", "no-ipa-sra")   // cold code: size over speed (hot pixel loops live in Draw/Mask)
+#pragma GCC optimize("Os", "no-ipa-sra", "no-caller-saves")   // cold code: size over speed (hot pixel loops live in Draw/Mask)
 #include <Arduino.h>
 #include <string.h>
 #include <CHGame.h>
@@ -7,7 +7,7 @@
 #include "../gfx/Font.h"
 #include "../gfx/Tiles.h"
 #include "../fx/Fx.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../ai/Ai.h"
 #include "../dict/Dict.h"
 #include "../dict/DictData.h"
