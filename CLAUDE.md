@@ -62,8 +62,13 @@ changing that game.
      the core, variant or `boards.txt` has no effect on a build until it is
      released or the installed copy is patched.
    - The three libraries in `platform/board/arduino/CHGame/libraries/` are
-     the exception: `tools/device.py`, `tools/sdcard/mkcard.py` and the
-     simulator pass them explicitly, so an edit there takes effect at once.
+     the exception: `chgame build`, `chgame card` and the simulator pass
+     them explicitly, so an edit there takes effect at once.
+   - `libraries/CHGame/src/chgame/Sizzle.inl` (particles, banners, floats)
+     is not compiled in the library but inside each game's `src/fx/Fx.cpp`,
+     under that game's size pragma and `SIZZLE_*` switches (its `src/fx/Fx.h`).
+     A change there is a change to every game's image: rebuild all 20 and
+     compare sizes and frames, as for the rest of the library.
    - `platform/bootloader/src/sd.c` and `src/fat.c` are a C fork of CHSd: a
      fix to one belongs in the other too.
 7. **Credits stay exactly as each game's `NOTICE` and README give them.** Do
@@ -128,7 +133,7 @@ it, `python tools/chgame.py` is the same thing. The shared tools under
 | Release build + size | `chgame build` |
 | Debug build (serial debug protocol on) | `chgame build --debug` |
 | Upload release / debug | `chgame upload [--debug]` |
-| Everything checkable without a board | `chgame check` (9 games have one; `--quick`, `--no-device`) |
+| Everything checkable without a board | `chgame check` (every game; `--quick`, `--no-device`; what it runs comes from the game's `tools/game.py`) |
 | Host unit tests | `chgame test` |
 | Build the simulator | `chgame sim` |
 | Run a script in the simulator | `chgame run tools/scripts/<s>.txt out/<s>` |
@@ -149,8 +154,8 @@ it, `python tools/chgame.py` is the same thing. The shared tools under
 | Build the bootloader (+ size report) | `platform/bootloader/build.sh [release\|locked\|nomenu\|app] [--theme=rainbow\|plain\|casino]` |
 | Its PC test suite (flash/SD/panel models, power cuts, menu frames) | `python3 platform/bootloader/test/native/run_tests.py` |
 | Refresh the committed binaries | `platform/bootloader/tools/dist.sh` |
-| Build and pack every game into `out/sdcard/` (+ FAT32 image) | `python tools/sdcard/mkcard.py [--image out/sdcard.img]` |
-| Package one sketch / check packages / list a card | `python tools/chgpack.py pack\|verify\|info` |
+| Build and pack every game into `out/sdcard/` (+ FAT32 image) | `chgame card [--image out/sdcard.img]` |
+| Package one sketch / check packages / list a card | `chgame pack pack\|verify\|info` |
 | Install the menu bootloader on a board | `platform/bootloader/HARDWARE.md` (self-update over USB) |
 | Build the uploader, `chgame-upload` (Go, five hosts, into `out/chgame-upload/`) | `python tools/release/build_uploader.py` |
 | The uploaders' parity tests (Python and Go against one vector file) | `python -m unittest discover -s platform/bootloader/test/protocol`; `go test ./...` in `host/go` |
@@ -256,8 +261,8 @@ buttons are needed.
   preselected. A starts it.
 - **After an upload** the sketch starts directly (RUN reset). It appears in
   the menu as INSTALLED PROGRAM if it is not on the card.
-- **Uploads work while the menu is on screen**, and so do `device.py run`
-  and the debug protocol.
+- **Uploads work while the menu is on screen**, and so do `chgame run
+  --device` and the debug protocol.
 - **Holding START for 3 s** in any game goes back to the menu (the shared
   core's `pollButtons()`; `arduboy.startExits = false` opts out,
   `arduboy.exitToMenu()` leaves on purpose). The games don't show it; it is
@@ -266,7 +271,7 @@ buttons are needed.
 - **Holding B at power-on** skips the card and the panel: USB mode.
 
 The board is USB VID:PID `16C0:27DD`, and `tools/serialcap.py` /
-`device.py` find its port by that.
+`chgame` find its port by that.
 
 **The board may be in use.** Someone may be playing it or listening to it,
 and other sessions may share it.
@@ -275,8 +280,8 @@ and other sessions may share it.
 - Say that you are about to upload a debug build or run device scripts. A
   debug build can drop music or screens to fit the protocol, and a lockstep
   script freezes the game, so both look like crashes from the outside.
-- Check that no other `device.py`, `chgame-upload` or `chdrive.py --device`
-  process is using the board.
+- Check that no other `chgame upload`, `chgame run --device`,
+  `chgame-upload` or `chdrive.py --device` process is using the board.
 - Never probe the port with a bare pyserial open: it can hang holding the
   port. `chgame uploader probe` (or `chgame-upload -port <PORT> probe`) is
   the safe check. A crashed
@@ -327,15 +332,20 @@ every game has `chgame check`; the newest have the most scripts and tests.
 Then:
 1. Rename the folder, the `.ino`, the `config.h` prefix (`<PFX>_VERSION`,
    `<PFX>_LEAN` ...), the debug hello (`dbg::begin("<ID> " ...)`, and
-   `ident=` in `tools/chsim/chdrive.py`) and the save magic
+   `IDENT` in `tools/chsim/chdrive.py`) and the save magic
    (`save::magic("....")` in `src/save/Save.cpp`); check them against every
    other game (rule 8).
 2. Give it its own sounds (`src/audio/Sounds.cpp`) and save data.
+   Its effects are the library's `chgame/Sizzle`: keep in `src/fx/Fx.h`
+   only the `SIZZLE_*` switches it needs (pool size, kinds, banner, floats).
+   Its `tools/game.py` tells `chgame test`, `check` and `redraw` what to
+   run (the schema is `tools/gamecfg.py`'s docstring; an empty file is
+   every default); `tools/chsim/chdrive.py` holds its own script commands.
 3. Keep the START-held-3-s exit to the menu (the library's) unless the game
    needs a long START hold for itself (`arduboy.startExits = false` in
    `setup()`).
 4. Write its README in the one format ([docs/game-readme.md](docs/game-readme.md))
-   and record its one GIF with `tools/readme_gif.py`.
+   and record its one GIF with `chgame gif`.
 
 ## Gotchas
 

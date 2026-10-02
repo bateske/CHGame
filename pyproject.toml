@@ -29,5 +29,6 @@ chgame = "chgame:main"
 # setuptools to an import hook that only knows the listed names.
 [tool.setuptools]
 package-dir = {"" = "tools"}
-py-modules = ["chgame", "device", "paths", "readme_gif", "check_size", "chgpack", "libzip", "serialcap"]
-packages = ["chsim", "audio", "sdcard"]
+py-modules = ["chgame", "device", "paths", "check", "hosttests", "gamecfg", "artlib", "pixkit",
+              "readme_gif", "check_size", "chgpack", "libzip", "serialcap"]
+packages = ["chsim", "audio", "sdcard", "music", "fonts", "release"]
