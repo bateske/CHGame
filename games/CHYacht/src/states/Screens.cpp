@@ -15,7 +15,7 @@
 #include "../render/Chips.h"
 #include "../render/Layout.h"
 #include "../render/Wall.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../save/Save.h"
 #include "../assets/Assets.h"
 #include "../debug/Debug.h"
@@ -126,8 +126,8 @@ static void applyOptions() {
 void begin() {
     if (!save::load(game, hasGame)) game.newPurse();
     game.mix(micros() * 2654435761u);
+    audio::begin(SOUNDS, (uint8_t)Sfx::COUNT, !game.opt.sound);
     applyOptions();
-    audio::begin(!game.opt.sound);
     titleDiceInit();
     enter(Scr::Title);
 }
