@@ -1,12 +1,11 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask and CHGfx)
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library and CHGfx)
 // Screens after CHBlackjack's (src/states/Screens.cpp) by way of CHCraps:
 // fades between them, the options list, statistics, the pause menu and the
 // endings.
-#include <CHGfx.h>
+#include <CHGame.h>
 #include <string.h>
 #include "../../config.h"
 #include "Screens.h"
-#include "../CHGame.h"
 #include "../game/Yacht.h"
 #include "../cam/Cam.h"
 #include "../cam/Dice3D.h"
@@ -16,10 +15,6 @@
 #include "../render/Chips.h"
 #include "../render/Layout.h"
 #include "../render/Wall.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Fmt.h"
-#include "../gfx/Mask.h"
-#include "../gfx/Palette.h"
 #include "../audio/Audio.h"
 #include "../save/Save.h"
 #include "../assets/Assets.h"
@@ -142,10 +137,10 @@ void begin() {
 // ---------------------------------------------------------------------------
 static void feltBackdrop() {
     gfx_clear(FELT);
-    gfx_dither(0, 0, 128, 6, FELT_DK, 0);
-    gfx_dither(0, 122, 128, 6, FELT_DK, 1);
-    gfx_dither(0, 0, 6, 128, FELT_DK, 0);
-    gfx_dither(122, 0, 6, 128, FELT_DK, 1);
+    dither(0, 0, 128, 6, FELT_DK, 0);
+    dither(0, 122, 128, 6, FELT_DK, 1);
+    dither(0, 0, 6, 128, FELT_DK, 0);
+    dither(122, 0, 6, 128, FELT_DK, 1);
     gfx_rect(2, 2, 124, 124, GOLD);
 }
 
@@ -270,7 +265,7 @@ static void titleRender(uint32_t frame) {
     if (sig != staticSig) { staticSig = sig; titleStatic(frame); }
     // The spotlight and its dice, every frame.
     gfx_fillRect(SPOT_X, SPOT_Y, SPOT_W, SPOT_H, FELT);
-    gfx_dither(SPOT_X + 4, SPOT_Y + 2, SPOT_W - 8, SPOT_H - 4, FELT_LT, 0);
+    dither(SPOT_X + 4, SPOT_Y + 2, SPOT_W - 8, SPOT_H - 4, FELT_LT, 0);
     gfx_setClip(SPOT_X, SPOT_Y, SPOT_W, SPOT_H);
     d3::Look look{RED, RED, WINE, WHITE, SILVER, INK};
     art::dieColours(0, look.light, look.dark, look.pip);
@@ -470,7 +465,7 @@ static void playRender(uint32_t frame) {
     if (paused || toastT) redrawAll();
     present::render(game, frame);
     if (paused) {
-        gfx_dither(0, 0, 128, 128, INK, 0);
+        dither(0, 0, 128, 128, INK, 0);
         panel(20, 30, 88, 62, 4, NAVY, GOLD);
         centred57(35, "PAUSED", GOLD);
         static const char *const P[4] = {"RESUME", "OPTIONS", "SOUND", "SAVE & QUIT"};

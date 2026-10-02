@@ -77,8 +77,8 @@ otherwise anywhere.
 
 ## Building
 
-Needs the CHGame board package 0.2.4+ and the CHGfx 1.3 library (this repository
-carries both in [`platform/`](../../platform)).
+Needs the CHGame board package 0.2.4+, the CHGfx 1.3 library and the CHGame
+library (this repository carries all three in [`platform/`](../../platform)).
 
 ```
 python tools/device.py build            # release image + size report

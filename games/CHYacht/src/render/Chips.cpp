@@ -1,10 +1,8 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask and CHGfx)
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library and CHGfx)
 // Chips derived from CHBlackjack's (render/CardArt.cpp), which grew out of
 // Press-Play-On-Tape/Blackjack (Apache-2.0); the rest is new.
-#include <CHGfx.h>
+#include <CHGame.h>
 #include "Chips.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Palette.h"
 #include "../assets/Assets.h"
 
 namespace art {
@@ -25,7 +23,7 @@ static void chipSprite(const uint8_t *spr, int x, int y, uint8_t d) {
     uint8_t rm[16];
     for (uint8_t i = 0; i < 16; i++) rm[i] = i;
     rm[WHITE] = CHIP_BODY[d]; rm[BLUE] = CHIP_EDGE[d]; rm[SILVER] = CHIP_SHADE[d];
-    gfx_sprite4(spr, x, y, rm);
+    sprite4(spr, x, y, rm);
 }
 
 void chip(int cx, int y, uint8_t d, bool top) {

@@ -16,7 +16,9 @@ licensed under the Apache License, Version 2.0, by way of CHBlackjack
     (tools/art/dealer.png), plus expressions drawn for CHBlackjack.
     tools/assets.py builds them into src/assets/Assets.cpp from the
     original's assets/ PNGs.
-  * The 3x5 font (src/gfx/Draw.cpp, FONT35), extended with a few symbols.
+  * The 3x5 font (in the CHGame library,
+    platform/libraries/CHGame/src/chgame/Draw.cpp, FONT35), extended with a
+    few symbols.
 
 New for this game: the rules, the house's player, the score card, the tray
 and the presentation. The 3D dice and the dice cam come from CHCraps

@@ -1,8 +1,8 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask and CHGfx)
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library and CHGfx)
 // CHBlackjack's presenter (fx/Presenter.cpp) by way of CHCraps: the rolling
 // purse and the band-level redraw, re-cut for a score card, a tray of dice
 // and the dice cam.
-#include <CHGfx.h>
+#include <CHGame.h>
 #include <string.h>
 #include "Presenter.h"
 #include "Fx.h"
@@ -12,9 +12,6 @@
 #include "../render/Wall.h"
 #include "../render/Bar.h"
 #include "../render/Chips.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Fmt.h"
-#include "../gfx/Palette.h"
 #include "../audio/Audio.h"
 #include "../debug/Debug.h"
 
@@ -276,7 +273,7 @@ static void drawCard(const Yacht &g, bool showPot) {
 static void drawTray(const Yacht &g, uint32_t frame) {
     wall::rail(RAIL_Y);
     gfx_fillRect(0, TRAY_Y, 128, TRAY_H, FELT);
-    gfx_dither(0, TRAY_Y, 128, 2, FELT_DK, 0);
+    dither(0, TRAY_Y, 128, 2, FELT_DK, 0);
     gfx_hline(0, TRIM_Y, 128, GOLD);
     if (!trayShown) {
         // The dice are in the cup.
