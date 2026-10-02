@@ -2,7 +2,6 @@
 #include <CHGame.h>
 #include "Tiles.h"
 #include "../assets/Assets.h"
-#include "../RamFunc.h"     // the glyph loop runs from SRAM
 
 static inline void plot(uint8_t *p, int x, uint8_t c) {
     if (x & 1) *p = (uint8_t)((*p & 0x0F) | (c << 4));

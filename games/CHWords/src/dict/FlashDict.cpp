@@ -7,7 +7,7 @@
 #include <string.h>
 #include "Dict.h"
 #include "DictData.h"
-#include "../RamFunc.h"
+#include <chgame/RamFunc.h>
 
 namespace dict {
 

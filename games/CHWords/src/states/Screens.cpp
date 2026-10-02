@@ -14,7 +14,6 @@
 #include "../game/Game.h"
 #include "../stage/Stage.h"
 #include "../save/Save.h"
-#include "../debug/Debug.h"
 #ifdef CHSIM
 #include <sim.h>
 #endif
@@ -60,7 +59,7 @@ static bool think() {
 static const char *const OPPONENT[game::LEVELS] = {"TOURIST", "REGULAR", "HIGH ROLLER"};
 static const char *const OPP_LINE[game::LEVELS] = {"SHORT WORDS, AND FEW", "KNOWS MOST WORDS", "EVERY WORD, BEST SCORE"};
 
-#if CHWD_DEBUG
+#if CHGAME_DEBUG
 static uint32_t thinkAt, thinkMs, sliceUs;
 #endif
 
@@ -588,23 +587,23 @@ static void playUpdate() {
         if (!thinkT) {
             ai::start(1, game::setup.level);
             stage::thinking("CPU THINKING");
-#if CHWD_DEBUG
+#if CHGAME_DEBUG
             thinkAt = millis();
             sliceUs = 0;
 #endif
         }
-#if CHWD_DEBUG
+#if CHGAME_DEBUG
         uint32_t t0 = micros();
 #endif
         bool done = think();
-#if CHWD_DEBUG
+#if CHGAME_DEBUG
         if (micros() - t0 > sliceUs) sliceUs = micros() - t0;
 #endif
         // Long enough: it plays the best it has found (a blank in the rack
         // on a crowded board can take a while to get through the list).
         if (++thinkT == 1200) { ai::stop(); done = true; }
         if (done && thinkT > 40) {
-#if CHWD_DEBUG
+#if CHGAME_DEBUG
             thinkMs = millis() - thinkAt;
 #endif
             thinkT = 0;
@@ -799,7 +798,7 @@ static void optionsRender(uint32_t frame) {
 // ---------------------------------------------------------------------------
 // Debug protocol hooks (tools/chsim/chdrive.py 'say')
 // ---------------------------------------------------------------------------
-#if CHWD_DEBUG
+#if CHGAME_DEBUG
 //   G <mode> <level> <seed>    start a game (mode 0 vs CPU, 1 two players)
 //   R <letters>                the rack of the side to move (? a blank)
 //   W <row> <col> <H|V> <word> lay the word's tiles out from there (squares already taken are
@@ -947,7 +946,7 @@ void begin() {
     save::load(opt, stats, hasGame);
     applyOptions();
     dict::begin();
-#if CHWD_DEBUG
+#if CHGAME_DEBUG
     dbg::hook = debugHook;
 #endif
     enter(Scr::Title);
