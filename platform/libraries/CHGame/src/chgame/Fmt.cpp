@@ -1,4 +1,3 @@
-#pragma GCC optimize("Os", "no-ipa-sra")
 #include "Fmt.h"
 
 char *fmtInt(char *p, int32_t v) {

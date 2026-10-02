@@ -1,4 +1,3 @@
-#pragma GCC optimize("Os", "no-ipa-sra")
 // fx:: maths: easing, integer sine, randomness. Pure (no graphics), so host
 // tests and game logic can link it on its own.
 #include "Fx.h"

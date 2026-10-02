@@ -1,4 +1,3 @@
-#pragma GCC optimize("Os", "no-ipa-sra")
 #include <string.h>
 #include <CHGfx_internal.h>         // gfx__clip: CHGfx's clip rectangle
 #include "Draw.h"

@@ -1,4 +1,3 @@
-#pragma GCC optimize("Os", "no-ipa-sra")
 #include <CHGfx.h>
 #include "Fx.h"
 #include "RamFunc.h"

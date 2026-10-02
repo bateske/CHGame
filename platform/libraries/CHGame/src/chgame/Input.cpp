@@ -1,4 +1,3 @@
-#pragma GCC optimize("Os", "no-ipa-sra")
 #include <Arduino.h>
 #include "Input.h"
 

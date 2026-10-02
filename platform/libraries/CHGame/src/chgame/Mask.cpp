@@ -1,4 +1,3 @@
-#pragma GCC optimize("Os", "no-ipa-sra")
 #include <string.h>
 #include <CHGfx.h>
 #include "Mask.h"
