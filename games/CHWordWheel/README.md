@@ -205,7 +205,7 @@ keeps your place, and CONTINUE starts that step again with a new puzzle.
 - `python tools/chsim/diffdrive.py tools/scripts/diff/diff_round.txt out/d 1` -
   compares the game against a build that redraws everything every frame.
 - `python tools/phrases/build_bank.py [--bytes N] [--curve]` - the banks.
-- `python tools/audio/preview.py out/audio` - every sound and the tune as
+- `python ../../tools/audio/preview.py . out/audio` - every sound and the tune as
   WAV files.
 - `python tools/mockup.py` - the layout mock-ups the screens were built from.
 - `python tools/device.py build|upload [--debug]` - the device build. (A

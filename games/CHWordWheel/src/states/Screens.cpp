@@ -14,7 +14,7 @@
 #include "../render/Layout.h"
 #include "../render/Stage.h"
 #include "../render/WheelStrip.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../save/Save.h"
 #include "../debug/Debug.h"
 #include "../gfx/Shapes.h"
@@ -43,9 +43,12 @@ static uint8_t forceSection;
 
 static void toast(const char *s) { toastText = s; toastT = 60; }
 
-// Options "SOUND|LEAD|ARPEGGIO|OFF" (all-zero is the default) -> audio mode
-// (2 lead, 1 arpeggio, 0 off).
-static uint8_t soundMode(uint8_t opt) { return opt >= 2 ? 0 : (uint8_t)(2 - opt); }
+// Options "SOUND|LEAD|ARPEGGIO|OFF" (all-zero is the default): the tune's
+// lead line, its arpeggio, or no sound at all.
+static void applySound(uint8_t opt) {
+    audio::setMusic(opt ? audio::ARPEGGIO : audio::LEAD);
+    audio::setOn(opt < 2);
+}
 
 // The play screen only redraws what changed; anything drawn over it from
 // outside (pause menu, toast) has to force a full redraw.
@@ -77,7 +80,7 @@ static void enter(Scr s) {
     switch (s) {
         case Scr::Title:
             paused = false; menuSel = 0;
-            audio::music(Song::Title, true);
+            playSong(Song::Title, true);
             gfx_wait();                     // a card put in (or taken out) since last time?
             bank::begin();
             break;
@@ -104,7 +107,8 @@ static void enter(Scr s) {
 
 void begin() {
     save::load(game, deck, hasGame);
-    audio::begin(soundMode(game.opt.sound));
+    audio::begin(SOUNDS, (uint8_t)Sfx::COUNT, game.opt.sound < 2);
+    audio::setMusic(game.opt.sound ? audio::ARPEGGIO : audio::LEAD);
     enter(Scr::Title);
 }
 
@@ -464,7 +468,7 @@ static void optionsUpdate() {
         uint8_t n = (uint8_t)(optField(OPT_TEXT[optSel], 0, tmp) - 1);
         uint8_t *f = (uint8_t *)&game.opt + optSel;
         *f = (uint8_t)((*f + n + d) % n);
-        if (optSel == O_SOUND) audio::setMode(soundMode(*f));
+        if (optSel == O_SOUND) applySound(*f);
         audio::sfx(Sfx::Coin);
     }
     if ((arduboy.justPressed(A_BUTTON) && optSel == O_BACK) || arduboy.justPressed(B_BUTTON)) {
