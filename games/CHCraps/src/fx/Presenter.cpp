@@ -15,7 +15,6 @@
 #include "../render/Bar.h"
 #include "../render/Chips.h"
 #include "../audio/Sounds.h"
-#include "../debug/Debug.h"
 
 namespace present {
 

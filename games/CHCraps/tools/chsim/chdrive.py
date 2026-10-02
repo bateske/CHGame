@@ -5,8 +5,8 @@
 
 --id names the game's handshake reply (default CHCR, CHCraps).
 
-Both targets speak the same serial debug protocol (see the sketch's
-src/debug/Debug.h), so one script produces comparable screenshots from each.
+Both targets speak the same serial debug protocol (the CHGame library's
+chgame/Debug.h), so one script produces comparable screenshots from each.
 
 Script lines (# comments allowed):
     wait N              advance N frames

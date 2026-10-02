@@ -19,9 +19,8 @@
 #include "../audio/Sounds.h"
 #include "../save/Save.h"
 #include "../assets/Assets.h"
-#include "../debug/Debug.h"
 
-#if CHCR_DEBUG && defined(CHSIM)
+#if CHGAME_DEBUG && defined(CHSIM)
 uint64_t sim_hostNanos();
 #endif
 
@@ -671,7 +670,7 @@ void render(uint32_t frame) {
 // ---------------------------------------------------------------------------
 // Debug protocol (tools/chsim/chdrive.py 'say')
 // ---------------------------------------------------------------------------
-#if CHCR_DEBUG
+#if CHGAME_DEBUG
 //   R <seed>             the dice from a fixed seed (timing no longer mixed in)
 //   F <a> <b> [<a> <b>]  force the next rolls
 //   J <T|P|B|O|S|W|L>    jump: title, play (Classic), play (Beginner), options, stats, win, lose

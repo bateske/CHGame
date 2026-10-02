@@ -8,19 +8,18 @@
 //
 // Frame loop: logic runs while the previous frame is still going out over
 // DMA; drawing waits for it (one framebuffer), then the new frame is sent.
-#include "config.h"
 #include <CHGame.h>
+#include "config.h"
 #include "src/states/Screens.h"
-#include "src/debug/Debug.h"
 
 void setup() {
     arduboy.boot();
-    dbg::paintStack();
+    dbg::begin("CHCR " CHCR_VERSION);     // the debug protocol's hello (CHGAME_DEBUG builds)
     gfx_begin(GFX_DIV2, GFX_12BPP);
     pal::init();
     screens::begin();
     arduboy.setFrameRate(CHCR_FPS);
-#if CHCR_DEBUG
+#if CHGAME_DEBUG
     dbg::hook = screens::debugCommand;
 #endif
 }

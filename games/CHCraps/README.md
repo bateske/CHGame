@@ -209,8 +209,8 @@ a C++ compiler for the simulator and tests (zig, clang++ or g++ on the PATH,
     python tools/device.py build|upload [--debug]
     python ../../tools/check_size.py build/release
 
-The debug build (`--debug`) speaks the serial protocol in
-`src/debug/Debug.h`. The game's commands are in `src/states/Screens.cpp`:
+The debug build (`--debug`) speaks the CHGame library's serial protocol
+(`chgame/Debug.h`). The game's commands are in `src/states/Screens.cpp`:
 - reseed or force the dice;
 - jump to a screen;
 - set bets, the purse or the point;
@@ -234,7 +234,7 @@ So a script reads like a player at the table.
     src/fx/                 particles and banners; the presenter
     src/states/Screens.*    title, play, options, stats, the two endings
     src/audio/Sounds.*      the sound effects (the CHGame library plays them)
-    src/save, src/debug     shared with CHBlackjack/CHChess
+    src/save/Save.*         what a save holds (the CHGame library keeps it in flash)
     tools/                  simulator, tests, assets, sound preview, device helpers
 
 ## License and credits

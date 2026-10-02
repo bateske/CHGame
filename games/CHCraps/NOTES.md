@@ -6,7 +6,7 @@ Agent-facing notes for continuing work here; rules, controls and build are in RE
 
 - Imported from https://github.com/bateske/CHCraps at commit fa1fd77 (2026-10-01); develop here now, not in the old repo.
 - Release build (`opt=oslto,rtlib=nano,periph=game,usb=uploadonly`, core 0.2.4, CHGfx 1.3.0): flash 49,776 of 50,944 B (1,168 spare), static RAM 15,520 of 18,416 B (2,896 spare).
-- The image (`../../tools/check_size.py`'s `image:` line; README quotes 50,032 B) is only ~400 B under the 50,432 B that keeps both A/B save pages (`PAGE_A` 0xF500, `PAGE_B` 0xF600 in `src/save/Save.cpp`). Past 0xF500 saving drops to one page; past 0xF600 it switches off.
+- The image (`../../tools/check_size.py`'s `image:` line; README quotes 50,032 B) is only ~400 B under the 50,432 B that keeps both A/B save pages (0xF500 and 0xF600, the CHGame library's `chgame/Save.cpp`). Past 0xF500 saving drops to one page; past 0xF600 it switches off.
 - Verification: simulator only. `tools/tests/run_tests.py` (every bet against an independent oracle, exact house edges, dice physics, zone reachability), `tools/tests/sim_save.py` (save mid-hand, debug `V` reboot and continue, the broke case), and the chdrive scripts in `tools/scripts`. There is no `tools/check.py` in this game.
 - As of 2026-10-01 it has never run on the device: frame times unmeasured, sound unheard.
 
@@ -28,7 +28,6 @@ Agent-facing notes for continuing work here; rules, controls and build are in RE
 - Known issue (logged, not fixed; see ../../docs/status.md): CHYacht uses this game's save magic `0x52434843` "CHCR" with the same
   version 1, so after playing one, the other accepts its save. The fix is a new magic in CHYacht.
 - Music: deferred until flash allows (it does not now).
-- `config.h`'s comment says `CHCR_LEAN` leaves out "music, the attract demo"; the code actually stubs saving (`src/save/Save.cpp`) and the Options and Stats pages (`src/states/Screens.cpp`). Fix the comment when next touching it.
 
 ## Gotchas
 
