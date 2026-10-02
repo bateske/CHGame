@@ -36,7 +36,7 @@ void led(Led) {}
 namespace audio {
 
 static const Effect *table = nullptr;
-static uint8_t tableN = 0;
+
 
 // --- Sequencer state (shared with the 1 kHz interrupt) ----------------------
 static volatile const Step *fxSteps = nullptr;
@@ -188,21 +188,23 @@ static uint16_t musicHz() {
     return notes[arpCh] ? noteHz(notes[arpCh]) : 0;
 }
 
-// The music player, linked in only by music() or melody().
-static void (*musicTick)() = nullptr;
-static uint16_t (*musicNote)() = nullptr;
+// The music player, linked in only by music() or melody(): it keeps time
+// every millisecond, and gives the note to sound when no effect has the pin.
+static uint16_t scorePlayer(bool sound)  { scoreTick();  return sound ? musicHz() : 0; }
+static uint16_t melodyPlayer(bool sound) { melodyTick(); return sound ? musicHz() : 0; }
+static uint16_t (*player)(bool sound) = nullptr;
 
 
 extern "C" void osSystickHandler(void) {
     if (!started) return;
-    if (musicMode && musicTick) musicTick();
     const Step *s = (const Step *)fxSteps;
+    uint16_t m = musicMode && player ? player(!s) : 0;
     if (s) {
         const Step &st = s[fxI];
         uint16_t hz = (uint16_t)(st.hz * 20), ms = (uint16_t)(st.ms * 2);
         bool sweep = hz && st.endHz;
         if (sweep) hz = (uint16_t)(hz + ((int32_t)st.endHz * 20 - hz) * fxT / ms);
-        if (fxPitch != 256) hz = (uint16_t)((uint32_t)hz * fxPitch >> 8);
+        hz = (uint16_t)((uint32_t)hz * fxPitch >> 8);             // 256: as written
         bool smooth = glide && sweep && fxT;
         if (++fxT >= ms) {
             fxT = 0;
@@ -211,12 +213,12 @@ extern "C" void osSystickHandler(void) {
         tone(hz, smooth);
     } else {
         soft = false;
-        tone(musicMode && musicNote ? musicNote() : 0, true);
+        tone(m, true);
     }
 }
 
 void begin(const Effect *effects, uint8_t count, bool o) {
-    table = effects; tableN = count;
+    table = effects; (void)count;               // (the count documents the table)
     RCC->APB2PCENR |= RCC_APB2Periph_GPIOB;
     uint32_t v = (CFGHR_tmpB & ~(15u << 4)) | (3u << 4);          // PB9 LED: push-pull output
     CFGHR_tmpB = v;
@@ -226,7 +228,7 @@ void begin(const Effect *effects, uint8_t count, bool o) {
 }
 
 void setOn(bool o) {
-    if (!o) {
+    if (!o || !table) {
         started = false;
         lastHz = 1; tone(0, false);
         return;
@@ -249,7 +251,7 @@ static void start(const Step *st, uint8_t n, uint8_t flags, uint16_t pitch) {
 }
 
 static void play(uint8_t id, uint16_t pitch) {
-    if (id >= tableN) return;
+    if (!started) return;                    // (started means begin() gave the table)
     const Effect &e = table[id];
     start(e.steps, e.n, e.flags, pitch);
 }
@@ -295,7 +297,7 @@ void music(const uint8_t *s, bool loop) {
     score = s; mel = nullptr; scorePos = s; scoreWait = 0; scoreLoops = loop;
     for (auto &x : notes) x = 0;
     leadHold = 0;
-    musicTick = scoreTick; musicNote = musicHz;
+    player = scorePlayer;
     __enable_irq();
 }
 
@@ -304,7 +306,7 @@ void melody(const Melody &m, bool loop) {
     score = nullptr; mel = &m; scorePos = m.notes; melI = 0; melT = 0; scoreLoops = loop;
     for (auto &x : notes) x = 0;
     leadHold = 0;
-    musicTick = melodyTick; musicNote = musicHz;
+    player = melodyPlayer;
     __enable_irq();
 }
 
