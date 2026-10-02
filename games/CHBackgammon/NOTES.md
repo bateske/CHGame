@@ -36,7 +36,7 @@ Agent-facing notes for continuing work on this game. Rules, controls and build s
   - The glove is drawn turned over (a vertical flip) when it works from below: the top-half points, and the bar/tray on Red's turn (`fromBelow()` in `src/stage/Stage.cpp`). The owner has objected to mirrored art elsewhere because flipped shading reads wrong, so this may need a separate drawing, which costs flash.
   - Red vs ivory chips, points printed on the felt, and a wood frame with a gold inlay.
   - The centred cube shows 64.
-  - This game's copy of the 3x5 font has an 'M' with a lighter middle (`FONT35` in `src/gfx/Draw.cpp`), so it differs from the other tables.
+  - The 3x5 font is now the CHGame library's (`platform/libraries/CHGame/src/chgame/Draw.cpp`), so its 'M' is PPOT's, as at the other tables. This game's own copy had an 'M' with a lighter middle (one row, not two), because two of PPOT's side by side, as in BACKGAMMON, read as HH at title size.
 - Cut earlier to fit flash, and not reviewed by the owner: party rays, the bear-off chip flip, and dice on the title. Re-adding any of them needs a flash cut first.
 
 ## Gotchas
@@ -44,8 +44,7 @@ Agent-facing notes for continuing work on this game. Rules, controls and build s
 - Flash tactics already in use:
   - Every hand-written `.cpp` starts with `#pragma GCC optimize("Os", "no-ipa-sra")`; no-ipa-sra saved about 256 B under LTO. Keep it in new files.
   - Avoid 64-bit division: it pulls in `__divdi3` (about 1.2 KB). See the 32-bit maths in `src/ai/Cube.cpp`.
-  - The 3x5 font covers only '!'..'Z' (no lower case), indexed by ASCII.
-  - The glove is one `HAND` sprite, turned over with a negative scale in `sprite4`.
+  - The glove is one `HAND` sprite, turned over with `SPR_FLIP_V` in `sprite4`.
 - Size levers measured earlier:
   - `-flto-partition=one` would save about 260 B, but it needs link flags in the board package.
   - The biggest remaining items are features: match/cube about 2 KB, display font + mask about 1.8 KB, tumbling-dice rotation about 0.7 KB.

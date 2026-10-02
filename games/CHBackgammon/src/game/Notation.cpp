@@ -2,7 +2,7 @@
 #include <string.h>
 #include "Notation.h"
 #include "../rules/Board.h"
-#include "../gfx/Fmt.h"
+#include <chgame/Fmt.h>     // the CHGame library's formatting alone: pure logic, built by the host tests too
 
 // A checker's move: the points it touched, and which of its steps hit.
 struct Tok { uint8_t pts[5], hits, n; };

@@ -1,7 +1,7 @@
 # The palette swaps that dress the one checker and the one set of dice as
 # each side. One line per art colour the swap changes: the art colour, then
-# White's colour, then Red's (names as in src/gfx/Palette.h). Colours not
-# listed stay as drawn.
+# White's colour, then Red's (names as in the CHGame library's
+# chgame/Palette.h). Colours not listed stay as drawn.
 
 [checker]
 WHITE    WHITE    RED

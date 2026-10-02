@@ -1,6 +1,6 @@
 #pragma GCC optimize("Os", "no-ipa-sra")   // cold code: size over speed (hot pixel loops live in Draw/Table)
 #include <string.h>
-#include <CHGfx.h>
+#include <CHGame.h>
 #include <Arduino.h>
 #include "../../config.h"
 #include "Stage.h"
@@ -8,9 +8,6 @@
 #include "../game/Notation.h"
 #include "../ai/Ai.h"
 #include "../table/Table.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Palette.h"
-#include "../gfx/Fmt.h"
 #include "../fx/Fx.h"
 #include "../audio/Audio.h"
 #include "../assets/Assets.h"
@@ -24,7 +21,6 @@ using bg::OFF;
 // ---------------------------------------------------------------------------
 // Colour remaps for the art (its neutral tones -> a side: Assets.h; effects here)
 // ---------------------------------------------------------------------------
-static const uint8_t RM_ID[16] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
 static const uint8_t RM_CPU[16] = {0, 1, 2, 3, 4, 5, 6, 7, RED, WINE, 10, 11, 12, 13, 14, 15};   // Red's glove: a red cuff
 static const uint8_t RM_HIT[16] = {INK, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE,
                                    WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE};   // struck: a white flash
@@ -894,7 +890,7 @@ static void drawGlove(uint32_t frame) {
     bob = zoomed(bob);
     const uint8_t *rm = denyT & 4 ? RM_ALERT : turnSide == bg::RED ? RM_CPU : RM_ID;
     uint8_t spot = humanTurn ? cur : mv.on ? mv.to : cpuSpot;
-    if (fromBelow(spot)) sprite4(HAND, x - zoomed(HAND_TIP), y + 1 - bob, rm, -zscale());   // turned over
+    if (fromBelow(spot)) sprite4(HAND, x - zoomed(HAND_TIP), y + 1 - bob, rm, zscale(), SPR_FLIP_V);   // turned over
     else sprite4(HAND, x - zoomed(HAND_TIP), y - zoomed(HAND[1]) + bob - 1, rm, zscale());
 }
 
