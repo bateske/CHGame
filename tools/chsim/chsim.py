@@ -36,7 +36,10 @@ $CHSIM_FLAGS are added after the usual flags. A memory check of a game
 (-mcpu=baseline: zig otherwise targets this PC's CPU, whose newest
 instructions valgrind may not know; zig's -O0 also turns UBSan on, which
 the -fno-sanitize keeps out of the way.) chdrive runs the simulator under
-$CHSIM_WRAP when it is set.
+$CHSIM_WRAP when it is set. A report of an uninitialised value in
+save::read() is a game's struct padding copied into its save: harmless
+(the CRC covers the bytes as stored), though zeroing the struct first
+silences it.
 
 The executable is <sketch>/tools/chsim/build/<name>/sim.exe.
 """
