@@ -2,7 +2,6 @@
 #include <CHGame.h>
 #include "WheelArt.h"
 #include "../assets/WheelMap.h"
-#include "../RamFunc.h"
 
 namespace wheelart {
 

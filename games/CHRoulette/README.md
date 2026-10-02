@@ -154,7 +154,8 @@ C++ compiler for the simulator and tests (zig, clang++ or g++ on the PATH,
   runs a script on the game and on a copy that redraws everything every
   frame, and reports any pixel the incremental redraws left stale.
 * `python tools/device.py upload [--debug]` - build and upload (`--debug`
-  adds the serial protocol for screenshots, injected input and lockstep).
+  adds the CHGame library's serial protocol, `chgame/Debug.h`, for
+  screenshots, injected input and lockstep).
 * `python tools/assets.py` packs the art in `tools/art/` (it checks the
   croupier, his faces and the glove come out byte-identical to
   CHBlackjack's and CHChess's), `python tools/wheel.py` makes the wheel's
@@ -175,8 +176,7 @@ C++ compiler for the simulator and tests (zig, clang++ or g++ on the PATH,
     src/gfx/Remap.*         the glove's colour remaps
     src/states/Screens.*    title, play, options, stats, won, broke
     src/audio/              the effects (Sounds.*) and the music's scores (Music.*)
-    src/save/               flash save pages
-    src/debug/              serial debug protocol (debug builds only)
+    src/save/Save.*         what a save holds (the CHGame library keeps it in flash)
     src/assets/             generated art and the wheel's map
     tools/                  simulator, tests, asset pipeline, wheel generator, music, device tools
 
