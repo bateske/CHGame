@@ -1,16 +1,17 @@
-#pragma GCC optimize("Os", "no-ipa-sra")
+#pragma GCC optimize("Os", "no-ipa-sra", "no-caller-saves")
 #include <Arduino.h>
 #include <CHGame.h>
 #include "../config.h"
 #include "Frame.h"
 #include "states/Screens.h"
 #include "debug/Debug.h"
-#include "audio/Audio.h"
+#include "audio/Sounds.h"
 
 namespace frame {
 
 void begin() {
     dbg::paintStack();
+    audio::begin(SOUNDS, (uint8_t)Sfx::COUNT, false);   // on once the options are read
     pal::init();
     screens::begin();
 }

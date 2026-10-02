@@ -1,4 +1,4 @@
-#pragma GCC optimize("Os", "no-ipa-sra")
+#pragma GCC optimize("Os", "no-ipa-sra", "no-caller-saves")
 #include "Debug.h"
 #if CHWD_DEBUG
 #include <Arduino.h>

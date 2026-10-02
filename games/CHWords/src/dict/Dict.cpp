@@ -1,4 +1,4 @@
-#pragma GCC optimize("Os", "no-ipa-sra")
+#pragma GCC optimize("Os", "no-ipa-sra", "no-caller-saves")
 // The card's side of the dictionary: the file WORDS.DIC in the card's root
 // folder (tools/dict/build_sd.py writes it, and describes it).
 //

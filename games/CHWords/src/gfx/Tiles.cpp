@@ -1,4 +1,4 @@
-#pragma GCC optimize("Os", "no-ipa-sra")
+#pragma GCC optimize("Os", "no-ipa-sra", "no-caller-saves")
 #include <CHGame.h>
 #include "Tiles.h"
 #include "../assets/Assets.h"
