@@ -1,30 +1,30 @@
 #include "Sounds.h"
 
-static const audio::Step CURSOR[]    = { AUDIO_STEP(2100, 0, 10) };
-static const audio::Step SELECT[]    = { AUDIO_STEP(1700, 0, 18), AUDIO_STEP(2600, 0, 30) };
-static const audio::Step DENY[]      = { AUDIO_STEP(900, 650, 70) };
-static const audio::Step CHIP[]      = { AUDIO_STEP(3100, 0, 12), AUDIO_REST(9), AUDIO_STEP(3700, 0, 26) };
-static const audio::Step COIN[]      = { AUDIO_STEP(2800, 0, 10), AUDIO_STEP(3700, 0, 28) };
-static const audio::Step WHOOSH[]    = { AUDIO_STEP(1200, 3800, 90) };
-static const audio::Step WIN[]       = { AUDIO_STEP(2093, 0, 60), AUDIO_STEP(2637, 0, 60), AUDIO_STEP(3136, 0, 60), AUDIO_STEP(4186, 0, 170) };
-static const audio::Step BIGWIN[]    = {
+AUDIO_STEPS(CURSOR)    = { AUDIO_STEP(2100, 0, 10) };
+AUDIO_STEPS(SELECT)    = { AUDIO_STEP(1700, 0, 18), AUDIO_STEP(2600, 0, 30) };
+AUDIO_STEPS(DENY)      = { AUDIO_STEP(900, 650, 70) };
+AUDIO_STEPS(CHIP)      = { AUDIO_STEP(3100, 0, 12), AUDIO_REST(9), AUDIO_STEP(3700, 0, 26) };
+AUDIO_STEPS(COIN)      = { AUDIO_STEP(2800, 0, 10), AUDIO_STEP(3700, 0, 28) };
+AUDIO_STEPS(WHOOSH)    = { AUDIO_STEP(1200, 3800, 90) };
+AUDIO_STEPS(WIN)       = { AUDIO_STEP(2093, 0, 60), AUDIO_STEP(2637, 0, 60), AUDIO_STEP(3136, 0, 60), AUDIO_STEP(4186, 0, 170) };
+AUDIO_STEPS(BIGWIN)    = {
     AUDIO_STEP(1568, 0, 50), AUDIO_STEP(2093, 0, 50), AUDIO_STEP(2637, 0, 50), AUDIO_STEP(3136, 0, 90),
     AUDIO_STEP(2093, 0, 40), AUDIO_STEP(2637, 0, 40), AUDIO_STEP(2093, 0, 40), AUDIO_STEP(2637, 0, 40),
     AUDIO_STEP(3136, 0, 40), AUDIO_STEP(4186, 0, 40), AUDIO_STEP(3136, 0, 40), AUDIO_STEP(4186, 0, 40),
     AUDIO_STEP(2000, 4200, 220) };
-static const audio::Step LOSE[]      = { AUDIO_STEP(1300, 950, 140), AUDIO_STEP(950, 700, 220) };
-static const audio::Step BROKE[]     = { AUDIO_STEP(1568, 1480, 300), AUDIO_STEP(1480, 1397, 300), AUDIO_STEP(1397, 1319, 300), AUDIO_STEP(1319, 1249, 400), AUDIO_STEP(1249, 1180, 400) };
-static const audio::Step PLACE[]     = { AUDIO_STEP(1300, 700, 26), AUDIO_REST(18), AUDIO_STEP(2800, 0, 6) };   // a mark lands
-static const audio::Step POOF[]      = { AUDIO_STEP(2600, 1100, 70) };                  // a mark vanishes
-static const audio::Step TIC[]       = { AUDIO_STEP(1568, 0, 45) };                     // one, two, three in a line
-static const audio::Step TAC[]       = { AUDIO_STEP(2093, 0, 45) };
-static const audio::Step MEOW[]      = { AUDIO_STEP(1500, 2300, 110), AUDIO_STEP(2300, 1250, 260) };   // a cat's game
-static const audio::Step TITLE[]     = {                                       // the title's sting
+AUDIO_STEPS(LOSE)      = { AUDIO_STEP(1300, 950, 140), AUDIO_STEP(950, 700, 220) };
+AUDIO_STEPS(BROKE)     = { AUDIO_STEP(1568, 1480, 300), AUDIO_STEP(1480, 1397, 300), AUDIO_STEP(1397, 1319, 300), AUDIO_STEP(1319, 1249, 400), AUDIO_STEP(1249, 1180, 400) };
+AUDIO_STEPS(PLACE)     = { AUDIO_STEP(1300, 700, 26), AUDIO_REST(18), AUDIO_STEP(2800, 0, 6) };   // a mark lands
+AUDIO_STEPS(POOF)      = { AUDIO_STEP(2600, 1100, 70) };                  // a mark vanishes
+AUDIO_STEPS(TIC)       = { AUDIO_STEP(1568, 0, 45) };                     // one, two, three in a line
+AUDIO_STEPS(TAC)       = { AUDIO_STEP(2093, 0, 45) };
+AUDIO_STEPS(MEOW)      = { AUDIO_STEP(1500, 2300, 110), AUDIO_STEP(2300, 1250, 260) };   // a cat's game
+AUDIO_STEPS(TITLE)     = {                                       // the title's sting
     AUDIO_STEP(1047, 0, 90), AUDIO_STEP(1319, 0, 90), AUDIO_STEP(1568, 0, 90), AUDIO_STEP(2093, 0, 150), AUDIO_REST(60),
     AUDIO_STEP(1568, 0, 80), AUDIO_STEP(2093, 0, 260) };
-static const audio::Step BOOM[]      = { AUDIO_STEP(1400, 500, 60), AUDIO_STEP(900, 400, 50), AUDIO_STEP(700, 350, 160) };   // a mine
-static const audio::Step TICK[]      = { AUDIO_STEP(1100, 0, 3) };
-static const audio::Step TOCK[]      = { AUDIO_STEP(850, 0, 3) };
+AUDIO_STEPS(BOOM)      = { AUDIO_STEP(1400, 500, 60), AUDIO_STEP(900, 400, 50), AUDIO_STEP(700, 350, 160) };   // a mine
+AUDIO_STEPS(TICK)      = { AUDIO_STEP(1100, 0, 3) };
+AUDIO_STEPS(TOCK)      = { AUDIO_STEP(850, 0, 3) };
 
 const audio::Effect SOUNDS[(int)Sfx::COUNT] = {
     AUDIO_EFFECT(CURSOR, 0), AUDIO_EFFECT(SELECT, 1), AUDIO_EFFECT(DENY, 1), AUDIO_EFFECT(CHIP, 1),
