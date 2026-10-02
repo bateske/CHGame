@@ -63,8 +63,9 @@ You need the Arduino IDE (2.x) or `arduino-cli`, and:
 1. **The CHGame board package, 0.2.4 or later**: see [Installing](../../README.md#installing)
    in the repository's README.
 2. **The CHGfx library, 1.3.0**, in this repository at
-   [`platform/libraries/CHGfx`](../../platform/libraries/CHGfx). Copy it into your
-   sketchbook's `libraries/` folder.
+   [`platform/libraries/CHGfx`](../../platform/libraries/CHGfx), and **the CHGame
+   library** at [`platform/libraries/CHGame`](../../platform/libraries/CHGame).
+   Copy both into your sketchbook's `libraries/` folder.
 3. **This game's folder**, `games/CHCraps` of this repository (keep the name `CHCraps`).
 
 The game needs **link-time optimisation** to fit the 50,944-byte
@@ -232,7 +233,7 @@ So a script reads like a player at the table.
     src/render/             the wall, the layout and its spots, chips, the bar
     src/fx/                 particles and banners; the presenter
     src/states/Screens.*    title, play, options, stats, the two endings
-    src/gfx, src/audio, src/save, src/debug, src/CHGame.*   shared with CHBlackjack/CHChess
+    src/audio, src/save, src/debug   shared with CHBlackjack/CHChess
     tools/                  simulator, tests, assets, sound preview, device helpers
 
 ## License and credits

@@ -32,7 +32,7 @@ Agent-facing notes for continuing work here; rules, controls and build are in RE
 
 ## Gotchas
 
-- Flash is effectively full while both save pages are kept. Tactics already in use: chips and pucks are `gfx_sprite4` span sprites recoloured by remap tables (drawn from CHBlackjack's chip, made by `tools/assets.py`); all 24 die orientations come from one walk of quarter turns stored in a 24-bit constant (`labelDie`, `WALK` 0x288A28 in `src/cam/Dice3D.cpp`); the dice share the game's sine table; no music.
+- Flash is effectively full while both save pages are kept. Tactics already in use: chips and pucks are span sprites (the CHGame library's `sprite4`) recoloured by remap tables (drawn from CHBlackjack's chip, made by `tools/assets.py`); all 24 die orientations come from one walk of quarter turns stored in a 24-bit constant (`labelDie`, `WALK` 0x288A28 in `src/cam/Dice3D.cpp`); the dice share the game's sine table; no music.
 - Device debug builds get `CHCR_LEAN` automatically (`config.h`): no saving, no Options or Stats. `-DCHCR_FULL` forces the whole game into a debug build (check it fits).
 - Dice3D: integer Euler-angle cubes and a tilting pinhole camera; physics steps once per 60 Hz tick, so the dice keep their speed if a frame is slow. The throw is pre-simulated deterministically and the dice relabelled afterwards: any physics change moves where they land, so rerun `run_tests.py` after touching it.
 - Drawing: the table redraws only the bands (wall, felt, bar) that changed or that something moving touched; the dice cam redraws everything each frame, so that is where frame time goes.

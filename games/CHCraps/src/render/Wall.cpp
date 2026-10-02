@@ -1,15 +1,12 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask and CHGfx)
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library and CHGfx)
 // The wall, dealer, rail and plaque are CHBlackjack's (render/Table.cpp);
 // the stick and the roll history are new.
-#include <CHGfx.h>
+#include <CHGame.h>
 #include <string.h>
 #include "Wall.h"
 #include "Layout.h"
 #include "Chips.h"
 #include "../game/Craps.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Fmt.h"
-#include "../gfx/Palette.h"
 #include "../assets/Assets.h"
 
 namespace wall {
@@ -24,14 +21,14 @@ void backdrop() {
     memset(row, NAVY | (NAVY << 4), sizeof row);
     for (int x = 3; x < 128; x += 8) row[x >> 1] = (uint8_t)((row[x >> 1] & 0x0F) | (INK << 4));
     for (int y = 0; y < WALL_H; y++) gfx_copyRow(y, row, 0, GFX_W);
-    gfx_dither(0, 0, 128, 3, INK, 0);                    // darker ceiling
-    gfx_dither(DEALER_X + 6, 2, 36, 30, WOOD, 1);        // warm spotlight behind the dealer
+    dither(0, 0, 128, 3, INK, 0);                        // darker ceiling
+    dither(DEALER_X + 6, 2, 36, 30, WOOD, 1);            // warm spotlight behind the dealer
 }
 
 void dealer(uint8_t expr, uint8_t look, int x, int y) {
-    gfx_sprite4(DEALER, x, y);
+    sprite4(DEALER, x, y);
     int fx = x + (FACE_X - DEALER_X), fy = y + (FACE_Y - DEALER_Y);
-    gfx_sprite4(FACE_NORMAL, fx, fy);
+    sprite4(FACE_NORMAL, fx, fy);
     if (expr > E_TALK) expr = E_NORMAL;
     if (expr) {
         for (uint16_t i = FACE_EDIT_AT[expr - 1]; i < FACE_EDIT_AT[expr]; i++) {

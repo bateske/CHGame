@@ -1,8 +1,8 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask and CHGfx)
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library and CHGfx)
 // CHBlackjack's presenter (fx/Presenter.cpp): chip flights, the rolling
 // purse, the talking dealer and the band-level redraw, re-cut for the craps
 // layout and the dice cam.
-#include <CHGfx.h>
+#include <CHGame.h>
 #include <string.h>
 #include "Presenter.h"
 #include "Fx.h"
@@ -14,9 +14,6 @@
 #include "../render/Wall.h"
 #include "../render/Bar.h"
 #include "../render/Chips.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Fmt.h"
-#include "../gfx/Palette.h"
 #include "../audio/Audio.h"
 #include "../debug/Debug.h"
 
@@ -576,7 +573,7 @@ void render(const Craps &g, uint32_t frame) {
             if (!spot(g, b, x, y)) continue;
             if (disp[b] > 0) {
                 art::stackSmall(x, y, disp[b], 3);
-                if (!g.working(b) && step == S_IDLE) gfx_dither(x - 5, y - 4, 11, 8, INK, 0);   // OFF: dimmed
+                if (!g.working(b) && step == S_IDLE) dither(x - 5, y - 4, 11, 8, INK, 0);   // OFF: dimmed
             }
             if (paid[b] > 0) art::stackSmall(x + 6, y, paid[b], 3);
         }
@@ -603,7 +600,10 @@ void render(const Craps &g, uint32_t frame) {
         fx::drawParticles();
         fx::drawFloats();
         fx::drawBanner();
-        fx::applyShake(0, TRIM_Y - 1, -1);
+        // Every shake (a die off the wall, a seven out) starts and ends while
+        // the dice cam is up, so this never moves anything here. INK, as in
+        // the cam: one fill keeps one shake path (gfx_scroll) in the build.
+        fx::applyShake(0, TRIM_Y - 1, INK);
     }
     dbg::prof(2);
 }

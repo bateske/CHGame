@@ -1,12 +1,10 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask and CHGfx)
-#include <CHGfx.h>
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library and CHGfx)
+#include <CHGame.h>
 #include "Felt.h"
 #include "Layout.h"
 #include "Zones.h"
 #include "Chips.h"
 #include "../game/Craps.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Palette.h"
 #include "../assets/Assets.h"
 
 namespace felt {
@@ -31,7 +29,7 @@ static void spot(const Craps &g, const Zone &z, bool beginner) {
         case PLACE4: case PLACE5: case PLACE6: case PLACE8: case PLACE9: case PLACE10: {
             static const char *const NUM[6] = {"4", "5", "6", "8", "9", "10"};
             centred57(cx, y + 2, NUM[z.bet - PLACE4], closed ? FELT_DK : GOLD);
-            if (closed) gfx_dither(x + 1, y + 1, w - 2, h - 2, FELT_DK, 0);
+            if (closed) dither(x + 1, y + 1, w - 2, h - 2, FELT_DK, 0);
             break;
         }
         case COME:
@@ -40,7 +38,7 @@ static void spot(const Craps &g, const Zone &z, bool beginner) {
         case FIELD:
             // One row: (2) 3 4 9 10 11 FIELD (12), the 2 and 12 ringed in gold
             // (they pay more); chips sit under the white numbers.
-            gfx_sprite4(FIELD_PRINT, beginner ? x + 20 : x + 1, beginner ? y + 1 : y + 1);
+            sprite4(FIELD_PRINT, beginner ? x + 20 : x + 1, beginner ? y + 1 : y + 1);
             break;
         case DONT:
             text35(x + 3, y + (beginner ? 3 : 2), "DONT PASS BAR", WHITE);
