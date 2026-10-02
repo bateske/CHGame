@@ -8,7 +8,7 @@
 #include "../../src/game/Table.h"
 #include "../../src/game/Hand.h"
 #include "../../src/game/Ai.h"
-#include "../../src/CHGame.h"
+#include <chgame/Input.h>          // button masks (the CHGame library)
 
 void testCheck(bool ok, const char *what);
 #define CHECKT(cond, ...) do { char _b[200]; snprintf(_b, sizeof _b, __VA_ARGS__); testCheck((cond), _b); } while (0)

@@ -12,7 +12,8 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
-sys.path.insert(0, str(HERE.parents[3] / "tools" / "chsim"))  # CHCasino/tools/chsim (find_cxx)
+REPO = HERE.parents[3]
+sys.path.insert(0, str(REPO / "tools" / "chsim"))  # tools/chsim (find_cxx)
 from chsim import find_cxx  # noqa: E402
 
 
@@ -23,7 +24,8 @@ def main():
     cmd = find_cxx() + ["-std=gnu++17", "-O2", "-Wall", "-Wextra", "-Wno-unused-parameter",
                         "-Wno-unused-function", "-Wno-unknown-pragmas",
                         "-fsanitize=undefined", "-fno-sanitize-recover=undefined",
-                        "-DCHTEST", *[str(s) for s in srcs], "-o", str(exe)]
+                        "-DCHTEST", f"-I{REPO / 'platform' / 'libraries' / 'CHGame' / 'src'}",
+                        *[str(s) for s in srcs], "-o", str(exe)]
     r = subprocess.run(cmd, capture_output=True, text=True)
     if r.returncode:
         sys.stderr.write(r.stdout + r.stderr)

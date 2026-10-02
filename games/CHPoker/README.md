@@ -180,7 +180,8 @@ C++ compiler (zig, clang++ or g++ on the PATH, `pip install ziglang`, or
     src/stage/Stage.*      events -> motion; drawing the table
     src/render/*           cards and chips, the action bar, layout
     src/states/Screens.*   title, lobby, play, options, stats, the endings
-    src/gfx/*, src/fx/*    palette, primitives, lettering, effects
+    src/fx/*               particles, banners, floating texts (on the CHGame
+                           library's palette, drawing, lettering and fx::)
     src/audio/*, src/save/*, src/debug/*
     tools/                 simulator, tests, asset pipeline, device tools
 

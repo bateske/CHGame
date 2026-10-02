@@ -2,7 +2,7 @@
 #include <string.h>
 #include "Table.h"
 #include "Hand.h"
-#include "../CHGame.h"                       // button masks only
+#include <chgame/Input.h>                    // button masks only (no graphics: host tests)
 
 // Pacing, in frames at the FUN pace (QUICK halves them).
 enum : uint8_t {

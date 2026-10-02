@@ -8,9 +8,7 @@
 // frame only, a fixed amount each time, so it never snowballs into the
 // catch-up ticks and lockstep runs stay deterministic.
 #include "config.h"
-#include <CHGfx.h>
-#include "src/CHGame.h"
-#include "src/gfx/Palette.h"
+#include <CHGame.h>
 #include "src/states/Screens.h"
 #include "src/audio/Audio.h"
 #include "src/debug/Debug.h"
