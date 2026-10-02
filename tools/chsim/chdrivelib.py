@@ -28,7 +28,9 @@ Script lines (# comments allowed):
     free SECONDS        run free (real time) for a while, then lockstep again
     freegif NAME SECONDS EVERY   the same, sampled into a GIF
     say TEXT            send TEXT as a raw protocol line (the sketch's dbg::hook)
-    perf                print the PERF line (frame times, stack)
+    cal                 (simulator) time CHGfx's primitives, so perf estimates device times
+    perf [LABEL]        print the PERF line (frame times, stack), or after cal the
+                        estimated device render time
     prof                print the PROF line (CHGAME_PROFILE builds)
 Buttons: A B UP DOWN LEFT RIGHT START SELECT
 """
@@ -296,10 +298,29 @@ class Driver:
                 # catch-up).
                 for _ in range(int(args[0])):
                     self.frames(1)
+            elif op == "cal":
+                # (simulator) host time of the primitives the CHGfx benchmark
+                # measured on the board -> device ns per host ns, for perf.
+                self.t.send("Q")
+                vals = [int(v) for v in self.expect("CAL").split()[1:]]
+                self.expect("OK")
+                device_us = [93, 4, 100, 246, 263]   # benchmark-results.txt, 12 bpp run
+                ratios = [d * 1000.0 / max(h, 1) for d, h in zip(device_us, vals)]
+                self.ratio = sum(ratios) / len(ratios)
+                print(f"calibration: device/host = {self.ratio:.1f} (clear, hline, blit16, text24, circle: "
+                      f"{[round(r) for r in ratios]})")
             elif op == "perf":
+                # After cal (simulator): the render time as the board would
+                # take it; else the PERF line (on the board: real times).
                 line = self.cmd("P", "PERF")
                 label = " ".join(args)
-                print(f"perf {label}: {line}" if label else line)
+                kv = dict(f.split("=") for f in line.split()[1:] if "=" in f)
+                if getattr(self, "ratio", None) and "pcrnd" in kv:
+                    avg = int(kv["pcrnd"]) * self.ratio / 1e6
+                    mx = int(kv["pcmax"]) * self.ratio / 1e6
+                    print(f"perf {label}: est. device render avg {avg:.1f} ms, max {mx:.1f} ms ({kv['frames']} frames)")
+                else:
+                    print(f"perf {label}: {line}" if label else line)
             elif op == "prof":
                 # (a build without CHGAME_PROFILE answers ERR)
                 self.t.send("T")

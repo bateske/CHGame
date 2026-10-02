@@ -132,6 +132,30 @@ static void runHook(const char *l) {
     print(hook && hook(l[0], args) ? "OK\n" : "ERR\n");
 }
 
+#ifdef CHSIM
+// Q (the simulator): host nanoseconds for the primitives the CHGfx
+// benchmark measured on the board (its benchmark-results.txt), so chdrive's
+// `cal` can turn the simulator's render times into estimated device times.
+// The frame being shown is put back afterwards.
+static void calibrate(char *buf) {
+    static uint8_t keep[GFX_FB_BYTES], spr[8 * 16];
+    gfx_wait();
+    memcpy(keep, gfx_fb, sizeof keep);
+    memset(spr, 0x3F, sizeof spr);
+    uint64_t t0, r[5];
+    t0 = sim_hostNanos(); for (int i = 0; i < 200; i++) gfx_clear((uint8_t)i); r[0] = (sim_hostNanos() - t0) / 200;
+    t0 = sim_hostNanos(); for (int i = 0; i < 20000; i++) gfx_hline(0, i & 127, 128, (uint8_t)i); r[1] = (sim_hostNanos() - t0) / 20000;
+    t0 = sim_hostNanos(); for (int i = 0; i < 2000; i++) gfx_blit(spr, i & 63, i & 63, 16, 16, 15); r[2] = (sim_hostNanos() - t0) / 2000;
+    t0 = sim_hostNanos(); for (int i = 0; i < 1000; i++) gfx_text(0, i & 63, "ABCDEFGHIJKLMNOPQRSTUVWX", 1); r[3] = (sim_hostNanos() - t0) / 1000;
+    t0 = sim_hostNanos(); for (int i = 0; i < 1000; i++) gfx_fillCircle(64, 64, 30, (uint8_t)i); r[4] = (sim_hostNanos() - t0) / 1000;
+    memcpy(gfx_fb, keep, sizeof keep);
+    char *p = fmtStr(buf, "CAL");
+    for (int k = 0; k < 5; k++) { *p++ = ' '; p = fmtInt(p, (int32_t)r[k]); }
+    fmtStr(p, "\nOK\n");
+    print(buf);
+}
+#endif
+
 static void execute() {
     line[len] = 0;
     char cmd = line[0];
@@ -202,6 +226,11 @@ static void execute() {
             profFrames = 0;
             break;
         }
+#endif
+#ifdef CHSIM
+        case 'Q':
+            calibrate(buf);
+            break;
 #endif
 #ifndef CHSIM
         case 'B':

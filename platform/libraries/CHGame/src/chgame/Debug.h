@@ -13,6 +13,8 @@
 //                 (+ fstk=<b> with a second frame stack, + host ns in the sim)
 //   T          -> "PROF <slot>=<us> ..." section timings (CHGAME_PROFILE)
 //   B          -> reboot into the CHGame bootloader
+//   Q          (simulator) -> "CAL <ns> x5": host time of CHGfx's benchmark
+//                 primitives, for estimated device times (chdrive's cal)
 //   anything else goes to the game's hook: "OK" if it took it, else "ERR"
 //
 // In a release build every call here is an empty inline, so a sketch calls

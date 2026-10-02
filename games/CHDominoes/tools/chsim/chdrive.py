@@ -4,7 +4,7 @@
     python tools/chsim/chdrive.py --device [--port COMx] <script> <outdir>
 
 The repository's tools/chsim/chdrivelib.py does the driving and has the
-common script commands (wait, tap, hold, snap, gif, rec, say, perf ...).
+common script commands (wait, tap, hold, snap, gif, rec, say, perf, cal ...).
 CHDominoes adds:
     auto [PLAYS]        play on for the human (the A command: the SHARK's choices, draws when
                         there is nothing to play, PRESS A answered) to the end of the match,
@@ -13,8 +13,6 @@ CHDominoes adds:
     board               print the game's state (the H command)
     waitturn [W]        run until the game waits for you (a tile to play, a draw), answering
                         "PRESS A"; then W frames more
-    cal                 (simulator) calibrate host time against the board's, so
-                        perf prints estimated device render times
 and writes its GIFs (gif, rec, freegif) with fbimage.save_gif: whole frames
 on one shared palette, which every viewer shows right (the README reels).
 --id names the game's handshake reply (default CHDM).
@@ -100,27 +98,6 @@ class DominoesDriver(Driver):
                 time.sleep(every)
             self.cmd("L1")
             save_gif(frames, outdir / f"{gif}.gif", int(1000 * every))
-        elif name == "cal":
-            # Simulator: host time of the primitives the CHGfx benchmark
-            # measured on the board -> device ns per host ns.
-            self.t.send("Q")
-            vals = [int(v) for v in self.expect("CAL").split()[1:]]
-            self.expect("OK")
-            device_us = [93, 4, 100, 246, 263]   # benchmark-results.txt, 12 bpp run
-            ratios = [d * 1000.0 / max(h, 1) for d, h in zip(device_us, vals)]
-            self.ratio = sum(ratios) / len(ratios)
-            print(f"calibration: device/host = {self.ratio:.1f} (clear, hline, blit16, text24, circle: {[round(r) for r in ratios]})")
-        elif name == "perf":
-            # After cal, estimated device times; else the PERF line as it came.
-            line = self.cmd("P", "PERF")
-            label = " ".join(args)
-            kv = dict(f.split("=") for f in line.split()[1:] if "=" in f)
-            if getattr(self, "ratio", None) and "pcrnd" in kv:
-                avg = int(kv["pcrnd"]) * self.ratio / 1e6
-                mx = int(kv["pcmax"]) * self.ratio / 1e6
-                print(f"perf {label}: est. device render avg {avg:.1f} ms, max {mx:.1f} ms ({kv['frames']} frames)")
-            else:
-                print(line)
         else:
             return False
         return True

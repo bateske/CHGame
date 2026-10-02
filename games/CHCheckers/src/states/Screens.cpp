@@ -755,23 +755,6 @@ static bool debugHook(char cmd, const char *args) {
             enter(S[q - K]);
             return true;
         }
-        case 'Q': {
-            // Calibration for chdrive's cal/perf: host ns for the primitives
-            // the CHGfx benchmark measured on the board (benchmark-results.txt).
-            static uint8_t spr[8 * 16];
-            memset(spr, 0x3F, sizeof spr);
-            uint64_t t0, r[5];
-            t0 = sim_hostNanos(); for (int i = 0; i < 200; i++) gfx_clear((uint8_t)i); r[0] = (sim_hostNanos() - t0) / 200;
-            t0 = sim_hostNanos(); for (int i = 0; i < 20000; i++) gfx_hline(0, i & 127, 128, (uint8_t)i); r[1] = (sim_hostNanos() - t0) / 20000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 2000; i++) gfx_blit(spr, i & 63, i & 63, 16, 16, 15); r[2] = (sim_hostNanos() - t0) / 2000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 1000; i++) gfx_text(0, i & 63, "ABCDEFGHIJKLMNOPQRSTUVWX", 1); r[3] = (sim_hostNanos() - t0) / 1000;
-            t0 = sim_hostNanos(); for (int i = 0; i < 1000; i++) gfx_fillCircle(64, 64, 30, (uint8_t)i); r[4] = (sim_hostNanos() - t0) / 1000;
-            char cal[96], *c = fmtStr(cal, "CAL");
-            for (int k = 0; k < 5; k++) { *c++ = ' '; c = fmtInt(c, (int32_t)r[k]); }
-            fmtStr(c, "\n");
-            dbg::print(cal);
-            return true;
-        }
         case 'R': {
             // R <sq>: the D-pad presses (U D L R) that take the glove to sq,
             // as the cursor steps between its spots (fewest presses).

@@ -4,14 +4,12 @@
     python tools/chsim/chdrive.py --device [--port COMx] <script> <outdir>
 
 The repository's tools/chsim/chdrivelib.py does the driving and has the
-common script commands (wait, tap, hold, snap, gif, rec, say, perf ...).
+common script commands (wait, tap, hold, snap, gif, rec, say, perf, cal ...).
 `say` sends a game command (src/states/Screens.cpp's debugHook); one the
 stage is not ready for is answered HELD and run a few frames later.
 CHBoardwalk adds:
     board               print the game's state line (BOARD ...)
     waitturn [W]        run until the game waits for you, then W frames more
-    cal                 (simulator) calibrate host time against the board's, so
-                        perf prints estimated device render times
 --id names the game's handshake reply (default CHBW).
 """
 import sys
@@ -41,25 +39,6 @@ class BoardwalkDriver(Driver):
             self.frames(int(args[0]) if args else 0)
         elif name == "board":
             print(self.query("H", "BOARD"), flush=True)
-        elif name == "cal":
-            # Simulator: host time of the primitives the CHGfx benchmark
-            # measured on the board -> device ns per host ns.
-            self.t.send("Q")
-            vals = [int(v) for v in self.expect("CAL").split()[1:]]
-            self.expect("OK")
-            device_us = [93, 4, 100, 246, 263]   # benchmark-results.txt, 12 bpp run
-            ratios = [d * 1000.0 / max(h, 1) for d, h in zip(device_us, vals)]
-            self.ratio = sum(ratios) / len(ratios)
-            print(f"calibration: device/host = {self.ratio:.1f} (clear, hline, blit16, text24, circle: {[round(r) for r in ratios]})")
-        elif name == "perf" and getattr(self, "ratio", None):
-            line = self.cmd("P", "PERF")
-            kv = dict(f.split("=") for f in line.split()[1:] if "=" in f)
-            if "pcrnd" not in kv:               # the board: its own times
-                print(line)
-                return True
-            avg = int(kv["pcrnd"]) * self.ratio / 1e6
-            mx = int(kv["pcmax"]) * self.ratio / 1e6
-            print(f"perf {' '.join(args)}: est. device render avg {avg:.1f} ms, max {mx:.1f} ms ({kv['frames']} frames)")
         else:
             return False
         return True
