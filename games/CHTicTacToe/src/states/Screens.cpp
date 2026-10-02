@@ -13,7 +13,7 @@
 #include "../render/ChipArt.h"
 #include "../render/Stage.h"
 #include "../render/Table.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../save/Save.h"
 #include "../assets/Assets.h"
 #include "../debug/Debug.h"
@@ -90,7 +90,7 @@ void begin() {
     casino.purse = START_PURSE;
     casino.ante = 1;
     save::load(casino, hasGame);
-    audio::begin(!casino.opt.sound);
+    audio::begin(SOUNDS, (uint8_t)Sfx::COUNT, !casino.opt.sound);
     enter(Scr::Title);
 }
 
@@ -505,7 +505,7 @@ static void optionsUpdate() {
         uint8_t n = (uint8_t)(optField(OPT_TEXT[optSel], 0, tmp) - 1);
         uint8_t *f = (uint8_t *)&casino.opt + optSel;
         *f = (uint8_t)((*f + n + d) % n);
-        if (optSel == O_SOUND) audio::setMode(!*f);
+        if (optSel == O_SOUND) audio::setOn(!*f);
         audio::sfx(Sfx::Chip);
     }
     if ((arduboy.justPressed(A_BUTTON) && optSel == O_BACK) || arduboy.justPressed(B_BUTTON)) {
