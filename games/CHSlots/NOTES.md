@@ -6,7 +6,7 @@ Agent-facing notes for continuing work here; rules, controls and build are in RE
 
 - Imported from https://github.com/bateske/CHSlots at commit 67fbef5 (2026-10-01); develop here now, not in the old repo.
 - Release build (CHGame core 0.2.4, CHGfx 1.3.0, `opt=oslto,rtlib=nano,periph=game,usb=uploadonly`): flash 46,856 of 50,944 B (4,088 spare), static RAM 14,788 of 18,416 B (3,628 spare).
-- Save pages: `../../tools/check_size.py` reports the image as 47,112 B, 256 B more than the compile's flash figure. Both A/B pages (0xF500, 0xF600) fit while the image is at most 50,432 B, so the real headroom is 3,320 B. Past that, `src/save/Save.cpp` saves to page B only.
+- Save pages: `../../tools/check_size.py` reports the image as 47,112 B, 256 B more than the compile's flash figure. Both A/B pages (0xF500, 0xF600) fit while the image is at most 50,432 B, so the real headroom is 3,320 B. Past that, saving (the CHGame library's `chgame/Save.cpp`) uses page B only.
 - Simulator-verified (as of 2026-10-01):
   - `python tools/tests/run_tests.py` passes: LUCKY 7's exact return, SWEET and DRAGON FORTUNE by Monte Carlo, money conservation.
   - `tools/chsim/diffdrive.py tools/scripts/diff.txt` reports 0 stale pixels (it found 4 redraw bugs, now fixed).
@@ -43,9 +43,7 @@ Agent-facing notes for continuing work here; rules, controls and build are in RE
   - Simulator estimates: reels 7-9 ms, the bonus wheel 9-11 ms, against the 8.3 ms budget.
   - `tools/scripts/perf.txt` prints the estimates.
 - The owner's verdict on the tunes, once they have been heard on a piezo.
-- Known issue, logged but not fixed (see `../../docs/status.md`): CHSlots and CHSolitaire use the same save magic and handshake id "CHSL", and the same `CHSL_DEBUG`/`CHSL_*` macro prefix.
-  - After switching games, one can read the other's save, and chdrive's `?` handshake can't tell them apart.
-  - A fix gives one game a new magic and id (and updates `--id` in its `tools/chsim/chdrive.py`). That orphans existing saves of that game, so bump deliberately.
+- Fixed 2026-10-01 (see `../../docs/status.md`): CHSlots and CHSolitaire used the same save magic and handshake id "CHSL" and the same `CHSL_*` macro prefix. CHSolitaire moved to "CHSO"; CHSlots keeps "CHSL", so its saves still load.
 - A fourth machine is an open idea, but SWEET cost about 3.4 KB and only 3.3 KB is left before page A is lost. A machine that size would need cuts elsewhere or would give up a save page.
 
 ## Gotchas

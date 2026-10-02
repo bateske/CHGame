@@ -14,9 +14,8 @@
 #include "../audio/Sounds.h"
 #include "../save/Save.h"
 #include "../assets/Assets.h"
-#include "../debug/Debug.h"
 
-#if CHSL_DEBUG && defined(CHSIM)
+#if CHGAME_DEBUG && defined(CHSIM)
 uint64_t sim_hostNanos();
 #endif
 
@@ -673,7 +672,7 @@ void render(uint32_t frame) {
 // ---------------------------------------------------------------------------
 // Debug protocol (tools/chsim/chdrive.py 'say')
 // ---------------------------------------------------------------------------
-#if CHSL_DEBUG
+#if CHGAME_DEBUG
 //   R <seed>             the reels from a fixed seed (timing no longer mixed in)
 //   F <s0> .. <s4>       force the next spin's stops
 //   G <n>                force a feature on the next Fortune spin: 1 free games,

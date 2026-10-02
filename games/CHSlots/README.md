@@ -186,7 +186,7 @@ save, continue and the demo; `perf.txt` prints the frame-time estimates.
     src/render/          the cabinets, reels, wheel, paytables, each machine's felt
     src/states/          title, machine menu, play, options, stats, endings
     src/audio/           sound effects and three tunes (the CHGame library plays them)
-    src/save/            the save record (flash pages 0xF500 / 0xF600)
+    src/save/            what a save holds (the CHGame library keeps it in flash)
     tools/               art, asset and strip generators, simulator, tests
 
 ## License
