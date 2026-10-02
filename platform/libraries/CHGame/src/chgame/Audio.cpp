@@ -242,12 +242,12 @@ void setOn(bool o) {
 
 bool on() { return started; }
 
+// An effect already sounding above priority `prio` keeps the pin.
+static bool busy(uint8_t prio) { return !started || (fxSteps && prio < fxPrio); }
+
 static void start(const Step *st, uint8_t n, uint8_t flags, uint16_t pitch) {
-    if (!started) return;
-    uint8_t prio = flags & 15;
-    if (fxSteps && prio < fxPrio) return;
     __disable_irq();
-    fxSteps = st; fxN = n; fxI = 0; fxT = 0; fxPrio = prio; fxPitch = pitch;
+    fxSteps = st; fxN = n; fxI = 0; fxT = 0; fxPrio = flags & 15; fxPitch = pitch;
     soft = (flags & SOFT) != 0; glide = (flags & GLIDE) != 0;
     lastHz = 1;                              // restart the tone with the new duty
     __enable_irq();
@@ -256,7 +256,7 @@ static void start(const Step *st, uint8_t n, uint8_t flags, uint16_t pitch) {
 static void play(uint8_t id, uint16_t pitch) {
     if (!started) return;                    // (started means begin() gave the table)
     const Effect &e = table[id];
-    start(e.steps, e.n, e.flags, pitch);
+    if (!busy(e.flags & 15)) start(e.steps, e.n, e.flags, pitch);
 }
 
 void sfx(uint8_t id) { play(id, 256); }
@@ -266,20 +266,18 @@ void sfx(uint8_t id, uint8_t n) {
     play(id, SEMI[n > 12 ? 12 : n]);
 }
 
-static void one(uint16_t hz, uint16_t ms, uint8_t flags) {
-    if (!started || (fxSteps && (flags & 15) < fxPrio)) return;
+// One step made up on the spot; it may cut off effects up to priority `over`.
+static void one(uint16_t hz, uint16_t ms, uint8_t flags, uint8_t over) {
+    if (busy(over)) return;
     __disable_irq();
     oneStep.hz = (uint8_t)((hz + 10) / 20); oneStep.endHz = 0; oneStep.ms = (uint8_t)((ms + 1) / 2);
     __enable_irq();
     start(&oneStep, 1, flags, 256);
 }
 
-void blip(uint16_t hz, uint16_t ms, bool s) {
-    if (fxSteps && fxPrio > 1) return;
-    one(hz, ms, s ? SOFT : 0);
-}
+void blip(uint16_t hz, uint16_t ms, bool s) { one(hz, ms, s ? SOFT : 0, 1); }
 
-void note(uint16_t hz, uint16_t ms, uint8_t priority) { one(hz, ms, priority & 15); }
+void note(uint16_t hz, uint16_t ms, uint8_t priority) { one(hz, ms, priority & 15, priority & 15); }
 
 bool playing() { return fxSteps != nullptr; }
 

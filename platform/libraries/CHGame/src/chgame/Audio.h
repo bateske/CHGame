@@ -65,8 +65,9 @@ void sfx(uint8_t id);
 void sfx(uint8_t id, uint8_t semitones);
 template <class E> inline void sfx(E e) { sfx((uint8_t)e); }
 template <class E> inline void sfx(E e, uint8_t semitones) { sfx((uint8_t)e, semitones); }
-// One note made up on the spot (a typewriter, a click): priority 0, so it
-// never cuts off anything above priority 1.
+// One note made up on the spot (a typewriter, a click, a counter rolling):
+// it cuts off effects of priority 0 and 1, is refused over anything higher,
+// and is itself priority 0. (Never over any effect: if (!playing()) blip().)
 void blip(uint16_t hz, uint16_t ms, bool soft = false);
 // One note at a priority, like an effect.
 void note(uint16_t hz, uint16_t ms, uint8_t priority);
