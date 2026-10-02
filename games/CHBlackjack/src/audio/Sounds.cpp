@@ -42,7 +42,7 @@ const audio::Effect SOUNDS[(int)Sfx::COUNT] = {
 };
 
 void playSong(Song s, bool loop) {
-#if CHBJ_DEBUG
+#if CHGAME_DEBUG
     // Debug builds have no scores (Music.cpp): with music() never called,
     // the library's score player stays out of the image too.
     (void)s; (void)loop;

@@ -137,7 +137,8 @@ statistics, or press A for the credits:
 * **Saving without EEPROM:** the CHGame bootloader erases only the pages a
   new sketch occupies, so the two pages below its metadata page (0xF500,
   0xF600) survive re-uploads. Records carry a sequence number and CRC, and
-  alternate between the two pages so a power cut mid-save loses nothing.
+  alternate between the two pages so a power cut mid-save loses nothing
+  (the CHGame library's `chgame/Save.h`).
 * **Music on one pin:** a piezo plays one note at a time, so the scores have
   two renderings - Lead (the melody; other voices only fill its rests) and
   Arpeggio (voices take 6 ms turns). Notes change pitch at the end of a
@@ -161,8 +162,8 @@ folder instead).
   contact sheet. It flags drawing into the framebuffer while a flush is
   still converting it. `tools/scripts/showcase.txt` makes the GIFs above.
 * `python tools/device.py upload [--debug]` - build and upload, with the
-  settings above. `--debug` keeps USB Serial and adds a serial protocol
-  (`src/debug/Debug.h`) for screenshots, injected input and frame-by-frame
+  settings above. `--debug` keeps USB Serial and adds the CHGame library's
+  serial protocol (`chgame/Debug.h`) for screenshots, injected input and frame-by-frame
   lockstep; debug builds leave out the music and the credits page, which
   the tests never need.
 * `python tools/device.py run tools/scripts/sc_split.txt out/` - the same
@@ -186,8 +187,7 @@ folder instead).
     src/render/*            table, cards and chips, action bar, layout
     src/states/Screens.*    splash, title, play, options, stats, credits, win, lose
     src/audio/*             sound effects and music scores
-    src/save/*              flash save pages
-    src/debug/*             serial debug protocol (debug builds only)
+    src/save/*              what a save holds (the CHGame library keeps it in flash)
     src/assets/*            generated art (tools/assets.py)
     tools/                  simulator, tests, asset pipeline, music, device tools
 

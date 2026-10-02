@@ -9,7 +9,6 @@
 #include "../render/Table.h"
 #include "../render/CardArt.h"
 #include "../audio/Sounds.h"
-#include "../debug/Debug.h"
 
 namespace present {
 

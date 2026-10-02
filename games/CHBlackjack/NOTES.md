@@ -54,12 +54,12 @@ Agent-facing notes for continuing work on this game. Rules, controls and build s
   - `src/assets/Assets.cpp` comes from `python tools/assets.py`. The first run clones PPOT's repository into `tools/.cache/ppot` (gitignored), pinned to a commit, so it needs git and network. `tools/art/dealer.png` must use palette colours only.
   - `src/audio/Music.cpp` comes from `python tools/make_music.py`.
 - Debug builds:
-  - Every `CHBJ_DEBUG` build, the simulator included, has no music scores (`Music.cpp` is under `#if !CHBJ_DEBUG`). Listen with `python ../../tools/audio/preview.py . out/audio` or a release build.
+  - Every `CHGAME_DEBUG` build, the simulator included, has no music scores (`Music.cpp` is under `#if !CHGAME_DEBUG`). Listen with `python ../../tools/audio/preview.py . out/audio` or a release build.
   - Device debug builds (`CHBJ_LEAN`) also drop the credits page; `-DCHBJ_FULL` forces it back in.
   - Announce device uploads, and put a release build back afterwards: a debug build looks like a game without its music.
 - Profiling:
-  - chdrive's `prof` sends the protocol's `T`, which answers only in a build made with `CHBJ_PROFILE=1`. In the simulator, use `chdrive.py --sim . -D CHBJ_PROFILE=1 ...`; `device.py` has no switch for it.
+  - chdrive's `prof` sends the protocol's `T`, which answers only in a build made with `CHGAME_PROFILE=1` (the CHGame library's protocol, `chgame/Debug.h`; without it `T` gets `ERR` and `prof` waits for ever). In the simulator, use `chdrive.py --sim . -D CHGAME_PROFILE=1 ...`; `device.py` has no switch for it.
   - The simulator's PERF line reports `pcrnd`, the host-measured render time.
   - Scripts: `prof.txt`, `prof_hand.txt`, `perf_free.txt` and `pace.txt` (device).
-- Saves use magic "CHBJ" in pages shared with every other CHGame game. A build that grows into the pages falls back to one page, then to none (Stats says SAVING UNAVAILABLE).
+- Saves use magic "CHBJ" in pages shared with every other CHGame game, kept by the CHGame library (`chgame/Save.cpp`). The record (`src/save/Save.cpp`) is byte for byte the one from before the library: the old header's u16 version 1 reads as the library's version 1 with flag 0, and "a game in progress" stays in the data. A build that grows into the pages falls back to one page, then to none (Stats says SAVING UNAVAILABLE).
 - Shared tools: the simulator is `../../tools/chsim/chsim.py` (game-side driver: `tools/chsim/chdrive.py`). Set `CHSIM_CXX` or have zig/clang++/g++ on PATH (see root CLAUDE.md).
