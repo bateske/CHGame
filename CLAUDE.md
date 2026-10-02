@@ -75,8 +75,8 @@ changing that game.
 ```bash
 curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=$HOME/.local/bin sh
 arduino-cli config init --overwrite
-arduino-cli config add board_manager.additional_urls https://github.com/bateske/CH32SerialBoot/releases/latest/download/package_chgame_index.json
-arduino-cli core update-index && arduino-cli core install CHGame:ch32v@0.2.4
+arduino-cli config add board_manager.additional_urls https://github.com/bateske/CHGame/releases/latest/download/package_chgame_index.json
+arduino-cli core update-index && arduino-cli core install CHGame:ch32v
 pip install -r tools/requirements.txt ziglang      # Pillow, pyserial; zig is the simulator's compiler
 ```
 
@@ -84,16 +84,17 @@ pip install -r tools/requirements.txt ziglang      # Pillow, pyserial; zig is th
 Manager), then `pip install -r tools/requirements.txt ziglang`.
 
 **Notes:**
-- **The Boards Manager URL** is still the old CH32SerialBoot release URL:
-  it is where 0.2.4 is served from. It moves to
-  `https://github.com/bateske/CHGame/releases/latest/download/package_chgame_index.json`
-  with the first release cut from this repository (docs/roadmap.md). Change
-  it here, in the README and in `platform/README.md` together.
+- **The Boards Manager URL** above is this repository's. Until 0.3.0, the
+  first release cut from here, is published, 0.2.4 is still served from
+  `https://github.com/bateske/CH32SerialBoot/releases/latest/download/package_chgame_index.json`
+  (use that URL and `CHGame:ch32v@0.2.4` meanwhile). The URL is given here,
+  in the README and in `platform/README.md`: change the three together.
 - The board package brings its own RISC-V GCC 8.2 and the `chgame-upload`
   tool, so nothing else is needed for device builds.
-- **Linux:** core 0.2.4's `ch32yyxx.h` includes `core_riscv_cH32yyxx.h` with a
-  capital H, which only resolves on case-insensitive file systems. Until the
-  board package fixes it:
+- **Linux:** the installed core 0.2.4's `ch32yyxx.h` includes
+  `core_riscv_cH32yyxx.h` with a capital H, which only resolves on
+  case-insensitive file systems. It is fixed in `platform/board` (ships with
+  0.3.0); for 0.2.4:
   `ln -s core_riscv_ch32yyxx.h ~/.arduino15/packages/CHGame/hardware/ch32v/0.2.4/cores/arduino/ch32/lib/core_riscv_cH32yyxx.h`.
 - **The libraries need no install.** `tools/device.py` compiles with
   `--library` for CHGfx, CHGame and CHSd from

@@ -70,18 +70,17 @@ games' twenty copies of their shared code became it.
 
 ## Installing
 
-> **Until the first release from this repository,** the board package is
-> still served from its old release URL, shown below. It will move to
-> `https://github.com/bateske/CHGame/releases/latest/download/package_chgame_index.json`
-> with that release, and this section will change with it.
-
 **The board package** (the toolchain and the uploader come with it):
 
 ```bash
-arduino-cli config add board_manager.additional_urls https://github.com/bateske/CH32SerialBoot/releases/latest/download/package_chgame_index.json
+arduino-cli config add board_manager.additional_urls https://github.com/bateske/CHGame/releases/latest/download/package_chgame_index.json
 arduino-cli core update-index
-arduino-cli core install CHGame:ch32v@0.2.4
+arduino-cli core install CHGame:ch32v
 ```
+
+(Until 0.3.0, the first release cut from this repository, is published,
+0.2.4 is still served from
+`https://github.com/bateske/CH32SerialBoot/releases/latest/download/package_chgame_index.json`.)
 
 In the Arduino IDE 2.x: add the same URL under *File > Preferences >
 Additional boards manager URLs*, then install **CHGame** from the Boards
@@ -309,12 +308,13 @@ Each folder carries its own licence:
 | `platform/board/arduino/CHGame/libraries/CHGame/examples/games/*` | Apache-2.0 (see each game's `LICENSE` and `NOTICE`). CHChess's engine `src/engine/ch2k.hpp` is MPL-2.0. |
 | `tools/` | Apache-2.0 (`tools/LICENSE`, `tools/NOTICE`) |
 | `platform/board/` | MIT (`platform/board/LICENSE`, `THIRD-PARTY.md`) |
-| `platform/bootloader/` | MIT (`LICENSE`, `THIRD-PARTY.md`, `NOTICE`: its 5x7 font is Adafruit glcdfont, BSD) |
+| `platform/bootloader/` | MIT (`LICENSE`, `THIRD-PARTY.md`, `NOTICE`: its 5x7 font is Adafruit glcdfont, BSD); `host/` (the uploader, Go and Python) with it, `go.bug.st/serial` BSD-3-Clause in `THIRD-PARTY.md` |
 | `platform/board/arduino/CHGame/libraries/CHGame/` | Apache-2.0 (`LICENSE`, `NOTICE`: the 3x5 font is Press Play On Tape's, by way of CHBlackjack) |
 | `platform/board/arduino/CHGame/libraries/CHGfx/` | MIT; some fonts carry their own notices (in its `LICENSE`, e.g. the 3x5 font is Apache-2.0) |
 | `platform/board/arduino/CHGame/libraries/CHSd/` | MIT |
 | `platform/board/arduino/CHGame/libraries/CHGame/examples/apps/CHSDtoUSB/` | GPL-3.0 (its SD layer comes from sdfatlib) |
-| `docs/`, root files | Apache-2.0, like the games |
+| `platform/hardware/` | No licence stated yet (schematic and netlist) |
+| `docs/`, root files | Apache-2.0 (`LICENSE`, `NOTICE`) |
 
 ## History
 

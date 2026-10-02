@@ -155,11 +155,12 @@ without reading the source:
 These were recorded as "for upstream" while the board package was a copy.
 It is ours now:
 
-- Linux: `ch32yyxx.h` includes `core_riscv_cH32yyxx.h` (capital H).
+- ~~Linux: `ch32yyxx.h` includes `core_riscv_cH32yyxx.h` (capital H).~~
+  Fixed in `platform/board` on 2026-10-02; ships with 0.3.0.
 - Stale comments about an 8 KB bootloader and an app at 0x2000.
-- The root `LICENSE` file is missing (the README states Apache-2.0 for root
-  files and `docs/`). (The working name "CHCasino" left the code and
-  comments on 2026-10-02.)
+- ~~The root `LICENSE` file is missing.~~ Added on 2026-10-02 (Apache-2.0,
+  with a `NOTICE`). (The working name "CHCasino" left the code and comments
+  on 2026-10-02.)
 
 ## Order
 

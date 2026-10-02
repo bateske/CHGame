@@ -33,14 +33,18 @@ done, the pieces are used as described below.
 
 **Installing.** Install the board package through the Arduino Boards
 Manager. That also installs the RISC-V GCC 8.2 toolchain, `chgame-upload`
-and `wchisp`. Until the first release is cut from this repository, 0.2.4 is
-served from its old release URL:
+and `wchisp`:
 
 ```bash
-arduino-cli config add board_manager.additional_urls https://github.com/bateske/CH32SerialBoot/releases/latest/download/package_chgame_index.json
+arduino-cli config add board_manager.additional_urls https://github.com/bateske/CHGame/releases/latest/download/package_chgame_index.json
 arduino-cli core update-index
-arduino-cli core install CHGame:ch32v@0.2.4
+arduino-cli core install CHGame:ch32v
 ```
+
+Until 0.3.0, the first release cut from this repository, is published, 0.2.4
+is still served from
+`https://github.com/bateske/CH32SerialBoot/releases/latest/download/package_chgame_index.json`
+(install `CHGame:ch32v@0.2.4` from there meanwhile).
 
 **What the copy here is:**
 - the source of the next release. A change made here does not reach a build
@@ -66,11 +70,14 @@ arduino-cli core install CHGame:ch32v@0.2.4
   behaviour and memory report are described in
   [../README.md](../README.md) and [../CLAUDE.md](../CLAUDE.md).
 
+**Fixed here, not yet released:**
+- **Linux builds failed.** `cores/arduino/ch32/lib/ch32yyxx.h` included
+  `core_riscv_cH32yyxx.h`; the file is `core_riscv_ch32yyxx.h`, so it only
+  resolved on case-insensitive file systems (Windows, default macOS). Fixed
+  in this copy (ships with 0.3.0); CLAUDE.md gives the symlink workaround
+  for an installed 0.2.4.
+
 **Known problems, to fix here:**
-- **Linux builds fail.** `cores/arduino/ch32/lib/ch32yyxx.h` includes
-  `core_riscv_cH32yyxx.h`; the file is `core_riscv_ch32yyxx.h`. It works only
-  on case-insensitive file systems (Windows, default macOS). CLAUDE.md gives
-  the symlink workaround for an installed 0.2.4.
 - **Stale comments.** Several say the bootloader is 8 KB and the app starts
   at 0x2000 (`link_chgame_app.ld`, `chgame_map.h`); the code says 12 KB and
   0x3000.
