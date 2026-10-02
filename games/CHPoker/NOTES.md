@@ -5,9 +5,10 @@ Agent-facing notes for continuing work here; rules, controls and build are in RE
 ## Snapshot
 
 - Imported from https://github.com/bateske/CHPoker at commit 0840afd (2026-10-01); develop here now, not in the old repo.
-- Release build (CHGame core 0.2.4, CHGfx 1.3.0, the CHGame library, `opt=oslto,rtlib=nano,periph=game,usb=uploadonly`; 2026-10-02): image 48,848 of 50,944 B, static RAM 15,540 of 18,416 B (2,876 spare).
+- Release build (CHGame core 0.2.4, CHGfx 1.3.0, the CHGame library, `opt=oslto,rtlib=nano,periph=game,usb=uploadonly`; 2026-10-02): image 48,472 of 50,944 B, static RAM 15,500 of 18,416 B (2,916 spare).
 - On the CHGame library (`platform/libraries/CHGame`, `<CHGame.h>`) since 2026-10-02: the input, palette, drawing, 3x5 font, masks, fx maths and shake, and formatting are the library's; `src/fx/` keeps the game's particles, banners and floating texts.
-- Save pages: the image (as `../../tools/check_size.py` reports it) is 48,848 B. Both A/B pages (0xF500, 0xF600) fit while it is at most 50,432 B, so the real headroom is 1,584 B. Past that, `src/save/Save.cpp` saves to page B only.
+- Sound: on the library's engine (`chgame/Audio.h`) since 2026-10-02; `src/audio/Sounds.*` holds the effect tables (3-byte steps, every sweep GLIDEs as the old sequencer did). `python ../../tools/audio/preview.py . out/audio` renders them to WAV.
+- Save pages: the image (as `../../tools/check_size.py` reports it) is 48,472 B. Both A/B pages (0xF500, 0xF600) fit while it is at most 50,432 B, so the real headroom is 1,960 B. Past that, `src/save/Save.cpp` saves to page B only.
 - Simulator-verified (as of 2026-10-01):
   - `python tools/tests/run_tests.py` passes. It builds under UBSan; `--long` adds the exhaustive 7-card enumeration.
   - It covers exact hand-category counts, betting spots, side pots, stud order, a fuzz of thousands of hands, CPU equity and honesty, and stats.
@@ -29,7 +30,7 @@ Agent-facing notes for continuing work here; rules, controls and build are in RE
   - every live hand is shown at the showdown;
   - a $500 starting purse, with goals of $10K, $50K or endless;
   - a NEXT HAND / LEAVE bar after each hand;
-  - sound effects only, with no music player (the fanfares are effects too, see `src/audio/Audio.h`).
+  - sound effects only, with no music player (the fanfares are effects too, see `src/audio/Sounds.cpp`).
 
 ## Open items
 
@@ -39,7 +40,7 @@ Agent-facing notes for continuing work here; rules, controls and build are in RE
 
 ## Gotchas
 
-- Flash: 1,584 B before the image reaches save page A. Measure with `python tools/device.py build`, which runs the shared `../../tools/check_size.py`.
+- Flash: 1,960 B before the image reaches save page A. Measure with `python tools/device.py build`, which runs the shared `../../tools/check_size.py`.
 - Device debug builds (`CHPK_LEAN`, set in `config.h`) leave saving out entirely (stubs in `src/save/Save.cpp`), so a debug run on the board never touches its save pages. The simulator and release builds keep saving. `-DCHPK_FULL` forces a full device debug build, which may not fit.
 - Debug hooks are sent with `say` in chdrive scripts; the list is in `src/states/Screens.cpp`:
   - `G` sit down (game, table, buy-in, seed), `D` stack the deck (card = rank*4 + suit), `$` set the purse;

@@ -5,7 +5,7 @@
 #include "../../config.h"
 #include "Screens.h"
 #include "../fx/Fx.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../game/Table.h"
 #include "../game/Hand.h"
 #include "../render/CardArt.h"
@@ -636,7 +636,7 @@ void begin() {
     if (table.purse < minBuyIn(ROOKIE)) table.newPurse();
     buyIn = maxBuyIn(table.opt.level) / 2;
     clampBuyIn();
-    audio::begin(true);
+    audio::begin(SOUNDS, (uint8_t)Sfx::COUNT, true);
     applyOptions();
 #if CHPK_DEBUG
     dbg::hook = debugHook;
