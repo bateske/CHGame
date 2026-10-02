@@ -53,8 +53,9 @@ You need the Arduino IDE (2.x) or `arduino-cli`, and:
 1. **The CHGame board package, 0.2.4 or later**: see [Installing](../../README.md#installing)
    in the repository's README.
 2. **The CHGfx library, 1.3.0**, in this repository at
-   [`platform/libraries/CHGfx`](../../platform/libraries/CHGfx). Copy it into your
-   sketchbook's `libraries/` folder.
+   [`platform/libraries/CHGfx`](../../platform/libraries/CHGfx), and **the CHGame
+   library** at [`platform/libraries/CHGame`](../../platform/libraries/CHGame).
+   Copy both into your sketchbook's `libraries/` folder.
 3. **This game's folder**, `games/CHTicTacToe` of this repository (keep the name `CHTicTacToe`).
 
 Pick *Tools > Optimize > Smallest + LTO* and *Tools > USB > Upload only*
@@ -168,7 +169,8 @@ are not offered, since they need a clock or a secret.
     src/game/         Rules (every table), Cpu (the dealer), Match (turns, toss, bids, clock), Text
     src/render/       Stage (the play screen), Iso (the isometric tables), Table (the dealer's wall), ChipArt
     src/states/       Screens: title, tables room, play, options, stats, win, broke
-    src/gfx, src/fx   palette, drawing, lettering, particles, banners
+    src/gfx, src/fx   sprite remaps, particles, banners, floating text (palette,
+                      drawing and lettering: the CHGame library)
     src/audio, src/save, src/debug
     tools/            assets, simulator, scripts, tests
 

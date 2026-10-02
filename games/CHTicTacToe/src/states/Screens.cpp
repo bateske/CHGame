@@ -1,23 +1,18 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask and CHGfx)
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library and CHGfx)
 // Screens after CHBlackjack's (which follow Press Play On Tape's
 // GameStateTypes): title, the tables room, play, options, statistics and the
 // won/broke screens, with a pause menu and the rules card over play.
 #include <Arduino.h>
-#include <CHGfx.h>
+#include <CHGame.h>
 #include <string.h>
 #include "../../config.h"
 #include "Screens.h"
-#include "../CHGame.h"
 #include "../game/Match.h"
 #include "../game/Text.h"
 #include "../fx/Fx.h"
 #include "../render/ChipArt.h"
 #include "../render/Stage.h"
 #include "../render/Table.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Fmt.h"
-#include "../gfx/Mask.h"
-#include "../gfx/Palette.h"
 #include "../audio/Audio.h"
 #include "../save/Save.h"
 #include "../assets/Assets.h"

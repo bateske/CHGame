@@ -1,10 +1,8 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw/Mask and CHGfx)
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library and CHGfx)
 // The wall band, from CHBlackjack's render/Table.cpp.
-#include <CHGfx.h>
+#include <CHGame.h>
 #include <string.h>
 #include "Table.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Palette.h"
 #include "../gfx/Remap.h"
 #include "../assets/Assets.h"
 
