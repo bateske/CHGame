@@ -191,7 +191,10 @@ static uint16_t musicHz() {
 // The music player, linked in only by music() or melody(): it keeps time
 // every millisecond, and gives the note to sound when no effect has the pin.
 static uint16_t scorePlayer(bool sound)  { scoreTick();  return sound ? musicHz() : 0; }
-static uint16_t melodyPlayer(bool sound) { melodyTick(); return sound ? musicHz() : 0; }
+static uint16_t melodyPlayer(bool sound) {      // one voice: no arpeggio or lead needed
+    melodyTick();
+    return sound && notes[0] ? noteHz(notes[0]) : 0;
+}
 static uint16_t (*player)(bool sound) = nullptr;
 
 
