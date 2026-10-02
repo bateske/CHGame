@@ -1,20 +1,18 @@
 // Saving the purse, options and lifetime stats.
 //
-// CHGame has no EEPROM, but its bootloader only erases the flash pages a new
-// sketch occupies, so the last pages of the application region survive
-// re-uploads. Two pages are used in turn, each record carrying a sequence
-// number and a CRC, so a power cut mid-write can only lose the newest save.
-// If the sketch ever grows into those pages, saving switches itself off
-// rather than overwrite code. (From CHBlackjack via CHChess, with its own
-// magic: the CHGame games share the pages, and each ignores the others'
-// records - so saving here replaces another game's save.)
+// The CHGame library keeps the record in flash (chgame/Save.h: two pages
+// used in turn, a CRC, this game's own magic "CHPK"); this is what goes in
+// it and back out: the purse (the chips at the table included), the
+// options and the lifetime stats. Every game shares the two pages, so saving
+// here can replace another game's save.
 #pragma once
-#include <stdint.h>
+#include <chgame/Save.h>
 #include "../game/Table.h"
 
 namespace save {
 
-bool available();                   // false: image too big, or a write failed
+// (save::available(), false when the image is too big or a write failed,
+// is the library's.)
 bool load(Options &o, Stats &s, int32_t &purse);
 // Call after gfx_wait(): the page is built in CHGfx's chunk scratch.
 bool store(const Options &o, const Stats &s, int32_t purse);

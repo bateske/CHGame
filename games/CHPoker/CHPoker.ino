@@ -7,14 +7,14 @@
 // frame is sent. A CPU player's thinking runs on the first logic tick of a
 // frame only, a fixed amount each time, so it never snowballs into the
 // catch-up ticks and lockstep runs stay deterministic.
-#include "config.h"
 #include <CHGame.h>
+#include "config.h"
 #include "src/states/Screens.h"
 #include "src/audio/Sounds.h"
-#include "src/debug/Debug.h"
 
 void setup() {
     arduboy.boot();
+    dbg::begin("CHPK " CHPK_VERSION);     // the debug protocol's hello (CHGAME_DEBUG builds)
     gfx_begin(GFX_DIV2, GFX_12BPP);
     pal::init();
     screens::begin();

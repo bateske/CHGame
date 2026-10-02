@@ -13,7 +13,6 @@
 #include "../render/Bar.h"
 #include "../stage/Stage.h"
 #include "../save/Save.h"
-#include "../debug/Debug.h"
 #ifdef CHSIM
 #include <sim.h>
 #endif
@@ -32,7 +31,7 @@ static bool seeded;
 
 enum Overlay : uint8_t { NONE, PAUSE, RANKS };
 static Overlay overlay;
-#if CHPK_DEBUG
+#if CHGAME_DEBUG
 static uint32_t thinkAt, thinkLast, thinkMax;       // a CPU's think, wall time (debug W)
 #endif
 
@@ -326,11 +325,11 @@ static void playUpdate(bool firstTick) {
     static const uint8_t DIRS = UP_BUTTON | DOWN_BUTTON | LEFT_BUTTON | RIGHT_BUTTON;
     for (uint8_t b = 1; b; b <<= 1) if ((DIRS & b) && arduboy.repeat(b)) rep |= b;
     if (overlay) rep = 0;
-#if CHPK_DEBUG
+#if CHGAME_DEBUG
     bool wasThinking = table.phase == Phase::Think;
 #endif
     table.update(pressed, rep, stage::busy(), firstTick);
-#if CHPK_DEBUG
+#if CHGAME_DEBUG
     bool thinking = table.phase == Phase::Think;
     if (thinking && !wasThinking) thinkAt = millis();
     if (!thinking && wasThinking) {
@@ -544,7 +543,7 @@ static void endRender(uint32_t frame) {
 // ---------------------------------------------------------------------------
 // Debug protocol hooks (tools/chsim/chdrive.py 'say')
 // ---------------------------------------------------------------------------
-#if CHPK_DEBUG
+#if CHGAME_DEBUG
 //   G <game> <level> <buyin> <seed>    sit down at a table
 //   D <c1,c2,...>                      stack the next cards dealt (0..51 = rank*4+suit)
 //   $ <amount>                         set the purse
@@ -638,7 +637,7 @@ void begin() {
     clampBuyIn();
     audio::begin(SOUNDS, (uint8_t)Sfx::COUNT, true);
     applyOptions();
-#if CHPK_DEBUG
+#if CHGAME_DEBUG
     dbg::hook = debugHook;
 #endif
     enter(Scr::Title);

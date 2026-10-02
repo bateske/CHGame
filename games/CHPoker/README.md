@@ -184,7 +184,7 @@ C++ compiler (zig, clang++ or g++ on the PATH, `pip install ziglang`, or
     src/fx/*               particles, banners, floating texts (on the CHGame
                            library's palette, drawing, lettering and fx::)
     src/audio/Sounds.*     the sound effects (the CHGame library's engine)
-    src/save/*, src/debug/*
+    src/save/Save.*        what a save holds (the CHGame library keeps it in flash)
     tools/                 simulator, tests, asset pipeline, device tools
 
 ## License
