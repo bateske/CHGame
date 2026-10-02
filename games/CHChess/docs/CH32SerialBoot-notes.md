@@ -84,8 +84,9 @@ assembly). Other options:
   drawing from deep code.
 
 A stack high-water helper in the core would help too (paint the stack at
-boot, scan for the first overwritten word). CHChess carries its own
-(`src/debug/Debug.cpp`), and it was how the 2 KB limit was found.
+boot, scan for the first overwritten word). CHChess carried its own
+(`src/debug/Debug.cpp`, now the CHGame library's `chgame/Debug.cpp`), and
+it was how the 2 KB limit was found.
 
 ### 3. A save-data API in the core
 
@@ -93,7 +94,8 @@ Sketches can keep data in flash pages above their image; it survives
 re-uploading, as the platform notes record. CHChess and CHBlackjack each
 carry a copy of the flash controller sequence mirrored from
 `bootloader/src/flash.c`, plus page selection, A/B pages and a CRC
-(`CHChess/src/save/Save.cpp`, about 1 KB).
+(`CHChess/src/save/Save.cpp`, about 1 KB; now one copy in the CHGame
+library, `chgame/Save.cpp`).
 
 A small core library would remove that duplication and the risk of
 getting the flash sequence subtly wrong: "give me the free pages above my
@@ -120,7 +122,7 @@ It relies on the linker script placing `.srodata*` in `.data` (copied to
 RAM at boot), but after `.sdata`, inside the 4 KB the global pointer
 reaches: the code pushed variables out of that window, and every
 access to one of them grew by an instruction. CHGfx 1.3 and CHChess
-(`src/RamFunc.h`) now use `.gnu.linkonce.r.<prefix>.<name>` instead, which
+(`src/RamFunc.h`, now the CHGame library's `chgame/RamFunc.h`) now use `.gnu.linkonce.r.<prefix>.<name>` instead, which
 the script places first in `.data`; on CHChess that alone saves 192 bytes.
 A named `.ramfunc` output section ahead of `.sdata` in the linker script,
 and one `RAMFUNC(name)` macro in the core headers, would make this

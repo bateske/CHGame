@@ -5,7 +5,6 @@
 #include "Frame.h"
 #include "states/Screens.h"
 #include "stage/Stage.h"
-#include "debug/Debug.h"
 #include "engine/Engine.h"
 #include "audio/Sounds.h"
 #ifdef CHSIM
@@ -62,11 +61,9 @@ static void onFrameStack(void (*fn)()) { fn(); }
 #endif
 
 void begin() {
-#if CHCH_DEBUG && !defined(CHSIM)
-    dbg::frameStackLo = frameStack;
-    dbg::frameStackHi = frameStack + 256;
+#ifndef CHSIM
+    dbg::frameStack(frameStack, frameStack + 256);   // P's fstk= (CHGAME_DEBUG builds)
 #endif
-    dbg::paintStack();
     audio::begin(SOUNDS, (uint8_t)Sfx::COUNT, false);   // on once the options are read
     pal::init();
     screens::begin();
@@ -100,7 +97,7 @@ static void thinkFrame();
 void thinkPoll() { onFrameStack(thinkFrame); }
 
 static void thinkFrame() {
-#if CHCH_DEBUG
+#if CHGAME_DEBUG
     if (arduboy.lockstep >= 0) {
         static uint8_t polls;
         dbg::poll();

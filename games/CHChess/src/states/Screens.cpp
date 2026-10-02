@@ -11,7 +11,6 @@
 #include "../game/Match.h"
 #include "../stage/Stage.h"
 #include "../save/Save.h"
-#include "../debug/Debug.h"
 #ifdef CHSIM
 #include <sim.h>
 #endif
@@ -37,7 +36,7 @@ static Overlay overlay;
 static uint8_t promoFrom, promoTo, promoSel;
 static uint8_t pendingAction;        // chosen from the pause menu while the CPU was thinking
 static bool statsCounted;
-#if CHCH_DEBUG
+#if CHGAME_DEBUG
 static uint32_t thinkMs;            // the CPU's last search, wall time (debug W)
 #endif
 
@@ -480,11 +479,11 @@ static void playUpdate(bool thinking) {
             if (match::humanToMove() && !stage::busy()) playInput();
             break;
     }
-#if CHCH_DEBUG
+#if CHGAME_DEBUG
     uint32_t t0 = millis();
 #endif
     match::update(stage::busy());          // the CPU's search runs in here
-#if CHCH_DEBUG
+#if CHGAME_DEBUG
     if (millis() - t0 > 100) thinkMs = millis() - t0;
 #endif
     stage::update();
@@ -611,7 +610,7 @@ static void optionsRender(uint32_t frame) {
 // ---------------------------------------------------------------------------
 // Debug protocol hooks (tools/chsim/chdrive.py 'say')
 // ---------------------------------------------------------------------------
-#if CHCH_DEBUG
+#if CHGAME_DEBUG
 //   G <mode> <humanBlack> <level> <seed>   start a game (mode 0 vs CPU, 1 two players)
 //   M <from> <to> [promo]                   play a move (squares 0..63)
 //   J <T|S|O>                               jump to title/setup/options
@@ -762,9 +761,9 @@ void begin() {
     opt.sound = 1;
     save::load(opt, stats, hasGame);
     applyOptions();
-#if CHCH_DEBUG
+#if CHGAME_DEBUG
     dbg::hook = debugHook;
-    dbg::holdGame = searching;
+    dbg::holdWhile(searching);
 #endif
     enter(Scr::Title);
 }

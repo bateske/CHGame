@@ -152,7 +152,8 @@ C++ compiler (zig, clang++ or g++ on the PATH, `pip install ziglang`, or
   (squares 0 = a1 .. 63 = h8).
   `cal` and `perf` in a script estimate the device's render time.
 * `python tools/device.py upload [--debug]` - build and upload (`--debug`
-  adds the serial protocol for screenshots, injected input and lockstep).
+  adds the CHGame library's serial protocol, `chgame/Debug.h`, for
+  screenshots, injected input and lockstep).
 * **Editing the art:** `python tools/sheet.py export` writes
   `tools/art/sheet.png`, an indexed PNG on the game's palette (transparent
   background, swatch included): the pieces and glove as drawn (MASTER), the
