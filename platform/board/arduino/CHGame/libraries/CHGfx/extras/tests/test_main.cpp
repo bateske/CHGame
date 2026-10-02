@@ -1,5 +1,6 @@
 /*
- * CHGfx host tests:   python extras/sim/chsim.py test
+ * CHGfx host tests:   python tools/chsim/chsim.py test   (in the CHGame repository;
+ *                     chgame test with --sketch CHGfx does the same)
  *
  * The library's drawing code, compiled for the PC exactly as the board
  * compiles it, checked three ways:
@@ -28,16 +29,17 @@
 #include <vector>
 #include <functional>
 #include "tiny3x5_cols.h"
-#include "../host/sim.h"
+#include "sim.h"                       /* the repository's tools/chsim/host */
 
 /* ------------------------------------------------------------------ */
-/* The simulator hooks chsim_gfx.cpp needs                             */
+/* The simulator hooks chgfx_host.cpp needs                            */
 /* ------------------------------------------------------------------ */
 static uint32_t s_now = 0;
 static int s_bugs = 0, s_frames = 0;
 uint32_t sim_now() { return s_now; }
 void sim_advance(uint32_t us) { s_now += us; sim_flushProgress(s_now); }
 void sim_sync() {}
+void sim_present() {}
 void sim_bug(const char *, ...) { s_bugs++; }
 bool sim_buttonHeld(uint32_t) { return false; }
 void sim_framePresented() { s_frames++; }

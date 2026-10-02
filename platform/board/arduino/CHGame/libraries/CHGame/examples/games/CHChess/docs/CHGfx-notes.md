@@ -127,8 +127,9 @@ next flush (so it can be called any time without tearing), and a
 `tools/chsim` (the host CHGfx with flush timing, the drawing-during-flush
 check, a cost model calibrated against `benchmark-results.txt`, and the
 `chdrive.py` script runner with screenshots and GIFs) has been copied
-from CHBlackjack to CHChess. It would be better maintained once, in
-`CHGfx/extras/sim`, and it is the fastest way to develop for the board.
+from CHBlackjack to CHChess. (Since then it is maintained once, as the
+repository's `tools/chsim`, which CHGfx's own tests run on too.) It is the
+fastest way to develop for the board.
 
 ## On CHGfx 1.3.0: shapes, sprites and row operations
 

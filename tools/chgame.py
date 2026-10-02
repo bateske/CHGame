@@ -13,13 +13,15 @@ same thing uninstalled.
                                          compile and flash through the Python uploader
                                          (--arduino: through arduino-cli and the Go tool instead)
   sim     [-D NAME[=V] ...]              build the PC simulator, print the executable
+          --free [--frames N] [--gif F | --png DIR] [--input SPEC] [--cost]
+                                         run it free (no driver): the panel's frames to a GIF or PNGs
   run     SCRIPT OUTDIR [--device] [--port P] [--card IMG] [-D ...]
                                          run a chdrive script in the simulator (default) or,
                                          with --device, as a debug build on the board
   shot    OUT.png [--port P]             screenshot of the debug build running on the board
   check   [--quick] [--no-device] [--compare A B]
                                          everything checkable without a board
-  test    [ARGS ...]                     the host unit tests
+  test    [ARGS ...]                     the host unit tests (--sketch CHGfx: the graphics library's)
   redraw  SCRIPT OUTDIR [TICKS]          the incremental-redraw check against a full redraw
   gif     [--check] [--no-run] [--every N] [--hold MS]
                                          record the README's docs/gameplay.gif (--check: all games)
@@ -92,9 +94,11 @@ def cmd_upload(a, sketch):
 
 
 def cmd_sim(a, sketch):
-    from chsim import build
-    print(build(sketch, a.D))
-    return 0
+    import chsim
+    if not a.free:
+        print(chsim.build(sketch, a.D))
+        return 0
+    return chsim.run(sketch, a.D, a.frames, a.every, a.start, a.scale, a.png, a.gif, a.input, a.cost, a.max_seconds)
 
 
 def cmd_run(a, sketch):
@@ -127,6 +131,9 @@ def cmd_check(a, sketch):
 
 
 def cmd_test(a, sketch):
+    if sketch.name == "CHGfx" and (sketch / "library.properties").exists():
+        import chsim                        # the graphics library's own tests, on the simulator's panel model
+        return chsim.test()
     import hosttests
     return hosttests.main(sketch, list(a.rest))
 
@@ -188,8 +195,18 @@ def main(argv=None):
     p.add_argument("--debug", action="store_true")
     p.add_argument("--port")
     p.add_argument("--arduino", action="store_true", help="upload through arduino-cli (the Go tool)")
-    p = sub.add_parser("sim", help="build the PC simulator")
+    p = sub.add_parser("sim", help="build the PC simulator (--free: run it, frames to a GIF or PNGs)")
     p.add_argument("-D", action="append", default=[], metavar="NAME[=V]")
+    p.add_argument("--free", action="store_true", help="free-run: no driver, virtual time, buttons from --input")
+    p.add_argument("--frames", type=int, default=300, help="free-run: stop after N presented frames")
+    p.add_argument("--gif", help="free-run: write the frames as a GIF, timed as shown")
+    p.add_argument("--png", help="free-run: write the frames as PNGs into this folder")
+    p.add_argument("--input", help='free-run: buttons, "F:BTN+BTN,F:" from presented frame F on')
+    p.add_argument("--every", type=int, default=1)
+    p.add_argument("--start", type=int, default=0)
+    p.add_argument("--scale", type=int, default=3)
+    p.add_argument("--cost", action="store_true", help="free-run: charge the sketch's own CPU time, scaled to the board")
+    p.add_argument("--max-seconds", type=float)
     p = sub.add_parser("run", help="run a chdrive script")
     p.add_argument("script")
     p.add_argument("outdir")

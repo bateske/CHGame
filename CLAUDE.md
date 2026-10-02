@@ -189,9 +189,18 @@ override `compiler.cpp.extra_flags`.
 
 ## The simulator (`tools/chsim`)
 
-`chsim.py build <sketch>` compiles the game's `.ino` and `src/` plus CHGfx's
-portable code and the CHGame library for the PC. `host/chgfx_host.cpp` stands in for the SPI/DMA
-part, and `host/main.cpp` runs the game in lockstep on virtual time.
+The one simulator: the games, CHGfx's examples and CHGfx's own tests all
+run on it (`chgame sim`, `chgame sim --free`, `chgame --sketch CHGfx test`;
+`python tools/chsim/chsim.py build|run|test` without the entry point).
+`chsim.py build <sketch>` compiles the sketch's `.ino` and `src/` plus
+CHGfx's portable code and, when the sketch includes it, the CHGame library.
+`host/chgfx_host.cpp` stands in for the SPI/DMA part with a model of the
+panel (the wire rate and setup the board measured, scaled by the SPI
+divider; rows converted two 512 B chunks ahead of the DMA as on the board;
+each row landing on a simulated panel, `sim_panel`, as it converts), and
+`host/main.cpp` runs the sketch on virtual time: in lockstep for a sketch on
+the CHGame library, or free-running (`--frames N`, with `--input` for the
+buttons and the panel's frames to a GIF or PNGs) for anything else.
 
 **How it is driven.** `chdrive.py` talks to the sim, or to a debug build on
 the board, over the library's serial debug protocol (`chgame/Debug.h`). The
@@ -215,13 +224,18 @@ Anything else goes to the game's hook (`dbg::hook`).
 `snap`, `gif`, `rec` and the like (the header of `chdrivelib.py`, and each
 game's `chdrive.py` for its own).
 
-**What a run produces.** Screenshots and GIFs go to the output folder. A
-`BUG:` line on stderr, with exit code 3, means the game drew into rows
-still being sent to the panel.
+**What a run produces.** Screenshots and GIFs go to the output folder
+(screenshots are the framebuffer; `chgame sim --free --gif` shows the panel
+instead, torn frames included). A `BUG:` line on stderr, with exit code 3,
+means a row landed on the panel with pixels that differ from the frame
+that was flushed: the game drew into rows still being sent (the message
+names the row and the `gfx_waitRow()` that would make it safe), or wrote
+`gfx_chunkScratch()` during a flush.
 
 **Behaviour.** The sim always runs with the debug protocol on and with fixed
-work slices instead of timers, so scripted runs repeat exactly. Scripts that
-use `free` / `freegif` run on wall-clock time and do not repeat.
+work slices instead of timers, so scripted runs repeat exactly: a pass of
+`loop()` costs 100 µs of virtual time, a full 12 bpp flush 8,384 µs. Scripts
+that use `free` / `freegif` run on wall-clock time and do not repeat.
 
 **Extra host shims.** A game can add its own in `tools/chsim/host/`.
 

@@ -11,8 +11,9 @@ bandwidth; there is no meaningful headroom left.
 On top of the transport: sprites in two formats (including palette-swapped
 span sprites that scale and rotate), a clip rectangle, rounded rectangles,
 ellipses, dither fills, word-speed row operations, palette fades,
-outlined gradient banner text, a tiny 3×5 font, and a PC simulator that
-runs your sketch and catches the classic tearing bugs.
+outlined gradient banner text, a tiny 3×5 font, and (in the CHGame
+repository) a PC simulator that runs your sketch and catches the classic
+tearing bugs.
 
 See [PERFORMANCE.md](../PERFORMANCE.md) for how those numbers were
 reached and the full datasheet reasoning.
@@ -406,22 +407,25 @@ across a flush. `drawSprite4Rot()` and `printFx()` use it too.
 
 ## The simulator
 
-`extras/sim` runs a sketch on a PC: the library's real drawing code, with
-a simulated panel in place of the SPI and DMA. It is the fastest way to
-develop for the board.
+The CHGame repository's `tools/chsim` runs a sketch on a PC: the library's
+real drawing code, with a simulated panel in place of the SPI and DMA. It
+is the fastest way to develop for the board. (It is the one simulator for
+the whole repository; the games run on it too, and the library's own tests
+live in `extras/tests/`. A copy of this library on its own has none.)
 
 ```bash
-python extras/sim/chsim.py run examples/GameKit --gif kit.gif --frames 300
-python extras/sim/chsim.py run MySketch --png shots --input "60:A,64:"
-python extras/sim/chsim.py test            # the library's own tests
+python tools/chsim/chsim.py run GameKit --gif kit.gif --frames 300      # from the repository root
+python tools/chsim/chsim.py run path/to/MySketch --png shots --input "60:A,64:"
+python tools/chsim/chsim.py test            # the library's own tests (extras/tests)
+chgame --sketch GameKit sim --free --gif kit.gif;  chgame --sketch CHGfx test     # the same through the entry point
 ```
 
 Flushes take the time the board takes and convert rows as the DMA would,
 so it catches the bugs that are hard to see on the glass: **drawing into
 a frame that is still being sent** (with the row, and the `waitRow()`
 that would fix it) and **using the chunk scratch during a flush**. `--cost`
-also estimates your sketch's own CPU time on the board. See
-[extras/sim/README.md](extras/sim/README.md).
+also estimates your sketch's own CPU time on the board. The repository's
+`tools/chsim/host/main.cpp` lists the options.
 
 ## Already using Adafruit_GFX?
 

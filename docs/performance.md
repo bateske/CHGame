@@ -298,7 +298,7 @@ the honest figure: **about a sixth of the CPU at 60 fps.**
 | Rotated sprite | `gfx_sprite4Rot`: 614 µs for 16×12. |
 | Outlined gradient text | `gfx_textFx`: 2.9 ms for a 3×, nine-letter banner with outline and shadow. |
 | 3×5 font | `CHGfx_Tiny3x5`, 857 B, as a GFXfont. |
-| Ship the simulator | `CHGfx/extras/sim`: sketches, screenshots, GIFs, tearing detection, 20k host tests. |
+| Ship the simulator | `tools/chsim` (it was `CHGfx/extras/sim`): sketches, screenshots, GIFs, tearing detection; the 20k host tests in `CHGfx/extras/tests`. |
 
 All `-O2`, from test 13 of the benchmark; `bench-1.3-O2.txt` and
 `bench-1.3-Os.txt` next to this file are the raw captures.
@@ -387,7 +387,7 @@ an even x with `transparent = -1` hits a byte-copy path that is roughly
 | `CHGfx/src/CHGfx_font.h` | 5×7 font, ASCII 32–126 (475 B) |
 | `CHGfx/src/CHGfx_AdafruitGFX.h` | Optional Adafruit_GFX bridge |
 | `CHGfx/examples/Benchmark/` | The benchmark suite and demo |
-| `CHGfx/extras/sim/` | PC simulator and host tests |
+| `tools/chsim/`, `CHGfx/extras/tests/` | PC simulator (the repository's) and the library's host tests |
 | `benchmark-results.txt` | Raw serial capture from the board, 1.2.0 (August) |
 | `bench-1.3-O2.txt`, `bench-1.3-Os.txt` | The same for 1.3 |
 | `bench-1.2.0-rerun-O2.txt` | 1.2.0 re-run on the current core, the fair baseline for 1.3 |

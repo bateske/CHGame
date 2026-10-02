@@ -14,7 +14,7 @@
  *
  * Press A (or wait) for a banner and a shake.
  *
- * Runs on the PC too:  python extras/sim/chsim.py run examples/GameKit --gif kit.gif
+ * Runs on the PC too (in the CHGame repository):  python tools/chsim/chsim.py run GameKit --gif kit.gif
  */
 #include <CHGfx.h>
 #include <fonts/CHGfx_Tiny3x5.h>

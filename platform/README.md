@@ -107,9 +107,10 @@ The games compile against this copy:
 - Its README documents the API, draw modes and configuration macros.
 - Its README links `../PERFORMANCE.md`. Here that document is
   [../docs/performance.md](../docs/performance.md).
-- `extras/sim` is CHGfx's own small simulator, used to test the library
-  itself. It is a different program from the repository's `tools/chsim`,
-  which runs whole games.
+- `extras/tests` is the library's own test suite (about 20,000 checks). It
+  runs on the repository's simulator, `tools/chsim`, which took over CHGfx's
+  own `extras/sim` on 2026-10-02 together with its panel model: `python
+  tools/chsim/chsim.py test`, or `chgame --sketch CHGfx test`.
 
 ## CHSd (`board/arduino/CHGame/libraries/CHSd/`)
 
@@ -162,6 +163,18 @@ differences from 0.2.4, building, testing and installing.
 
 ## Changes since the copies were taken
 
+- 2026-10-02: one simulator. `tools/chsim` took over CHGfx's `extras/sim`: its
+  panel model (the measured wire rate scaled by the SPI divider, 45 us of
+  setup, rows landing on a simulated panel as they convert, per-column
+  tearing detection, the board's palette) and its free-running mode; CHGfx's
+  tests moved to `extras/tests` and run on it. A full 12 bpp flush is 28 us
+  shorter than the old model's; games that take a seed or an animation phase
+  from the clock take another branch from there on, so 11 of 201 script runs
+  and CHCheckers' README GIF were re-recorded (CHBoardwalk `save`, CHCheckers
+  `gameplay`, CHFour `play1` and `showcase`, CHPoker `monkey` and `showcase`,
+  CHSlots `save`, CHSolitaire `cascade`, `save` and `screens`, CHWords
+  `card_words`); every other run is frame for frame the same, with no `BUG:`
+  line anywhere, and every check, redraw and save test unchanged.
 - `board/`: the core is as released; `arduino/CHGame/libraries/` gained CHGame, CHGfx and CHSd.
 - `board/arduino/CHGame/libraries/CHGfx/`: `library.properties` gives this repository's URL.
 - `board/arduino/CHGame/libraries/CHGame/`: new.
