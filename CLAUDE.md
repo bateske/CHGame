@@ -2,13 +2,15 @@
 
 The one repository for the CHGame handheld: the Arduino board package, the
 bootloader with the SD game menu (`platform/bootloader`), the graphics and
-SD libraries, twenty casino games that are the platform's examples, and the
+SD libraries, twenty casino games that are the CHGame library's examples
+(`platform/board/arduino/CHGame/libraries/CHGame/examples/games/`), and the
 PC tools. It is the source of truth: the repositories the pieces came from
 (CH32SerialBoot, CHGfx, one per game) are frozen and are not synced with.
 The aim is one board package that delivers all of it, with one `CHGame.h`
-library. The library exists (`platform/libraries/CHGame`, its
-[README](platform/libraries/CHGame/README.md)) and every game is built on
-it; bundling it in the board package is still to come.
+library. The library exists (`platform/board/arduino/CHGame/libraries/CHGame`, its
+[README](platform/board/arduino/CHGame/libraries/CHGame/README.md)) and every game is built on
+it. It sits with CHGfx and CHSd in the board package's `libraries/`
+folder, so the first release from this repository delivers them with the core.
 [docs/roadmap.md](docs/roadmap.md) says what is done and what is not,
 [docs/chgame-library.md](docs/chgame-library.md) why the library is as it
 is, and [docs/unification.md](docs/unification.md) what changed when the
@@ -27,7 +29,9 @@ changing that game.
    should not alter the picture must give identical frames. Run the game's
    scripts before and after and compare (`tools/check.py --compare A B`, or
    hash the PNG/GIF frames). A change that does alter the picture must
-   re-record the README GIFs it affects.
+   re-record the game's README GIF (`python tools/run.py readme_gif.py`).
+   Each game's README has one GIF, `docs/gameplay.gif`, of at most 1 MB,
+   and one format: [docs/game-readme.md](docs/game-readme.md).
 3. **Measure size after every change.** `python tools/device.py build`
    prints flash and RAM. Most games are within 1 KB of full (see Limits).
 4. **Generated files are not edited by hand:**
@@ -36,11 +40,9 @@ changing that game.
      CHWordWheel `src/bank/BankData.*`, CHCrossword `src/game/PuzzleData.*`,
      CHSlots `src/game/Strips.h`, CHMahjong `src/game/Layouts.cpp`. The header
      of each says what makes it.
-   - **CHSd copies:** `games/{CHWords,CHCrossword,CHWordWheel}/src/sd/*`, their
-     `tools/chsim/host/{VCard.h,sd_host.cpp}` and CHCrossword's
-     `tools/puzzles/fatimg.py`. Edit `platform/libraries/CHSd`, run its
-     `tests/run_tests.py`, then `python platform/libraries/CHSd/tools/vendor.py`.
-     `--check` verifies.
+   - Nothing of CHSd is copied any more: the three SD games include
+     `<Fat.h>` / `<SdSpi.h>` from the library. After changing CHSd, run its
+     `tests/run_tests.py` and the three games' `tools/check.py`.
 5. **The shared `tools/` serve all 20 games.** After changing anything in
    `tools/chsim` or `tools/*.py`, run several games' `tools/check.py` and
    compare sim frames against a run from before the change.
@@ -51,8 +53,12 @@ changing that game.
    [platform/README.md](platform/README.md) (the bootloader's README lists
    its own). Two things to know:
    - `platform/board` is what the *next* board package release will contain.
-     Builds use the installed package (0.2.4), so an edit there has no effect
-     on a build until it is released or the installed copy is patched.
+     Builds use the installed package (0.2.4) for the core, so an edit to
+     the core, variant or `boards.txt` has no effect on a build until it is
+     released or the installed copy is patched.
+   - The three libraries in `platform/board/arduino/CHGame/libraries/` are
+     the exception: `tools/device.py`, `tools/sdcard/mkcard.py` and the
+     simulator pass them explicitly, so an edit there takes effect at once.
    - `platform/bootloader/src/sd.c` and `src/fat.c` are a C fork of CHSd: a
      fix to one belongs in the other too.
 7. **Credits stay exactly as each game's `NOTICE` and README give them.** Do
@@ -89,17 +95,25 @@ Manager), then `pip install -r tools/requirements.txt ziglang`.
   capital H, which only resolves on case-insensitive file systems. Until the
   board package fixes it:
   `ln -s core_riscv_ch32yyxx.h ~/.arduino15/packages/CHGame/hardware/ch32v/0.2.4/cores/arduino/ch32/lib/core_riscv_cH32yyxx.h`.
-- **CHGfx and the CHGame library need no install.** `tools/device.py`
-  compiles with `--library` for both (`platform/libraries/CHGfx`,
-  `platform/libraries/CHGame`), and the simulator uses the same copies. With
-  plain `arduino-cli compile`, add both `--library` options yourself.
+- **The libraries need no install.** `tools/device.py` compiles with
+  `--library` for CHGfx, CHGame and CHSd from
+  `platform/board/arduino/CHGame/libraries/`, and the simulator uses the same
+  copies. With plain `arduino-cli compile`, add those `--library` flags
+  yourself, until a board package that bundles them is installed.
 - **The simulator's compiler:** `$CHSIM_CXX` (for example `"zig c++"` or a
   full path plus ` c++`), otherwise zig on the PATH, otherwise
   `python -m ziglang`, otherwise clang++ or g++.
 
 ## Commands
 
-Run from a game folder, `games/<Name>/`:
+The games are the CHGame library's examples:
+`platform/board/arduino/CHGame/libraries/CHGame/examples/games/<Name>/`
+(apps, such as CHSDtoUSB, are beside them in `examples/apps/`). Run these
+from a game's folder. `tools/run.py <tool>` there runs one of the
+repository's shared tools on the game; from the repository root the shared
+tools also take a game by name (`python tools/readme_gif.py CHFour`,
+`python tools/device.py --sketch CHFour build`,
+`python tools/chsim/chsim.py build CHFour`):
 
 | What | Command |
 |---|---|
@@ -108,13 +122,14 @@ Run from a game folder, `games/<Name>/`:
 | Upload release / debug | `python tools/device.py upload [--debug]` |
 | Everything checkable without a board | `python tools/check.py` (9 games have one; `--quick`, `--no-device`) |
 | Host unit tests | `python tools/tests/run_tests.py` |
-| Build the simulator | `python ../../tools/chsim/chsim.py build .` |
+| Build the simulator | `python tools/run.py chsim/chsim.py build .` |
 | Run a script in the simulator | `python tools/chsim/chdrive.py --sim . tools/scripts/<s>.txt out/<s>` |
 | The same script on the board | `python tools/device.py run tools/scripts/<s>.txt out/<s>` (debug build + upload) |
 | Screenshot of a running debug build | `python tools/device.py shot out/shot.png` |
-| Sound effects (and songs) to WAV | `python ../../tools/audio/preview.py . out/audio` (prints a hash per effect) |
+| Sound effects (and songs) to WAV | `python tools/run.py audio/preview.py . out/audio` (prints a hash per effect) |
 | Regenerate art | `python tools/assets.py` |
-| What fills the flash | `python ../../tools/check_size.py build/release --top 30` |
+| What fills the flash | `python tools/run.py check_size.py build/release --top 30` |
+| Record the README's GIF (`tools/scripts/gameplay.txt` to `docs/gameplay.gif`, at most 1 MB) | `python tools/run.py readme_gif.py` (`--check` from the root checks all 20) |
 | Redraw check (5 games) | `python tools/chsim/diffdrive.py <script> <outdir> [ticks]` |
 | Memory check (valgrind) | see `tools/chsim/chsim.py`'s docstring (`CHSIM_FLAGS`, `CHSIM_WRAP`) |
 | Any sketch (from the root) | `python tools/device.py --sketch <dir> build`, `python tools/chsim/chdrive.py --sim <dir> <script> <out>` |
@@ -129,6 +144,7 @@ Run from a game folder, `games/<Name>/`:
 | Build and pack every game into `out/sdcard/` (+ FAT32 image) | `python tools/sdcard/mkcard.py [--image out/sdcard.img]` |
 | Package one sketch / check packages / list a card | `python tools/chgpack.py pack\|verify\|info` |
 | Install the menu bootloader on a board | `platform/bootloader/HARDWARE.md` (self-update over USB) |
+| Build the uploader, `chgame-upload` (Go, five hosts, into `out/chgame-upload/`) | `platform/bootloader/host/go/build.sh` |
 
 The release FQBN is
 `CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly`. A debug
@@ -197,9 +213,12 @@ still being sent to the panel.
 work slices instead of timers, so scripted runs repeat exactly. Scripts that
 use `free` / `freegif` run on wall-clock time and do not repeat.
 
-**Extra host shims.** A game can add its own in `tools/chsim/host/`. The
-three SD games keep the pretend SD card there; set `CHWD_CARD` /
-`CHWW_CARD` to a file, or pass `--card <img>` for CHCrossword.
+**Extra host shims.** A game can add its own in `tools/chsim/host/`.
+
+**The pretend SD card.** A sketch that includes CHSd gets the card in
+CHSd's `host/` folder: set `CHSD_CARD` to a file (a `.img` is a whole card,
+any other file is put on a FAT16 card made for it), or pass `--card <img>`
+for CHCrossword. Unset means no card.
 
 ## The device
 
@@ -247,11 +266,11 @@ and other sessions may share it.
 
 ## Putting files on the SD card without removing it
 
-[`utilities/CHSDtoUSB`](utilities/CHSDtoUSB) turns the board into a USB card
+[`platform/board/arduino/CHGame/libraries/CHGame/examples/apps/CHSDtoUSB`](platform/board/arduino/CHGame/libraries/CHGame/examples/apps/CHSDtoUSB) turns the board into a USB card
 reader, with its serial port still working beside the drive:
 
-1. Upload it from `utilities/CHSDtoUSB`:
-   `arduino-cli compile -b CHGame:ch32v:CHGame --library ../../platform/libraries/CHGfx .`
+1. Upload it from `platform/board/arduino/CHGame/libraries/CHGame/examples/apps/CHSDtoUSB`:
+   `arduino-cli compile -b CHGame:ch32v:CHGame --library ../../platform/board/arduino/CHGame/libraries/CHGfx .`
    then `arduino-cli upload -b CHGame:ch32v:CHGame -p <PORT> .`.
    After it starts, the board enumerates on a new serial port.
 2. A removable drive appears whose SCSI vendor is "CHGame" and product "SD
@@ -290,6 +309,8 @@ Then:
 3. Keep the START-held-3-s exit to the menu (the library's) unless the game
    needs a long START hold for itself (`arduboy.startExits = false` in
    `setup()`).
+4. Write its README in the one format ([docs/game-readme.md](docs/game-readme.md))
+   and record its one GIF with `tools/readme_gif.py`.
 
 ## Gotchas
 
@@ -308,5 +329,5 @@ Then:
   if someone will be playing it.
 - **Sibling assets:** some `tools/assets.py` read another game's art (for
   example `../CHBlackjack/tools/art/dealer.png`) to check or share it. The
-  games must stay side by side in `games/`.
+  games must stay side by side in `examples/games/`.
 - `tools/chsim/build/`, `build/` and `out/` are build output and ignored.

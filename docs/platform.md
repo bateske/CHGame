@@ -91,7 +91,7 @@ the option bytes and is untested here. Instead:
 - **Why it works.** The bootloader erases only the pages a new image covers.
   Pages between the end of the image and the metadata page at 0xF700
   survive re-uploads. This was proven on hardware by
-  `games/CHBlackjack/tools/probes/FlashProbe`.
+  `platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHBlackjack/tools/probes/FlashProbe`.
 - **Writing a page.** A sketch can erase and program a 256 B page from user
   mode in about 1.4 ms:
   - the code must run from SRAM (a RAMFUNC);

@@ -1,18 +1,21 @@
 # tools/: platform-wide tools
 
-The tools in this folder are **shared by every game** in `games/`. They know
+The tools in this folder are **shared by every game** (the CHGame library's
+examples, `platform/board/arduino/CHGame/libraries/CHGame/examples/games/`). From a game's folder,
+`python tools/run.py <tool> ...` runs one of them; from the repository root
+they take a game by name (`paths.py`). They know
 nothing about any one game. Each game's own scripts find them by the fixed
-layout `games/<Name>/tools/... -> ../../tools` (search for
+layout: the repository's `tools/` is nine folders above a game (search for
 `the repository's tools/` in their comments to see every place that does).
 
 Run them from a game's folder (or, for any sketch, from the root with its
 folder as an argument):
 
 ```bash
-cd games/CHFour
-python ../../tools/chsim/chsim.py build .          # build the PC simulator of this game
-python ../../tools/check_size.py build/release     # flash/RAM report of the last release build
-python ../../tools/serialcap.py --seconds 5        # print what the board says on USB serial
+cd platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHFour
+python tools/run.py chsim/chsim.py build .          # build the PC simulator of this game
+python tools/run.py check_size.py build/release     # flash/RAM report of the last release build
+python tools/run.py serialcap.py --seconds 5        # print what the board says on USB serial
 ```
 
 Python packages: `pip install -r tools/requirements.txt` (Pillow and
@@ -23,14 +26,16 @@ pyserial). The simulator also needs a C++ compiler: `$CHSIM_CXX`, zig,
 
 | Tool | What it does |
 |---|---|
-| `device.py` | Builds, uploads and drives any sketch on the board through arduino-cli, against `platform/libraries/CHGfx` and `CHGame`: `[--sketch DIR] build [--debug]`, `upload`, `run SCRIPT OUTDIR`, `shot OUT.png`. A debug build adds `-DCHGAME_DEBUG=1`. Each game's `tools/device.py` runs it on that game. |
-| `chsim/chsim.py` | Builds a sketch for the PC: its `.ino` + `src/`, CHGfx's portable drawing code (`platform/libraries/CHGfx`, or `$CHSIM_CHGFX`), the CHGame library (`$CHSIM_CHGAME`), and the host shims. `$CHSIM_FLAGS` adds compiler flags (a memory check under valgrind: see its docstring). `build()` and `find_cxx()` are imported by the games' tools. Output: `<sketch>/tools/chsim/build/<Name>/sim.exe`. |
+| `device.py` | Builds, uploads and drives any sketch on the board through arduino-cli, against `platform/board/arduino/CHGame/libraries/CHGfx` and `CHGame`: `[--sketch DIR] build [--debug]`, `upload`, `run SCRIPT OUTDIR`, `shot OUT.png`. A debug build adds `-DCHGAME_DEBUG=1`. Each game's `tools/device.py` runs it on that game. |
+| `chsim/chsim.py` | Builds a sketch for the PC: its `.ino` + `src/`, CHGfx's portable drawing code (`platform/board/arduino/CHGame/libraries/CHGfx`, or `$CHSIM_CHGFX`), the CHGame library (`$CHSIM_CHGAME`), and the host shims. `$CHSIM_FLAGS` adds compiler flags (a memory check under valgrind: see its docstring). `build()` and `find_cxx()` are imported by the games' tools. Output: `<sketch>/tools/chsim/build/<Name>/sim.exe`. |
 | `chsim/chdrivelib.py`, `chsim/chdrive.py` | The script driver: runs a script against the simulator (`--sim`) or the board (`--device`) over the library's debug protocol: `wait tap hold release snap gif rec step say free freegif perf prof cal`. `chdrive.py` drives any sketch; a game's own `tools/chsim/chdrive.py` subclasses `Driver` for its commands. `$CHSIM_WRAP` runs the simulator under another program (valgrind). |
 | `audio/preview.py` + `audio/host/` | Renders a game's sound effects and songs to WAV from the real engine (the library's `chgame/Audio.cpp` with the game's `src/audio/*.cpp`) through a model of the piezo timer, and prints a hash per sound: `preview.py <game dir> OUTDIR [--only NAME ...]`. The names come from the game's `enum class Sfx` / `Song`. |
 | `chsim/host/main.cpp` | The simulator's main loop: virtual time, lockstep frames, the game's serial port on stdin/stdout, a deterministic random seed. |
 | `chsim/host/chgfx_host.cpp` | Stands in for `CHGfx.cpp`, the SPI/DMA part. It times the simulated panel and reports `BUG:` when a game draws into rows that are still being sent. |
 | `chsim/host/Arduino.h`, `sim.h` | A minimal Arduino API for the PC, and the shims' internal declarations (including the SD card hooks some games add). |
 | `chsim/fbimage.py` | Turns a framebuffer dump (8 KB of 4 bpp + 32 B palette, from the `S` debug command) into a PNG, a contact sheet, or a full-colour GIF (`save_gif`). |
+| `readme_gif.py` | Makes a game's one README picture: runs its `tools/scripts/gameplay.txt`, joins the clips it records (`01_title`, `02_...`) into `docs/gameplay.gif` and refuses anything over 1 MB. `--check` checks every game's. The README format is in `docs/game-readme.md`. |
+| `libzip.py` | Packs a bundled library (`platform/board/arduino/CHGame/libraries/<Name>`) as `out/<Name>-<version>.zip` for the IDE's *Add .ZIP Library*: how CHGfx is installed on its own. |
 | `chsim/gifsheet.py` | Tiles a GIF's frames into one image to review it: `gifsheet.py IN.gif OUT.png [--every N] [--start F] [--count N] [--cols C] [--scale S]`. |
 | `check_size.py` | Flash and RAM report from the linker map. It checks the 50,944 B / 18,416 B limits and shows the space left for the save pages; `--top N` and `--symbols` list what takes the room. |
 | `serialcap.py` | Finds the board's USB serial port (VID:PID 16C0:27DD), opens it with DTR set and prints its output. `find_port()` and `open_port()` are used by `device.py` and `chdrive.py`. |
@@ -58,7 +63,7 @@ a similar game when starting a new one.
 | `tools/chsim/diffdrive.py` | CHBingo, CHRoulette, CHSlots, CHTicTacToe, CHWordWheel | The redraw check: builds the game twice, normal and forced to redraw everything every frame, and reports any pixel the incremental redraw got wrong. The forced-redraw patch is per game. |
 | `tools/tests/sim_save.py` | CHBingo, CHCraps, CHYacht | Save, power off, continue, in the simulator. |
 | `tools/assets.py` | all 20 | The art pipeline: `tools/art/*` → `src/assets/Assets.{h,cpp}`, with previews in `build/assets`. |
-| `tools/scripts/*.txt` | all 20 | chdrive scripts: the README GIFs (`showcase`, `gameplay`), smoke tests, perf runs, device-only runs (`device_*`). |
+| `tools/scripts/*.txt` | all 20 | chdrive scripts: the README's GIF (`gameplay`, joined by `readme_gif.py`), smoke tests, perf runs, device-only runs (`device_*`). |
 
 ### Game-specific
 
@@ -85,12 +90,11 @@ a similar game when starting a new one.
 
 | Tool | What it does |
 |---|---|
-| `platform/libraries/CHSd/tools/vendor.py` | Copies CHSd into the SD games; `--check` verifies the copies. |
-| `platform/libraries/CHSd/tools/fatimg.py` | Builds and reads FAT16/FAT32 card images: useful for any SD-card test. |
-| `platform/libraries/CHSd/tests/run_tests.py` | CHSd's host tests on FAT images. |
-| `platform/libraries/CHGfx/extras/fontconvert.py`, `sprite4.py` | CHGfx's font and sprite converters. |
-| `platform/libraries/CHGfx/extras/sim/` | CHGfx's own simulator for testing the library and its examples. It is not the game simulator above. |
-| `utilities/CHSDtoUSB/tools/chsd_test.py`, `scsi.py` | Hardware test suite for the SD-to-USB sketch (Windows, SCSI pass-through). `find_drive()` locates the board's drive. |
+| `platform/board/arduino/CHGame/libraries/CHSd/tools/fatimg.py` | Builds and reads FAT16/FAT32 card images: useful for any SD-card test. |
+| `platform/board/arduino/CHGame/libraries/CHSd/tests/run_tests.py` | CHSd's host tests on FAT images. |
+| `platform/board/arduino/CHGame/libraries/CHGfx/extras/fontconvert.py`, `sprite4.py` | CHGfx's font and sprite converters. |
+| `platform/board/arduino/CHGame/libraries/CHGfx/extras/sim/` | CHGfx's own simulator for testing the library and its examples. It is not the game simulator above. |
+| `platform/board/arduino/CHGame/libraries/CHGame/examples/apps/CHSDtoUSB/tools/chsd_test.py`, `scsi.py` | Hardware test suite for the SD-to-USB sketch (Windows, SCSI pass-through). `find_drive()` locates the board's drive. |
 
 ## Candidates to share later
 

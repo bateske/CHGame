@@ -108,7 +108,10 @@ void NVIC_Init(NVIC_InitTypeDef *NVIC_InitStruct)
     }
 }
 /* MMOLE 250805: moved from startup_ch32x035.S to ch32x035_misc.c (see issue #204) */
-__attribute__ ((weak)) void while1_handler(void) {while(1);};
+/* CHGAME: an interrupt with no handler is a crash like any other: to
+   HardFault_Handler (ch32x035_it.c), which silences the piezo instead of
+   spinning here with its note held. mcause tells which interrupt it was. */
+__attribute__ ((weak, naked)) void while1_handler(void) { __asm volatile ("j HardFault_Handler"); }
 __attribute__ ((weak)) void Ecall_M_Mode_Handler (void) __attribute__ ((weak, alias ("while1_handler")));
 __attribute__ ((weak)) void Ecall_U_Mode_Handler (void) __attribute__ ((weak, alias ("while1_handler")));
 __attribute__ ((weak)) void Break_Point_Handler (void) __attribute__ ((weak, alias ("while1_handler")));

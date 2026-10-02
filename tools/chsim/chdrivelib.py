@@ -13,7 +13,7 @@ one script gives comparable screenshots from each. --id checks the start
 of the sketch's hello line (what dbg::begin() was given).
 
 A game adds script commands of its own by subclassing Driver and
-overriding op(name, args, outdir); each game in games/ has a
+overriding op(name, args, outdir); each game has a
 tools/chsim/chdrive.py that does, and runs main(ItsDriver, ident=...).
 
 Script lines (# comments allowed):
@@ -110,7 +110,10 @@ class SerialTransport:
         self.bugs = []
 
     def send(self, line):
-        self.s.write((line + "\n").encode())
+        try:
+            self.s.write((line + "\n").encode())
+        except Exception as e:      # serial.SerialTimeoutException: the board is not reading
+            raise TimeoutError(f"the board does not take input ({e})")
 
     def read(self, n):
         buf = b""
@@ -126,7 +129,7 @@ class SerialTransport:
         end = time.time() + timeout
         while not buf.endswith(b"\n"):
             if time.time() > end:
-                raise TimeoutError("no reply from device")
+                raise TimeoutError(f"no reply from device (got {buf[-40:]!r})")
             buf += self.s.readline()
         return buf.decode("latin-1").strip()
 
@@ -301,6 +304,10 @@ class Driver:
             elif op == "cal":
                 # (simulator) host time of the primitives the CHGfx benchmark
                 # measured on the board -> device ns per host ns, for perf.
+                # The board has no Q and needs none: its perf is measured.
+                if isinstance(self.t, SerialTransport):
+                    print("cal: not needed on the board (perf gives measured times)")
+                    continue
                 self.t.send("Q")
                 vals = [int(v) for v in self.expect("CAL").split()[1:]]
                 self.expect("OK")

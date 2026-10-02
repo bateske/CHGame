@@ -21,7 +21,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent                  # tools/audio
 REPO = HERE.parents[1]
-LIB = Path(os.environ.get("CHGAME_LIB_SRC", REPO / "platform" / "libraries" / "CHGame" / "src"))
+LIB = Path(os.environ.get("CHGAME_LIB_SRC", REPO / "platform" / "board" / "arduino" / "CHGame" / "libraries" / "CHGame" / "src"))
 sys.path.insert(0, str(REPO / "tools" / "chsim"))
 from chsim import find_cxx  # noqa: E402
 
@@ -65,11 +65,13 @@ def run(exe, wav, mode, kind, index, ms, log=None):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("game", help="the game's folder (games/<Name>)")
+    p.add_argument("game", help="the game's folder, or its name")
     p.add_argument("outdir")
     p.add_argument("--only", nargs="*", help="just these effects/songs (by name)")
     a = p.parse_args()
-    game = Path(a.game).resolve()
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    import paths
+    game = paths.sketch(a.game)
     audio = game / "src" / "audio"
     headers = "".join(h.read_text(encoding="utf-8") for h in sorted(audio.glob("*.h")))
     sfx = enum_names(headers, "Sfx")

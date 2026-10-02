@@ -173,12 +173,11 @@ recipe.size.regex.data=^(?:\.data|\.bss|\.noinit)\s+([0-9]+).*
 # 1200bps touch and port-waiting -- two actors racing for the same port is the
 # classic source of flaky native-USB uploads.
 #
-# During development this is the Python prototype; the shipping platform
-# substitutes a self-contained binary with the same command line.
 # chgame-upload is a self-contained binary delivered as a tool dependency,
 # the same way avrdude, bossac and openocd are. Arduino ships no Python
 # interpreter, so a script here would mean either requiring a Python install
 # or freezing one per platform - both worse than a 2 MB static binary.
+# Its source is platform/bootloader/host/go in the CHGame repository.
 tools.chgame_upload.path={runtime.tools.chgame-upload.path}
 tools.chgame_upload.cmd=chgame-upload
 tools.chgame_upload.cmd.windows=chgame-upload.exe
@@ -193,27 +192,38 @@ tools.chgame_upload.upload.params.verbose=-verbose
 tools.chgame_upload.upload.params.quiet=-quiet
 tools.chgame_upload.upload.pattern="{path}/{cmd}" {upload.verbose} -port "{serial.port}" flash "{build.path}/{build.project_name}.bin" -run
 
-# Arduino runs a separate chip-erase step before Burn Bootloader. wchisp already
-# erases the whole code flash as part of writing, so this is an explicit no-op
-# rather than a second full erase.
+# Arduino runs a separate chip-erase step before Burn Bootloader. Both ways of
+# writing a bootloader erase what they need themselves, so this is an explicit
+# no-op rather than a second erase.
 tools.chgame_upload.erase.params.verbose=-verbose
 tools.chgame_upload.erase.params.quiet=-quiet
 tools.chgame_upload.erase.pattern="{path}/{cmd}" noop
 
-# Burn Bootloader: write the CHGame bootloader through the factory ISP.
-# The device must already be in ISP mode (hold BOOT across a power cycle).
-# No application is written, so the board comes up in the bootloader, enumerates
-# as a COM port straight away, and the first sketch goes on with a normal Upload.
+# Burn Bootloader writes the bootloader chosen in Tools > Bootloader
+# ({bootloader.file}, boards.txt). The programmer chosen in Tools > Programmer
+# sets {burn.method} (programmers.txt):
+#   usb  through the bootloader already on the board, like an upload: no
+#        driver, no buttons. The port is the selected one, or the board is
+#        looked for if none is selected.
+#   isp  through the chip's factory ISP. The board must already be in ISP mode
+#        (hold BOOT across a power cycle).
+# Either way no sketch is left installed: the board comes up in the bootloader
+# and the next sketch goes on with a normal Upload (or from the SD card menu).
+# {burn.port} is the port argument, and only the usb programmer gives one: a
+# board in ISP mode has no serial port, and Arduino refuses to run a recipe
+# that names {serial.port} when none is selected.
+tools.chgame_upload.burn.method=usb
+tools.chgame_upload.burn.port=-port "{serial.port}"
 tools.chgame_upload.bootloader.params.verbose=-verbose
 tools.chgame_upload.bootloader.params.quiet=-quiet
-tools.chgame_upload.bootloader.pattern="{path}/{cmd}" {bootloader.verbose} provision -wchisp "{tools.chgame_upload.wchisp}" -bootloader "{runtime.platform.path}/bootloaders/{bootloader.file}"
+tools.chgame_upload.bootloader.pattern="{path}/{cmd}" {bootloader.verbose} {burn.port} burn -method {burn.method} -wchisp "{tools.chgame_upload.wchisp}" -bootloader "{runtime.platform.path}/bootloaders/{bootloader.file}"
 
-# Upload Using Programmer: bootloader AND this sketch in a single ISP write.
-# A recovery path - it puts a board with no working bootloader straight back to
-# running the sketch in front of you, without a separate Burn Bootloader step.
+# Upload Using Programmer: the same, then this sketch. With the factory ISP it
+# is one write, and puts a board with no working bootloader straight back to
+# running the sketch in front of you.
 tools.chgame_upload.program.params.verbose=-verbose
 tools.chgame_upload.program.params.quiet=-quiet
-tools.chgame_upload.program.pattern="{path}/{cmd}" {program.verbose} provision -wchisp "{tools.chgame_upload.wchisp}" -bootloader "{runtime.platform.path}/bootloaders/{bootloader.file}" -app "{build.path}/{build.project_name}.bin"
+tools.chgame_upload.program.pattern="{path}/{cmd}" {program.verbose} {burn.port} burn -method {burn.method} -wchisp "{tools.chgame_upload.wchisp}" -bootloader "{runtime.platform.path}/bootloaders/{bootloader.file}" -app "{build.path}/{build.project_name}.bin"
 
 # Debugger configuration (general options)
 # ----------------------------------------

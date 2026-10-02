@@ -1,8 +1,8 @@
 """Flash and RAM report for a CHGame build, from the linker map.
 
-    python ../../tools/check_size.py [build/release] [--top 30] [--flash-limit N] [--ram-limit N]
+    python tools/run.py check_size.py [build/release] [--top 30] [--flash-limit N] [--ram-limit N]
 
-The repository's shared copy: run it from a game's folder (games/<Name>), or pass
+The repository's shared copy: run it from a game's folder (platform/board/arduino/CHGame/libraries/CHGame/examples/games/<Name>), or pass
 the build folder. tools/device.py runs it after every build.
 
 The ceiling for statics + heap is 18,416 B (the 2 KB stack is fixed at the

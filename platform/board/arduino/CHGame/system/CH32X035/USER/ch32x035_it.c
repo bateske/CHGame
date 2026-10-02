@@ -12,7 +12,7 @@
 #include "ch32x035_it.h"
 
 void NMI_Handler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
-void HardFault_Handler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
+void HardFault_Handler(void) __attribute__((naked));
 
 /*********************************************************************
  * @fn      NMI_Handler
@@ -31,12 +31,14 @@ void NMI_Handler(void)
  * @brief   This function handles Hard Fault exception.
  *
  * @return  none
+ *
+ * CHGAME: the core's chgame_fault() (cores/arduino/ch32/chgame_boot.c):
+ * silences the piezo and lights the LED (a debug build also keeps where it
+ * happened and restarts on a press of A). It is given ra and sp as they were.
  */
 void HardFault_Handler(void)
 {
-  while (1)
-  {
-  }
+  __asm volatile ("mv a0, ra\n\tmv a1, sp\n\tj chgame_fault");
 }
 
 

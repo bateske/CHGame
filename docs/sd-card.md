@@ -7,7 +7,7 @@ it, and one utility exposes it over USB.
 
 | | Driver | Reads | Licence |
 |---|---|---|---|
-| CHWords | CHSd (generated copy in `src/sd`) | `WORDS.DIC` in the card's root: the full ENABLE word list (4 MB) | MIT |
+| CHWords | CHSd (the library) | `WORDS.DIC` in the card's root: the full ENABLE word list (4 MB) | MIT |
 | CHWordWheel | CHSd | `PHRASES.BNK` in the root: the phrase bank (39 KB) | MIT |
 | CHCrossword | CHSd | `CHCW/*.CWD`: puzzle packs | MIT |
 | CHSDtoUSB | its own read-write driver (from sdfatlib, CRC-checked, DMA) | the whole card, block by block, for the PC | GPL-3.0 |
@@ -20,7 +20,7 @@ fragmentation and recovers a card that a reset left mid-transfer.
 The other 17 games never touch the card. Each SD game also works without
 one, using its built-in data in flash. The card adds to that.
 
-**CHSd** ([../platform/libraries/CHSd](../platform/libraries/CHSd)):
+**CHSd** ([../platform/board/arduino/CHGame/libraries/CHSd](../platform/board/arduino/CHGame/libraries/CHSd)):
 - **What it is.** A polled SPI block driver and a FAT16/FAT32 reader, about
   1.7 KB of flash and 24 B of RAM.
 - **How a game reads a file.** `fat::open("WORDS   DIC", runs, max, buf)`
@@ -47,7 +47,8 @@ one, using its built-in data in flash. The card adds to that.
 - **Some cards are slow.** They take 300-800 ms to deliver a block that has
   never been written, so CHSd waits up to 1 s per block and CHSDtoUSB up to
   1.5 s.
-- **Never edit a game's `src/sd/`.** Change CHSd and run its `vendor.py`.
+- **The games hold no copy of CHSd.** They include the library; change it
+  there and run its tests and the three games' `tools/check.py`.
 
 ## In the simulator
 
@@ -57,8 +58,8 @@ generated from CHSd's `host/`) give the game a pretend card:
   CHCrossword's `tools/puzzles/mkcard.py` make them.
 - Any other file (e.g. `sdcard/WORDS.DIC`) is put on a pretend FAT16 card
   built on the fly, in two pieces, so the real FAT code runs.
-- Choose the card with `CHWD_CARD=<file>` (CHWords), `CHWW_CARD=<file>`
-  (CHWordWheel), or `chdrive.py --card <img>` (CHCrossword). Unset means
+- Choose the card with `CHSD_CARD=<file>`, or `chdrive.py --card <img>`
+  (CHCrossword). Unset means
   no card.
 
 ## Putting files on a real card
@@ -73,7 +74,7 @@ folder to the card. Follow the paths above exactly: the root for
 `WORDS.DIC` and `PHRASES.BNK`, `CHCW/` for crossword packs.
 
 **Without removing the card:** upload
-[CHSDtoUSB](../utilities/CHSDtoUSB). The board becomes a USB drive with its
+[CHSDtoUSB](../platform/board/arduino/CHGame/libraries/CHGame/examples/apps/CHSDtoUSB). The board becomes a USB drive with its
 serial port still working:
 1. Copy the files to the drive and eject it.
 2. Upload the game again. Upload works while the drive is mounted.

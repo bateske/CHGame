@@ -7,14 +7,14 @@ components are listed in THIRD-PARTY.md.
 The SD game menu adds code from two other parts of this repository (CHGame), both MIT:
 
 - src/sd.c and src/fat.c are C ports of CHSd 1.0.0
-  (platform/libraries/CHSd). Its NOTICE says the SPI-mode block driver and
+  (platform/board/arduino/CHGame/libraries/CHSd). Its NOTICE says the SPI-mode block driver and
   the FAT reader are HypeRunner's clean-room code (MIT), written from the SD
   Physical Layer Simplified Specification, the Microsoft FAT specification,
   the MBR layout and the CH32X035 reference manual, with no code from any
   other SD or FAT library.
 
 - The ST7735 panel set-up values in src/lcd.c come from CHGfx 1.3.0
-  (platform/libraries/CHGfx, MIT).
+  (platform/board/arduino/CHGame/libraries/CHGfx, MIT).
 
 - src/font5x7.h is CHGfx 1.3.0's src/CHGfx_font.h. The only change is a
   guard that leaves out the glyphs after '_' (the menu draws capitals).

@@ -7,7 +7,7 @@ CHGame is built to feel familiar to an Arduboy developer:
 
 This page covers what is the same, what is different, and what happens behind the scenes, and walks through a first sketch.
 
-One `#include <CHGame.h>` brings buttons, graphics, the house palette and drawing helpers, sound, saving and the debug protocol, as `Arduboy2.h` does. The library's [README](../platform/libraries/CHGame/README.md) is the reference; all twenty games in `games/` are built on it.
+One `#include <CHGame.h>` brings buttons, graphics, the house palette and drawing helpers, sound, saving and the debug protocol, as `Arduboy2.h` does. The library's [README](../platform/board/arduino/CHGame/libraries/CHGame/README.md) is the reference; all twenty games in `games/` are built on it.
 
 ## The machine
 
@@ -67,7 +67,7 @@ One `#include <CHGame.h>` brings buttons, graphics, the house palette and drawin
 
 ## A first sketch
 
-The library's example [Hello](../platform/libraries/CHGame/examples/Hello/Hello.ino)
+The library's example [Hello](../platform/board/arduino/CHGame/libraries/CHGame/examples/Hello/Hello.ino)
 is a whole sketch in sixty lines: a ball to steer, a sound effect, a counter
 saved in flash, the felt re-dyed with B. Its loop is the one every game
 uses:
@@ -99,14 +99,14 @@ It uses 10.8 KB of flash and 11.9 KB of RAM, most of the RAM being the
 8 KB framebuffer.
 
 **To build it:**
-- **From the repository** (the library and CHGfx come from `platform/libraries`):
+- **From the repository** (the library and CHGfx come from `platform/board/arduino/CHGame/libraries`):
   ```bash
-  python tools/device.py --sketch platform/libraries/CHGame/examples/Hello build
-  python tools/device.py --sketch platform/libraries/CHGame/examples/Hello upload
+  python tools/device.py --sketch platform/board/arduino/CHGame/libraries/CHGame/examples/Hello build
+  python tools/device.py --sketch platform/board/arduino/CHGame/libraries/CHGame/examples/Hello upload
   ```
 - **Arduino IDE:**
   1. Install the CHGame board package ([README](../README.md#installing)).
-  2. Copy `platform/libraries/CHGfx` and `platform/libraries/CHGame` into
+  2. Copy `platform/board/arduino/CHGame/libraries/CHGfx` and `platform/board/arduino/CHGame/libraries/CHGame` into
      your sketchbook's `libraries/` (until the board package bundles them).
   3. Open *File > Examples > CHGame > Hello*, choose *Tools > Optimize >
      Smallest + LTO*, then *Upload*.
@@ -124,7 +124,7 @@ sketch through the library's **serial debug protocol** (`dbg::begin()` in
 scripted:
 
 ```bash
-python tools/chsim/chdrive.py --sim platform/libraries/CHGame/examples/Hello myscript.txt out/hello
+python tools/chsim/chdrive.py --sim platform/board/arduino/CHGame/libraries/CHGame/examples/Hello myscript.txt out/hello
 ```
 
 A script is a list of `wait 30`, `tap A`, `hold RIGHT`, `snap name`,

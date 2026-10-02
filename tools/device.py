@@ -5,11 +5,12 @@
     python tools/device.py [--sketch DIR] run SCRIPT OUTDIR   debug build, upload, run a chdrive script
     python tools/device.py [--sketch DIR] shot OUT.png        screenshot of a running debug build
 
-The sketch is DIR, else the current folder. Each game in games/ has a
+The sketch is DIR (a folder, or the name of a game or app: CHFour,
+CHSDtoUSB), else the current folder. Each game has a
 tools/device.py that runs this one on itself, so from a game's folder
 `python tools/device.py build` does the same.
 
-Builds use the CHGfx and CHGame libraries in platform/libraries (the copies
+Builds use the CHGfx and CHGame libraries in platform/board/arduino/CHGame/libraries (the copies
 the simulator uses too). Both use opt=oslto (Tools > Optimize > "Smallest +
 LTO": -Os -flto, about 3.9 KB smaller than plain -Os) and periph=game (the
 default Peripherals setting). Release builds add usb=uploadonly (Tools >
@@ -29,7 +30,10 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
-LIBRARIES = REPO / "platform" / "libraries"
+sys.path.insert(0, str(REPO / "tools"))
+import paths  # noqa: E402
+
+LIBRARIES = paths.LIBRARIES
 FQBN_DEBUG = "CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game"
 FQBN_RELEASE = FQBN_DEBUG + ",usb=uploadonly"
 
@@ -41,7 +45,9 @@ def build(sketch, debug, flags=""):
     extra = ("-DCHGAME_DEBUG=1 " if debug else "") + flags
     if extra.strip():
         cmd += ["--build-property", "build.extra_flags=" + extra.strip()]
-    cmd += ["--library", str(LIBRARIES / "CHGfx"), "--library", str(LIBRARIES / "CHGame")]
+    # All three every time: Arduino links only the ones a sketch includes.
+    for lib in ("CHGfx", "CHGame", "CHSd"):
+        cmd += ["--library", str(LIBRARIES / lib)]
     cmd.append(str(sketch))
     r = subprocess.run(cmd, capture_output=True, text=True)
     if r.returncode:
@@ -83,7 +89,7 @@ def main(sketch=None, flags=""):
     p.add_argument("out")
     p.add_argument("--port")
     a = ap.parse_args()
-    sketch = Path(sketch or a.sketch).resolve()
+    sketch = paths.sketch(sketch or a.sketch)
     chsim = sketch / "tools" / "chsim"
     if a.cmd == "build":
         build(sketch, a.debug, flags)

@@ -164,17 +164,24 @@ fixed and tried on that board again. Both cost no flash.
 - **The box is 8 pixels wider and the progress bar runs under the title.**
   A title is drawn 114 pixels wide and covered the inner border column of
   the 112-pixel box. The bar starts and ends where the title field does.
-- **Not yet run through the native tests.** Their card and panel models need
-  `fork`, so they do not run on the Windows PC used. Owed: the host model of
-  the reset cause (`host_hal.c`) should set both flags at power-on as the
-  chip does, and every frame with a box needs re-pinning in `frames.json`
-  (`run_tests.py --pin-frames`), with the pictures in `docs/` redrawn.
+- **Run through the native tests on 2026-10-02.** The suite now also runs
+  on Windows (see Testing). All of it passes; the twelve frames with a box
+  were re-pinned in `frames.json`, and the pictures in `docs/` redrawn. The
+  host model of the reset cause needed no change: `hal_soft_reset()` is
+  modelled as a whole ("software reset and not power-on"), not flag by flag.
 
 ## Testing
 
 ```
 python3 test/native/run_tests.py            # about 30 s; needs cc and Pillow
 ```
+
+On Windows the harness cannot run natively (it forks a process per boot).
+There `run_tests.py` cross-compiles the test programs for Linux with zig
+(`pip install ziglang`) and runs them under WSL: any distribution, even
+Docker Desktop's, since the programs are static. That mode has UBSan but
+not ASan. `$CHBOOT_WSL` names the distribution, `$CC` forces a native
+compiler.
 
 The portable sources are compiled for the PC against `test/native`'s
 hardware layer:
@@ -201,16 +208,24 @@ The hardware steps are in [HARDWARE.md](HARDWARE.md).
 
 ## Installing it on a board
 
-- **From a board with the 0.2.4 bootloader** (it has self-update):
+- **From the Arduino IDE, over USB** (any board that has a bootloader with
+  self-update, the 0.2.4 one included): *Tools > Bootloader* **SD game
+  menu**, *Tools > Programmer* **CHGame USB**, *Tools > Burn Bootloader*.
+  No driver, no buttons. The installed sketch is erased. It needs a board
+  package that carries this bootloader and `chgame-upload` 0.2.0 (the next
+  release; [docs/roadmap.md](../../docs/roadmap.md)).
+- **By hand, the same thing:** `chgame-upload selfupdate
+  release/chgame_sdboot.bin` ([host/go](host/go/README.md)), or
   `python host/py/chgame_upload.py selfupdate release/chgame_sdboot.bin --yes`.
 - **Factory ISP:** hold BOOT across power-on, then `wchisp flash
   release/chgame_sdboot.bin`.
 - **The first time:** [HARDWARE.md](HARDWARE.md) has two routes. The direct
   route goes straight to `chgame_sdboot.bin`, with fallbacks. The staged
   route is HW1, HW2a, HW2b.
-- **The Arduino IDE caveat.** *Burn Bootloader* and *Upload Using
-  Programmer* still write the board package's own 0.2.4 bootloader until a
-  board package release carries this one.
+- **The Arduino IDE caveat.** The installed board package 0.2.4 offers only
+  the factory ISP and writes its own 0.2.4 bootloader. The Bootloader menu
+  and the USB programmer are in `platform/board` and come with the next
+  release.
 
 ## Files
 
@@ -225,7 +240,8 @@ The hardware steps are in [HARDWARE.md](HARDWARE.md).
 | `src/proto.c`, `usb.c`, `flash.c`, `appmeta.c`, `jump.c`, `startup_chgame_boot.S`, ... | CH32SerialBoot 0.2.4, changed as listed above |
 | `shared/chgame_bootreq.h` | the boot request reasons |
 | `vendor/` | WCH SPL and the USB CDC stack (`vendor/usbcdc/VENDORED.md` lists the changes) |
-| `host/py/` | the Python uploader (`probe`, `info`, `flash`, `selfupdate`) |
+| `host/go/` | `chgame-upload`, the uploader the board package installs ([its README](host/go/README.md)) |
+| `host/py/` | the same protocol in Python: the reference the hardware tests drive (`probe`, `info`, `flash`, `selfupdate`) |
 | `test/hil/` | CH32SerialBoot's hardware tests |
 | `test/native/` | the PC suite |
 | `tools/` | `size_report.py`, `dist.sh`, `screens.py` (the pictures in `docs/`), `bootcheck.py` (boot region read back over USB), `chgame_map.py`, `mkimage.py` |
@@ -234,7 +250,7 @@ The hardware steps are in [HARDWARE.md](HARDWARE.md).
 
 It began as the bootloader of CH32SerialBoot v0.2.4 (5de3006): that
 repository's `bootloader/` flattened into this folder, plus `shared/`,
-`host/py/`, `test/` and two `tools/` scripts. CH32SerialBoot is frozen; this
+`host/py/`, `host/go/`, `test/` and two `tools/` scripts. CH32SerialBoot is frozen; this
 folder is the bootloader's home, and the list of changes above is measured
 against that starting point. MIT licence ([LICENSE](LICENSE)); third-party notices in
 [THIRD-PARTY.md](THIRD-PARTY.md) and [NOTICE](NOTICE).

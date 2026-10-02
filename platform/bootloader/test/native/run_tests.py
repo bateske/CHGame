@@ -21,6 +21,14 @@ fatimg.py and packages with tools/chgpack.py, and runs:
                 the menu's frames against pinned hashes (frames.json)
 
 Compiler: $CC, else cc. Built with -fsanitize=address,undefined.
+
+On Windows the harness cannot run natively (it forks a process per boot and
+shares memory with mmap). With no $CC set there, the test programs are
+cross-compiled for Linux with zig (zig on the PATH, or `pip install
+ziglang`) and run under WSL: the default distribution, or $CHBOOT_WSL. Any
+distribution will do, even Docker Desktop's: the programs are static and
+need nothing installed. That mode has UBSan but not ASan (no runtime for a
+static musl build).
 """
 from __future__ import annotations
 
@@ -42,7 +50,7 @@ BL = HERE.parent.parent                     # platform/bootloader
 REPO = BL.parent.parent
 SRC, SHARED = BL / "src", BL / "shared"
 BUILD = HERE / "build"
-sys.path.insert(0, str(REPO / "platform" / "libraries" / "CHSd" / "tools"))
+sys.path.insert(0, str(REPO / "platform" / "board" / "arduino" / "CHGame" / "libraries" / "CHSd" / "tools"))
 sys.path.insert(0, str(REPO / "tools"))
 import fatimg   # noqa: E402
 import chgpack  # noqa: E402
@@ -57,10 +65,57 @@ def compiler():
     return os.environ.get("CC") or shutil.which("cc") or shutil.which("gcc") or shutil.which("clang")
 
 
+# ---- Windows: cross-compile for Linux, run under WSL ----------------------------
+
+WSL = sys.platform == "win32" and not os.environ.get("CC")
+_wsl = {}
+
+
+def wsl_cmd():
+    d = os.environ.get("CHBOOT_WSL")
+    return ["wsl.exe"] + (["-d", d] if d else []) + ["--"]
+
+
+def wsl_mount():
+    """Where the distribution mounts Windows drives: /mnt (most) or /mnt/host
+    (Docker Desktop's)."""
+    if "mount" not in _wsl:
+        drive = HERE.drive[0].lower()
+        r = subprocess.run(wsl_cmd() + ["sh", "-c", f"ls -d /mnt/{drive} /mnt/host/{drive} 2>/dev/null"],
+                           capture_output=True)
+        found = r.stdout.decode("utf-8", "replace").replace(chr(0), "").split()
+        if not found:
+            raise SystemExit("WSL did not answer, or does not mount this drive: install a WSL distribution "
+                             "(wsl --install), set $CHBOOT_WSL to one, or set $CC to a POSIX compiler")
+        _wsl["mount"] = found[0].rsplit("/", 1)[0]
+    return _wsl["mount"]
+
+
+def hostpath(path):
+    """A path as the test programs see it: unchanged natively, the mounted
+    path under WSL."""
+    if not WSL:
+        return str(path)
+    path = pathlib.Path(path).resolve()
+    return f"{wsl_mount()}/{path.drive[0].lower()}{path.as_posix()[2:]}"
+
+
+def zig_cc():
+    if shutil.which("zig"):
+        return ["zig", "cc"]
+    try:
+        import ziglang  # noqa: F401
+    except ImportError:
+        raise SystemExit("no compiler: on Windows this needs zig (pip install ziglang) and WSL, or $CC")
+    return [sys.executable, "-m", "ziglang", "cc"]
+
+
 def build(name, main, defs, srcs):
     out = BUILD / name
-    cmd = [compiler(), "-std=gnu11", "-O1", "-g", "-Wall", "-Wextra", "-Wno-unused-parameter",
-           "-fsanitize=address,undefined", "-fno-sanitize-recover=undefined",
+    cc, san = [compiler()], ["-fsanitize=address,undefined", "-fno-sanitize-recover=undefined"]
+    if WSL:
+        cc, san = zig_cc() + ["-target", "x86_64-linux-musl", "-static"], ["-fsanitize=undefined"]
+    cmd = [*cc, "-std=gnu11", "-O1", "-g", "-Wall", "-Wextra", "-Wno-unused-parameter", *san,
            "-DCHBOOT_HOST", "-DF_CPU=48000000", *defs,
            f"-I{HERE}", f"-I{SRC}", f"-I{SHARED}", "-o", str(out),
            str(HERE / main), *[str(HERE / s) for s in HOST], *[str(SRC / s) for s in srcs]]
@@ -73,7 +128,10 @@ def build(name, main, defs, srcs):
 
 def run(name, exe, *args):
     env = dict(os.environ, ASAN_OPTIONS="detect_leaks=0")
-    r = subprocess.run([str(exe), *map(str, args)], capture_output=True, text=True, env=env)
+    argv = [str(exe), *map(str, args)]
+    if WSL:
+        argv = wsl_cmd() + [hostpath(exe)] + [hostpath(a) if isinstance(a, pathlib.Path) else str(a) for a in args]
+    r = subprocess.run(argv, capture_output=True, text=True, env=env)
     out = (r.stdout + r.stderr).strip()
     status = "ok" if r.returncode == 0 else "FAILED"
     print(f"{name:12s} {status:6s} {out.splitlines()[-1] if out else ''}")
@@ -183,7 +241,7 @@ def sd_spec(imgs, lay, pk, quick):
 
     def case(name, card, img, init="OK", sets=(), body=()):
         s.append(f"case {name}")
-        s.append(f"card {card} {img}" if img else f"card {card}")
+        s.append(f"card {card} {hostpath(img)}" if img else f"card {card}")
         s.extend(f"set {k} {v}" for k, v in sets)
         s.append(f"init {init}")
         s.extend(body)
@@ -235,6 +293,8 @@ def main():
     ap.add_argument("--pin-frames", action="store_true", help="record the current menu frames as the reference")
     a = ap.parse_args()
     BUILD.mkdir(exist_ok=True)
+    if WSL:
+        print(f"(Windows: Linux test programs built with zig, run under WSL from {wsl_mount()}; UBSan, no ASan)")
     ok = check_constants()
     menu_built = (SRC / "menu.c").exists()
     suites = [("core_nomenu", "test_core.c", ["-DCHBOOT_MENU=0", "-DCHGAME_ALLOW_SELFUPDATE=1"], CORE)]

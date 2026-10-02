@@ -32,7 +32,10 @@ def open_port(port=None, timeout=10.0):
         dev = port or find_port(max(0.5, end - time.time()))
         if dev:
             try:
-                s = serial.Serial(dev, 115200, timeout=0.1)
+                # A write to a board that is not reading (crashed, or sitting in
+                # its bootloader) must give up: a blocked write cannot be
+                # killed and holds the port until the board is unplugged.
+                s = serial.Serial(dev, 115200, timeout=0.1, write_timeout=2)
                 s.dtr = True
                 return s
             except serial.SerialException as e:  # port still re-enumerating

@@ -9,10 +9,10 @@ here. The table's "Came from" column is history, not something to sync with.
 |---|---|---|---|---|
 | `board/arduino/CHGame/` | The CHGame Arduino board package: core, variant, linker scripts, bootloader binary, `boards.txt` / `platform.txt` | 0.2.4 | CH32SerialBoot tag `v0.2.4` (5de3006), folder `arduino/CHGame` | MIT (`board/LICENSE`, `board/THIRD-PARTY.md`) |
 | `board/docs/` | The board's docs: hardware pin map, flash/RAM map, boot flow, upload protocol, recovery, CH32X035 gotchas, building the bootloader | 0.2.4 | same tag, folder `docs` | MIT |
-| `libraries/CHGame/` | The CHGame library: `CHGame.h`, the one include of a sketch (buttons, pacing, palette, drawing, sound, saving, the debug protocol) | 0.1.0 | built here (2026-10-02) from the code the twenty games shared | Apache-2.0 (`LICENSE`, `NOTICE`) |
-| `libraries/CHGfx/` | The graphics library | 1.3.0 | CHGfx tag `1.3.0` (838bbb0) | MIT (+ font notices in its `LICENSE`) |
-| `libraries/CHSd/` | Read-only SD card + FAT16/32 library | 1.0.0 | never had a repository of its own | MIT |
-| `bootloader/` | The bootloader with the SD game menu: sources, PC test suite, built binaries, and the uploader's source (`host/py`) | 0.2.4 + the SD menu (BOOT_VERSION 2) | CH32SerialBoot tag `v0.2.4` (5de3006): `bootloader/`, `shared/`, `host/py/`, `test/` | MIT (+ BSD font, `bootloader/NOTICE`) |
+| `board/arduino/CHGame/libraries/CHGame/` | The CHGame library: `CHGame.h`, the one include of a sketch (buttons, pacing, palette, drawing, sound, saving, the debug protocol) | 0.1.0 | built here (2026-10-02) from the code the twenty games shared | Apache-2.0 (`LICENSE`, `NOTICE`) |
+| `board/arduino/CHGame/libraries/CHGfx/` | The graphics library | 1.3.0 | CHGfx tag `1.3.0` (838bbb0) | MIT (+ font notices in its `LICENSE`) |
+| `board/arduino/CHGame/libraries/CHSd/` | Read-only SD card + FAT16/32 library | 1.0.0 | never had a repository of its own | MIT |
+| `bootloader/` | The bootloader with the SD game menu: sources, PC test suite, built binaries, and the uploader's source (`host/go`; `host/py` is the Python reference) | 0.2.4 + the SD menu (BOOT_VERSION 2) | CH32SerialBoot tag `v0.2.4` (5de3006): `bootloader/`, `shared/`, `host/py/`, `test/` | MIT (+ BSD font, `bootloader/NOTICE`) |
 | `hardware/` | Rev 0 schematic (PDF) and netlist (EasyEDA `.tel`) | 2026-08-21 | | |
 
 The third-party code inside these (the WCH core and SPL, the USB CDC stack,
@@ -75,12 +75,12 @@ arduino-cli core install CHGame:ch32v@0.2.4
   at 0x2000 (`link_chgame_app.ld`, `chgame_map.h`); the code says 12 KB and
   0x3000.
 
-## CHGame (`libraries/CHGame/`)
+## CHGame (`board/arduino/CHGame/libraries/CHGame/`)
 
-The library every game is built on; [its README](libraries/CHGame/README.md)
+The library every game is built on; [its README](board/arduino/CHGame/libraries/CHGame/README.md)
 is the reference and [../docs/chgame-library.md](../docs/chgame-library.md)
 the record of its decisions. Like CHGfx it is not in the board package yet:
-- `tools/device.py` passes `--library <repo>/platform/libraries/CHGame`;
+- `tools/device.py` passes `--library <repo>/platform/board/arduino/CHGame/libraries/CHGame`;
 - the simulator compiles its `src/` unless `CHSIM_CHGAME` points elsewhere;
 - Arduino IDE users copy this folder into their sketchbook's `libraries/`.
 
@@ -88,10 +88,10 @@ A change to it is a change to every game: rebuild all twenty (size), and
 compare their simulator frames (and, for `chgame/Audio`, the sound preview
 hashes: `tools/audio/preview.py`).
 
-## CHGfx (`libraries/CHGfx/`)
+## CHGfx (`board/arduino/CHGame/libraries/CHGfx/`)
 
 The games compile against this copy:
-- `tools/device.py` passes `--library <repo>/platform/libraries/CHGfx` to
+- `tools/device.py` passes `--library <repo>/platform/board/arduino/CHGame/libraries/CHGfx` to
   arduino-cli. That takes priority over a CHGfx installed in the sketchbook.
 - The simulator (`tools/chsim/chsim.py`) uses its `src/` unless
   `CHSIM_CHGFX` points elsewhere.
@@ -105,19 +105,16 @@ The games compile against this copy:
   itself. It is a different program from the repository's `tools/chsim`,
   which runs whole games.
 
-## CHSd (`libraries/CHSd/`)
+## CHSd (`board/arduino/CHGame/libraries/CHSd/`)
 
-The SD reader of CHWords, CHCrossword and CHWordWheel. Each of those games
-carries a generated copy of it, because a sketch compiles only its own
-folder.
+The SD reader of CHWords, CHCrossword and CHWordWheel. They include it as
+a library (`<Fat.h>`, `<SdSpi.h>`); there are no copies in the games.
 
 To change it:
 
 ```bash
-cd platform/libraries/CHSd
+cd platform/board/arduino/CHGame/libraries/CHSd
 python tests/run_tests.py          # FAT16/FAT32 images, every failure mode
-python tools/vendor.py             # regenerate the games' copies
-python tools/vendor.py --check     # verify (CI-style)
 ```
 
 Then run `tools/check.py` in each of the three games. Its `tools/fatimg.py`
@@ -130,13 +127,20 @@ the SD card ([../docs/sd-menu.md](../docs/sd-menu.md)).
 [bootloader/README.md](bootloader/README.md) has the design, the
 differences from 0.2.4, building, testing and installing.
 
-**It is not in the board package yet.**
-- `board/arduino/CHGame/bootloaders/CHGame/chgame_bootloader.bin` is still
-  the 0.2.4 bootloader, and the IDE's *Burn Bootloader* writes that one.
+**It is in `platform/board`, not in a released package yet** (2026-10-02).
+- `board/arduino/CHGame/bootloaders/CHGame/` carries the menu bootloader,
+  the no-menu build and the 0.2.4 bootloader. *Tools > Bootloader* chooses
+  one, and the programmer **CHGame USB** writes it through the bootloader
+  already on the board (`chgame-upload burn`, tool version 0.2.0,
+  `bootloader/host/go`); **WCH factory ISP** remains for recovery.
+- Tried on a board through `arduino-cli burn-bootloader`: every change
+  between the three, 0.2.4 to the menu included, then an upload.
+- The installed package 0.2.4 has none of this: it offers the factory ISP
+  only and writes the 0.2.4 bootloader.
 - Games build against core 0.2.4 unchanged; the menu bootloader is
   compatible with it.
-- To ship the menu through the Boards Manager, a board package release must
-  carry `bootloader/release/chgame_sdboot.bin`.
+- To ship it through the Boards Manager, the release must also publish the
+  `chgame-upload` 0.2.0 archives and name them in the package index.
 
 ## Changing a platform piece
 
@@ -152,9 +156,20 @@ differences from 0.2.4, building, testing and installing.
 
 ## Changes since the copies were taken
 
-- `board/`: none.
-- `libraries/CHGfx/`: `library.properties` gives this repository's URL.
-- `libraries/CHGame/`: new.
-- `libraries/CHSd/`: `tools/vendor.py` and `tests/run_tests.py` point at
-  `games/` and this folder depth, and the README describes this layout.
+- `board/`: the core is as released; `arduino/CHGame/libraries/` gained CHGame, CHGfx and CHSd.
+- `board/arduino/CHGame/libraries/CHGfx/`: `library.properties` gives this repository's URL.
+- `board/arduino/CHGame/libraries/CHGame/`: new.
+- `board/arduino/CHGame/libraries/CHSd/`: used as a library by the three SD
+  games since 2026-10-02 (`tools/vendor.py` and the games' copies are gone);
+  `architectures=ch32v`; the simulator's card is `$CHSD_CARD`.
+- 2026-10-02: the three libraries moved from `platform/libraries/` into the
+  board package's `libraries/` folder. Checked: 17 release images byte for
+  byte the same, the three SD games 4 to 56 B smaller, every game's README
+  reel frame for frame the same from the simulator.
 - `bootloader/`: the SD menu work, listed in its README.
+- 2026-10-02: the core's crash handler (`cores/arduino/ch32/chgame_boot.c`
+  `chgame_fault()`, reached from `HardFault_Handler` and `while1_handler`)
+  silences the piezo and lights the LED; debug builds also keep the crash
+  for the CHGame library's `!` command (CHANGELOG). Release images grow
+  64-72 B (CHCrossword 50,416 B, still under 50,432). Builds see it only
+  through a patched installed 0.2.4 until the next release.
