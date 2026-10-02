@@ -5,9 +5,78 @@ The goal is the Arduboy model:
 - one board package;
 - the games as its examples.
 
-This page measures how far the twenty games' copies of the "shared" code really are from that, layer by layer. [chgame-library.md](chgame-library.md) is the design that follows from it, and [roadmap.md](roadmap.md) puts it in order with the rest of the release.
+This page measured how far the twenty games' copies of the "shared" code were from that, layer by layer, and then records how they became one library. [chgame-library.md](chgame-library.md) has the decisions, and [roadmap.md](roadmap.md) puts the rest of the release in order.
 
-The numbers come from comparing the copies in `games/*/src` by md5, by line diff against CHFour (small and recent), and by hashing function bodies. The survey was made on 2026-10-02; the commands are at the end, so it can be repeated.
+## The result (2026-10-02)
+
+**Every game is built on `platform/libraries/CHGame`.** What each carried a
+copy of is gone from its `src/`: `CHGame.h/.cpp`, `RamFunc.h`, `debug/`, the
+save engine, `gfx/{Draw,Fmt,Mask,Palette}`, `fx/Ease` and the sound engine
+(`audio/Audio.*`). A game keeps its rules, screens, art, its own effects,
+its sound tables (`src/audio/Sounds.cpp`), what it saves, its debug
+commands and its frame loop. The games' sources lost about 30,600 lines
+(their tools another 11,700: one `device.py`, one script driver, one sound
+preview); the library is about 2,400.
+
+**How it was checked**, step by step and game by game:
+- **Pixels.** Every simulator script of every game before and after. All
+  identical, except these changes, made on purpose and measured:
+  - the CHFour family (CHFour, CHBackgammon, CHCrossword, CHDominoes,
+    CHWords): the common 3x5 font's `M`, and the common easing curves (a
+    pixel here and there in animations);
+  - CHWordWheel: one bevel corner pixel;
+  - CHBingo: the title's clipping;
+  - CHBlackjack and CHYacht: the screen shake's edge rows.
+
+  Their README GIFs were recorded again.
+- **Sound.** Every effect rendered by the old engine and by the library's,
+  compared a millisecond at a time: identical in the five games that had
+  3-byte steps; elsewhere pitches within 10 Hz (the 20 Hz grid) and odd
+  lengths by 1 ms (runs of 45 ms notes were written 46/44 so they keep
+  time). Songs compared the same way.
+- **Saves.** Each game's old record and its new data checked offset by
+  offset: a save from before still loads.
+- **Size.** Every game fits, both save pages kept:
+
+  | Game | Image before | now | | RAM before | now | |
+  |---|---|---|---|---|---|---|
+  | CHBackgammon | 49,580 | 50,224 | +644 | 16,924 | 16,892 | -32 |
+  | CHBingo | 36,748 | 36,320 | -428 | 15,208 | 14,912 | -296 |
+  | CHBlackjack | 45,872 | 45,572 | -300 | 15,736 | 15,436 | -300 |
+  | CHBoardwalk | 49,884 | 49,668 | -216 | 15,404 | 15,052 | -352 |
+  | CHCheckers | 42,048 | 42,168 | +120 | 17,444 | 17,108 | -336 |
+  | CHChess | 48,904 | 48,764 | -140 | 17,880 | 17,544 | -336 |
+  | CHCraps | 50,064 | 49,876 | -188 | 15,520 | 15,568 | +48 |
+  | CHCrossword | 50,312 | 50,360 | +48 | 17,540 | 17,276 | -264 |
+  | CHDominoes | 42,364 | 42,728 | +364 | 17,296 | 16,864 | -432 |
+  | CHFour | 36,356 | 36,728 | +372 | 16,388 | 16,348 | -40 |
+  | CHMahjong | 48,456 | 48,516 | +60 | 18,084 | 17,812 | -272 |
+  | CHPoker | 48,940 | 48,480 | -460 | 15,868 | 15,500 | -368 |
+  | CHRoulette | 49,804 | 49,848 | +44 | 16,084 | 16,072 | -12 |
+  | CHSlots | 47,092 | 47,596 | +504 | 14,788 | 14,916 | +128 |
+  | CHSnakes | 37,348 | 37,204 | -144 | 15,704 | 15,360 | -344 |
+  | CHSolitaire | 31,184 | 30,812 | -372 | 16,540 | 16,188 | -352 |
+  | CHTicTacToe | 50,352 | 49,644 | -708 | 15,176 | 14,580 | -596 |
+  | CHWordWheel | 50,348 | 50,368 | +20 | 15,244 | 14,952 | -292 |
+  | CHWords | 50,416 | 50,328 | -88 | 15,836 | 15,788 | -48 |
+  | CHYacht | 43,732 | 44,036 | +304 | 14,996 | 15,260 | +264 |
+
+  In all, 564 B of flash and 4.2 KB of RAM fewer. The games without music
+  pay ~150-190 B for the one sound engine's generality; the tightest made
+  that back inside the game (CHWords: no newlib `strncpy`, an unused effect,
+  one more optimisation flag; CHCrossword: casino effects it never used).
+- **Memory.** Every script once more on an `-O0` simulator under valgrind.
+
+**Bugs found on the way**, fixed: CHBoardwalk dealt from an uninitialised
+count (a new game could deal the wrong deeds; its `save` script crashed the
+simulator); CHCrossword's debug STATE line overflowed its buffer; the
+library's `blip()` comment and code disagreed (the code now does what most
+old engines did).
+
+The rest of this page is the survey from before the move, kept for the
+record. Its numbers come from comparing the copies in `games/*/src` by md5,
+by line diff against CHFour, and by hashing function bodies; the commands
+are at the end.
 
 ## Summary
 
