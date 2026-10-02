@@ -14,7 +14,7 @@
 #include "../render/CardArt.h"
 #include "../render/Layout.h"
 #include "../render/Table.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../save/Save.h"
 #include "../assets/Assets.h"
 #include "../debug/Debug.h"
@@ -71,7 +71,7 @@ static void enter(Scr s) {
             break;
         case Scr::Title:
             demo = false; paused = false; menuSel = 0;
-            audio::music(Song::Title, true);
+            playSong(Song::Title, true);
             break;
         case Scr::Play:
             audio::stopMusic();
@@ -85,11 +85,11 @@ static void enter(Scr s) {
             lastPhase = game.phase;
             break;
         case Scr::Win:
-            audio::music(Song::Victory, false);
+            playSong(Song::Victory, false);
             audio::led(audio::LED_PARTY);
             break;
         case Scr::Lose:
-            audio::music(Song::Broke, true);
+            playSong(Song::Broke, true);
             break;
         default:
             break;
@@ -102,7 +102,8 @@ void begin() {
     (void)ok;
     art::fourColour = game.opt.fourColour;
     pal::setTheme(game.opt.theme);
-    audio::begin(soundMode(game.opt.sound));
+    audio::begin(SOUNDS, (uint8_t)Sfx::COUNT, false);
+    sound::setMode(soundMode(game.opt.sound));
     enter(Scr::Splash);
 }
 
@@ -363,7 +364,7 @@ static void playUpdate() {
         return;
     }
     if (!demo && (pressed & START_BUTTON)) { paused = true; pauseSel = 0; audio::sfx(Sfx::Select); return; }
-    if (pressed & SELECT_BUTTON) { audio::mute(!audio::muted()); toast(audio::muted() ? "SOUND OFF" : "SOUND ON"); }
+    if (pressed & SELECT_BUTTON) { sound::mute(!sound::muted()); toast(sound::muted() ? "SOUND OFF" : "SOUND ON"); }
     if ((pressed & B_BUTTON) && game.phase != Phase::InitBet) present::dismissBubble();
 
     game.update(pressed & ~START_BUTTON, rep, present::busy());
@@ -442,7 +443,7 @@ static void optionsUpdate() {
         *f = (uint8_t)((*f + n + d) % n);
         switch (optSel) {
             case O_RULES: if (*f != before) game.resetShoe(); break;
-            case O_SOUND: audio::setMode(soundMode(*f)); break;
+            case O_SOUND: sound::setMode(soundMode(*f)); break;
             case O_FELT: pal::setTheme(*f); break;
             case O_DECK: art::fourColour = *f; break;
         }
