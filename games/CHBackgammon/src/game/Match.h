@@ -108,7 +108,7 @@ bool load(const Record &r);
 
 // Scripts and tests (the simulator, the host tests, a device debug build):
 // a position (see Match.cpp), dice to come up next, and the match's score.
-#if defined(CHSIM) || defined(CHTEST) || (defined(CHBG_DEBUG) && CHBG_DEBUG)
+#if defined(CHSIM) || defined(CHTEST) || (defined(CHGAME_DEBUG) && CHGAME_DEBUG)
 #define MATCH_SCRIPTED 1
 bool startPosition(const Setup &s, const char *spec, uint8_t sideToRoll);
 void stackDice(const char *digits);         // "6431..": the next rolls, a die a digit

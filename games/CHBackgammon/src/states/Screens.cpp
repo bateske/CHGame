@@ -15,7 +15,6 @@
 #include "../game/Notation.h"
 #include "../stage/Stage.h"
 #include "../save/Save.h"
-#include "../debug/Debug.h"
 #include "../assets/Assets.h"
 #ifdef CHSIM
 #include <sim.h>
@@ -61,7 +60,7 @@ static const char *const OPP_LINE[match::LEVELS] = {
     "STILL LEARNING", "ITS BEST PLAY, EVERY ROLL", "LOOKS A ROLL AHEAD"};
 static const uint8_t LENGTHS[4] = {1, 3, 5, 7};
 
-#if CHBG_DEBUG
+#if CHGAME_DEBUG
 // The CPU's last think (debug W): how long, and its longest slice of a tick.
 static uint32_t thinkAt, thinkMs, sliceUs;
 static bool wasThinking;
@@ -548,13 +547,13 @@ static void playUpdate() {
     wasConfirm = confirm;
     if (asking && (match::humanToMove() || match::humanToConfirm()) && ai::step(64)) asked();
 #endif
-#if CHBG_DEBUG
+#if CHGAME_DEBUG
     bool th = match::cpuThinking();
     uint32_t t0 = micros();
     if (th && !wasThinking) { thinkAt = millis(); sliceUs = 0; }
 #endif
     match::update(stage::busy());          // the CPU thinks a little in here
-#if CHBG_DEBUG
+#if CHGAME_DEBUG
     if (th && micros() - t0 > sliceUs) sliceUs = micros() - t0;
     if (wasThinking && !match::cpuThinking()) thinkMs = millis() - thinkAt;
     wasThinking = match::cpuThinking();
@@ -701,7 +700,7 @@ static void optionsRender(uint32_t frame) {
 // ---------------------------------------------------------------------------
 // Debug protocol hooks (tools/chsim/chdrive.py 'say')
 // ---------------------------------------------------------------------------
-#if CHBG_DEBUG
+#if CHGAME_DEBUG
 //   G <mode> <level> <seed> [length] start a match (mode 0 vs CPU, 1 two players; length 1 by default)
 //   D <digits>                       the next rolls, a die a digit (D 6431)
 //   C <length> <white> <red> <cube> <owner> <crawford>   the match: its length and score; the cube
@@ -893,7 +892,7 @@ void begin() {
     opt.sound = 1;
     save::load(opt, stats, hasGame);
     applyOptions();
-#if CHBG_DEBUG
+#if CHGAME_DEBUG
     dbg::hook = debugHook;
 #endif
     enter(Scr::Title);
