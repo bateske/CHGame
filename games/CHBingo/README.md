@@ -154,8 +154,8 @@ C++ compiler for the simulator and tests (zig, clang++ or g++ on the PATH,
   - the incremental redraw against a full redraw, frame by frame.
 * `python tools/device.py build [--debug]`, `upload`, `run SCRIPT OUTDIR`,
   `shot OUT.png` - the board. Debug builds carry the serial protocol the
-  scripts drive (`src/debug/Debug.h`, and the game's own commands at the
-  top of `CHBingo.ino`).
+  scripts drive (the CHGame library's `chgame/Debug.h`, and the game's own
+  commands at the top of `CHBingo.ino`).
 * `python tools/assets.py` - art in `tools/art/` to `src/assets/Assets.*`.
 * `python ../../tools/audio/preview.py . out/audio` - the sound effects as WAVs.
 * `python ../../tools/check_size.py build/release` - flash and RAM from the map.
@@ -170,8 +170,7 @@ C++ compiler for the simulator and tests (zig, clang++ or g++ on the PATH,
     src/render/          the wall (Table), the cards, the buy-in and the bar (Cards)
     src/states/          title, play, pause, options, stats, broke
     src/audio/           the sound effects (the CHGame library's sequencer plays them)
-    src/save/            the two flash pages
-    src/debug/           the serial protocol
+    src/save/            what a save holds (the CHGame library keeps it in flash)
     tools/               simulator, tests, scripts and art tools
 
 ## License

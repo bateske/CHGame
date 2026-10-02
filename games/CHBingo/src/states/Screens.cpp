@@ -16,7 +16,6 @@
 #include "../audio/Sounds.h"
 #include "../save/Save.h"
 #include "../assets/Assets.h"
-#include "../debug/Debug.h"
 
 namespace screens {
 
@@ -94,7 +93,7 @@ static void seedOnce() {
 // ---------------------------------------------------------------------------
 // Debug hooks
 // ---------------------------------------------------------------------------
-#if CHBN_DEBUG
+#if CHGAME_DEBUG
 void debugSeed(uint32_t s) { game.seed(s); seeded = true; }
 void debugJump(char c) {
     // Scripted tests start from a known animation clock, so a board that has

@@ -9,29 +9,18 @@
 
 #define CHBN_VERSION     "0.1"
 
-// Serial debug protocol: screenshots, input injection, lockstep, perf.
-// Off in normal builds (it costs ~2 KB and needs USB Serial).
-// tools/device.py turns it on with --build-property build.extra_flags.
-#ifndef CHBN_DEBUG
-#ifdef CHSIM
-#define CHBN_DEBUG       1       // the simulator is driven through the protocol
-#else
-#define CHBN_DEBUG       0
-#endif
-#endif
+// The CHGame library's switches: CHGAME_DEBUG (the serial debug protocol:
+// screenshots, input injection, lockstep, perf; always on in the simulator,
+// on the board only in `tools/device.py build --debug`) and CHGAME_PROFILE.
+#include <chgame/Config.h>
 
 // Device debug builds carry the protocol, so they leave out the broke
 // screen's lettering unless built with -DCHBN_FULL. Saving stays. Release
-// builds keep everything.
-#if CHBN_DEBUG && !defined(CHSIM) && !defined(CHBN_FULL)
+// builds and the simulator keep everything.
+#if CHGAME_DEBUG && !defined(CHSIM) && !defined(CHBN_FULL)
 #define CHBN_LEAN        1
 #else
 #define CHBN_LEAN        0
-#endif
-
-// Section profiler (dbg::prof + the T command). Opt-in: costs flash.
-#ifndef CHBN_PROFILE
-#define CHBN_PROFILE     0
 #endif
 
 // Logic runs at a fixed 60 Hz; drawing catches up as it can.

@@ -5,13 +5,12 @@
 //
 // Frame loop: logic runs while the previous frame is still going out over
 // DMA; drawing waits for it (one framebuffer), then the new frame is sent.
-#include "config.h"
 #include <CHGame.h>
+#include "config.h"
 #include "src/states/Screens.h"
 #include "src/save/Save.h"
-#include "src/debug/Debug.h"
 
-#if CHBN_DEBUG
+#if CHGAME_DEBUG
 #ifdef CHSIM
 #include <string.h>
 uint64_t sim_hostNanos();
@@ -79,12 +78,12 @@ static bool debugHook(char cmd, const char *args) {
 
 void setup() {
     arduboy.boot();
-    dbg::paintStack();
+    dbg::begin("CHBN " CHBN_VERSION);     // the debug protocol's hello (CHGAME_DEBUG builds)
     gfx_begin(GFX_DIV2, GFX_12BPP);
     pal::init();
     screens::begin();
     arduboy.setFrameRate(CHBN_FPS);
-#if CHBN_DEBUG
+#if CHGAME_DEBUG
     dbg::hook = debugHook;
 #endif
 }
