@@ -78,9 +78,10 @@ draws from all 606.
    *Code > Download ZIP* and unzip it. The game is the folder `games/CHWordWheel`,
    already named like its `.ino` file (the Arduino IDE only opens a sketch
    whose folder has the same name).
-4. Add the **CHGfx library** (1.3.0). Copy the folder `platform/libraries/CHGfx`
-   from the download into the `libraries/` folder of your sketchbook (its
-   location is shown in *File > Preferences*).
+4. Add the **CHGfx library** (1.3.0) and the **CHGame library**. Copy the folders
+   `platform/libraries/CHGfx` and `platform/libraries/CHGame` from the download
+   into the `libraries/` folder of your sketchbook (its location is shown in
+   *File > Preferences*).
 5. Open `games/CHWordWheel/CHWordWheel.ino` in the IDE and set:
    - *Tools > Board*: **CHGame**
    - *Tools > Optimize*: **Smallest + LTO**. The game does not fit without it.

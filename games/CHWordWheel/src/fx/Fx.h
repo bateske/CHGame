@@ -1,8 +1,7 @@
-// Motion and sparkle: a particle pool, pop-up banners and floating "+$15"
-// texts (easing and randomness are in Ease.h).
+// Sparkle: a particle pool, pop-up banners and floating "+$15" texts, on
+// top of the CHGame library's fx:: (easing, integer sine and randomness).
 #pragma once
-#include <stdint.h>
-#include "Ease.h"
+#include <CHGame.h>
 
 namespace fx {
 

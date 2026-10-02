@@ -1,12 +1,10 @@
-#pragma GCC optimize("Os", "no-ipa-sra", "no-inline-functions-called-once", "no-jump-tables", "no-guess-branch-probability")   // cold code: size over speed (hot pixel loops live in Draw/Mask and CHGfx)
-#include <CHGfx.h>
+#pragma GCC optimize("Os", "no-ipa-sra", "no-inline-functions-called-once", "no-jump-tables", "no-guess-branch-probability")   // cold code: size over speed (hot pixel loops live in the CHGame library and CHGfx)
+#include <CHGame.h>
 #include <string.h>
 #include "Board.h"
 #include "Layout.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Fmt.h"
-#include "../gfx/Palette.h"
 #include "../game/Puzzle.h"
+#include "../gfx/Shapes.h"
 
 namespace board {
 
@@ -174,7 +172,7 @@ void picker(uint32_t allowed, uint32_t used, uint8_t cur, const char *hint) {
 void summary(const char *title, const char *line, const char *const *names, const int32_t *won,
              const int32_t *total, uint8_t winner, const char *foot) {
     gfx_fillRect(0, STRIP_Y, 128, PROMPT_Y - STRIP_Y, INK);
-    panel(3, STRIP_Y + 1, 122, PROMPT_Y - STRIP_Y - 2, 4, FELT_DK, GOLD);
+    edgedRound(3, STRIP_Y + 1, 122, PROMPT_Y - STRIP_Y - 2, 4, FELT_DK, GOLD);
     bold57(64 - (gfx_textWidth(title) + 1) / 2, STRIP_Y + 5, title, FX_B);
     text35(64 - text35Width(line) / 2, STRIP_Y + 15, line, WHITE);
     for (uint8_t i = 0; i < 3; i++) {

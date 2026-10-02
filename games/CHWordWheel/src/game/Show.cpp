@@ -4,8 +4,8 @@
 #include <string.h>
 #include "Show.h"
 #include "Cpu.h"
-#include "../CHGame.h"
-#include "../gfx/Fmt.h"
+#include <chgame/Input.h>  // the button masks and
+#include <chgame/Fmt.h>    // the number formatting only, so the rules build on the PC for the host tests
 
 using namespace pz;
 

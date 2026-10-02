@@ -18,7 +18,8 @@ sys.path.insert(0, str(HERE.parents[3] / "tools" / "chsim"))  # CHCasino/tools/c
 sys.path.insert(0, str(HERE))
 from chsim import find_cxx  # noqa: E402
 
-GAME = [*sorted((ROOT / "src" / "game").glob("*.cpp")), ROOT / "src" / "gfx" / "Fmt.cpp"]
+LIB = HERE.parents[3] / "platform" / "libraries" / "CHGame" / "src"   # chgame/Input.h, chgame/Fmt.*
+GAME = [*sorted((ROOT / "src" / "game").glob("*.cpp")), LIB / "chgame" / "Fmt.cpp"]
 TESTS = {
     "test_show": [HERE / "test_show.cpp", *GAME],
     "test_bank": [HERE / "test_bank.cpp", *GAME, ROOT / "src" / "bank" / "FlashBank.cpp",
@@ -44,7 +45,7 @@ def main():
         exe.parent.mkdir(exist_ok=True)
         cmd = cxx() + ["-std=gnu++17", "-O2", "-Wall", "-Wextra", "-Wno-unused-parameter",
                        "-Wno-unknown-pragmas", "-fsanitize=undefined",
-                       "-fno-sanitize-recover=undefined", "-DCHTEST",
+                       "-fno-sanitize-recover=undefined", "-DCHTEST", "-I" + str(LIB),
                        *[str(s) for s in sources], "-o", str(exe)]
         r = subprocess.run(cmd, capture_output=True, text=True)
         if r.returncode:

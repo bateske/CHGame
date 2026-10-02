@@ -8,7 +8,7 @@
 #include "../../src/game/Show.h"
 #include "../../src/game/Spin.h"
 #include "../../src/game/Cpu.h"
-#include "../../src/CHGame.h"
+#include <chgame/Input.h>
 
 static long checks, failures;
 #define CHECK(c) do { checks++; if (!(c)) { failures++; printf("FAIL %s:%d  %s\n", __FILE__, __LINE__, #c); } } while (0)

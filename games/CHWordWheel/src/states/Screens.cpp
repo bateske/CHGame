@@ -1,13 +1,12 @@
-#pragma GCC optimize("Os", "no-ipa-sra", "no-inline-functions-called-once", "no-jump-tables", "no-guess-branch-probability")   // cold code: size over speed (hot pixel loops live in Draw/Mask and CHGfx)
+#pragma GCC optimize("Os", "no-ipa-sra", "no-inline-functions-called-once", "no-jump-tables", "no-guess-branch-probability")   // cold code: size over speed (hot pixel loops live in the CHGame library and CHGfx)
 // Screens after CHBlackjack's (which follow Press Play On Tape's
 // GameStateTypes): title, setup, play, options, statistics and the end of
 // an episode, with a pause menu over play.
 #include <Arduino.h>
-#include <CHGfx.h>
+#include <CHGame.h>
 #include <string.h>
 #include "../../config.h"
 #include "Screens.h"
-#include "../CHGame.h"
 #include "../game/Show.h"
 #include "../bank/Bank.h"
 #include "../fx/Presenter.h"
@@ -15,13 +14,10 @@
 #include "../render/Layout.h"
 #include "../render/Stage.h"
 #include "../render/WheelStrip.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Fmt.h"
-#include "../gfx/Mask.h"
-#include "../gfx/Palette.h"
 #include "../audio/Audio.h"
 #include "../save/Save.h"
 #include "../debug/Debug.h"
+#include "../gfx/Shapes.h"
 
 namespace screens {
 
@@ -266,7 +262,7 @@ static void titleRender(uint32_t frame) {
     wheelstrip::draw(game, (int32_t)((frame * 96u) % (uint32_t)(72 * 14 * 256)), 0, frame);
     static const char *const LABEL[5] = {"PLAY", "CONTINUE", "NEW GAME", "OPTIONS", "STATS"};
     int y0 = 116 - n * 10;
-    panel(26, y0 - 4, 76, n * 10 + 5, 4, INK, GOLD);
+    edgedRound(26, y0 - 4, 76, n * 10 + 5, 4, INK, GOLD);
     for (uint8_t i = 0; i < n; i++) {
         int y = y0 + i * 10;
         bool sel = i == menuSel;
@@ -419,7 +415,7 @@ static void playRender(uint32_t frame) {
     if (drew) present::overlay(game, frame);
     if (paused) {
         dither(0, 0, 128, 128, INK, 0);
-        panel(24, 34, 80, 56, 4, NAVY, GOLD);
+        edgedRound(24, 34, 80, 56, 4, NAVY, GOLD);
         centred57(39, "PAUSED", GOLD);
         static const char *const P[3] = {"RESUME", "OPTIONS", "SAVE & QUIT"};
         for (int i = 0; i < 3; i++) {
@@ -663,7 +659,7 @@ void render(uint32_t frame) {
     }
     if (toastT) {
         int w = gfx_textWidth(toastText) + 8;
-        panel(64 - w / 2, 2, w, 11, 3, INK, GOLD);
+        edgedRound(64 - w / 2, 2, w, 11, 3, INK, GOLD);
         centred57(4, toastText, WHITE);
     }
 }
