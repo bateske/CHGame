@@ -15,7 +15,7 @@
 #             bootloader
 # --theme     the menu's colours (src/menu.c): rainbow (default), plain
 #             (the same, gold instead of the cycling colours) or casino
-#             (CHCasino's green felt and gold)
+#             (the casino games' green felt and gold)
 # --nolto     build without LTO, for a per-object size breakdown
 #
 # Output: build/<MODE>[-<theme>]/chgame_boot.{elf,bin,map,lst} and a size

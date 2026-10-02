@@ -132,10 +132,9 @@ It is ours now:
 
 - Linux: `ch32yyxx.h` includes `core_riscv_cH32yyxx.h` (capital H).
 - Stale comments about an 8 KB bootloader and an app at 0x2000.
-- The names: the root `LICENSE` file is missing (the README states
-  Apache-2.0 for root files and `docs/`), and "CHCasino" remains in code
-  comments, `tools/NOTICE`, a variable in each `device.py` and the
-  bootloader's `casino` theme description. None of it affects a build.
+- The root `LICENSE` file is missing (the README states Apache-2.0 for root
+  files and `docs/`). (The working name "CHCasino" left the code and
+  comments on 2026-10-02.)
 
 ## Order
 

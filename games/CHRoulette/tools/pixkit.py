@@ -66,7 +66,7 @@ def _font57():
     """CHGfx's 5x7 font, from the installed library (found as the simulator
     finds it: $CHSIM_CHGFX, or the Arduino sketchbook's libraries)."""
     import sys
-    sys.path.insert(0, str(HERE.parents[2] / "tools" / "chsim"))  # CHCasino/tools/chsim
+    sys.path.insert(0, str(HERE.parents[2] / "tools" / "chsim"))  # the repository's tools/chsim
     from chsim import chgfx_dir  # noqa: E402
     text = (chgfx_dir() / "CHGfx_font.h").read_text(encoding="utf-8")
     body = text[text.index("chgfx_font5x7"):]

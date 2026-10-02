@@ -32,7 +32,7 @@
 /* The theme: ./build.sh --theme=rainbow|plain|casino, or -DMENU_THEME=. The
    default is neutral, so the menu suits any game on the card, and still shows
    that the panel has colour. PLAIN is the same without the animation (168 B
-   less, if the bytes are ever needed); CASINO is CHCasino's felt. */
+   less, if the bytes are ever needed); CASINO is the casino games' felt. */
 #define MENU_THEME_RAINBOW  0       /* black and dark grey; the accent cycles through the hues */
 #define MENU_THEME_PLAIN    1       /* black and dark grey; a gold accent */
 #define MENU_THEME_CASINO   2       /* green felt and gold */

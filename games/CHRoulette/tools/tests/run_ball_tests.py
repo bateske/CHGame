@@ -28,7 +28,7 @@ def cxx():
         work = ROOT.parents[2] / "CH32Sound" / ".work" / "zig"
         for z in sorted(work.glob("zig-*/zig.exe")) + sorted(work.glob("zig-*/zig")):
             return [str(z), "c++"]
-    sys.path.insert(0, str(HERE.parents[3] / "tools" / "chsim"))  # CHCasino/tools/chsim (find_cxx)
+    sys.path.insert(0, str(HERE.parents[3] / "tools" / "chsim"))  # the repository's tools/chsim (find_cxx)
     from chsim import find_cxx  # noqa: E402
     return find_cxx()
 

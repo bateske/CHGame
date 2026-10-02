@@ -9,7 +9,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 CHGAME = HERE.parents[3] / "platform" / "libraries" / "CHGame" / "src"   # the CHGame library
-sys.path.insert(0, str(HERE.parents[3] / "tools" / "chsim"))  # CHCasino/tools/chsim (find_cxx)
+sys.path.insert(0, str(HERE.parents[3] / "tools" / "chsim"))  # the repository's tools/chsim (find_cxx)
 from chsim import find_cxx  # noqa: E402
 
 # The pure-logic sources, compiled beside the tests as they are.

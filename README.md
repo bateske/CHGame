@@ -325,6 +325,6 @@ here on 2026-10-01, without their histories:
   (the commits are listed in [docs/status.md](docs/status.md));
 - CHSd 1.0.0, which never had a repository of its own.
 
-The collection was first assembled under the working name CHCasino, which
-some file names and code comments still carry. Those repositories are
+The collection was first assembled under the working name CHCasino (the
+name went from the code and comments on 2026-10-02). Those repositories are
 frozen. All development continues here.

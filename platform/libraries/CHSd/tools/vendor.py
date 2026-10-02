@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-WORKSPACE = ROOT.parents[2] / "games"  # CHCasino/games
+WORKSPACE = ROOT.parents[2] / "games"  # the repository's games/
 
 # Each game: its card variable, and where else it keeps CHSd files.
 GAMES = {

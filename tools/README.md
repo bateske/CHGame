@@ -3,8 +3,7 @@
 The tools in this folder are **shared by every game** in `games/`. They know
 nothing about any one game. Each game's own scripts find them by the fixed
 layout `games/<Name>/tools/... -> ../../tools` (search for
-`CHCasino/tools`, the repository's working name in those comments, to see
-every place that does).
+`the repository's tools/` in their comments to see every place that does).
 
 Run them from a game's folder (or, for any sketch, from the root with its
 folder as an argument):

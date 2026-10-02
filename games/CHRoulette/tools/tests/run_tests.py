@@ -15,7 +15,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 LIB = HERE.parents[3] / "platform" / "libraries" / "CHGame" / "src"   # the CHGame library
-sys.path.insert(0, str(HERE.parents[3] / "tools" / "chsim"))  # CHCasino/tools/chsim (find_cxx)
+sys.path.insert(0, str(HERE.parents[3] / "tools" / "chsim"))  # the repository's tools/chsim (find_cxx)
 sys.path.insert(0, str(HERE))
 from chsim import find_cxx  # noqa: E402
 import ref_roulette  # noqa: E402

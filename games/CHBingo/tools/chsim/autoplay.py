@@ -16,7 +16,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-sys.path.insert(1, str(HERE.parents[3] / "tools" / "chsim"))  # CHCasino/tools/chsim: chsim.py, fbimage.py
+sys.path.insert(1, str(HERE.parents[3] / "tools" / "chsim"))  # the repository's tools/chsim: chsim.py, fbimage.py
 from chsim import build  # noqa: E402
 from chdrive import Driver, SimTransport, mask_of  # noqa: E402
 from fbimage import to_image  # noqa: E402

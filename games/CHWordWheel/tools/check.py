@@ -84,7 +84,7 @@ def main():
         ok = False
 
     print("== simulator")
-    r = run([HERE.parents[2] / "tools" / "chsim" / "chsim.py", "build", ROOT])  # CHCasino/tools/chsim
+    r = run([HERE.parents[2] / "tools" / "chsim" / "chsim.py", "build", ROOT])  # the repository's tools/chsim
     if r.returncode:
         print((r.stdout + r.stderr)[-3000:])
         sys.exit("simulator build failed")
