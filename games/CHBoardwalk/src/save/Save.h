@@ -1,14 +1,11 @@
 // Saving options, lifetime stats and a game in progress.
 //
-// CHGame has no EEPROM, but its bootloader only erases the flash pages a new
-// sketch occupies, so the last pages of the application region survive
-// re-uploads. Two pages are used in turn, each record carrying a sequence
-// number and a CRC, so a power cut mid-write can only lose the newest save.
-// If the sketch ever grows into those pages, saving switches itself off
-// rather than overwrite code. (From CHBlackjack, with its own magic: the
-// games share the pages, and each ignores the others' records.)
+// The CHGame library keeps the record in flash (chgame/Save.h: two pages
+// used in turn, a CRC, this game's own magic "CHBW"); this is what goes in
+// it and back out: the options, the stats and, when a game was saved, the
+// whole game state as its turn began (so CONTINUE starts that turn again).
 #pragma once
-#include <stdint.h>
+#include <chgame/Save.h>
 #include "../game/Game.h"
 
 struct Options {
@@ -28,7 +25,8 @@ namespace save {
 
 enum Game : uint8_t { NO_GAME, THIS_GAME, SAVED_GAME };
 
-bool available();                   // false: image too big, or a write failed
+// (save::available(), false when the image is too big or a write failed,
+// is the library's.)
 bool load(Options &o, Stats &s, bool &hasGame);
 bool loadGame();                    // the saved game, as its turn began
 // With no game, the game being played (as its turn began), or the game

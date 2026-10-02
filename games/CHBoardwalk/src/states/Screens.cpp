@@ -12,7 +12,6 @@
 #include "../render/MapView.h"
 #include "../assets/Assets.h"
 #include "../save/Save.h"
-#include "../debug/Debug.h"
 #ifdef CHSIM
 #include <sim.h>
 #endif
@@ -693,7 +692,7 @@ static void optionsRender(uint32_t frame) {
 // ---------------------------------------------------------------------------
 // Debug protocol hooks (tools/chsim/chdrive.py 'say')
 // ---------------------------------------------------------------------------
-#if CHBW_DEBUG
+#if CHGAME_DEBUG
 //   G <k0> <k1> <k2> <k3> <rounds> <seed>   start a game (kinds: 0 empty, 1 human, 2-4 CPU)
 //   D <d1> <d2>                             the next roll
 //   A <deck> <card>                         the card on top of a deck (0 Chance, 1 Chest)
@@ -806,9 +805,9 @@ void begin() {
     save::load(opt, stats, hasGame);
     if (!opt.rounds || opt.rounds > 6) opt.rounds = 2;
     applyOptions();
-#if CHBW_DEBUG
+#if CHGAME_DEBUG
     dbg::hook = debugHook;
-    dbg::holdGame = settling;
+    dbg::holdWhile(settling);
 #endif
     enter(Scr::Title);
 }

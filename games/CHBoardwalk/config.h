@@ -9,31 +9,20 @@
 
 #define CHBW_VERSION     "0.1"
 
-// Serial debug protocol: screenshots, input injection, lockstep, perf.
-// Off in normal builds. tools/device.py turns it on with
-// --build-property build.extra_flags, and leaves USB at "Serial" for it.
-#ifndef CHBW_DEBUG
-#ifdef CHSIM
-#define CHBW_DEBUG       1       // the simulator is driven through the protocol
-#else
-#define CHBW_DEBUG       0
-#endif
-#endif
+// The CHGame library's switches: CHGAME_DEBUG (the serial debug protocol:
+// screenshots, input injection, lockstep, perf; always on in the simulator,
+// on the board only in `tools/device.py build --debug`) and CHGAME_PROFILE.
+#include <chgame/Config.h>
 
 // A build that leaves out saving and the options screen (about 2 KB). On
 // for device debug builds, which carry the ~2 KB protocol and no longer fit
 // beside everything; release builds and the simulator have it all.
 #ifndef CHBW_LEAN
-#if CHBW_DEBUG && !defined(CHSIM)
+#if CHGAME_DEBUG && !defined(CHSIM)
 #define CHBW_LEAN        1
 #else
 #define CHBW_LEAN        0
 #endif
-#endif
-
-// Section profiler (dbg::prof + the T command). Opt-in: costs flash.
-#ifndef CHBW_PROFILE
-#define CHBW_PROFILE     0
 #endif
 
 // Frame rate the game logic is paced for.
