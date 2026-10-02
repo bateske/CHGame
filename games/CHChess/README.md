@@ -163,7 +163,8 @@ C++ compiler (zig, clang++ or g++ on the PATH, `pip install ziglang`, or
   the assets. Details at the top of `tools/sheet.py`.
 * `python tools/pieces.py` renders the pieces, `python tools/assets.py`
   packs the art, `python tools/book.py N` cuts the opening book to N plies,
-  `python tools/audio/preview.py out/` renders the sound effects to WAV.
+  `python ../../tools/audio/preview.py . out/audio` renders the sound effects
+  to WAV.
 
 ## Notes for the platform
 

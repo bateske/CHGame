@@ -35,7 +35,7 @@ CPU turn (it should act like a player):
 - `onTurn` glides the red glove to the CPU's own king (`holdT` 24) before the search starts (it used to start over the player's piece).
 - Search in bursts (`src/Frame.cpp`): every `SEARCH_MS` 2000 a `BURST_MS` 450 full-rate burst (`stage::thinkPick` moves the glove); in between a frame every `BOB_MS` 133 with `frameCount |= 7` so the glove keeps bobbing. Buttons or a menu force frames (`screens::holdFrames`).
 - The pick: glove rests on the piece (24/8 frames), taps, the piece lifts (its target lit, prey flashing), glove glides to the square, stays 60/16, taps, moves. The CPU's piece gets the HOVER outline too; `stage::selected()` returns the player's selection only.
-- A soft clock (`Sfx::Tick`/`Tock`, every 2 s) plays while it searches: slows perceived time, hides hiccups. Sfx >= Tick play at 1/8 duty. Keep Tick/Tock last in the enum.
+- A soft clock (`Sfx::Tick`/`Tock`, every 2 s) plays while it searches: slows perceived time, hides hiccups. They are `audio::SOFT` in `src/audio/Sounds.cpp` (1/8 duty).
 - Vs the CPU the camera stays on the human's side; the hand-over spin is for 2P only.
 
 Camera and effects:

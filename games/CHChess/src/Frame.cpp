@@ -7,7 +7,7 @@
 #include "stage/Stage.h"
 #include "debug/Debug.h"
 #include "engine/Engine.h"
-#include "audio/Audio.h"
+#include "audio/Sounds.h"
 #ifdef CHSIM
 #include <sim.h>
 #endif
@@ -67,6 +67,7 @@ void begin() {
     dbg::frameStackHi = frameStack + 256;
 #endif
     dbg::paintStack();
+    audio::begin(SOUNDS, (uint8_t)Sfx::COUNT, false);   // on once the options are read
     pal::init();
     screens::begin();
     eng::pollHook = thinkPoll;

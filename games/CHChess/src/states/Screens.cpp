@@ -5,7 +5,7 @@
 #include "../../config.h"
 #include "Screens.h"
 #include "../fx/Fx.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../iso/Iso.h"
 #include "../engine/Engine.h"
 #include "../game/Match.h"
