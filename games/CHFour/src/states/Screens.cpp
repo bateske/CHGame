@@ -1,14 +1,10 @@
 #pragma GCC optimize("Os", "no-ipa-sra")   // cold code: size over speed (hot pixel loops live in Draw/Mask)
 #include <Arduino.h>
 #include <string.h>
-#include <CHGfx.h>
+#include <CHGame.h>
+#include "../gfx/Font.h"
 #include "../../config.h"
 #include "Screens.h"
-#include "../CHGame.h"
-#include "../gfx/Palette.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Mask.h"
-#include "../gfx/Fmt.h"
 #include "../fx/Fx.h"
 #include "../audio/Audio.h"
 #include "../render/Table.h"
@@ -130,7 +126,7 @@ static void heading(const char *text, int y) {
     maskFont(m, 0, 0, text);
     uint8_t r[FONT_H + 2];
     for (int i = 0; i < FONT_H + 2; i++) r[i] = i < 3 ? FX_B : (i < 8 ? GOLD : WOOD);
-    maskDraw(m, 64 - w / 2, y, INK, INK, r);
+    maskDraw(m, 64 - w / 2, y, 0, INK, -1, r);
 }
 
 static void centred35(int y, const char *s, uint8_t c) { text35(64 - text35Width(s) / 2, y, s, c); }
@@ -374,14 +370,14 @@ static void playRender(uint32_t frame) {
     char buf[40], *p;
     bool vsCpu = game::setup.mode == game::VS_CPU;
     if (overlay == PAUSE) {
-        table::panel(10, 60, 108, 50, 3, NAVY, GOLD);
+        panel(10, 60, 108, 50, 3, NAVY, GOLD);
         for (uint8_t i = 0; i < 3; i++) {
             int y = 66 + i * 14;
             if (i == sel) fillRound(14, y - 3, 100, 16, 3, INK);
             centred2(y, PAUSE_ITEM[i], i == sel ? FX_B : WHITE);
         }
     } else if (overlay == RESULT) {
-        table::panel(10, 95, 108, 31, 3, NAVY, GOLD);
+        panel(10, 95, 108, 31, 3, NAVY, GOLD);
         uint8_t w = game::winner, lv = game::setup.level;
         const char *head = w == c4::NOBODY ? "A DRAW" : vsCpu ? (w == game::YOU ? "YOU WIN!" : "YOU LOSE")
                          : w == c4::RED ? "RED WINS" : "GOLD WINS";

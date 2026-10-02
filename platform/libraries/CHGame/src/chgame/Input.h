@@ -1,7 +1,7 @@
-// CHGame - Arduboy-flavoured input and frame pacing for the CHGame board.
+// Buttons and frame pacing: the Arduboy-flavoured front of the CHGame board.
 //
 // Started from the helper shared by CHSpriteView/CHMultiSprite/CHStlView and
-// reworked for this game:
+// reworked for the casino games, which all used this copy:
 //   * button masks are parenthesised, so ~UP_BUTTON and A|B behave;
 //   * every query reads the state captured by pollButtons(), so a frame sees
 //     one consistent snapshot and injected input (debug protocol, simulator)

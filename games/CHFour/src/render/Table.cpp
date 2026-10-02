@@ -1,11 +1,9 @@
 #pragma GCC optimize("Os", "no-ipa-sra")   // cold code: size over speed (hot pixel loops live in Draw/Mask and CHGfx)
 // The wall, the dealer and his bubble are CHBlackjack's render/Table.cpp by
 // way of CHRoulette's; the board is new.
-#include <CHGfx.h>
+#include <CHGame.h>
 #include <string.h>
 #include "Table.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Palette.h"
 #include "../fx/Fx.h"
 #include "../assets/Assets.h"
 
@@ -29,11 +27,6 @@ void setCamera(int x, int y) {
     if (y < half) y = half;
     if (y > 128 - half) y = 128 - half;
     camX = (int16_t)x; camY = (int16_t)y;
-}
-
-void panel(int x, int y, int w, int h, uint8_t r, uint8_t fill, uint8_t edge) {
-    fillRound(x, y, w, h, r, fill);
-    roundRect(x, y, w, h, r, edge);
 }
 
 void wall() {

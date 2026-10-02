@@ -6,8 +6,7 @@
 // the dealer's lines in src/game, and everything you see and hear in
 // src/render, src/stage and src/states.
 #include "config.h"
-#include <CHGfx.h>
-#include "src/CHGame.h"
+#include <CHGame.h>
 #include "src/Frame.h"
 
 void setup() {

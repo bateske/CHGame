@@ -1,6 +1,6 @@
-#pragma GCC optimize("Os", "no-ipa-sra")   // cold code: size over speed (hot pixel loops live in Draw/Mask)
+#pragma GCC optimize("Os", "no-ipa-sra")
 #include <Arduino.h>
-#include "CHGame.h"
+#include "Input.h"
 
 CHGame arduboy;
 

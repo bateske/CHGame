@@ -33,6 +33,7 @@ def build(debug):
     if debug:
         cmd += ["--build-property", "build.extra_flags=-DCHCH_DEBUG=1"]
     cmd += ["--library", str(CHCASINO / "platform" / "libraries" / "CHGfx")]  # CHCasino's CHGfx
+    cmd += ["--library", str(CHCASINO / "platform" / "libraries" / "CHGame")]  # the CHGame library
     cmd.append(str(SKETCH))
     r = subprocess.run(cmd, capture_output=True, text=True)
     if r.returncode:
