@@ -11,7 +11,6 @@
 #include "../stage/Stage.h"
 #include "../assets/Assets.h"
 #include "../save/Save.h"
-#include "../debug/Debug.h"
 #ifdef CHSIM
 #include <sim.h>
 #endif
@@ -497,7 +496,7 @@ static void optionsRender(uint32_t frame) {
 // ---------------------------------------------------------------------------
 // Debug protocol hooks (tools/chsim/chdrive.py 'say')
 // ---------------------------------------------------------------------------
-#if CHSN_DEBUG
+#if CHGAME_DEBUG
 //   G <k0> <k1> <k2> <k3> <mode> <seed>     start a game (kinds: 0 empty, 1 human, 2-4 CPU; mode 0 CLASSIC, 1 ARCADE)
 //   D <d1> <d2>                             the next dice (CLASSIC throws one: D 4 0)
 //   M <player> <square>                     a token
@@ -582,9 +581,9 @@ void begin() {
     save::load(opt, stats, hasGame);
     if (opt.mode > ARCADE) opt.mode = ARCADE;
     applyOptions();
-#if CHSN_DEBUG
+#if CHGAME_DEBUG
     dbg::hook = debugHook;
-    dbg::holdGame = settling;
+    dbg::holdWhile(settling);
 #endif
     enter(Scr::Title);
 }

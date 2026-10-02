@@ -12,6 +12,7 @@ sys.path.insert(0, str(HERE.parents[3] / "tools" / "chsim"))  # CHCasino/tools/c
 from chsim import find_cxx  # noqa: E402
 
 GAME = ROOT / "src" / "game"
+LIB = HERE.parents[3] / "platform" / "libraries" / "CHGame" / "src"   # config.h includes <chgame/Config.h>
 SOURCES = [HERE / "test_rules.cpp", GAME / "Game.cpp", GAME / "Layout.cpp", GAME / "Cpu.cpp"]
 
 
@@ -21,7 +22,7 @@ def main():
     srcs = [str(s) for s in SOURCES if s.exists()]
     cmd = find_cxx() + ["-std=gnu++17", "-O2", "-Wall", "-Wextra", "-Wno-unused-parameter",
                         "-Wno-unused-function", "-Wno-unused-variable", "-Wno-unknown-pragmas", "-fsanitize=undefined", "-fno-sanitize-recover=undefined",
-                        "-DCHTEST", *srcs, "-o", str(exe)]
+                        "-DCHTEST", "-I", str(LIB), *srcs, "-o", str(exe)]
     r = subprocess.run(cmd, capture_output=True, text=True)
     if r.returncode:
         sys.stderr.write(r.stdout + r.stderr)

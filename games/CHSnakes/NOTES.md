@@ -6,7 +6,8 @@ Agent-facing notes for continuing work here; rules, controls and build are in RE
 
 - Imported from https://github.com/bateske/CHSnakes at commit 89bba02 (2026-10-01); develop here now, not in the old repo.
 - Release build (CHGame core 0.2.4, CHGfx 1.3.0, `opt=oslto,rtlib=nano,periph=game,usb=uploadonly`): flash 37,080 of 50,944 B (13,864 spare), static RAM 15,704 of 18,416 B (2,712 spare).
-- Save pages: `../../tools/check_size.py` reports the image as 37,336 B, 256 B more than the compile's flash figure. Both A/B pages (0xF500, 0xF600) fit with 13,096 B to spare (the limit is an image of at most 50,432 B).
+- The debug protocol (`chgame/Debug.h`, `CHGAME_DEBUG`), the flash save record (`chgame/Save.h`; `src/save/Save.cpp` says only what the record holds, byte for byte the old layout) and RAMFUNC are the CHGame library's since 2026-10-02, and `tools/chsim/chdrive.py` is the shared `tools/chsim/chdrivelib.py` plus this game's `board`, `waitturn`, `cal`, the calibrated `perf` and a `say` that also takes the frame ack owed after a HELD command. Image 37,136 -> 37,208 B (the library's `audio::setOn()` out of line, about +12 B; its save code, about +30 B), static RAM 15,360 B unchanged; the same frames on every script.
+- Save pages: `../../tools/check_size.py` reports the image as 37,208 B (2026-10-02). Both A/B pages (0xF500, 0xF600, the CHGame library's `chgame/Save.cpp`) fit with 13,224 B to spare (the limit is an image of at most 50,432 B).
 - Simulator-verified (as of 2026-10-01): `python tools/check.py` passes. It runs:
   - the host tests (100,000 seeded games, saves, CPUs, the SHARK table against the layout);
   - every script in `tools/scripts/` twice, with identical frames and no drawing into a frame still being sent;
@@ -54,10 +55,10 @@ Agent-facing notes for continuing work here; rules, controls and build are in RE
 - Art round trip:
   - `python tools/sheet.py export`, edit `tools/art/sheet.png` (indexed palette), then `python tools/sheet.py import`.
   - The import writes each changed sprite to `tools/art/<name>.png`, which from then on overrides that sprite's letters in `tools/art/sprites.txt`. `token_banana.png` already does.
-- `CHSN_LEAN` is on for every device debug build: no saving and no options screen.
-  - It is the same switch as in CHBoardwalk, whose framework this game started from, although this game has room to spare.
-  - To test saving on the board, build debug with `-DCHSN_LEAN=0` (the macro is `#ifndef`-guarded).
-- Debug hooks are sent with `say`; the list is in `src/states/Screens.cpp`:
+- `CHSN_LEAN` is on for every device debug build (`CHGAME_DEBUG` on the board): no saving and no options screen.
+  - It is the same switch as in CHBoardwalk, whose framework this game started from, although this game has room to spare: a full debug build is 39,940 B (2026-10-02).
+  - To test saving on the board, build debug with `-DCHSN_LEAN=0` too (the macro is `#ifndef`-guarded): `tools/device.py` has no option for it, so use `arduino-cli compile` with `--build-property "build.extra_flags=-DCHGAME_DEBUG=1 -DCHSN_LEAN=0"` (plus the FQBN and `--library` paths in the root CLAUDE.md).
+- Debug hooks (the CHGame library's protocol, `chgame/Debug.h`) are sent with `say`; the list is in `src/states/Screens.cpp`. `M` and `O` wait (HELD) while the stage is busy (`dbg::holdWhile`):
   - `G` new game (seat kinds, mode, seed), `D` next dice, `M` place a token, `O` overview, `H` state;
   - simulator only: `J` screen, `V` look at a square, `X` square tones, `Q` calibration.
 - The determinism check in `check.py` runs every script twice. New animation code must draw from seeded state only, never from host time.
