@@ -11,6 +11,7 @@
 //   chgame/Draw.h     rounded panels, span sprites, dithering, the 3x5 font
 //   chgame/Mask.h     outlined, shadowed and gradient lettering and logos
 //   chgame/Fx.h       fx:: easing, integer sine, randomness, screen shake
+//   chgame/Audio.h    audio:: effects, music and the status LED (the piezo)
 //   chgame/Fmt.h      number formatting without printf
 //   chgame/RamFunc.h  CHGAME_RAMFUNC: code that runs from SRAM
 //
@@ -23,4 +24,5 @@
 #include "chgame/Draw.h"
 #include "chgame/Mask.h"
 #include "chgame/Fx.h"
+#include "chgame/Audio.h"
 #include "chgame/Fmt.h"
