@@ -1,0 +1,11 @@
+* text=auto eol=lf
+*.gif binary
+*.png binary
+*.bin binary
+*.pdf binary
+*.wav binary
+*.CHG binary
+*.DIC binary
+*.BNK binary
+*.CWD binary
+*.img binary

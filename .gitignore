@@ -1,0 +1,13 @@
+# Build output (each game and platform piece also has its own .gitignore)
+build/
+out/
+tools/chsim/build/
+
+# Python
+__pycache__/
+*.pyc
+
+# Editor and OS clutter
+.vscode/
+.DS_Store
+Thumbs.db
