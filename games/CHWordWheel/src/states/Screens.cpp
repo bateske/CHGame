@@ -16,7 +16,6 @@
 #include "../render/WheelStrip.h"
 #include "../audio/Sounds.h"
 #include "../save/Save.h"
-#include "../debug/Debug.h"
 #include "../gfx/Shapes.h"
 
 namespace screens {

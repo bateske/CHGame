@@ -2,7 +2,6 @@
 #include <string.h>
 #include "WheelStrip.h"
 #include "Layout.h"
-#include "../RamFunc.h"
 #include "../game/Show.h"
 #include "../game/Spin.h"
 

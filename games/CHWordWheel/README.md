@@ -209,8 +209,9 @@ keeps your place, and CONTINUE starts that step again with a new puzzle.
   WAV files.
 - `python tools/mockup.py` - the layout mock-ups the screens were built from.
 - `python tools/device.py build|upload [--debug]` - the device build. (A
-  debug build carries the test protocol, and leaves out the Setup, Options
-  and Stats screens to make room for it.)
+  debug build carries the test protocol, the CHGame library's
+  `chgame/Debug.h`, and leaves out the Setup, Options and Stats screens to
+  make room for it.)
 
 ## License
 
