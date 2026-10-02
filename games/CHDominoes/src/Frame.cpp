@@ -6,12 +6,13 @@
 #include "gfx/Colours.h"
 #include "states/Screens.h"
 #include "debug/Debug.h"
-#include "audio/Audio.h"
+#include "audio/Sounds.h"
 
 namespace frame {
 
 void begin() {
     dbg::paintStack();
+    audio::begin(SOUNDS, (uint8_t)Sfx::COUNT, false);   // on once the options are read
     pal::init(COLOURS);
     screens::begin();
 }

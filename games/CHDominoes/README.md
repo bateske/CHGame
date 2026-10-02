@@ -212,9 +212,10 @@ until the next player presses A.
   the menus, the options and setup choices, the panels, and through
   CHBlackjack's mask code the outlined, gradient-filled headings and the
   dancing banners (their half ink in a tone between fill and outline).
-* **Sound** is CHBlackjack's piezo sequencer of short step lists, three
-  bytes a step: bone on wood, knuckles for a pass, a rising run for points,
-  the crackers' climbing cracks and the boom, fanfares.
+* **Sound** is the CHGame library's piezo sequencer (CHBlackjack's) of
+  short step lists, three bytes a step (`src/audio/Sounds.cpp`): bone on
+  wood, knuckles for a pass, a rising run for points, the crackers'
+  climbing cracks and the boom, fanfares.
 * **Saved games** hold the round as it stands, the score and the
   generators' state, so reloading can never change a tile to come.
 
@@ -255,7 +256,7 @@ C++ compiler (zig, clang++ or g++ on the PATH, `pip install ziglang`, or
   (`logo.txt`). The tiles have no art: their look is in
   `src/table/Table.cpp` (`tilePx` for the close-up drawing, `SETS` for the
   sets of tiles).
-* `python tools/audio/preview.py out/audio` renders the sound effects to WAV.
+* `python ../../tools/audio/preview.py . out/audio` renders the sound effects to WAV.
 
 ## License
 

@@ -8,7 +8,7 @@
 #include "../table/Table.h"
 #include "../table/Layout.h"
 #include "../fx/Fx.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../assets/Assets.h"
 
 #if CHDM_DEBUG && defined(CHSIM)
