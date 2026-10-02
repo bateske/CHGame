@@ -1,7 +1,7 @@
 # Maxing out ST7735 graphics on the CH32X035
 
-*The engineering notes behind the [CHGfx](../platform/libraries/CHGfx/) library. For how to
-use it, see [its README](../platform/libraries/CHGfx/README.md). Brought here from the
+*The engineering notes behind the [CHGfx](../platform/board/arduino/CHGame/libraries/CHGfx/) library. For how to
+use it, see [its README](../platform/board/arduino/CHGame/libraries/CHGfx/README.md). Brought here from the
 CHGfx workspace as of CHGfx 1.3.0; this is now its home.*
 
 Target: **CH32X035G8U6** @ 48 MHz (QingKe V4C, 62 KB flash, 20 KB SRAM),

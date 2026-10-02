@@ -62,7 +62,9 @@ def run_all(build_dir, build, run, imgs, lay, pk, quick, pin=False):
     fatimg.build_image(str(card), files, fs="fat32", lfn=True, decoys=True,
                        fragment={"GAMES/ALPHA.CHG": 7, "GAMES/BRAVO.CHG": 3}, dir_pieces={"GAMES": 2})
     order = sorted(z, key=lambda n: display_title(n, z[n]))
-    man = [f"img fat32 {card}", f"img fat16 {imgs['fat16']}", f"img nogames {imgs['nogames']}"]
+    from run_tests import hostpath   # noqa: E402  (paths as the test program sees them)
+    man = [f"img fat32 {hostpath(card)}", f"img fat16 {hostpath(imgs['fat16'])}",
+           f"img nogames {hostpath(imgs['nogames'])}"]
     for n in order:
         d = z[n]
         try:
@@ -70,7 +72,7 @@ def run_all(build_dir, build, run, imgs, lay, pk, quick, pin=False):
             ln, crc = info["payload_bytes"], info["payload_crc32"]
         except chgpack.ChgError:
             ln, crc = 0, 0
-        man.append(f"pkg {n} 0 {ln} {crc:x} {pkdir / n}")
+        man.append(f"pkg {n} 0 {ln} {crc:x} {hostpath(pkdir / n)}")
     mpath = build_dir / "boot_manifest.txt"
     mpath.write_text("\n".join(man) + "\n")
     fdir = build_dir / "frames"
@@ -94,7 +96,7 @@ def run_all(build_dir, build, run, imgs, lay, pk, quick, pin=False):
 
 
 def run_real(build_dir, exe, img, fdir):
-    from run_tests import run   # noqa: E402
+    from run_tests import run, hostpath   # noqa: E402
     vol = fatimg.FatVolume(str(img))
     g, _, _ = vol.find("GAMES", is_dir=True)
     pkgs = {}
@@ -105,11 +107,11 @@ def run_real(build_dir, exe, img, fdir):
         pkgs[name] = vol.read_file("GAMES/" + name)
     pkdir = build_dir / "realpk"
     pkdir.mkdir(exist_ok=True)
-    man = [f"img fat32 {img}"]
+    man = [f"img fat32 {hostpath(img)}"]
     for n in sorted(pkgs, key=lambda n: display_title(n, pkgs[n])):
         (pkdir / n).write_bytes(pkgs[n])
         info = chgpack.parse(pkgs[n])
-        man.append(f"pkg {n} 0 {info['payload_bytes']} {info['payload_crc32']:x} {pkdir / n}")
+        man.append(f"pkg {n} 0 {info['payload_bytes']} {info['payload_crc32']:x} {hostpath(pkdir / n)}")
     mpath = build_dir / "real_manifest.txt"
     mpath.write_text("\n".join(man) + "\n")
     return run("boot_real", exe, mpath, fdir, "real")
@@ -128,7 +130,7 @@ def check_frames(fdir, pin):
         if not pin:
             pinned.clear()
         pinned.update(now)
-        pinned_path.write_text(json.dumps(pinned, indent=1, sort_keys=True) + "\n")
+        pinned_path.write_text(json.dumps(pinned, indent=1, sort_keys=True) + "\n", newline="\n")
         print(f"{'frames':12s} {'pinned':6s} {len(now)} frames recorded in frames.json")
         return True
     # real_* frames come from out/sdcard.img, which only exists after mkcard.py

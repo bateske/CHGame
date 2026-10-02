@@ -12,7 +12,7 @@ which is small and recent.
 |---|---|
 | `<Name>.ino` | Includes `<CHGame.h>` (first, then `config.h`). `setup()` calls `arduboy.boot()`, `dbg::begin("<ID> <version>")`, `gfx_begin(...)` and the frame loop's `begin()`; `loop()` runs one frame. |
 | `config.h` | The game's build switches, prefixed with its four letters (`CHF4_`): its version, frame rate, often `<PFX>_LEAN` (drops saving or screens so a device debug build fits, derived from the library's `CHGAME_DEBUG`). It includes `<chgame/Config.h>`, the library's switches (`CHGAME_DEBUG`: the serial debug protocol, on in the simulator, set on the board by `tools/device.py build --debug`; `CHGAME_PROFILE`). Put new switches here, not in build flags. |
-| `README.md` | Rules, controls, design notes and the tools. Its GIFs come from `tools/scripts/showcase.txt` / `gameplay.txt`. |
+| `README.md` | The hook, one GIF, controls, rules, how to play, developer notes, credits: the format in [game-readme.md](game-readme.md). Its GIF, `docs/gameplay.gif`, comes from `tools/scripts/gameplay.txt` by way of `tools/readme_gif.py`. |
 | `NOTES.md` | For developers: snapshot, design decisions, open items, gotchas. |
 | `LICENSE`, `NOTICE` | Apache-2.0, plus attribution for anything derived from elsewhere. |
 | `docs/` | The README's images. |
@@ -21,7 +21,7 @@ which is small and recent.
 ## `src/`: the game, on the library
 
 What every game used to carry a copy of is now the CHGame library's
-(`#include <CHGame.h>`; [its README](../platform/libraries/CHGame/README.md)):
+(`#include <CHGame.h>`; [its README](../platform/board/arduino/CHGame/libraries/CHGame/README.md)):
 buttons and pacing (`arduboy`), the palette (`pal::`), drawing and the 3x5
 font, lettering, easing and shake (`fx::`), number formatting, the sound
 engine (`audio::`), saving (`save::`), the debug protocol (`dbg::`) and
@@ -86,8 +86,8 @@ shared in the root `tools/`.
 4. Run `python tools/tests/run_tests.py`, `python tools/check.py` if the
    game has one (otherwise the scripts), and
    `python tools/device.py build` for the size.
-5. Compare frames with the baseline. Re-record the README GIFs if the look
-   changed on purpose.
+5. Compare frames with the baseline. Re-record the README's GIF if the look
+   changed on purpose (`python tools/run.py readme_gif.py`).
 6. If a device check is needed, follow "The device" in
    [../CLAUDE.md](../CLAUDE.md). Record what was or was not measured on
    hardware in the game's `NOTES.md`.

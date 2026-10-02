@@ -2,7 +2,8 @@
 
     python tools/chsim/chsim.py build <sketch dir> [-D NAME=VAL ...]   -> prints the .exe path
 
-This is the repository's shared simulator: every game in games/ builds with it,
+This is the repository's shared simulator: every game builds with it (a
+sketch dir may also be a game's or app's name: `chsim.py build CHFour`),
 and so does any other sketch on the CHGame library.
 
 Compiles the sketch's .ino and every .cpp/.c under its src/ folder, CHGfx's
@@ -11,18 +12,23 @@ extras, text effects, palette), the CHGame library (every .cpp under its
 src/), and the host shims in host/, where chgfx_host.cpp stands in for
 CHGfx.cpp.
 
-A game may add shims of its own in <sketch>/tools/chsim/host/ (the SD games
-keep CHSd's pretend card there): its .cpp files are compiled too, and one
+A sketch that includes CHSd (<Fat.h> or <SdSpi.h>) also gets CHSd's FAT
+reader and, in place of its SPI driver, the pretend card in CHSd's host/
+folder: the file named by $CHSD_CARD is in the slot (a *.img as a whole
+card, any other file on a FAT16 card made for it; unset: no card).
+
+A game may add shims of its own in <sketch>/tools/chsim/host/: its .cpp
+files are compiled too, and one
 with the same name as a shared shim replaces it. Its headers come first on
 the include path, so a header there must not share a name with one here.
 
 CHGfx is $CHSIM_CHGFX (its src folder) if set, else the repository's own copy in
-platform/libraries/CHGfx, else the Arduino sketchbook's libraries/CHGfx, or
+platform/board/arduino/CHGame/libraries/CHGfx, else the Arduino sketchbook's libraries/CHGfx, or
 libraries/CHGfx* (a GitHub zip installs as CHGfx-main). The sketchbook is
 $CHSIM_SKETCHBOOK, else what `arduino-cli config get directories.user`
 reports, else ~/Documents/Arduino (~/Arduino on Linux). The CHGame library
 is found the same way: $CHSIM_CHGAME (its src folder), else
-platform/libraries/CHGame, else the sketchbook's libraries/CHGame.
+platform/board/arduino/CHGame/libraries/CHGame, else the sketchbook's libraries/CHGame.
 
 Compiler: $CHSIM_CXX (e.g. "zig c++"), else zig on the PATH, else the
 ziglang pip package (`pip install ziglang`), else clang++ or g++.
@@ -51,8 +57,11 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent                  # tools/chsim
-VENDORED_CHGFX = HERE.parents[1] / "platform" / "libraries" / "CHGfx" / "src"
-VENDORED_CHGAME = HERE.parents[1] / "platform" / "libraries" / "CHGame" / "src"
+sys.path.insert(0, str(HERE.parent))
+import paths  # noqa: E402
+VENDORED_CHGFX = HERE.parents[1] / "platform" / "board" / "arduino" / "CHGame" / "libraries" / "CHGfx" / "src"
+VENDORED_CHGAME = HERE.parents[1] / "platform" / "board" / "arduino" / "CHGame" / "libraries" / "CHGame" / "src"
+VENDORED_CHSD = HERE.parents[1] / "platform" / "board" / "arduino" / "CHGame" / "libraries" / "CHSd"
 
 
 def sketchbook():
@@ -90,13 +99,30 @@ def chgfx_dir():
 
 def chgame_dir():
     """The CHGame library's src folder: $CHSIM_CHGAME, else this repository's
-    platform/libraries/CHGame, else the sketchbook's libraries/CHGame."""
+    platform/board/arduino/CHGame/libraries/CHGame, else the sketchbook's libraries/CHGame."""
     env = os.environ.get("CHSIM_CHGAME")
     d = Path(env) if env else VENDORED_CHGAME
     if not (d / "CHGame.h").exists():
         d = sketchbook() / "libraries" / "CHGame" / "src"
     if not (d / "CHGame.h").exists():
         raise SystemExit(f"the CHGame library was not found at {d}: set CHSIM_CHGAME")
+    return d
+
+
+def chsd_dir(sketch, inos):
+    """CHSd's folder if the sketch includes it, else None: $CHSIM_CHSD, else
+    this repository's copy, else the sketchbook's libraries/CHSd."""
+    import re
+    uses = re.compile(r'#\s*include\s*<(Fat|SdSpi)\.h>')
+    files = list(inos) + [p for p in (sketch / "src").rglob("*") if p.suffix in (".cpp", ".c", ".h", ".hpp")]
+    if not any(uses.search(p.read_text(encoding="utf-8", errors="replace")) for p in files):
+        return None
+    env = os.environ.get("CHSIM_CHSD")
+    d = Path(env) if env else VENDORED_CHSD
+    if not (d / "src" / "Fat.h").exists():
+        d = sketchbook() / "libraries" / "CHSd"
+    if not (d / "src" / "Fat.h").exists():
+        raise SystemExit(f"the CHSd library was not found at {d}: set CHSIM_CHSD")
     return d
 
 
@@ -119,7 +145,7 @@ def find_cxx():
 
 
 def build(sketch, defines=(), out=None):
-    sketch = Path(sketch).resolve()
+    sketch = paths.sketch(sketch)
     name = sketch.name
     chgfx = chgfx_dir()
     chgame = chgame_dir()
@@ -148,6 +174,12 @@ def build(sketch, defines=(), out=None):
     srcs += sorted(p for p in (sketch / "src").rglob("*") if p.suffix in (".cpp", ".c"))
     srcs += sorted(p for p in chgfx.glob("*.cpp") if p.name != "CHGfx.cpp")
     srcs += sorted(p for p in chgame.rglob("*") if p.suffix in (".cpp", ".c"))
+    chsd = chsd_dir(sketch, inos)
+    if chsd:
+        # The FAT reader as it is; SdSpi.cpp compiles to nothing under
+        # CHSIM, and host/sd_host.cpp is the card.
+        srcs += sorted((chsd / "src").glob("*.cpp"))
+        shims.setdefault("sd_host.cpp", chsd / "host" / "sd_host.cpp")
     srcs += [shims[n] for n in sorted(shims)]
     exe = Path(out) if out else bdir / "sim.exe"
     cmd = find_cxx() + [
@@ -156,6 +188,8 @@ def build(sketch, defines=(), out=None):
     ]
     cmd += [f"-I{d}" for d in (own, HERE / "host") if d.is_dir()]
     cmd += [f"-I{sketch}", f"-I{chgfx}", f"-I{chgame}"]
+    if chsd:
+        cmd += [f"-I{chsd / 'src'}", f"-I{chsd / 'host'}"]
     for d in defines:
         cmd.append(f"-D{d}")
     cmd += os.environ.get("CHSIM_FLAGS", "").split()      # after the defaults, so they win

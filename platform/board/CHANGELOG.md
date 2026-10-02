@@ -5,6 +5,34 @@ number Boards Manager compares with what a user has installed, so every release
 bumps it. `tools/release.sh <version> bateske/CH32SerialBoot` publishes the
 release and uses the matching section of this file as the GitHub release notes.
 
+## Unreleased
+
+### Added
+
+- **Tools > Bootloader** chooses what *Burn Bootloader* writes: the SD game
+  menu (default), the same bootloader without the menu, or the 0.2.4 one.
+- **Programmer "CHGame USB"**: *Burn Bootloader* through the bootloader that
+  is already on the board. No driver and no buttons; a port must be
+  selected, as for Upload. The installed sketch is erased. *Upload Using
+  Programmer* does the same and then uploads the sketch. "WCH factory ISP"
+  remains for a board whose bootloader is missing, damaged or locked, and no
+  longer needs a port selected.
+- `chgame-upload` 0.2.0: `selfupdate <boot.bin>` and `burn -method usb|isp`.
+  It refuses an image that is not a bootloader for this board. Its source
+  is in this repository now (`platform/bootloader/host/go`).
+- The CHGame, CHGfx and CHSd libraries are in the package's `libraries/`.
+
+### Fixed
+
+- **A crash no longer leaves the piezo sounding.** A hard fault, or an
+  interrupt with no handler, used to spin with interrupts off, and the timer
+  driving the piezo held the note that was playing. Now the piezo pin is
+  driven low and the status LED stays on (`chgame_fault()`, 58 B). A debug
+  build (`-DCHGAME_DEBUG=1`) also keeps mcause, mepc, mtval, ra and sp at
+  the bottom of the stack. A sketch that provides `chgame_fault_park()` (the
+  CHGame library's debug protocol) goes on answering its PC; otherwise a
+  press of A restarts it, for the library's debug command `!` to report.
+
 ## 0.2.4 (2026-09-30)
 
 ### Added

@@ -1,13 +1,28 @@
 # Programmers offered for Burn Bootloader and Upload Using Programmer.
 #
-# Exactly one, because there is exactly one situation that needs a programmer:
-# putting the CHGame bootloader onto a board that does not have it yet, or
-# rescuing one whose bootloader was damaged. Normal uploads never come here.
+# Normal uploads never come here. A programmer is for changing the bootloader
+# itself, and there are two ways to do that. Which bootloader is written is
+# the board's Tools > Bootloader menu (boards.txt).
 #
-# "WCH factory ISP" is not an external programmer - it is the immutable ISP
-# built into the chip, entered by holding BOOT across a power cycle. Nothing
-# needs to be plugged in beyond the USB cable.
+# "CHGame USB" goes through the bootloader that is already on the board, the
+# same way Upload does: no driver, no buttons. Every CHGame leaves the factory
+# with a bootloader, so this is the one to use.
+#
+# "WCH factory ISP" is not an external programmer either - it is the immutable
+# ISP built into the chip, entered by holding BOOT across a power cycle (and on
+# Windows it needs the WinUSB driver, docs/recovery.md). It is for a board
+# whose bootloader is missing, damaged or locked.
+#
+# burn.method and burn.port are read by the recipes in platform.txt.
+
+chgameusb.name=CHGame USB (through the installed bootloader, no driver)
+chgameusb.program.tool=chgame_upload
+chgameusb.program.extra_params=
+chgameusb.burn.method=usb
+chgameusb.burn.port=-port "{serial.port}"
 
 wchisp.name=WCH factory ISP (hold BOOT, power cycle)
 wchisp.program.tool=chgame_upload
 wchisp.program.extra_params=
+wchisp.burn.method=isp
+wchisp.burn.port=

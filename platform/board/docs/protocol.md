@@ -6,7 +6,7 @@ the CHGame bootloader. Three implementations must agree:
 | Implementation | Location |
 |---|---|
 | Device (C) | `bootloader/src/proto.{h,c}` |
-| Host (Go) — shipping | `host/go/protocol.go` |
+| Host (Go) — shipping | `platform/bootloader/host/go/protocol.go` |
 | Host (Python) — reference and tests | `host/py/chgame/protocol.py` |
 
 A browser implementation for the Web Serial updater will be a fourth. The whole

@@ -1,12 +1,12 @@
 # The `CHGame` library: how it was built, and why
 
-`platform/libraries/CHGame` is the one library the board package is to
+`platform/board/arduino/CHGame/libraries/CHGame` is the one library the board package is to
 carry, with `CHGame.h` as its single include: what `Arduboy2.h` is to the
 Arduboy. All twenty games are built on it.
 
 - **The reference** (modules, calls, rules of thumb) is the library's
-  [README](../platform/libraries/CHGame/README.md); the smallest complete
-  sketch is [examples/Hello](../platform/libraries/CHGame/examples/Hello/Hello.ino).
+  [README](../platform/board/arduino/CHGame/libraries/CHGame/README.md); the smallest complete
+  sketch is [examples/Hello](../platform/board/arduino/CHGame/libraries/CHGame/examples/Hello/Hello.ino).
 - **What it was built from:** the code the games carried copies of.
   [unification.md](unification.md) measured those copies before the move,
   and records what changed.
@@ -19,7 +19,7 @@ as they are.
 ## Layout
 
 ```
-platform/libraries/CHGame/
+platform/board/arduino/CHGame/libraries/CHGame/
   library.properties        name=CHGame, includes=CHGame.h, depends=CHGfx
   src/CHGame.h              the one include: CHGfx and every module below
   src/chgame/Config.h       CHGAME_DEBUG, CHGAME_PROFILE

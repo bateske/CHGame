@@ -136,7 +136,7 @@ def cmd_info(a) -> int:
             print("  " + line)
             bad += not ok
         return 1 if bad else 0
-    sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent / "platform" / "libraries" / "CHSd" / "tools"))
+    sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent / "platform" / "board" / "arduino" / "CHGame" / "libraries" / "CHSd" / "tools"))
     import fatimg  # noqa: E402
     vol = fatimg.FatVolume(str(p))
     games, _, _ = vol.find("GAMES", is_dir=True)

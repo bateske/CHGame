@@ -41,6 +41,18 @@
 /* --- Boot request marker --------------------------------------------------- */
 /* Stored as {magic, ~magic} so uninitialised SRAM cannot forge a request. */
 #define CHGAME_BOOT_MAGIC     0x43484742u   /* "CHGB" */
+/* Start the installed program without the menu (the SD-menu bootloader;
+   platform/bootloader/shared/chgame_bootreq.h). Older bootloaders start it
+   on any request but CHGB. */
+#define CHGAME_RUN_MAGIC      0x43484752u   /* "CHGR" */
+
+/* --- Crash record ----------------------------------------------------------- */
+/* In a debug build, chgame_fault() (chgame_boot.c) keeps six words at the bottom of the stack
+   (_susrstack): this magic, then mcause, mepc, mtval, ra and sp. A warm reset
+   keeps SRAM, and neither bootloader's RUN path nor a program's startup
+   reaches that far down, so the restarted program can report it (the CHGame
+   library's debug command '!'). */
+#define CHGAME_FAULT_MAGIC    0x46474843u   /* "CHGF" */
 
 /* --- Application metadata (one flash page at CHGAME_META_ADDR) ------------- */
 #define CHGAME_META_MAGIC     0x4D474843u   /* "CHGM" */

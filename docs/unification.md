@@ -9,7 +9,7 @@ This page measured how far the twenty games' copies of the "shared" code were fr
 
 ## The result (2026-10-02)
 
-**Every game is built on `platform/libraries/CHGame`.** What each carried a
+**Every game is built on `platform/board/arduino/CHGame/libraries/CHGame`.** What each carried a
 copy of is gone from its `src/`: `CHGame.h/.cpp`, `RamFunc.h`, `debug/`, the
 save engine, `gfx/{Draw,Fmt,Mask,Palette}`, `fx/Ease` and the sound engine
 (`audio/Audio.*`). A game keeps its rules, screens, art, its own effects,
@@ -74,7 +74,7 @@ library's `blip()` comment and code disagreed (the code now does what most
 old engines did).
 
 The rest of this page is the survey from before the move, kept for the
-record. Its numbers come from comparing the copies in `games/*/src` by md5,
+record. Its numbers come from comparing the copies in `platform/board/arduino/CHGame/libraries/CHGame/examples/games/*/src` by md5,
 by line diff against CHFour, and by hashing function bodies; the commands
 are at the end.
 
@@ -93,8 +93,8 @@ are at the end.
 | Banner lettering (`gfx/Mask`) | 20 | 4 API families | **Mid-way.** One signature covers the others. |
 | Effects (`fx/Fx`, `fx/Ease`) | 20 | 13 | **Mid-way** for the maths and particles; banners and particle kinds stay per game. |
 | Sound (`audio/`) | 20 | 14 distinct engines | **Far.** The hardest layer. |
-| CHGfx | 1 library | | **Ready.** Already a library; every game builds against `platform/libraries/CHGfx`. |
-| CHSd | 1 library + 3 generated copies | | **Ready** once the board package bundles it. |
+| CHGfx | 1 library | | **Ready.** Already a library; every game builds against `platform/board/arduino/CHGame/libraries/CHGfx`. |
+| CHSd | 1 library + 3 generated copies | | **Done** 2026-10-02: one library, no copies. |
 
 In one line: the device interface (`CHGame.h`), `RamFunc`, `Fmt`, CHGfx and CHSd could move into a library today without changing a pixel. Saving, debugging and the frame loop need small hooks. The house-style drawing helpers need two decisions. Sound needs a superset engine and per-game conversion.
 
@@ -282,7 +282,7 @@ The magics, which CLAUDE.md rule 8 requires to be unique:
   - CHCrossword adds `"`, `&` and `;`.
   - CHWordWheel folds lower case to capitals.
 - **`text35x2`** has five implementations. They differ in `\n` and `~` handling.
-- **CHGfx already has most of these** (`gfx_fillRoundRect`, `gfx_dither`, `gfx_remapRect`, `gfx_sprite4`, `gfx_sprite4Rot`, `gfx_scroll`, `gfx_textFx` with `CHGfx_Tiny3x5`). The games kept their copies on purpose, because they are smaller and in two cases draw different pixels ([CHChess/docs/CHGfx-notes.md](../games/CHChess/docs/CHGfx-notes.md)). Only CHBlackjack, CHCraps, CHSlots and CHYacht call CHGfx's versions.
+- **CHGfx already has most of these** (`gfx_fillRoundRect`, `gfx_dither`, `gfx_remapRect`, `gfx_sprite4`, `gfx_sprite4Rot`, `gfx_scroll`, `gfx_textFx` with `CHGfx_Tiny3x5`). The games kept their copies on purpose, because they are smaller and in two cases draw different pixels ([CHChess/docs/CHGfx-notes.md](../platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHChess/docs/CHGfx-notes.md)). Only CHBlackjack, CHCraps, CHSlots and CHYacht call CHGfx's versions.
 - **For the library:** a `chgame` draw module with the identical functions and the `sprite4` superset. Then **decide the font**: ship both tables (a per-game choice), or accept a one-pixel change to `M` in five games and re-record their GIFs.
 
 ### Banner lettering: `gfx/Mask`
@@ -361,24 +361,24 @@ Every game then needs its tables converted and its preview hashes compared, and 
 ### CHGfx and CHSd
 
 - **CHGfx** is a library already:
-  - every game builds against `platform/libraries/CHGfx`, through `--library` in `device.py` and `chgfx_dir()` in `tools/chsim/chsim.py`;
+  - every game builds against `platform/board/arduino/CHGame/libraries/CHGfx`, through `--library` in `device.py` and `chgfx_dir()` in `tools/chsim/chsim.py`;
   - its `library.properties` still points at the CH32SerialBoot URL.
-- **CHSd** is a library too, but a sketch can only compile its own folder unless the library is installed. So CHWords, CHCrossword and CHWordWheel carry generated copies, made by `platform/libraries/CHSd/tools/vendor.py`. Once the board package bundles CHSd, the copies and `vendor.py` go.
+- **CHSd** is a library too, but a sketch can only compile its own folder unless the library is installed. So CHWords, CHCrossword and CHWordWheel carried generated copies, made by CHSd's `tools/vendor.py`. Since 2026-10-02 the three libraries are in the board package's `libraries/` folder, the games include CHSd as a library, and the copies and `vendor.py` are gone ([bundling-plan.md](bundling-plan.md)).
 
 ## What the tools need
 
 | Tool | Today | For a library |
 |---|---|---|
-| `games/*/tools/device.py` (20 copies, 4-26 lines apart) | `--library platform/libraries/CHGfx`, `-D<PFX>_DEBUG=1` | also `--library platform/libraries/CHGame`, and `-DCHGAME_DEBUG=1` beside the game's flag |
+| `platform/board/arduino/CHGame/libraries/CHGame/examples/games/*/tools/device.py` (20 copies, 4-26 lines apart) | `--library platform/board/arduino/CHGame/libraries/CHGfx`, `-D<PFX>_DEBUG=1` | also `--library platform/board/arduino/CHGame/libraries/CHGame`, and `-DCHGAME_DEBUG=1` beside the game's flag |
 | `tools/sdcard/mkcard.py` | `--library` CHGfx for CHSDtoUSB | the same addition |
 | `tools/chsim/chsim.py` | compiles `<sketch>/src/**` + CHGfx's `src/*.cpp` | a resolver like `chgfx_dir()` for the CHGame library, its `src/**`, and `-I` |
-| `games/*/tools/audio/preview.py` | compiles `src/audio/Audio.cpp` | the library's audio source |
-| `platform/libraries/CHSd/tools/vendor.py` | copies CHSd into three games | retired once CHSd is bundled |
+| `platform/board/arduino/CHGame/libraries/CHGame/examples/games/*/tools/audio/preview.py` | compiles `src/audio/Audio.cpp` | the library's audio source |
+| CHSd's `tools/vendor.py` | copied CHSd into three games | retired 2026-10-02: CHSd is used as a library |
 | CI | none | one job: every game's release build size, every simulator script, the host tests |
 
 ## Repeating the survey
 
-From `games/`:
+From the games' folder (then `games/`, now the library's `examples/games/`):
 
 ```bash
 # identical copies of a file

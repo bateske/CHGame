@@ -37,8 +37,13 @@ def main():
     strip(["menu_installed", "plain_menu_installed", "casino_menu_installed"]).save(DOCS / "menu_themes.png")
     # the boot test binary in its picture mode, on the casino card
     native = HERE / "test" / "native" / "build"
-    subprocess.run([str(native / "boot"), str(native / "real_manifest.txt"), str(FRAMES), "anim"], check=True,
-                   capture_output=True)
+    # (through run_tests' launcher: on Windows the binary is a Linux one, run under WSL)
+    import sys
+    sys.path.insert(0, str(native.parent))
+    import run_tests
+    argv = [run_tests.hostpath(native / "boot"), run_tests.hostpath(native / "real_manifest.txt"),
+            run_tests.hostpath(FRAMES), "anim"]
+    subprocess.run((run_tests.wsl_cmd() if run_tests.WSL else []) + argv, check=True, capture_output=True)
     anim = []
     for i in range(32):
         ppm = FRAMES / f"anim_{i:02d}.ppm"

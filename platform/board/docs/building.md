@@ -5,7 +5,7 @@
 | Tool | Needed for | Notes |
 |---|---|---|
 | RISC-V GCC (`riscv-none-embed-gcc` 8.2.0) | bootloader, sketches | Installed by the CHGame board package, or by the upstream CH32 core |
-| Go 1.21+ | the uploader | Only to rebuild `chgame-upload`; not needed to use the board |
+| Go 1.25+ | the uploader | Only to rebuild `chgame-upload`; not needed to use the board |
 | Python 3.10+ | build scripts, tests | Not needed by end users — the shipping uploader is a binary |
 | `wchisp` | first flash and recovery | Installed by the board package |
 | `arduino-cli` | compiling sketches, packaging | |
@@ -36,8 +36,11 @@ that ship without the header. Change the header, not the copies.
 ## Uploader
 
 ```bash
-./host/go/build.sh          # -> dist/tools/<host>/chgame-upload[.exe]
+platform/bootloader/host/go/build.sh    # -> out/chgame-upload/<host>/chgame-upload[.exe]
 ```
+
+(The other commands on this page are CH32SerialBoot's and have not moved to
+this repository yet: docs/roadmap.md, step 1.)
 
 Cross-compiles for all five hosts Arduino supports from a single machine, with
 CGO disabled. macOS avoids the cgo-only IOKit enumerator via a build-tagged

@@ -8,15 +8,17 @@
 #
 # The advanced menus that remain are the ones a game actually needs to trade
 # off: optimisation, float printf support, which core peripherals are compiled
-# in, and whether USB Serial is. Programmer selection is NOT offered: normal
-# uploads always go through the CHGame bootloader over USB CDC. Factory
-# provisioning and recovery use wchisp directly and are documented in
-# docs/recovery.md rather than surfaced here.
+# in, and whether USB Serial is. Normal uploads always go through the CHGame
+# bootloader over USB CDC and need no programmer. The Bootloader menu and the
+# two programmers (programmers.txt) are for Burn Bootloader only: changing the
+# bootloader over USB, or through the factory ISP for recovery
+# (docs/recovery.md).
 
 menu.opt=Optimize
 menu.rtlib=C Runtime Library
 menu.periph=Peripherals
 menu.usb=USB
+menu.boot=Bootloader (for Burn Bootloader)
 
 CHGame.name=CHGame
 
@@ -60,10 +62,11 @@ CHGame.upload.use_1200bps_touch=false
 CHGame.upload.wait_for_upload_port=false
 CHGame.upload.native_usb=true
 
-# Burn Bootloader writes this image through the factory ISP. Shipped with the
-# platform so a user never has to locate or build a bootloader binary.
+# Burn Bootloader writes the image chosen in the Bootloader menu below, over
+# USB or through the factory ISP (Tools > Programmer, programmers.txt). The
+# images are shipped with the platform so a user never has to locate or build
+# a bootloader binary.
 CHGame.bootloader.tool=chgame_upload
-CHGame.bootloader.file=CHGame/chgame_bootloader.bin
 
 CHGame.vid.0=0x16C0
 CHGame.pid.0=0x27DD
@@ -127,6 +130,18 @@ CHGame.menu.usb.serial=Serial (default)
 CHGame.menu.usb.serial.build.usb_flags=-DUSE_CHGAME_USB_CDC
 CHGame.menu.usb.uploadonly=Upload only: no Serial (~0.7 KB smaller)
 CHGame.menu.usb.uploadonly.build.usb_flags=-DUSE_CHGAME_USB_BOOTONLY
+
+# Which bootloader Burn Bootloader writes. It changes nothing in a sketch: all
+# three keep the same memory map, USB identity and upload protocol, so a sketch
+# built for one runs under the others. The sources and what each one does are
+# in platform/bootloader; bootloaders/CHGame/README.md says where each binary
+# comes from.
+CHGame.menu.boot.sdmenu=SD game menu (default)
+CHGame.menu.boot.sdmenu.bootloader.file=CHGame/chgame_sdboot.bin
+CHGame.menu.boot.nomenu=USB only, no menu
+CHGame.menu.boot.nomenu.bootloader.file=CHGame/chgame_boot_nomenu.bin
+CHGame.menu.boot.classic=Classic 0.2.4 (before the SD menu)
+CHGame.menu.boot.classic.bootloader.file=CHGame/chgame_bootloader.bin
 
 CHGame.build.flags.debug=-DNDEBUG
 CHGame.build.flags.fp=

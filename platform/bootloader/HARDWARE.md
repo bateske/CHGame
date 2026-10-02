@@ -127,8 +127,8 @@ UP info                                  # BOOT_VERSION 2
 
 1. **Load the card.**
    ```
-   cd utilities/CHSDtoUSB
-   arduino-cli compile -b CHGame:ch32v:CHGame --library ../../platform/libraries/CHGfx .
+   cd platform/board/arduino/CHGame/libraries/CHGame/examples/apps/CHSDtoUSB
+   arduino-cli compile -b CHGame:ch32v:CHGame --library ../../platform/board/arduino/CHGame/libraries/CHGfx .
    arduino-cli upload  -b CHGame:ch32v:CHGame -p <PORT> .
    ```
    - A drive appears (vendor "CHGame"). Copy everything in `out/sdcard/`
@@ -183,7 +183,7 @@ jumping. It changes nothing else.
    python platform/bootloader/test/hil/test_powercut.py arm --at 50    # switch off when told
    python platform/bootloader/test/hil/test_powercut.py verify         # after switching on
    ```
-3. **A normal upload.** `cd games/CHFour && python tools/device.py upload`.
+3. **A normal upload.** `cd platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHFour && python tools/device.py upload`.
    The game runs. Switch off and on: it runs again.
 
 ## HW2b: the menu bootloader
@@ -220,7 +220,7 @@ expected result.
 
 **USB and uploads**
 - [ ] With the menu on screen, upload from the IDE (or
-      `cd games/CHFour && python tools/device.py upload`). The upload works,
+      `cd platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHFour && python tools/device.py upload`). The upload works,
       CHFour starts, and on the next power-on the menu shows
       INSTALLED PROGRAM.
 - [ ] With the menu on screen, `UP probe` or `UP info` answers, and the menu

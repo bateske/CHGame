@@ -48,12 +48,30 @@ void CDC_init(void) { USB_init(); }
 uint8_t CDC_available(void) { return CDC_readByteCount; }
 uint8_t CDC_ready(void) { return !CDC_writeBusyFlag; }
 
+/* CHGAME: UEP2_CTRL_H holds the answer for both directions of endpoint 2, and
+   the USB interrupt rewrites it (CDC_EP2_IN, CDC_EP2_OUT). Code outside the
+   interrupt must not be interrupted between reading and writing it, or it
+   writes back the half the interrupt has just changed: an IN packet sent
+   twice, or an OUT packet accepted over one not read yet. */
+static void CDC_ep2_answer(uint8_t mask, uint8_t answer) {
+  uint32_t on = NVIC_GetStatusIRQ(USBFS_IRQn);
+  NVIC_DisableIRQ(USBFS_IRQn);
+  USBFSD->UEP2_CTRL_H = (USBFSD->UEP2_CTRL_H & ~mask) | answer;
+  if(on) NVIC_EnableIRQ(USBFS_IRQn);
+}
+
 void CDC_flush(void) {
   if(!CDC_writeBusyFlag && CDC_writePointer > 0) {
-    USBFSD->UEP2_TX_LEN = CDC_writePointer;
-    USBFSD->UEP2_CTRL_H = (USBFSD->UEP2_CTRL_H & ~USBFS_UEP_T_RES_MASK) | USBFS_UEP_T_RES_ACK;
+    /* CHGAME: busy BEFORE the packet is armed. The other way round, another
+       interrupt (a display flush, the sound timer) landing between the two
+       lets the host take the packet first: CDC_EP2_IN clears the flag, this
+       code then sets it, and nothing ever clears it again. Every later write
+       is dropped: the port stays open and the sketch is mute. Seen on the
+       board as debug-protocol runs that stopped answering (2026-10-02). */
     CDC_writeBusyFlag = 1;
+    USBFSD->UEP2_TX_LEN = CDC_writePointer;
     CDC_writePointer  = 0;
+    CDC_ep2_answer(USBFS_UEP_T_RES_MASK, USBFS_UEP_T_RES_ACK);
   }
 }
 
@@ -82,7 +100,7 @@ int16_t CDC_read_nb(void) {
   if(!CDC_readByteCount) return -1;
   data = (int16_t)wch_usbcdc_EP2_buffer[CDC_readPointer++];
   if(--CDC_readByteCount == 0)
-    USBFSD->UEP2_CTRL_H = (USBFSD->UEP2_CTRL_H & ~USBFS_UEP_R_RES_MASK) | USBFS_UEP_R_RES_ACK;
+    CDC_ep2_answer(USBFS_UEP_R_RES_MASK, USBFS_UEP_R_RES_ACK);
   return data;
 }
 
@@ -99,7 +117,7 @@ char CDC_read(void) {
   while(!CDC_readByteCount);
   data = (char)wch_usbcdc_EP2_buffer[CDC_readPointer++];
   if(--CDC_readByteCount == 0)
-    USBFSD->UEP2_CTRL_H = (USBFSD->UEP2_CTRL_H & ~USBFS_UEP_R_RES_MASK) | USBFS_UEP_R_RES_ACK;
+    CDC_ep2_answer(USBFS_UEP_R_RES_MASK, USBFS_UEP_R_RES_ACK);
   return data;
 }
 

@@ -10,7 +10,7 @@ For every program in games.json it builds the release image (each game's
 tools/device.py build, or arduino-cli for the utilities), wraps it in a .CHG
 package with tools/chgpack.py, and copies the data files the games read from
 the card. Copy the CONTENTS of out/sdcard/ to the root of a FAT16/FAT32 card
-(for example through utilities/CHSDtoUSB): GAMES/ holds the packages, the
+(for example through platform/board/arduino/CHGame/libraries/CHGame/examples/apps/CHSDtoUSB): GAMES/ holds the packages, the
 data files stay where the games look for them.
 
 The same inputs give the same bytes, so a card can be rebuilt and compared.
@@ -52,7 +52,8 @@ def build(p: dict) -> pathlib.Path:
     else:
         out = d / "build" / "release"
         cmd = ["arduino-cli", "compile", "-b", p.get("fqbn", RELEASE_FQBN), "--build-path", str(out),
-               "--library", str(REPO / "platform" / "libraries" / "CHGfx"), str(d)]
+               "--library", str(REPO / "platform" / "board" / "arduino" / "CHGame" / "libraries" / "CHGfx"),
+               "--library", str(REPO / "platform" / "board" / "arduino" / "CHGame" / "libraries" / "CHGame"), str(d)]
         r = subprocess.run(cmd, capture_output=True, text=True)
     if r.returncode:
         print(r.stdout[-3000:] + r.stderr[-3000:])
@@ -97,7 +98,7 @@ def main() -> int:
                     files[str(dst_rel).replace(os.sep, "/")] = f.read_bytes()
     print(f"\n{len(progs)} packages in {out / 'GAMES'}")
     if a.image:
-        sys.path.insert(0, str(REPO / "platform" / "libraries" / "CHSd" / "tools"))
+        sys.path.insert(0, str(REPO / "platform" / "board" / "arduino" / "CHGame" / "libraries" / "CHSd" / "tools"))
         import fatimg  # noqa: E402
         fatimg.build_image(a.image, files, fs="fat32", label="CHGAME")
         print(f"card image: {a.image}")
