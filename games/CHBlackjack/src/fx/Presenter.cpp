@@ -8,7 +8,7 @@
 #include "../render/Layout.h"
 #include "../render/Table.h"
 #include "../render/CardArt.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../debug/Debug.h"
 
 namespace present {
@@ -377,7 +377,8 @@ void update(const Round &r) {
         int32_t step = d / 5;
         if (!step) step = d > 0 ? 1 : -1;
         shown += step;
-        if (d > 0 && (shown & 3) == 0) audio::blip(3000 + (uint16_t)((shown * 7) & 511), 8);
+        // The counter's ticks (and the typewriter's, below) never cut off an effect.
+        if (d > 0 && (shown & 3) == 0 && !audio::playing()) audio::blip(3000 + (uint16_t)((shown * 7) & 511), 8);
     }
     if (purseFlash) purseFlash--;
 
@@ -385,7 +386,7 @@ void update(const Round &r) {
     if (bubLine != 0xFF) {
         if (bubChars < bubLen) {
             bubChars++;
-            if (bubChars & 1) audio::blip((uint16_t)(1900 + (bubChars * 97) % 700), 12);
+            if ((bubChars & 1) && !audio::playing()) audio::blip((uint16_t)(1900 + (bubChars * 97) % 700), 12);
         } else if (bubHold) {
             bubHold--;
         } else {

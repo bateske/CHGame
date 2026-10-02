@@ -114,8 +114,8 @@ statistics, or press A for the credits:
   2.9 KB.
   Getting there meant building everything at -Os, dropping `snprintf`
   (3.5 KB with 64-bit division), replacing `pinMode` with register writes
-  (2 KB of pin tables), writing a 1.8 KB sound sequencer instead of the
-  6.5 KB CHGameSound library, and storing dealer expressions as pixel edits.
+  (2 KB of pin tables), writing a 1.8 KB sound sequencer (now the CHGame
+  library's `chgame/Audio`) instead of the 6.5 KB CHGameSound library, and storing dealer expressions as pixel edits.
   `python ../../tools/check_size.py build/release` prints the budget.
 * **Code runs from flash with 3 wait states**, so a function call per pixel
   costs 2-3 us. Hot loops (glyphs, spans, remapped sprites) run from SRAM,
@@ -173,8 +173,8 @@ folder instead).
   Tape's art (cloned into `tools/.cache/`, pinned to a commit) and the
   hand-drawn pieces in `tools/art/` (text sheets, and `dealer.png`, which
   must use palette colours only).
-* `python tools/make_music.py` - the scores; `python tools/audio/preview.py
-  out/` renders every tune and effect to WAV from the real sequencer code.
+* `python tools/make_music.py` - the scores; `python ../../tools/audio/preview.py
+  . out/audio` renders every tune and effect to WAV from the real sequencer code.
 
 ## Files
 
@@ -185,7 +185,7 @@ folder instead).
     src/fx/Fx.*             particles, banners, floating text
     src/render/*            table, cards and chips, action bar, layout
     src/states/Screens.*    splash, title, play, options, stats, credits, win, lose
-    src/audio/*             sound sequencer and music
+    src/audio/*             sound effects and music scores
     src/save/*              flash save pages
     src/debug/*             serial debug protocol (debug builds only)
     src/assets/*            generated art (tools/assets.py)

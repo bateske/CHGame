@@ -42,7 +42,7 @@ Agent-facing notes for continuing work on this game. Rules, controls and build s
   - Every hand-written `.cpp` uses `#pragma GCC optimize("Os")`.
   - No `snprintf`: it is 3.5 KB with 64-bit division; use the CHGame library's `fmt*` (`chgame/Fmt.h`).
   - No `pinMode`: its pin tables are about 2 KB; write the registers.
-  - The game has its own 1.8 KB sound sequencer, not CHGameSound.
+  - Sound is the CHGame library's piezo sequencer (`chgame/Audio.h`), not CHGameSound; `src/audio/Sounds.*` holds the effect tables, `playSong` and the two sound switches (the options' mode and SELECT's mute, `sound::`).
   - The README's "How it fits" has the budget breakdown. Measure with `python ../../tools/check_size.py build/release` after every change.
 - Big outlined lettering (Mask: a 1 bpp mask, grown for the outline, painted in up to three layers) costs about 5-10 ms per word on the board. Draw it once, on still screens or static layers, never every frame.
 - The credits page draws its felt once and redraws only the wall band: 3.3 ms a frame measured on CHGfx 1.2.
@@ -54,7 +54,7 @@ Agent-facing notes for continuing work on this game. Rules, controls and build s
   - `src/assets/Assets.cpp` comes from `python tools/assets.py`. The first run clones PPOT's repository into `tools/.cache/ppot` (gitignored), pinned to a commit, so it needs git and network. `tools/art/dealer.png` must use palette colours only.
   - `src/audio/Music.cpp` comes from `python tools/make_music.py`.
 - Debug builds:
-  - Every `CHBJ_DEBUG` build, the simulator included, has no music scores (`Music.cpp` is under `#if !CHBJ_DEBUG`). Listen with `python tools/audio/preview.py out/audio` or a release build.
+  - Every `CHBJ_DEBUG` build, the simulator included, has no music scores (`Music.cpp` is under `#if !CHBJ_DEBUG`). Listen with `python ../../tools/audio/preview.py . out/audio` or a release build.
   - Device debug builds (`CHBJ_LEAN`) also drop the credits page; `-DCHBJ_FULL` forces it back in.
   - Announce device uploads, and put a release build back afterwards: a debug build looks like a game without its music.
 - Profiling:
