@@ -1,9 +1,7 @@
 #pragma GCC optimize("Os")   // cold code: size over speed (the span fills are CHGfx's, in SRAM)
 #include <string.h>
-#include <CHGfx.h>
+#include <CHGame.h>
 #include "Iso.h"
-#include "../gfx/Palette.h"
-#include "../gfx/Draw.h"
 #include "../game/Board.h"
 #include "../assets/Assets.h"
 

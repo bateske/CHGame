@@ -6,6 +6,7 @@ Agent-facing notes for continuing work on this game. Rules, controls and build s
 
 - Imported from https://github.com/bateske/CHBoardwalk at commit a99a4f8 (2026-10-01). Develop here now, not in the old repo.
 - Release build (`CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly`, core 0.2.4, CHGfx 1.3.0): flash 49,600 of 50,944 B (1,344 spare), static RAM 15,404 of 18,416 B (3,012 spare).
+- On the CHGame library since 2026-10-02 (`platform/libraries/CHGame`, `<CHGame.h>`): the input, palette, drawing, 3x5 font, masks, fx maths, shake and formatting that were `src/CHGame.*` and `src/gfx/` are the library's; `src/fx/Fx.*` keeps the game's particles, banners and floating texts. The same frames on every repeatable script; image 49,884 -> 49,712 B, static RAM 15,404 -> 15,100 B (the doubled 3x5 text runs from flash).
 - Save pages: `../../tools/check_size.py` reports the image as 49,856 B. Both A/B save pages need the image to stay at or below 50,432 B, so the margin is only about 576 B. Treat flash as full: any feature needs a cut first. LTO inlining makes small additions cost more than they look.
 - Verification as of 2026-10-01: simulator only.
   - `tools/tests/run_tests.py` checks every rule, then plays 5,000 seeded games (CPUs and random "humans") checking that the books balance, houses stay even and every game ends, and prints a tuning table.

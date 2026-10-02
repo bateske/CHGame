@@ -1,7 +1,7 @@
 #pragma GCC optimize("Os")   // cold code: size over speed
 #include "Text.h"
 #include "Board.h"
-#include "../gfx/Fmt.h"
+#include <CHGame.h>
 
 namespace text {
 

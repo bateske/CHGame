@@ -1,9 +1,6 @@
-#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in Draw)
-#include <CHGfx.h>
+#pragma GCC optimize("Os")   // cold code: size over speed (hot pixel loops live in the CHGame library)
+#include <CHGame.h>
 #include "Cards.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Palette.h"
-#include "../gfx/Fmt.h"
 #include "../game/Game.h"
 #include "../game/Text.h"
 #include "../iso/Iso.h"
