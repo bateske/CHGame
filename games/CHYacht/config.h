@@ -9,29 +9,19 @@
 
 #define CHYD_VERSION     "0.1"
 
-// Serial debug protocol: screenshots, input injection, lockstep, perf.
-// Off in normal builds (it costs ~2 KB and needs USB Serial).
-// tools/device.py turns it on with --build-property build.extra_flags.
-#ifndef CHYD_DEBUG
-#ifdef CHSIM
-#define CHYD_DEBUG       1       // the simulator is driven through the protocol
-#else
-#define CHYD_DEBUG       0
-#endif
-#endif
+// The CHGame library's switches: CHGAME_DEBUG (the serial debug protocol:
+// screenshots, input injection, lockstep, perf; always on in the simulator,
+// on the board only in `tools/device.py build --debug`) and CHGAME_PROFILE.
+#include <chgame/Config.h>
 
 // Device debug builds carry the protocol, so they may leave out things the
-// tests never need (music, the attract demo) to fit. Release builds and the
-// simulator keep everything; -DCHYD_FULL forces a full device debug build.
-#if CHYD_DEBUG && !defined(CHSIM) && !defined(CHYD_FULL)
+// tests never need (saving, the Options and Stats screens) to fit. Release
+// builds and the simulator keep everything; -DCHYD_FULL forces a full
+// device debug build.
+#if CHGAME_DEBUG && !defined(CHSIM) && !defined(CHYD_FULL)
 #define CHYD_LEAN        1
 #else
 #define CHYD_LEAN        0
-#endif
-
-// Section profiler (dbg::prof + the T command). Opt-in: costs flash.
-#ifndef CHYD_PROFILE
-#define CHYD_PROFILE     0
 #endif
 
 #define CHYD_FPS         60

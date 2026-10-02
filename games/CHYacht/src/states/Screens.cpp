@@ -18,9 +18,8 @@
 #include "../audio/Sounds.h"
 #include "../save/Save.h"
 #include "../assets/Assets.h"
-#include "../debug/Debug.h"
 
-#if CHYD_DEBUG && defined(CHSIM)
+#if CHGAME_DEBUG && defined(CHSIM)
 uint64_t sim_hostNanos();
 #endif
 
@@ -770,7 +769,7 @@ void render(uint32_t frame) {
 // ---------------------------------------------------------------------------
 // Debug protocol (tools/chsim/chdrive.py 'say')
 // ---------------------------------------------------------------------------
-#if CHYD_DEBUG
+#if CHGAME_DEBUG
 //   R <seed>             the dice from a fixed seed (timing no longer mixed in)
 //   F <a> <b> <c> <d> <e>   force the next roll's five dice (up to 4 queued)
 //   J <T|P|C|2|3|4|O|S|E|L>   jump: title, play solo, vs dealer, party of 2..4,

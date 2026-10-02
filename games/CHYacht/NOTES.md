@@ -5,8 +5,8 @@ Agent-facing notes for continuing work here; rules, controls and build are in RE
 ## Snapshot
 
 - Imported from https://github.com/bateske/CHYacht at commit 751b026 (2026-10-01); develop here now, not in the old repo.
-- Release build (FQBN `CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly`, core 0.2.4, CHGfx 1.3.0, the CHGame library): flash 43,830 of 50,944 B (7,114 spare; the image is 44,180 B, so both save pages fit with 6,252 B to go), static RAM 15,264 of 18,416 B (3,152 spare).
-- On the CHGame library since 2026-10-02 (`#include <CHGame.h>`): its input, palette, drawing (sprite4, dither, fillConvex, the 3x5 font), masks, fx maths, screen shake and formatting replace the game's copies; `src/fx` keeps only the game's particles, banners and floating texts. The score-zero shake (`fx::applyShake(0, TRIM_Y - 1, -1)` in src/fx/Presenter.cpp) now also shifts the rows and the 2 px edge it uncovers instead of leaving them as they were.
+- Release build (FQBN `CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly`, core 0.2.4, CHGfx 1.3.0, the CHGame library): flash 43,674 of 50,944 B (7,270 spare; the image is 44,036 B, so both save pages fit with 6,396 B to go), static RAM 15,260 of 18,416 B (3,156 spare).
+- On the CHGame library since 2026-10-02 (`#include <CHGame.h>`): its input, palette, drawing (sprite4, dither, fillConvex, the 3x5 font), masks, fx maths, screen shake and formatting replace the game's copies; `src/fx` keeps only the game's particles, banners and floating texts. The debug protocol (`chgame/Debug.h`, `CHGAME_DEBUG`), the flash save record (`chgame/Save.h`; src/save/Save.cpp says only what the record holds, byte for byte the old layout) and RAMFUNC are the library's too, and tools/chsim/chdrive.py is the shared tools/chsim/chdrivelib.py plus this game's `idle` and `cal` (its copy's `goto ZONE`, a CHCraps leftover with no `Z` hook here, is gone). The score-zero shake (`fx::applyShake(0, TRIM_Y - 1, -1)` in src/fx/Presenter.cpp) now also shifts the rows and the 2 px edge it uncovers instead of leaving them as they were.
 - Verification: simulator and host tests only, all passing as of 2026-10-01 (not re-run since the import). There is no tools/check.py here; run these by hand:
   - `tools/tests/run_tests.py`: the rules against an oracle over all 7,776 rolls, the house player's self-play and the paytable's return, the 3D dice physics at every power for every set of kept dice.
   - `tools/tests/sim_save.py`: save mid-turn, reboot, continue; a finished game leaves nothing to continue but keeps the purse.
@@ -28,7 +28,7 @@ Agent-facing notes for continuing work here; rules, controls and build are in RE
 ## Open items
 
 - Fixed 2026-10-01 (with the SD game menu, which makes switching games routine): the save magic in src/save/Save.cpp was `0x52434843`, CHCraps's "CHCR"; it is now "CHYD" = `0x44594843`, as its comment always said. A save written by an older build is ignored once. The debug handshake was already CHYD.
-- Device run: dice cam frame times, the feel of shaking and throwing, sounds, saving across a power cycle. Device debug builds are `CHYD_LEAN` (no saving, no Options/Stats pages; `-DCHYD_FULL` keeps them). Put the release build back afterwards.
+- Device run: dice cam frame times, the feel of shaking and throwing, sounds, saving across a power cycle. Device debug builds (`CHGAME_DEBUG` on the board) are `CHYD_LEAN` (no saving, no Options/Stats pages; `-DCHYD_FULL` keeps them). Put the release build back afterwards.
 
 ## Gotchas
 

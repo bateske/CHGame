@@ -98,8 +98,8 @@ python tools/chsim/chdrive.py --sim . tools/scripts/look.txt out/look
 
 The simulator needs a C++ compiler (`CHSIM_CXX`, zig, clang++ or g++).
 Scripts in `tools/scripts` drive the game through its serial debug protocol
-(see `src/debug/Debug.h` and the command list at the end of
-`src/states/Screens.cpp`); the same scripts run on the board with `--device`.
+(the CHGame library's `chgame/Debug.h`; the game's commands are listed at
+the end of `src/states/Screens.cpp`); the same scripts run on the board with `--device`.
 
 ## Credits
 
