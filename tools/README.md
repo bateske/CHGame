@@ -6,7 +6,8 @@ layout `games/<Name>/tools/... -> ../../tools` (search for
 `CHCasino/tools`, the repository's working name in those comments, to see
 every place that does).
 
-Run them from a game's folder:
+Run them from a game's folder (or, for any sketch, from the root with its
+folder as an argument):
 
 ```bash
 cd games/CHFour
@@ -23,7 +24,10 @@ pyserial). The simulator also needs a C++ compiler: `$CHSIM_CXX`, zig,
 
 | Tool | What it does |
 |---|---|
-| `chsim/chsim.py` | Builds a game for the PC: its `.ino` + `src/`, CHGfx's portable drawing code (`platform/libraries/CHGfx`, or `$CHSIM_CHGFX`), and the host shims. `build()` and `find_cxx()` are imported by the games' tools. Output: `<game>/tools/chsim/build/<Name>/sim.exe`. |
+| `device.py` | Builds, uploads and drives any sketch on the board through arduino-cli, against `platform/libraries/CHGfx` and `CHGame`: `[--sketch DIR] build [--debug]`, `upload`, `run SCRIPT OUTDIR`, `shot OUT.png`. A debug build adds `-DCHGAME_DEBUG=1`. Each game's `tools/device.py` runs it on that game. |
+| `chsim/chsim.py` | Builds a sketch for the PC: its `.ino` + `src/`, CHGfx's portable drawing code (`platform/libraries/CHGfx`, or `$CHSIM_CHGFX`), the CHGame library (`$CHSIM_CHGAME`), and the host shims. `$CHSIM_FLAGS` adds compiler flags (a memory check under valgrind: see its docstring). `build()` and `find_cxx()` are imported by the games' tools. Output: `<sketch>/tools/chsim/build/<Name>/sim.exe`. |
+| `chsim/chdrivelib.py`, `chsim/chdrive.py` | The script driver: runs a script against the simulator (`--sim`) or the board (`--device`) over the library's debug protocol: `wait tap hold release snap gif rec step say free freegif perf prof cal`. `chdrive.py` drives any sketch; a game's own `tools/chsim/chdrive.py` subclasses `Driver` for its commands. `$CHSIM_WRAP` runs the simulator under another program (valgrind). |
+| `audio/preview.py` + `audio/host/` | Renders a game's sound effects and songs to WAV from the real engine (the library's `chgame/Audio.cpp` with the game's `src/audio/*.cpp`) through a model of the piezo timer, and prints a hash per sound: `preview.py <game dir> OUTDIR [--only NAME ...]`. The names come from the game's `enum class Sfx` / `Song`. |
 | `chsim/host/main.cpp` | The simulator's main loop: virtual time, lockstep frames, the game's serial port on stdin/stdout, a deterministic random seed. |
 | `chsim/host/chgfx_host.cpp` | Stands in for `CHGfx.cpp`, the SPI/DMA part. It times the simulated panel and reports `BUG:` when a game draws into rows that are still being sent. |
 | `chsim/host/Arduino.h`, `sim.h` | A minimal Arduino API for the PC, and the shims' internal declarations (including the SD card hooks some games add). |
@@ -48,11 +52,10 @@ a similar game when starting a new one.
 
 | Tool | In | What changes per game |
 |---|---|---|
-| `tools/chsim/chdrive.py` | all 20 | Runs a script against the simulator (`--sim`) or the board (`--device`) over the debug protocol: `wait tap hold release snap gif rec say perf free freegif`. Each game sets its handshake `--id` and adds its own commands (e.g. CHChess `goto`/`waitturn`/`board`, CHCrossword `type`/`solve`/`--card`, CHMahjong `solve`/`takehint`). |
-| `tools/device.py` | all 20 | `build [--debug]`, `upload`, `run SCRIPT OUTDIR`, `shot OUT.png` through arduino-cli. Per game: the name and the debug define (`-D<PFX>_DEBUG=1`, CHCrossword also `-DCHCW_LEAN=1`). |
+| `tools/chsim/chdrive.py` | all 20 | The shared driver (`tools/chsim/chdrivelib.py`) with the game's handshake `ident` and its own script commands (e.g. CHChess `goto`/`waitturn`/`board`, CHCrossword `type`/`solve`/`--card`, CHMahjong `solve`/`takehint`); some games have none yet. |
+| `tools/device.py` | all 20 | A few lines that run the shared `tools/device.py` on the game. |
 | `tools/check.py` | CHBackgammon, CHCheckers, CHCrossword, CHDominoes, CHFour, CHSnakes, CHSolitaire, CHWords, CHWordWheel | Everything checkable without a board: host tests, every script twice (same frames, no `BUG:`), release build + size. Some add game checks: the network's evaluation, puzzle packs, card scripts, the redraw check. |
 | `tools/tests/run_tests.py` | all 20 | Builds and runs the host unit tests. The source list is per game. |
-| `tools/audio/preview.py` + `audio/host/` | all 20 | Renders the game's `src/audio/Audio.cpp` to WAV through a model of the piezo timer, and prints a hash per sound. The effect and song lists are per game. |
 | `tools/chsim/diffdrive.py` | CHBingo, CHRoulette, CHSlots, CHTicTacToe, CHWordWheel | The redraw check: builds the game twice, normal and forced to redraw everything every frame, and reports any pixel the incremental redraw got wrong. The forced-redraw patch is per game. |
 | `tools/tests/sim_save.py` | CHBingo, CHCraps, CHYacht | Save, power off, continue, in the simulator. |
 | `tools/assets.py` | all 20 | The art pipeline: `tools/art/*` → `src/assets/Assets.{h,cpp}`, with previews in `build/assets`. |
@@ -94,11 +97,9 @@ a similar game when starting a new one.
 
 These exist in several games in nearly the same form. They were left in
 place so that bringing the games together changed no behaviour:
-- **`chdrive.py`'s common core:** a shared driver plus per-game command
-  plugins.
-- **`device.py`, `check.py`, `tests/run_tests.py`:** each could take a small
-  per-game config.
-- **The audio preview harness.**
+- **`check.py`, `tests/run_tests.py`:** each could take a small per-game
+  config. (The script driver, `device.py` and the audio preview are shared
+  now.)
 - **`make_music.py`'s composer:** CHBlackjack, CHRoulette, CHWordWheel.
 - **`pixkit.py`:** CHRoulette and CHWordWheel differ by 8 lines.
 - **The font tools:** `tilefont.py`, `aafont.py`, `font_preview.py`.
