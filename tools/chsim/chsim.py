@@ -2,7 +2,8 @@
 
     python tools/chsim/chsim.py build <sketch dir> [-D NAME=VAL ...]   -> prints the .exe path
 
-This is CHCasino's shared simulator: every game in games/ builds with it.
+This is the repository's shared simulator: every game in games/ builds with it,
+and so does any other sketch on the CHGame library.
 
 Compiles the sketch's .ino and every .cpp/.c under its src/ folder, CHGfx's
 portable code (every src/*.cpp except CHGfx.cpp, unmodified: drawing,
@@ -15,7 +16,7 @@ keep CHSd's pretend card there): its .cpp files are compiled too, and one
 with the same name as a shared shim replaces it. Its headers come first on
 the include path, so a header there must not share a name with one here.
 
-CHGfx is $CHSIM_CHGFX (its src folder) if set, else CHCasino's own copy in
+CHGfx is $CHSIM_CHGFX (its src folder) if set, else the repository's own copy in
 platform/libraries/CHGfx, else the Arduino sketchbook's libraries/CHGfx, or
 libraries/CHGfx* (a GitHub zip installs as CHGfx-main). The sketchbook is
 $CHSIM_SKETCHBOOK, else what `arduino-cli config get directories.user`
@@ -35,7 +36,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-HERE = Path(__file__).resolve().parent                  # CHCasino/tools/chsim
+HERE = Path(__file__).resolve().parent                  # tools/chsim
 VENDORED_CHGFX = HERE.parents[1] / "platform" / "libraries" / "CHGfx" / "src"
 VENDORED_CHGAME = HERE.parents[1] / "platform" / "libraries" / "CHGame" / "src"
 
