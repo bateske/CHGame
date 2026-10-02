@@ -13,7 +13,6 @@
 #include "../stage/Stage.h"
 #include "../save/Save.h"
 #include "../assets/Assets.h"
-#include "../debug/Debug.h"
 #ifdef CHSIM
 #include <sim.h>
 #endif
@@ -605,7 +604,7 @@ static void optionsRender(uint32_t frame) {
 // ---------------------------------------------------------------------------
 // Debug protocol hooks (tools/chsim/chdrive.py 'say')
 // ---------------------------------------------------------------------------
-#if CHMJ_DEBUG
+#if CHGAME_DEBUG
 //   G <layout> <seed>      deal a table and go to it
 //   M <a> <b>              take the pair of tiles a and b
 //   A                      take a pair (the first there is); ERR if there is none
@@ -749,7 +748,7 @@ void begin() {
     save::load(opt, stats, hasGame);
     if (opt.layout >= board::LAYOUTS) opt.layout = 0;
     applyOptions();
-#if CHMJ_DEBUG
+#if CHGAME_DEBUG
     dbg::hook = debugHook;
 #endif
     enter(Scr::Title);

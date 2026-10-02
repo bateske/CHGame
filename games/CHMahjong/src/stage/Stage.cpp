@@ -826,7 +826,7 @@ bool render(uint32_t frame, uint32_t ui) {
     return true;
 }
 
-#if CHMJ_DEBUG
+#if CHGAME_DEBUG
 // Device render profile (debug Y command): microseconds per section.
 void profile(uint32_t *us) {
     uint32_t t = micros();

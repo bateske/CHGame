@@ -1,7 +1,7 @@
 #pragma GCC optimize("Os")
 #include <CHGfx.h>
 #include "Tile.h"
-#include "../RamFunc.h"     // the pile is up to 144 of these a frame: from SRAM
+#include <chgame/RamFunc.h>  // the pile is up to 144 of these a frame: from SRAM
 
 namespace tile {
 

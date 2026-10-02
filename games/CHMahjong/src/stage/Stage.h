@@ -38,7 +38,7 @@ bool clearedShown();                 // the table is cleared and the celebration
 void shoo();                         // a button while the sparrow visits: off it flies
 bool stuckShown();                   // no pair left, and the banner has said so
 
-#if CHMJ_DEBUG
+#if CHGAME_DEBUG
 void profile(uint32_t *us);          // render cost by section (table, pile, hud, fx)
 #endif
 

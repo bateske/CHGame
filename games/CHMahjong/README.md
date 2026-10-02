@@ -183,7 +183,8 @@ C++ compiler (zig, clang++ or g++ on the PATH, `pip install ziglang`, or
   `zoom.txt` (the close-up, and a pair taken in it), `perf.txt` (render
   cost at both sizes).
 * `python tools/device.py upload [--debug]` - build and upload (`--debug`
-  adds the serial protocol for screenshots, injected input and lockstep);
+  adds the CHGame library's serial protocol, `chgame/Debug.h`, for
+  screenshots, injected input and lockstep);
   `python tools/device.py run tools/scripts/device_render.txt out/device`
   measures what a frame costs to draw on the board.
 * **The classic faces:** `python tools/faces.py` writes
