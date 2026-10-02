@@ -23,6 +23,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(HERE / "tests"))
+sys.path.insert(0, str(HERE.parents[9] / "tools"))   # the repository's tools/: pixkit
 import wheel  # noqa: E402
 from pixkit import FB, NAVY, WHITE, SILVER, GOLD, FX_A  # noqa: E402
 import run_ball_tests  # noqa: E402

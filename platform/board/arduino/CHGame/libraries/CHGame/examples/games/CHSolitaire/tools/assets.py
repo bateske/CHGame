@@ -23,6 +23,9 @@ from PIL import Image
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 ART = HERE / "art"
+import sys  # noqa: E402
+sys.path.insert(0, str(HERE.parents[9] / "tools"))     # the repository's tools/: artlib (shared art in tools/art/common)
+import artlib  # noqa: E402
 OUT_H = ROOT / "src" / "assets" / "Assets.h"
 OUT_C = ROOT / "src" / "assets" / "Assets.cpp"
 PREVIEW = ROOT / "build" / "assets"
@@ -71,7 +74,7 @@ def load_png(path):
 
 def load_art(name):
     """tools/art/<name>.txt: palette letters, one row per line; '#' starts a comment line."""
-    rows = [ln.rstrip("\n") for ln in (ART / f"{name}.txt").read_text().splitlines()
+    rows = [ln.rstrip("\n") for ln in (artlib.art(HERE, f"{name}.txt")).read_text().splitlines()
             if ln and not ln.startswith("#")]
     w = max(len(r) for r in rows)
     return [[TRANSPARENT if ch in " ." else LETTER[ch] for ch in r.ljust(w)] for r in rows]
@@ -79,7 +82,7 @@ def load_art(name):
 
 def load_sheet(name, sizes=None):
     """tools/art/<name>.txt with several glyphs per line separated by spaces."""
-    rows = [ln.split() for ln in (ART / f"{name}.txt").read_text().splitlines()
+    rows = [ln.split() for ln in (artlib.art(HERE, f"{name}.txt")).read_text().splitlines()
             if ln.strip() and not ln.startswith("#")]
     imgs = []
     for i in range(len(rows[0])):
@@ -228,7 +231,7 @@ def main():
         preview(f"back_{nm}", img, 8)
 
     # The title lettering (tools/art/logo.txt), 1 bpp rows.
-    rows = [ln.rstrip() for ln in (ART / "logo.txt").read_text().splitlines() if ln and not ln.startswith("# ")]
+    rows = [ln.rstrip() for ln in (artlib.art(HERE, "logo.txt")).read_text().splitlines() if ln and not ln.startswith("# ")]
     w = max(len(r) for r in rows)
     bits = [[1 if ch == "#" else 0 for ch in r.ljust(w)] for r in rows]
     o.array("LOGO", pack_rows1(bits), comment=f"the title lettering, {w}x{len(bits)}, MSB-first rows")
@@ -236,7 +239,7 @@ def main():
     o.const("LOGO_H", len(bits))
     preview("logo", [[1 if b else TRANSPARENT for b in r] for r in bits], 6, bg=0)
 
-    png = ART / "hand.png"
+    png = artlib.art(HERE, "hand.png")
     hand = load_png(png) if png.exists() else load_art("hand")
     hand = hand[::-1]            # drawn pointing down; here it points up, from under a card
     o.array("HAND", pack_span4(hand), comment="the pointing glove (CHChess), turned over: span4, fingertip on the top row")

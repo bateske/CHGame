@@ -21,6 +21,9 @@ from PIL import Image
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 ART = HERE / "art"
+import sys  # noqa: E402
+sys.path.insert(0, str(HERE.parents[9] / "tools"))     # the repository's tools/: artlib (shared art in tools/art/common)
+import artlib  # noqa: E402
 GEN = ART / "gen"
 OUT_H = ROOT / "src" / "assets" / "Assets.h"
 OUT_C = ROOT / "src" / "assets" / "Assets.cpp"
@@ -77,7 +80,7 @@ def load_art(name):
     """tools/art/<name>.txt: palette letters, one row per line; '#' starts a comment line.
     Several images may follow each other, separated by a blank line."""
     imgs, cur = [], []
-    for ln in (ART / f"{name}.txt").read_text().splitlines():
+    for ln in (artlib.art(HERE, f"{name}.txt")).read_text().splitlines():
         if ln.startswith("#"):
             continue
         if not ln.strip():
@@ -97,14 +100,14 @@ def load_art(name):
 
 def source(name):
     """tools/art/<name>.png if someone has drawn one, else the letters in <name>.txt."""
-    png = ART / f"{name}.png"
+    png = artlib.art(HERE, f"{name}.png")
     return load_png(png) if png.exists() else load_art(name)[0]
 
 
 def load_logo(word="Dominoes", gap=2):
     """tools/art/logo.txt -> rows of 0/1: the word's letters side by side."""
     glyphs, cur = {}, None
-    for ln in (ART / "logo.txt").read_text().splitlines():
+    for ln in (artlib.art(HERE, "logo.txt")).read_text().splitlines():
         if not ln.strip() or ln.startswith("# ") or ln == "#":     # (rows start with '#' too)
             continue
         if ln.startswith("= "):
@@ -202,7 +205,7 @@ def main():
 
     # The serif lettering.
     glyphs, cur = {}, None
-    for ln in (ART / "aafont.txt").read_text().splitlines():
+    for ln in (artlib.art(HERE, "aafont.txt")).read_text().splitlines():
         if ln.startswith("= "):
             cur = glyphs.setdefault(ln[2], [])
         elif ln.strip() and not ln.startswith("# "):

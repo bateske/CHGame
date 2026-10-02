@@ -9,13 +9,15 @@ can't drift apart.
 """
 import math
 import re
+import sys
 from pathlib import Path
 
 from PIL import Image
 
-HERE = Path(__file__).resolve().parent
-GAME = HERE.parent
-WORKSPACE = GAME.parent
+HERE = Path(__file__).resolve().parent                  # the repository's tools/
+REPO = HERE.parent
+sys.path.insert(0, str(HERE))
+import artlib  # noqa: E402
 
 # Palette (RGB444), the same 16 slots as CHBlackjack and CHChess.
 PALETTE = [0x000, 0xFFF, 0x042, 0x173, 0x4B5, 0xBBC, 0xE12, 0x702,
@@ -44,7 +46,7 @@ def rgb(c444):
 def _font35():
     """The CHGame library's 3x5 font: one glyph (3 column bytes) per
     character from '!' to 'z', blank where there is none."""
-    src = HERE.parents[9] / "platform/board/arduino/CHGame/libraries/CHGame/src/chgame/Draw.cpp"
+    src = REPO / "platform/board/arduino/CHGame/libraries/CHGame/src/chgame/Draw.cpp"
     text = re.sub(r"//[^\n]*", "", src.read_text(encoding="utf-8"))
     body = text[text.index("FONT35[FONT35_LAST - FONT35_FIRST + 1][3]"):]
     body = body[:body.index("};")]
@@ -57,16 +59,26 @@ def _font35():
 FONT35 = _font35()
 
 
+UPPER35 = False         # set_upper35(True): lower case drawn as capitals (CHWordWheel upper-cases its text)
+
+
+def set_upper35(on):
+    global UPPER35
+    UPPER35 = on
+
+
 def glyph35(ch):
+    """Index into FONT35, -1 = none."""
     o = ord(ch)
+    if UPPER35 and 97 <= o <= 122:
+        o -= 32
     return o - 33 if 33 <= o <= 122 else -1
 
 
 def _font57():
     """CHGfx's 5x7 font, from the installed library (found as the simulator
     finds it: $CHSIM_CHGFX, or the Arduino sketchbook's libraries)."""
-    import sys
-    sys.path.insert(0, str(HERE.parents[9] / "tools" / "chsim"))  # the repository's tools/chsim
+    sys.path.insert(0, str(HERE / "chsim"))
     from chsim import chgfx_dir  # noqa: E402
     text = (chgfx_dir() / "CHGfx_font.h").read_text(encoding="utf-8")
     body = text[text.index("chgfx_font5x7"):]
@@ -340,8 +352,8 @@ def load_png(path):
     return rows
 
 
-DEALER = load_png(WORKSPACE / "CHBlackjack/tools/art/dealer.png")
-HAND = load_png(WORKSPACE / "CHChess/tools/art/hand.png")
+DEALER = load_png(artlib.COMMON / "dealer.png")      # CHBlackjack's dealer, CHChess's glove: the shared art
+HAND = load_png(artlib.COMMON / "hand.png")
 HAND_TIP = 5
 
 # Sprite remaps (16 entries, art colour -> screen colour).

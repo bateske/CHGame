@@ -19,6 +19,9 @@ from PIL import Image
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 ART = HERE / "art"
+import sys  # noqa: E402
+sys.path.insert(0, str(HERE.parents[9] / "tools"))     # the repository's tools/: artlib (shared art in tools/art/common)
+import artlib  # noqa: E402
 OUT_H = ROOT / "src" / "assets" / "Assets.h"
 OUT_C = ROOT / "src" / "assets" / "Assets.cpp"
 PREVIEW = ROOT / "build" / "assets"
@@ -85,7 +88,7 @@ def load_sprites():
             w = max(len(r) for r in rows)
             out[name] = [[TRANSPARENT if ch == "." else LETTER[ch] for ch in r.ljust(w, ".")] for r in rows]
 
-    for ln in (ART / "sprites.txt").read_text().splitlines():
+    for ln in (artlib.art(HERE, "sprites.txt")).read_text().splitlines():
         ln = ln.rstrip()
         if ln.startswith("#") or not ln:
             continue
@@ -96,7 +99,7 @@ def load_sprites():
             rows.append(ln)
     flush()
     for name in out:
-        png = ART / f"{name.lower()}.png"
+        png = artlib.art(HERE, f"{name.lower()}.png")
         if png.exists():
             out[name] = load_png(png)
     return out

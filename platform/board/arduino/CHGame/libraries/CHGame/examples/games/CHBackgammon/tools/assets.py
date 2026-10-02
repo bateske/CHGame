@@ -25,6 +25,9 @@ from PIL import Image
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 ART = HERE / "art"
+import sys  # noqa: E402
+sys.path.insert(0, str(HERE.parents[9] / "tools"))     # the repository's tools/: artlib (shared art in tools/art/common)
+import artlib  # noqa: E402
 GEN = ART / "gen"
 OUT_H = ROOT / "src" / "assets" / "Assets.h"
 OUT_C = ROOT / "src" / "assets" / "Assets.cpp"
@@ -45,7 +48,7 @@ DIE = 12
 def load_sides():
     """tools/art/sides.txt -> {section: [white, red]}, each art colour -> side colour (16 entries)."""
     out, cur = {}, None
-    for ln in (ART / "sides.txt").read_text().splitlines():
+    for ln in (artlib.art(HERE, "sides.txt")).read_text().splitlines():
         words = ln.split("#", 1)[0].split()
         if not words:
             continue
@@ -97,7 +100,7 @@ def load_art(name):
     """tools/art/<name>.txt: palette letters, one row per line; '#' starts a comment line.
     Several images may follow each other, separated by a blank line."""
     imgs, cur = [], []
-    for ln in (ART / f"{name}.txt").read_text().splitlines():
+    for ln in (artlib.art(HERE, f"{name}.txt")).read_text().splitlines():
         if ln.startswith("#"):
             continue
         if not ln.strip():
@@ -117,7 +120,7 @@ def load_art(name):
 
 def source(name):
     """tools/art/<name>.png if someone has drawn one, else the letters in <name>.txt."""
-    png = ART / f"{name}.png"
+    png = artlib.art(HERE, f"{name}.png")
     return load_png(png) if png.exists() else load_art(name)[0]
 
 
@@ -173,7 +176,7 @@ def draw_big_checker():
 
 
 def load_dice():
-    png = ART / "dice.png"
+    png = artlib.art(HERE, "dice.png")
     if png.exists():
         sheet = load_png(png)
         return [[row[f * DIE:(f + 1) * DIE] for row in sheet] for f in range(6)]
@@ -185,7 +188,7 @@ def load_dice():
 def load_font():
     """tools/art/font.txt -> {char: {"w", "top", "rows"}} (rows of 0/1, all-clear rows trimmed)."""
     font, cur = {}, None
-    for ln in (ART / "font.txt").read_text().splitlines():
+    for ln in (artlib.art(HERE, "font.txt")).read_text().splitlines():
         if not ln.strip() or ln.startswith("# "):           # (glyph rows are only '#' and '.')
             continue
         if ln.startswith("= "):
@@ -293,7 +296,7 @@ def main():
     preview("checker", [remapped(chk, m) for m in sides["checker"]])
 
     # ... and at twice the size, for the close-ups.
-    big = load_png(ART / "checker_big.png") if (ART / "checker_big.png").exists() else draw_big_checker()
+    big = load_png(artlib.art(HERE, "checker_big.png")) if (artlib.art(HERE, "checker_big.png")).exists() else draw_big_checker()
     save_png(GEN / "checker_big.png", big)
     data = pack_span4(big)
     defs.append(c_array("CHECKER_BIG", data))

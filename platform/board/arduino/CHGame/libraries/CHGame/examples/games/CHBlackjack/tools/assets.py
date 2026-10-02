@@ -25,7 +25,9 @@ ROOT = HERE.parent
 PPOT = HERE / ".cache" / "ppot"
 PPOT_COMMIT = "72a6b1b7c583971568d92eca39c81b8cb99def29"
 ART = HERE / "art"
-DEALER_PNG = ART / "dealer.png"
+sys.path.insert(0, str(HERE.parents[9] / "tools"))     # the repository's tools/: artlib (shared art in tools/art/common)
+import artlib  # noqa: E402
+DEALER_PNG = artlib.art(HERE, "dealer.png")
 OUT_H = ROOT / "src" / "assets" / "Assets.h"
 OUT_C = ROOT / "src" / "assets" / "Assets.cpp"
 PREVIEW = ROOT / "build" / "assets"
@@ -67,7 +69,7 @@ def load_mono(rel):
 
 def load_art(name):
     """tools/art/<name>.txt: palette letters, one row per line; '#' starts a comment line."""
-    rows = [ln.rstrip("\n") for ln in (ART / f"{name}.txt").read_text().splitlines()
+    rows = [ln.rstrip("\n") for ln in (artlib.art(HERE, f"{name}.txt")).read_text().splitlines()
             if ln and not ln.startswith("#")]
     w = max(len(r) for r in rows)
     return [[TRANSPARENT if ch in " ." else LETTER[ch] for ch in r.ljust(w)] for r in rows]
@@ -96,7 +98,7 @@ def load_png(path):
 def load_sheet(name, sizes=None):
     """tools/art/<name>.txt with several glyphs per line separated by spaces.
     Returns a list of images; checks each against sizes [(w, h), ...] if given."""
-    rows = [ln.split() for ln in (ART / f"{name}.txt").read_text().splitlines()
+    rows = [ln.split() for ln in (artlib.art(HERE, f"{name}.txt")).read_text().splitlines()
             if ln.strip() and not ln.startswith("#")]
     n = len(rows[0])
     imgs = []
