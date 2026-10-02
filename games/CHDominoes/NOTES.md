@@ -22,6 +22,8 @@ Agent-facing notes for continuing work here; rules, controls and build are in RE
 - Title: falling tiles as in CHMahjong/CHSolitaire; all fallers tumble end over end (planar `rotRaw`, 1:1) with a slow spin at the original fall pace; the name hand-drawn at full size in `tools/art/logo.txt`, straight on black (no plaque, no shadow); menu selector radius 2.
 - Title rejections: any scaled art (it reads as crunched / pixel-doubled; keep art 1:1), turning about the vertical axis and tiles lying on their side (uncomfortable to watch), half-speed falling, grey depth-shaded tiles, a radius-3 selector (jaggies).
 - Lettering: CHCrossword's anti-aliased DejaVu Serif Bold at its 12 px size, everywhere. Rejected: 14 px (looks horizontally stretched) and any rescaling - adapt the layout to the font, not the font to the layout.
+- The 3x5 font is the CHGame library's (`platform/libraries/CHGame/src/chgame/Draw.cpp`), so its 'M' is PPOT's (a two-row middle), as at the other tables. This game's own copy, from CHBackgammon, had an 'M' with a lighter middle (one row).
+- The display font (`src/gfx/Font.*`: `maskFont`, `fontHalf`, `fontText`) is this game's, built on the library's masks and `glyph16`.
 
 ## Open items
 
@@ -40,10 +42,10 @@ Agent-facing notes for continuing work here; rules, controls and build are in RE
 - RAM: the title's fallers are cached as images (`fallerImg`, 9 x 175 B, ~1.6 KB); new RAM has to come from somewhere like that.
 - `tilePx` (`src/table/Table.cpp`) uses `CLEAR` = 0xFF for "no pixel", because colour 15 (`FX_B`) is a real face colour.
 - `fx::applyShake(10, GFX_H - 1)` shakes everything under the scoreboard. Shaking only the felt rows split anything crossing them (the revealed CPU hand, a raised rack tile), which looked like partial renders.
-- Palette: two slots were given to the tiles (SKIN to BONE 0xEEE, CYAN to SLATE 0x445), so the rainbow and confetti have no cyan. A tile set is a swap of BONE/SLATE (`table::useSet`, `SETS`).
+- Palette: two slots were given to the tiles (SKIN to BONE 0xEEE, CYAN to SLATE 0x445), so the rainbow and confetti have no cyan. The game passes its own table (`COLOURS`, `src/gfx/Colours.*`, which also names BONE and SLATE) to the CHGame library's `pal::init()`. A tile set is a swap of BONE/SLATE (`table::useSet`, `SETS`).
 - `Options.tiles` took the old pad byte (no save `VERSION` bump); one `pad` byte is left. Another new option needs it or a version bump.
 - `fontText` picks the half-ink tone from the ink (WHITE to SILVER, GOLD/FX_B to WOOD, FELT_LT to FELT; any other ink gets no half ink): a new ink colour needs a mapping. Selection boxes are 15 px tall (y - 3) for the 9-px caps.
-- Speed: close-up tiles use an SRAM row-pattern renderer (`tileFast`); `text35x2` writes the framebuffer directly. The simulator cannot show gains like these (host calls are cheap; the device pays flash wait states): measure on the board.
+- Speed: close-up tiles use an SRAM row-pattern renderer (`tileFast`). `text35x2` (the floating score, the plates of ends out of view) is now the CHGame library's, which runs from flash and draws each pixel as a 2x2 `gfx_fillRect`; this game's own wrote the framebuffer directly from SRAM. The same pixels; the cost on the board is unmeasured. The simulator cannot show gains like these (host calls are cheap; the device pays flash wait states): measure on the board.
 - Simulator perf estimates swing with host load (about 2x seen): compare against a clean copy of HEAD run at the same time before blaming a change.
 - `CHDM_LEAN` exists but is off: debug builds carry the whole game. Turn it on only if the game outgrows the debug build.
 - Debug hooks (above the hook in `src/states/Screens.cpp`): `G` start a match, `D` stack the deal, `C` score, `W` end the round, `Y` render profile, `J` jump, `A` play for the human, `H` state, `Q` (simulator) calibration. chdrive extras: `waitturn`, `auto`, `round`.

@@ -2,7 +2,7 @@
 #include <Arduino.h>
 #include <string.h>
 #include <stddef.h>
-#include <CHGfx.h>
+#include <CHGame.h>
 #include "../../config.h"
 #include "../RamFunc.h"
 #include "Save.h"

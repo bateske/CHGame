@@ -1,14 +1,10 @@
 #pragma GCC optimize("Os", "no-ipa-sra")   // cold code: size over speed (hot pixel loops live in Draw/Mask)
 #include <Arduino.h>
 #include <string.h>
-#include <CHGfx.h>
+#include <CHGame.h>
 #include "../../config.h"
 #include "Screens.h"
-#include "../CHGame.h"
-#include "../gfx/Palette.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Mask.h"
-#include "../gfx/Fmt.h"
+#include "../gfx/Font.h"
 #include "../fx/Fx.h"
 #include "../audio/Audio.h"
 #include "../table/Table.h"
@@ -112,7 +108,7 @@ static void heading(const char *text, int y) {
     maskFont(m, 0, 0, text);
     uint8_t r[FONT_H + 2];
     for (int i = 0; i < FONT_H + 2; i++) r[i] = i < 3 ? FX_B : (i < 8 ? GOLD : WOOD);
-    maskDraw(m, 64 - w / 2, y, INK, INK, r);
+    maskDraw(m, 64 - w / 2, y, 0, INK, -1, r);
     fontHalf(64 - w / 2, y, text, nullptr, 1, WOOD);
 }
 
@@ -196,7 +192,6 @@ static Faller fallers[FALLERS + 1];  // the last: the meteor
 static uint8_t fallerImg[FALLERS + 1][table::TILE_IMG];
 static bool meteorOn, railKept;
 static uint16_t meteorIn;
-static const uint8_t RM_ID[16] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
 
 static int menuTop(uint8_t n) { return 128 - n * 14 - 4; }
 
@@ -291,7 +286,7 @@ static void titleRender(uint32_t frame) {
         maskBlit1(m, LOGO, LOGO_W, LOGO_H);
         uint8_t r[LOGO_H];
         for (int i = 0; i < LOGO_H; i++) r[i] = i < 7 ? FX_B : (i < 12 ? GOLD : WOOD);
-        maskDraw(m, 64 - LOGO_W / 2, 7, INK, INK, r);
+        maskDraw(m, 64 - LOGO_W / 2, 7, 0, INK, -1, r);
         railKept = true;
     }
     gfx_setClip(0, RAIL + 1, 128, 127 - RAIL);

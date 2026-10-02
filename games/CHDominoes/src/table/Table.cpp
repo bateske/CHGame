@@ -1,11 +1,9 @@
 #pragma GCC optimize("Os", "no-ipa-sra")   // cold code: size over speed
 #include <string.h>
-#include <CHGfx.h>
+#include <CHGame.h>
 #include "Table.h"
-#include "../gfx/Palette.h"
-#include "../gfx/Draw.h"
+#include "../gfx/Colours.h"
 #include "../RamFunc.h"
-#include "../gfx/Palette.h"
 
 namespace table {
 
