@@ -5,7 +5,7 @@
 #include "Stage.h"
 #include "../gfx/Tile.h"
 #include "../fx/Fx.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../game/Board.h"
 #include "../game/Nav.h"
 #include "../assets/Assets.h"

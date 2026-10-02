@@ -47,7 +47,7 @@ Agent-facing notes for continuing work here; rules, controls and build are in RE
 
 ## Gotchas
 
-- RAM has 572 B spare (release, since the move to the CHGame library: 17,844 of 18,416 B). The hot blitters run from SRAM (`RAMFUNC` in `src/gfx/Tile.cpp`; the CHGame library's sprite, 3x5 text, mask and shake loops), so their code counts against static RAM; the tile blitters alone take about 1.26 KB. Debug builds have less spare RAM still.
+- RAM has 604 B spare (release, since the move to the CHGame library and its sound engine: 17,812 of 18,416 B). The hot blitters run from SRAM (`RAMFUNC` in `src/gfx/Tile.cpp`; the CHGame library's sprite, 3x5 text, mask and shake loops), so their code counts against static RAM; the tile blitters alone take about 1.26 KB. Debug builds have less spare RAM still.
 - Device debug builds don't fit with everything:
   - `config.h` turns on `CHMJ_LEAN`, which drops the EASY faces; `-DCHMJ_FULL` overrides it.
   - The simulator and release builds keep everything.

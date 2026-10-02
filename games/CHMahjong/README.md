@@ -207,8 +207,9 @@ C++ compiler (zig, clang++ or g++ on the PATH, `pip install ziglang`, or
   that, then `python tools/assets.py`.
 * **The title:** `tools/art/logo.txt`, a `#` for each pixel of the
   lettering; the title screen tints it as CHBlackjack's logo.
-* `python tools/assets.py` packs the art, `python tools/audio/preview.py
-  out/` renders the sound effects to WAV.
+* `python tools/assets.py` packs the art, `python ../../tools/audio/preview.py
+  . out/audio` renders the sound effects to WAV (their tables are in
+  `src/audio/Sounds.cpp`).
 
 ## License
 

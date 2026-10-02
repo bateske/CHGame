@@ -5,7 +5,7 @@
 #include "Frame.h"
 #include "states/Screens.h"
 #include "debug/Debug.h"
-#include "audio/Audio.h"
+#include "audio/Sounds.h"
 
 namespace frame {
 
@@ -20,6 +20,7 @@ static const uint16_t FELTS[pal::THEME_COUNT][3] = {
 
 void begin() {
     dbg::paintStack();
+    audio::begin(SOUNDS, (uint8_t)Sfx::COUNT, false);   // on once the options are read
     pal::setThemes(FELTS, pal::THEME_COUNT);
     pal::init();
     screens::begin();
