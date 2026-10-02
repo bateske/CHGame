@@ -11,7 +11,6 @@
 #include "../assets/Assets.h"
 #include "../stage/Stage.h"
 #include "../save/Save.h"
-#include "../debug/Debug.h"
 #ifdef CHSIM
 #include <sim.h>
 #endif
@@ -499,7 +498,7 @@ static void statsRender(uint32_t frame) {
 // ---------------------------------------------------------------------------
 // Debug protocol hooks (tools/chsim/chdrive.py 'say')
 // ---------------------------------------------------------------------------
-#if CHSO_DEBUG
+#if CHGAME_DEBUG
 //   G <seed>           deal that game (with the options as they are)
 //   W <cards>          all but that many cards already on the foundations
 //   O <i> <value>      set option byte i
@@ -604,7 +603,7 @@ void begin() {
     if (opt.back >= art::BACKS) opt.back = 0;
     audio::begin(SOUNDS, (uint8_t)Sfx::COUNT, false);   // on once applyOptions() reads the option
     applyOptions();
-#if CHSO_DEBUG
+#if CHGAME_DEBUG
     dbg::hook = debugHook;
 #endif
     enter(Scr::Title);

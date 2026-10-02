@@ -26,10 +26,10 @@ Agent-facing notes for continuing work here; rules, controls and build are in RE
 
 ## Open items
 
-- Device run: pace, sound by ear, card legibility, real frame times. A device debug build (`tools/device.py upload --debug`) keeps saving unless built with `-DCHSO_LEAN=1`, so it writes the shared save pages like the release; put the release build back afterwards.
+- Device run: pace, sound by ear, card legibility, real frame times. A device debug build (`tools/device.py upload --debug`) keeps saving unless built with `-DCHSO_LEAN=1`, so it writes the shared save pages like the release; put the release build back afterwards. (A LEAN build's Stats page says "SAVED IN FLASH" all the same: `save::available()` is the CHGame library's now, and only the game's load/store are stubbed.)
 - The owner's art pass on the card backs (tools/art/backs/*.txt, 15x21 in palette letters; a palette-exact PNG of the same name overrides one).
 - The owner's verdict on the plan-level choices listed above.
-- Fixed 2026-10-01 (with the SD game menu, which makes switching games routine): the save magic, the debug handshake id and the macro prefix used to be CHSlots' (`0x4C534843` "CHSL", `CHSL_`). They are now `0x4F534843` "CHSO", handshake "CHSO" (tools/chsim/chdrive.py `--id` default) and `CHSO_` (CHSO_DEBUG etc.). A save written by an older build is ignored once.
+- Fixed 2026-10-01 (with the SD game menu, which makes switching games routine): the save magic, the debug handshake id and the macro prefix used to be CHSlots' (`0x4C534843` "CHSL", `CHSL_`). They are now `0x4F534843` "CHSO", handshake "CHSO" (tools/chsim/chdrive.py `--id` default) and `CHSO_` (CHSO_VERSION etc.; the debug protocol's switch is now the CHGame library's `CHGAME_DEBUG`). A save written by an older build is ignored once.
 
 ## Gotchas
 
