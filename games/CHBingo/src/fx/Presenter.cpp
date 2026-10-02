@@ -8,7 +8,7 @@
 #include "../render/Table.h"
 #include "../render/Cards.h"
 #include "../assets/Assets.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../debug/Debug.h"
 
 namespace present {

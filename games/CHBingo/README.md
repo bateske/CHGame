@@ -157,7 +157,7 @@ C++ compiler for the simulator and tests (zig, clang++ or g++ on the PATH,
   scripts drive (`src/debug/Debug.h`, and the game's own commands at the
   top of `CHBingo.ino`).
 * `python tools/assets.py` - art in `tools/art/` to `src/assets/Assets.*`.
-* `python tools/audio/preview.py out/audio` - the sound effects as WAVs.
+* `python ../../tools/audio/preview.py . out/audio` - the sound effects as WAVs.
 * `python ../../tools/check_size.py build/release` - flash and RAM from the map.
 
 ## Files
@@ -169,10 +169,10 @@ C++ compiler for the simulator and tests (zig, clang++ or g++ on the PATH,
     src/fx/Fx.*          particles, banners, floating text
     src/render/          the wall (Table), the cards, the buy-in and the bar (Cards)
     src/states/          title, play, pause, options, stats, broke
-    src/audio/           the piezo sequencer and its effects
+    src/audio/           the sound effects (the CHGame library's sequencer plays them)
     src/save/            the two flash pages
     src/debug/           the serial protocol
-    tools/               simulator, tests, scripts, art and audio tools
+    tools/               simulator, tests, scripts and art tools
 
 ## License
 
