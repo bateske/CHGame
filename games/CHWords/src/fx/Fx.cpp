@@ -1,58 +1,10 @@
-#pragma GCC optimize("Os", "no-ipa-sra")   // cold code: size over speed (hot pixel loops live in Draw/Mask)
-#include <CHGfx.h>
+#pragma GCC optimize("Os", "no-ipa-sra")   // cold code: size over speed
 #include <string.h>
+#include <CHGame.h>
 #include "Fx.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Fmt.h"
-#include "../gfx/Mask.h"
-#include "../gfx/Palette.h"
-#include "../RamFunc.h"
+#include "../gfx/Font.h"
 
 namespace fx {
-
-// ---------------------------------------------------------------------------
-// Curves: 17-point tables in half-Q8 units (a byte each), linearly
-// interpolated.
-// ---------------------------------------------------------------------------
-static const uint8_t CURVES[4][17] = {
-    {0, 23, 42, 60, 74, 87, 97, 105, 112, 118, 121, 124, 126, 127, 128, 128, 128},
-    {0, 35, 63, 87, 105, 119, 129, 136, 139, 141, 141, 139, 136, 134, 131, 129, 128},
-    {0, 2, 6, 12, 20, 30, 41, 52, 64, 76, 88, 99, 108, 116, 123, 127, 128},
-    {0, 4, 15, 34, 61, 95, 124, 108, 98, 97, 102, 116, 125, 120, 123, 127, 128},
-};
-
-int ease(Ease e, int t, int n) {
-    if (n <= 0 || t >= n) return 256;
-    if (t <= 0) return 0;
-    int p = (t << 8) / n;                    // 0..255
-    int i = p >> 4, f = p & 15;
-    const uint8_t *c = CURVES[e];
-    return 2 * c[i] + (((c[i + 1] - c[i]) * f) >> 3);
-}
-
-static const uint8_t SIN[65] = {
-    0, 6, 13, 19, 25, 31, 38, 44, 50, 56, 62, 68, 74, 80, 86, 92, 98, 104, 109, 115, 121, 126,
-    132, 137, 142, 147, 152, 157, 162, 167, 172, 177, 181, 185, 190, 194, 198, 202, 206, 209,
-    213, 216, 220, 223, 226, 229, 231, 234, 237, 239, 241, 243, 245, 247, 248, 250, 251, 252,
-    253, 254, 255, 255, 255, 255, 255};
-
-int isin(int a) {
-    a &= 255;
-    int q = a >> 6, i = a & 63;
-    int v;
-    switch (q) {
-        case 0: v = SIN[i]; break;
-        case 1: v = SIN[64 - i]; break;
-        case 2: v = -SIN[i]; break;
-        default: v = -SIN[64 - i]; break;
-    }
-    return v;
-}
-
-static uint32_t seed = 0x1234567u;
-uint32_t rnd() { seed ^= seed << 13; seed ^= seed >> 17; seed ^= seed << 5; return seed; }
-void reseed() { seed = 0x1234567u; }
-int rndRange(int lo, int hi) { return hi > lo ? lo + (int)(rnd() % (uint32_t)(hi - lo)) : lo; }
 
 // ---------------------------------------------------------------------------
 // Particles
@@ -182,54 +134,17 @@ void drawBanner() {
         int g = r - off;                                                // row of the letters
         switch (bannerStyle) {
             case B_RAINBOW: ramp[r] = RAIN[(((r + 8) / 2) + t / 3) % 5]; break;
-            case B_GOLD:    ramp[r] = g < 3 ? FX_B : (g < 8 ? GOLD : WOOD); break;
             case B_RED:     ramp[r] = g < 3 ? WHITE : (g < 9 ? RED : WINE); break;
-            case B_CYAN:    ramp[r] = g < 3 ? WHITE : CYAN; break;
             default:        ramp[r] = g < 6 ? WHITE : SILVER; break;
         }
     }
     uint8_t outline = bannerStyle == B_RAINBOW ? FX_A : INK;
-    maskDraw(m, 64 - w / 2, bannerCy - FONT_H / 2 - off, outline, INK, ramp);
-}
-
-// ---------------------------------------------------------------------------
-// Shake
-// ---------------------------------------------------------------------------
-static uint8_t shakeT, shakeAmp;
-
-void shake(uint8_t frames, uint8_t amp) { shakeT = frames; shakeAmp = amp; }
-
-// Rows y0..y1 moved dy rows and one byte (2 px) sideways, in one pass of
-// word copies from SRAM (newlib's memmove is a byte loop in flash: ~10 ms a
-// shaken frame). Walks away from the direction of travel so every source row
-// is read before it is overwritten; rows the move uncovers shift in place.
-RAMFUNC(shake) static void shiftRows(int y0, int y1, int dy, bool right) {
-    const int W = GFX_FB_STRIDE / 4;
-    for (int k = 0; k <= y1 - y0; k++) {
-        int y = dy > 0 ? y1 - k : y0 + k, sy = y - dy;
-        if (sy < y0 || sy > y1) sy = y;
-        uint32_t *d = (uint32_t *)(gfx_fb + y * GFX_FB_STRIDE);
-        const uint32_t *s = (const uint32_t *)(gfx_fb + sy * GFX_FB_STRIDE);
-        if (right) {        // d[i] = s[i - 1], the first byte kept
-            for (int j = W - 1; j > 0; j--) d[j] = (s[j] << 8) | (s[j - 1] >> 24);
-            d[0] = (s[0] << 8) | (s[0] & 0xFF);
-        } else {            // d[i] = s[i + 1], the last byte kept
-            for (int j = 0; j < W - 1; j++) d[j] = (s[j] >> 8) | (s[j + 1] << 24);
-            d[W - 1] = (s[W - 1] >> 8) | (s[W - 1] & 0xFF000000u);
-        }
-    }
-}
-
-void applyShake(int y0, int y1) {
-    if (!shakeT) return;
-    int a = (shakeAmp * shakeT + 9) / 10;
-    if (a < 1) a = 1;
-    shiftRows(y0, y1, (shakeT & 1) ? a : -a, (shakeT & 2) != 0);    // 2 px sideways
+    maskDraw(m, 64 - w / 2, bannerCy - FONT_H / 2 - off, 0, outline, outline == INK ? -1 : INK, ramp);
 }
 
 bool activeRows(int &lo, int &hi) {
     lo = 999; hi = -1;
-    if (shakeT) { lo = 0; hi = 127; return true; }
+    if (shaking()) { lo = 0; hi = 127; return true; }
     for (auto &p : parts) if (p.life) { int y = p.y >> 4; if (y - 2 < lo) lo = y - 2; if (y + 3 > hi) hi = y + 3; }
     if (bannerFrames) { if (bannerCy - 30 < lo) lo = bannerCy - 30; if (bannerCy + 12 > hi) hi = bannerCy + 12; }
     return hi >= lo;
@@ -239,7 +154,7 @@ void clear() {
     memset(parts, 0, sizeof parts);
     bannerFrames = 0;
     bannerHeld = false;
-    shakeT = 0;
+    shakeStop();
 }
 
 void update() {
@@ -248,7 +163,7 @@ void update() {
         if (!bannerHeld || bannerFrames > 10) bannerFrames--;    // held: up, until let go to blink out
         if (!++bannerT) bannerT = 128;                           // (the same phase of the dance)
     }
-    if (shakeT) shakeT--;
+    shakeTick();
 }
 
 }  // namespace fx

@@ -2,9 +2,7 @@
 #include "Debug.h"
 #if CHWD_DEBUG
 #include <Arduino.h>
-#include <CHGfx.h>
-#include "../CHGame.h"
-#include "../gfx/Fmt.h"
+#include <CHGame.h>
 #include <string.h>
 
 #ifndef CHSIM

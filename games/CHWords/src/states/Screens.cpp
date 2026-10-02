@@ -1,14 +1,11 @@
 #pragma GCC optimize("Os", "no-ipa-sra")   // cold code: size over speed (hot pixel loops live in Draw/Mask)
 #include <Arduino.h>
 #include <string.h>
-#include <CHGfx.h>
+#include <CHGame.h>
 #include "../../config.h"
 #include "Screens.h"
-#include "../CHGame.h"
-#include "../gfx/Palette.h"
-#include "../gfx/Draw.h"
-#include "../gfx/Mask.h"
-#include "../gfx/Fmt.h"
+#include "../gfx/Font.h"
+#include "../gfx/Tiles.h"
 #include "../fx/Fx.h"
 #include "../audio/Audio.h"
 #include "../ai/Ai.h"
@@ -134,7 +131,7 @@ static void heading(const char *text, int y) {
     maskFont(m, 0, 0, text);
     uint8_t r[FONT_H + 2];
     for (int i = 0; i < FONT_H + 2; i++) r[i] = i < 3 ? FX_B : (i < 8 ? GOLD : WOOD);
-    maskDraw(m, 64 - w / 2, y, INK, INK, r);
+    maskDraw(m, 64 - w / 2, y, 0, INK, -1, r);
 }
 
 static void centred35(int y, const char *s, uint8_t c) { text35(64 - text35Width(s) / 2, y, s, c); }
@@ -146,8 +143,7 @@ static void centred2(int y, const char *s, uint8_t c) { fontText(64 - fontWidth(
 static void menuItem(int y, const char *s, bool on, uint32_t frame) {
     int w = text35x2Width(s), x = 64 - w / 2;
     if (on) {
-        fillRound(x - 7, y - 4, w + 14, 17, 3, NAVY);
-        roundRect(x - 7, y - 4, w + 14, 17, 3, (frame & 16) ? FX_B : GOLD);
+        panel(x - 7, y - 4, w + 14, 17, 3, NAVY, (frame & 16) ? FX_B : GOLD);
     }
     text35x2(x, y, s, on ? GOLD : WHITE);
 }
@@ -158,10 +154,7 @@ static bool menuNav(uint8_t n) {
     return arduboy.justPressed(A_BUTTON);
 }
 
-static void panel(int y, int h) {
-    fillRound(10, y, 108, h, 3, NAVY);
-    roundRect(10, y, 108, h, 3, GOLD);
-}
+static void panel(int y, int h) { panel(10, y, 108, h, 3, NAVY, GOLD); }
 
 // The bag is shuffled by when you pressed the button: your timing, not ours.
 static uint32_t seedNow() { return micros() * 2654435761u ^ arduboy.frameCount; }
@@ -228,8 +221,7 @@ static void titleUpdate() {
 static void titleRender(uint32_t frame) {
     stage::renderTitle(frame);
     // The sign: a navy plaque framed in gold.
-    fillRound(14, 3, 100, 24, 4, NAVY);
-    roundRect(14, 3, 100, 24, 4, GOLD);
+    panel(14, 3, 100, 24, 4, NAVY, GOLD);
     heading("WORDS", 9);
     uint8_t items[5], n = titleItems(items);
     int y0 = 128 - n * 15;
@@ -248,8 +240,7 @@ static void titleRender(uint32_t frame) {
 #if !CHWD_LEAN
 static void setupUpdate() {
     int d = arduboy.repeat(RIGHT_BUTTON) ? 1 : (arduboy.repeat(LEFT_BUTTON) ? -1 : 0);
-    if (arduboy.repeat(UP_BUTTON) && sel > 0) { sel--; audio::sfx(Sfx::Cursor); }
-    if (arduboy.repeat(DOWN_BUTTON) && sel < 1) { sel++; audio::sfx(Sfx::Cursor); }
+    menuNav(2);
     if (d) { opt.level = (uint8_t)((opt.level + game::LEVELS + d) % game::LEVELS); audio::sfx(Sfx::Coin); }
     // Hold SELECT to wipe your record against this opponent.
     static uint8_t hold;
@@ -759,8 +750,7 @@ static void optionsRender(uint32_t frame) {
         char label[12], value[12];
         optField(OPT_TEXT[i], 0, label);
         if (i == sel && !wordsInfo) {               // two clear pixels or more round the lettering
-            fillRound(8, y - 4, 112, 18, 3, NAVY);
-            roundRect(8, y - 4, 112, 18, 3, (frame & 16) ? FX_B : GOLD);
+            panel(8, y - 4, 112, 18, 3, NAVY, (frame & 16) ? FX_B : GOLD);
         }
         // In the tiles' anti-aliased serif.
         bool on = i == sel && !wordsInfo;
@@ -792,7 +782,7 @@ static void optionsRender(uint32_t frame) {
             maskFont(m, 0, 0, randomWord, dy, gap);
             uint8_t ramp[FONT_H + 6];
             for (int r = 0; r < FONT_H + 6; r++) ramp[r] = fx::RAIN[(((r + 8) / 2) + t / 3) % 5];
-            maskDraw(m, 64 - w / 2, 74, FX_A, INK, ramp);
+            maskDraw(m, 64 - w / 2, 74, 0, FX_A, INK, ramp);
         } else {
             centred35(52, "168551 WORDS MISSING", RED);
             centred35(66, "PLACE FILE WORDS.DIC IN", SILVER);
