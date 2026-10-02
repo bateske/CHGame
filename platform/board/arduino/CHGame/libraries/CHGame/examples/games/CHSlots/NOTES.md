@@ -82,14 +82,14 @@ Everything can be checked on a PC (Python 3 with Pillow, `../../../../../../../.
   - `gameplay.txt` records the README's clips: the title, three sevens on LUCKY 7, the bonus wheel, the dragon, and SWEET's sugar rush. The sevens are played at $1 (`say E 0`): at $5 the 250x passes the $1000 goal and the clip ends on YOU BROKE THE BANK. `say M 500` puts the purse back between clips for the same reason.
   - `showcase.txt` and `showcase_sweet.txt` walk the three machines through their features and paytables (run them into `out/`); `screens.txt` snaps every screen once; `save.txt` checks save, continue and the demo; `perf.txt` prints the frame-time estimates; `diff/diff.txt` is for `chgame redraw`.
 - The art: the reel symbols are one sprite sheet, `tools/art/symbols.png`, in 22x22 cells: LUCKY 7's fifteen on the top row, DRAGON FORTUNE's ten on the second, SWEET's eight on the third. Every opaque pixel must be exactly a palette colour (`tools/art/palette.png`, `palette.gpl`); the second and third rows use their machines' palettes. Then `python tools/assets.py`.
-- Building by hand: Arduino IDE with *Tools > Optimize > Smallest + LTO* and *Tools > USB > Upload only* (the game does not use USB Serial), or `arduino-cli compile -b CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly` with the CHGfx and CHGame libraries from `platform/board/arduino/CHGame/libraries`. `tools/device.py build` does the same.
+- Building by hand: Arduino IDE with *Tools > Optimize > Smallest + LTO* and *Tools > USB > Upload only* (the game does not use USB Serial), or `arduino-cli compile -b CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly` with the CHGfx and CHGame libraries from `platform/board/arduino/CHGame/libraries`. `chgame build` does the same.
 - It shares its palette, lettering, banners and coin fountains with CHBlackjack, CHChess, CHCraps, CHRoulette and the rest of the series.
 - Files:
 
       CHSlots.ino          the frame loop
       config.h             build switches
       src/game/            the rules of the three machines, the reel strips
-      src/fx/              the presenter, particles, banners, shake
+      src/fx/              the presenter; chgame/Sizzle configured (Fx.h) plus explode()
       src/render/          the cabinets, reels, wheel, paytables, each machine's felt
       src/states/          title, machine menu, play, options, stats, endings
       src/audio/           sound effects and three tunes (the CHGame library plays them)

@@ -51,7 +51,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
   1. Run `python tools/turns.py`.
   2. Paste the printed table into `TURNS[]` in `src/game/Cpu.cpp` (the SHARK's turns-to-go, 101 bytes). The host tests recompute it and fail if they disagree.
   3. Use `python tools/lookdev.py` to preview the board at each size.
-- ADL trap: a stage helper must not share its name with an `fx::` function that takes an `fx` enum. A local `banner()` called with an `fx::BannerStyle` resolved to `fx::banner` and put banners off-screen. The helper is now `call()`; see the comment in `src/stage/Stage.cpp`.
+- ADL trap: a stage helper must not share its name with an `fx::` function that takes an `fx` enum. A local `banner()` called with an `fx::BannerStyle` resolved to `fx::banner` and put banners off-screen. The helper is now `call()`; see the comment in `src/stage/Stage.cpp`. (`fx::banner` is the library's `chgame/Sizzle` since 2026-10-02, configured in `src/fx/Fx.h`; the trap is the same.)
 - Snakes are procedural bead chains pushed by a travelling sine wave. Only the head (`SNAKE_HEAD`, `SNAKE_HEAD_OPEN`) is art, and its `FELT_LT`/`FELT` pixels become each snake's two colours.
 - Art round trip:
   - `python tools/sheet.py export`, edit `tools/art/sheet.png` (indexed palette), then `python tools/sheet.py import`.

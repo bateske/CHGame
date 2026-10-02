@@ -22,7 +22,7 @@ done in order and checked.
 | SD card / FAT | `platform/board/arduino/CHGame/libraries/CHSd` | 1.0.0; never yet run against a real card on a board |
 | The `CHGame` library: buttons and pacing, palette, drawing, the 3x5 font, lettering, effects maths, sound, saving, the debug protocol, `RAMFUNC` | `platform/board/arduino/CHGame/libraries/CHGame` | every game is built on it ([its README](../platform/board/arduino/CHGame/libraries/CHGame/README.md)); in the board package's `libraries/` folder with CHGfx and CHSd |
 | Twenty games, one app | the CHGame library's examples: `platform/board/arduino/CHGame/libraries/CHGame/examples/games/`, `apps/CHSDtoUSB` | building; verification per game in [status.md](status.md) |
-| PC tools | `tools/`, per-game `tools/` | in use |
+| PC tools | `tools/` (one entry point, `chgame`; `pip install -e .`), per game a `tools/game.py`, a `chdrive.py` and scripts | in use; one simulator for the games, CHGfx's examples and its tests |
 
 ## What the first release needs
 
@@ -79,6 +79,7 @@ library's:
 | Drawing, the 3x5 font | `chgame/Draw` | one font for all: five games' `M` changed by a pixel; one `sprite4` superset |
 | Lettering | `chgame/Mask` | the CHBingo/CHCraps signature |
 | Effects maths | `chgame/Fx` | one `ease` table set; the CHFour family's moves a pixel here and there |
+| Particles, banners, floating text | `chgame/Sizzle` (`Sizzle.h` + `Sizzle.inl`) | one body, configured per game with `SIZZLE_*` switches in its `src/fx/Fx.h` and compiled in its `src/fx/Fx.cpp` (the library is compiled apart and cannot see a sketch's defines); every release image byte for byte unchanged |
 | Number formatting | `chgame/Fmt` | the union of all variants |
 | Sound | `chgame/Audio` | one engine: 3-byte steps (20 Hz, 2 ms), priorities, soft and glide flags, semitone shifts, Playtune scores and one-voice melodies, the LED. Each game keeps its own effect tables (`src/audio/Sounds.cpp`) |
 | Saving | `chgame/Save` | the record every game wrote, byte for byte (old saves still load); each game keeps its magic and what it saves |
@@ -105,7 +106,7 @@ generated copies and `vendor.py` are gone. The bootloader's C fork
 (`src/sd.c`, `fat.c`) remains.
 
 **What is left:** the release. Until a package cut from this repository is
-installed, `tools/device.py` passes the three folders with `--library`
+installed, `chgame build` passes the three folders with `--library`
 (and keeps doing so afterwards, so a clone builds against its own sources).
 The acceptance test of the first release is one game built with plain
 `arduino-cli compile` and no `--library`.
@@ -150,8 +151,13 @@ without reading the source:
 - the uploader named among the tools: done; `chgame upload` and `chgame
   uploader` are the Python one, and the release attaches the Go binaries;
 - the candidates for sharing listed at the end of
-  [tools/README.md](../tools/README.md): `check.py`, `run_tests.py` and the
-  redraw check are shared since 2026-10-02 (`tools/game.py` per game).
+  [tools/README.md](../tools/README.md): `check.py`, `run_tests.py`, the
+  redraw and save checks are shared since 2026-10-02 (`tools/game.py` per
+  game, and every game has `chgame check`); so are the art the games had
+  in common (`tools/art/common/`), the mock-up kit, the music composer and
+  the font tools. `sheet.py` is the one left.
+- one simulator: `tools/chsim` runs the games, CHGfx's examples and
+  CHGfx's tests (2026-10-02); CHGfx's `extras/sim` is gone.
 
 ### 6. Known problems to fix on the way
 

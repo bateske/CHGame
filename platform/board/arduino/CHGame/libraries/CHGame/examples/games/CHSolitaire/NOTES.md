@@ -41,7 +41,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 - The README's GIF is made by `chgame gif`, which runs gameplay.txt into out/gameplay and joins its clips. showcase.txt is a test like the other scripts now; run it into out/, not docs/.
 - tools/make_logo.py renders the title once from a TrueType font (Georgia Bold Italic by default; pass another path as the first argument). tools/art/logo.txt is the source from then on; re-running overwrites hand edits. Then `python tools/assets.py`.
 - The card face (ranks, pips, court busts, suit glyphs: the shared tools/art/common/ at the repository root, CHBlackjack's and CHPoker's files) and the 3x5 font come from CHBlackjack/CHPoker; assets.py does not cross-check them against those siblings.
-- Simulator: `../../../../../../../../../tools/chsim/chsim.py` (shared; this game's tools/chsim/chdrive.py imports it). Set `CHSIM_CXX` or have zig/clang++/g++ on PATH (see root CLAUDE.md). Size report: `../../../../../../../../../tools/check_size.py` (`tools/device.py build` runs it).
+- Simulator: `chgame sim` (the repository's `tools/chsim`). Set `CHSIM_CXX` or have zig/clang++/g++ on PATH (see root CLAUDE.md). Size report: `chgame size` (`chgame build` runs it).
 
 ## Development
 
@@ -74,7 +74,7 @@ Files:
     src/stage/Stage.*      the glove, cards in motion, the table, the cascade
     src/render/*           the card and its backs, layout
     src/states/Screens.*   title, play, deck, options, stats
-    src/fx/*               particles, banners, floating texts (palette, primitives and lettering: the CHGame library)
+    src/fx/*               the library's chgame/Sizzle (particles, banners, floating texts), configured in Fx.h
     src/audio/*            the sound effects (the CHGame library plays them)
     src/save/Save.*        what a save holds (the CHGame library keeps it in flash)
     tools/                 tests, asset pipeline, script driver, device tools

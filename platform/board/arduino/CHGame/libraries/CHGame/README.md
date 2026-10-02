@@ -79,6 +79,7 @@ include just the one it needs, e.g. `<chgame/Fmt.h>`.
 | `chgame/Draw.h` | `fillRound`, `roundRect`, `panel`, `panelLit`, `bevel`, `dither`, `dropShadow`, `remapRect`, `fillConvex`, span sprites (`sprite4`, scaled, flipped, recoloured; `spriteRot`), and the 3x5 font: `text35`, `text35s` (shadowed), `text35x2`, `text35Width`. |
 | `chgame/Mask.h` | Lettering and logos with an outline, a drop shadow and a gradient fill: `maskBegin`, `maskText35`, `maskBlit1`, `maskDraw`. |
 | `chgame/Fx.h` | `fx::ease` (cubic, back, in-out, bounce), `isin`/`icos` (integer, 256 steps a turn), `rnd`/`rndRange`/`reseed` (presentation randomness, repeatable), and the screen shake. |
+| `chgame/Sizzle.h`, `Sizzle.inl` | The particle pool (`spawn`, `burst`, `fountain`; sparks, confetti, stars, dust, coins, rain, goo), the pop-up or drop-in banner (`banner`, `holdBanner`, `activeRows`) and the floating `+$15` texts (`floatText`). An implementation header: a game sets `SIZZLE_*` switches in its `src/fx/Fx.h` (pool size, kinds, banner style, floats or not) and includes the bodies once from its `src/fx/Fx.cpp`, so each game compiles only what it uses, under its own size pragma. Not part of `<CHGame.h>`; `Sizzle.h` lists the switches. |
 | `chgame/Audio.h` | `audio::`: effects as step tables (`AUDIO_STEPS`, `AUDIO_STEP(hz, endHz, ms)`, `AUDIO_EFFECT(steps, priority \| SOFT \| GLIDE)`), `sfx()` (optionally a few semitones up), `blip()`, `note()`, music from Playtune scores (`music()`, its voices rendered as an arpeggio or a lead line) or one-voice melodies (`melody()`), and the status LED. One effect at a time on the piezo; a higher priority wins. |
 | `chgame/Save.h` | `save::load(MAGIC, version, data)` / `save::store(...)`: a record of up to 244 bytes in flash, kept across power cycles and re-uploads, two pages in turn with a CRC. Every sketch needs its own magic (`save::magic("XXXX")`). |
 | `chgame/Fmt.h` | Numbers to text without printf: `fmtInt`, `fmtMoney`, `fmtCash`, `fmtShort`, `fmtTime`, `fmtStr`. |
@@ -105,11 +106,13 @@ include just the one it needs, e.g. `<chgame/Fmt.h>`.
 
 ## What stays in a game
 
-The rules, the screens, its own effects (particle kinds, banners) and
-sounds, its art, its save data and magic, its debug commands, and its
-`config.h`. The twenty games in `examples/games/` show the range, from CHTicTacToe to
-CHChess's search running inside the frame loop; each `NOTES.md` explains
-its design.
+The rules, the screens and everything they animate (`stage/`, `render/`,
+`fx/Presenter`), its sounds and music tables, its art, its save data and
+magic, its debug commands, its `config.h`, and the `src/fx/Fx.h` that
+configures `chgame/Sizzle` for it (plus any effect of its own on top, such
+as CHBingo's `gack()`). The twenty games in `examples/games/` show the
+range, from CHTicTacToe to CHChess's search running inside the frame loop;
+each `NOTES.md` explains its design.
 
 ## License
 

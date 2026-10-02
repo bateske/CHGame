@@ -1,33 +1,20 @@
 // Sparkle: a particle pool, pop-up banners and floating "+$15" texts. The
 // easing, sine, randomness and screen shake are the CHGame library's
 // (fx:: in chgame/Fx.h).
+// The particle pool, the banner and the floats are the CHGame library's
+// chgame/Sizzle, configured here (the switches that differ from its defaults)
+// and compiled in Fx.cpp; the library's Sizzle.h lists every switch.
 #pragma once
-#include <stdint.h>
 #include <CHGame.h>
 
-namespace fx {
-
-enum Kind : uint8_t { SPARK, CONFETTI, COIN, RAIN, STAR, DUST };
-void spawn(Kind k, int x, int y, int vx16, int vy16, uint8_t life, uint8_t colour);
-void burst(Kind k, int x, int y, uint8_t n, int speed16, uint8_t colour);  // radial
-void fountain(Kind k, int x, int y, uint8_t n);                            // confetti/coins up
-bool particlesAlive();
-
-// Big centred lettering with an outline; pops in, holds, fades.
-enum BannerStyle : uint8_t { B_RAINBOW, B_GOLD, B_RED, B_CYAN, B_WHITE };
-void banner(const char *text, BannerStyle s, int cy, uint8_t frames = 70);
-bool bannerActive();
-
-void floatText(const char *text, int x, int y, uint8_t colour);
-
-// Vertical extent of everything transient on screen (particles, floats,
-// banner, shake). Returns false if nothing is moving.
-bool activeRows(int &lo, int &hi);
-
-void clear();
-void update();                      // once per frame
-void drawParticles();
-void drawBanner();
-void drawFloats();
-
-}  // namespace fx
+#define SIZZLE_CONFIGURED 1
+#define SIZZLE_KIND_COIN 1
+#define SIZZLE_KIND_RAIN 1
+#define SIZZLE_RAIN_KIND_NAME RAIN
+#define SIZZLE_DUST 1
+#define SIZZLE_HUES_EXPORT 0
+#define SIZZLE_HOLD_BANNER 0
+#define SIZZLE_BANNER_WRAP 0
+#define SIZZLE_BANNER_FILL WHITE
+#define SIZZLE_COLOUR_INLINE 1
+#include <chgame/Sizzle.h>

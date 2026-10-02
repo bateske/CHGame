@@ -163,6 +163,17 @@ differences from 0.2.4, building, testing and installing.
 
 ## Changes since the copies were taken
 
+- 2026-10-02: `chgame/Sizzle` (`libraries/CHGame/src/chgame/Sizzle.h` and
+  `Sizzle.inl`): the particle pool, the banners and the floating texts the
+  twenty games each carried in `src/fx/Fx.cpp` are one body in the
+  library, configured per game with `SIZZLE_*` switches in its `src/fx/Fx.h`
+  and compiled in its `src/fx/Fx.cpp` under its own size pragma (an
+  implementation header, since the library is compiled apart from the
+  sketch). Checked: all twenty release images byte for byte the same as
+  before, static RAM unchanged, every script's frames, every README GIF,
+  check, redraw and save test the same. (CHSlots' device debug image is 4 B
+  smaller: LTO partitions the unchanged code differently; the release image
+  is identical.)
 - 2026-10-02: one simulator. `tools/chsim` took over CHGfx's `extras/sim`: its
   panel model (the measured wire rate scaled by the SPI divider, 45 us of
   setup, rows landing on a simulated panel as they convert, per-column

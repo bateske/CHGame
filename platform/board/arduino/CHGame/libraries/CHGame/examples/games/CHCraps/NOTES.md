@@ -7,7 +7,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 - Imported from https://github.com/bateske/CHCraps at commit fa1fd77 (2026-10-01); develop here now, not in the old repo.
 - Release build (`opt=oslto,rtlib=nano,periph=game,usb=uploadonly`, core 0.2.4, CHGfx 1.3.0): flash 49,776 of 50,944 B (1,168 spare), static RAM 15,520 of 18,416 B (2,896 spare).
 - The image (`../../../../../../../../../tools/check_size.py`'s `image:` line; 50,032 B when last measured) is only ~400 B under the 50,432 B that keeps both A/B save pages (0xF500 and 0xF600, the CHGame library's `chgame/Save.cpp`). Past 0xF500 saving drops to one page; past 0xF600 it switches off.
-- Verification: simulator only. `chgame test` (every bet against an independent oracle, exact house edges, dice physics, zone reachability), `tools/tests/sim_save.py` (save mid-hand, debug `V` reboot and continue, the broke case), and the chdrive scripts in `tools/scripts`. There is no `chgame check` in this game.
+- Verification: simulator only. `chgame test` (every bet against an independent oracle, exact house edges, dice physics, zone reachability), `tools/tests/sim_save.py` (save mid-hand, debug `V` reboot and continue, the broke case), and the chdrive scripts in `tools/scripts`; `chgame check` runs all of it.
 - As of 2026-10-01 it has never run on the device: frame times unmeasured, sound unheard.
 
 ## Design decisions
@@ -70,7 +70,7 @@ Files:
     src/game/Craps.*        the table: bets, payouts, the point, the dice
     src/cam/                the dice cam: 3D dice and physics, the scene
     src/render/             the wall, the layout and its spots, chips, the bar
-    src/fx/                 particles and banners; the presenter
+    src/fx/                 the presenter; the library's chgame/Sizzle configured in Fx.h
     src/states/Screens.*    title, play, options, stats, the two endings
     src/audio/Sounds.*      the sound effects (the CHGame library plays them)
     src/save/Save.*         what a save holds (the CHGame library keeps it in flash)

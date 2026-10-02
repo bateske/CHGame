@@ -6,13 +6,13 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 
 - Imported from https://github.com/bateske/CHPoker at commit 0840afd (2026-10-01); develop here now, not in the old repo.
 - Release build (CHGame core 0.2.4, CHGfx 1.3.0, the CHGame library, `opt=oslto,rtlib=nano,periph=game,usb=uploadonly`; 2026-10-02): image 48,480 of 50,944 B, static RAM 15,500 of 18,416 B (2,916 spare).
-- On the CHGame library (`platform/board/arduino/CHGame/libraries/CHGame`, `<CHGame.h>`) since 2026-10-02: the input, palette, drawing, 3x5 font, masks, fx maths and shake, formatting, the debug protocol (`chgame/Debug.h`), saving (`chgame/Save.h`) and `RAMFUNC` are the library's; `src/fx/` keeps the game's particles, banners and floating texts.
+- On the CHGame library (`platform/board/arduino/CHGame/libraries/CHGame`, `<CHGame.h>`) since 2026-10-02: the input, palette, drawing, 3x5 font, masks, fx maths and shake, formatting, the debug protocol (`chgame/Debug.h`), saving (`chgame/Save.h`) and `RAMFUNC` are the library's; `src/fx/` configures the library's `chgame/Sizzle` (particles, banners and floating texts; since later that day, image unchanged).
 - Sound: on the library's engine (`chgame/Audio.h`) since 2026-10-02; `src/audio/Sounds.*` holds the effect tables (3-byte steps, every sweep GLIDEs as the old sequencer did). `chgame audio out/audio` renders them to WAV.
 - Save pages: the image (as `../../../../../../../../../tools/check_size.py` reports it) is 48,480 B. Both A/B pages (0xF500, 0xF600) fit while it is at most 50,432 B, so the real headroom is 1,952 B. Past that, saving (the CHGame library's `chgame/Save.cpp`; `src/save/Save.cpp` says what the record holds) uses page B only.
 - Simulator-verified (as of 2026-10-01):
   - `chgame test` passes. It builds under UBSan; `--long` adds the exhaustive 7-card enumeration.
   - It covers exact hand-category counts, betting spots, side pots, stud order, a fuzz of thousands of hands, CPU equity and honesty, and stats.
-  - The scripts in `tools/scripts/` run in the simulator, and `gameplay.txt` makes the README's `docs/gameplay.gif` (through `../../../../../../../../../tools/readme_gif.py`).
+  - The scripts in `tools/scripts/` run in the simulator, and `gameplay.txt` makes the README's `docs/gameplay.gif` (`chgame gif`).
 - Device: never run on the board.
 
 ## Design decisions
@@ -92,8 +92,8 @@ Everything can be checked on a PC (Python 3 with Pillow, and a C++ compiler for 
     src/stage/Stage.*      events -> motion; drawing the table
     src/render/*           cards and chips, the action bar, layout
     src/states/Screens.*   title, lobby, play, options, stats, the endings
-    src/fx/*               particles, banners, floating texts (on the CHGame
-                           library's palette, drawing, lettering and fx::)
+    src/fx/*               the library's chgame/Sizzle (particles, banners,
+                           floating texts), configured in Fx.h
     src/audio/Sounds.*     the sound effects (the CHGame library's engine)
     src/save/Save.*        what a save holds (the CHGame library keeps it in flash)
     tools/                 simulator driver, tests, asset pipeline, device tools

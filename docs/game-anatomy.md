@@ -32,7 +32,7 @@ engine (`audio::`), saving (`save::`), the debug protocol (`dbg::`) and
 | `audio/Sounds.h/.cpp` | The game's sound effects (`enum class Sfx`, step tables, `SOUNDS[]` for `audio::begin`), and `playSong()` if it has music; `Music.*` holds generated Playtune scores. |
 | `save/Save.h/.cpp` | What a save holds (the game's `Data` struct, its magic and version) and how it goes in and out; the library keeps the record in flash. |
 | `gfx/` | (some games) the game's own drawing: a display font, tiles, colour tables, remaps. |
-| `fx/` | Banners, particles, coin fountains, floating text; `Presenter` in the Blackjack lineage. Built from `fx::` maths. |
+| `fx/` | `Fx.h` configures the library's `chgame/Sizzle` (particles, banners, floating text) for this game and `Fx.cpp` compiles it under the game's size pragma; `Presenter` in the Blackjack lineage turns events into motion. Built from `fx::` maths. |
 | `stage/` or `render/` | The play screen's presentation. The game logic emits events; the stage animates them and reports `busy()` until it has shown them, so the CPU and the rules wait for the animation. |
 | `states/` | Title, menus, options, results; the debug hook (the game's own protocol commands) is usually here (`Screens.cpp`). |
 | `game/`, `rules/`, `ai/`, `engine/` | Pure logic with no drawing, covered by host unit tests. |

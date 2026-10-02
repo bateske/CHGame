@@ -42,7 +42,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 - Iso D-pad: the nearest cell in the pressed screen direction, scored `along + 3 * |perp|` (src/game/Match.cpp).
 - Debug hooks (CHTicTacToe.ino): `R seed`, `J <T|G|P|W|L|O|S> [table]`, `C cell [arg]`, `H cell` (the dealer's next move), `M purse`, `D 0..2` dealer level, `V ticks` BLITZ clock, `E 1|0` (a non-lean device debug build writes saves only after `E 1`), `Q` simulator calibration.
 - The README's one GIF, docs/gameplay.gif, is made by `chgame gif` from tools/scripts/gameplay.txt (clips 01_title, 02_classic, 03_vanish, 04_ultimate, 05_cat in out/gameplay). showcase.txt is kept as a test and records its clips into the folder it is given (use out/showcase, not docs/).
-- Simulator: `../../../../../../../../../tools/chsim/chsim.py` (shared; this game's tools/chsim/chdrive.py imports it). Set `CHSIM_CXX` or have zig/clang++/g++ on PATH (see root CLAUDE.md). Size report: `../../../../../../../../../tools/check_size.py` (`tools/device.py build` runs it).
+- Simulator: `chgame sim` (the repository's `tools/chsim`). Set `CHSIM_CXX` or have zig/clang++/g++ on PATH (see root CLAUDE.md). Size report: `chgame size` (`chgame build` runs it).
 
 ## Development
 
@@ -74,8 +74,8 @@ Files:
     src/game/         Rules (every table), Cpu (the dealer), Match (turns, toss, bids, clock), Text
     src/render/       Stage (the play screen), Iso (the isometric tables), Table (the dealer's wall), ChipArt
     src/states/       Screens: title, tables room, play, options, stats, win, broke
-    src/gfx, src/fx   sprite remaps, particles, banners, floating text (palette,
-                      drawing and lettering: the CHGame library)
+    src/gfx, src/fx   sprite remaps; the library's chgame/Sizzle (particles,
+                      banners, floating text), configured in fx/Fx.h
     src/audio         the sound effects (the CHGame library plays them)
     src/save          what a save holds (the CHGame library keeps it in flash)
     tools/            assets, simulator, scripts, tests

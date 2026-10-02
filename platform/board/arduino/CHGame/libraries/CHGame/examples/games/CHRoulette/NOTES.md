@@ -99,7 +99,7 @@ Files:
     src/game/               the rules (Roulette), the betting spots, the glove's
                             navigation, the wheels' orders - no graphics, host-tested
     src/wheel/              the ball and its solver; the wheel's drawing
-    src/fx/                 the presenter (events -> motion), particles, banners, floating text
+    src/fx/                 the presenter (events -> motion); the library's chgame/Sizzle configured in Fx.h
     src/render/             the wall and croupier, the felt layout, chips, the action bar
     src/gfx/Remap.*         the glove's colour remaps
     src/states/Screens.*    title, play, options, stats, won, broke

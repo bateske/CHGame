@@ -90,7 +90,7 @@ Everything can be checked on a PC (Python 3 with `pip install -r ../../../../../
 
 - `chgame test` covers the lines, the cards, the race against the hall over thousands of rounds (a player who daubs everything wins exactly when one of their cards is first or level), the money, the power-ups, the buttons, saving a round, the jackpot's odds, and the round set-up against an independent Python model.
 - Scripts (`tools/scripts`): `smoke.txt` is every screen and a round as screenshots, `perf.txt` estimates render times, `showcase.txt` records the buy-in, swiping, both banners and a rival's win as separate GIFs (a test now, written to its output folder, not `docs/`), `gameplay.txt` records the README's clips (`01_title` ... `06_rival`). `say R 21` seeds the round, `say J P` jumps to the buy-in, `say H n` sets the call a rival wins on, `say W` makes a bingo, `say I 1` forces the rare banner; the full list is at the top of `CHBingo.ino`. The same scripts run on the device with a debug build.
-- The device build wants *Optimize: Smallest + LTO* and *USB: Upload only* (the game has no use for USB Serial); `tools/device.py build` sets both.
+- The device build wants *Optimize: Smallest + LTO* and *USB: Upload only* (the game has no use for USB Serial); `chgame build` sets both.
 - Render times estimated from the simulator: a slide across the cards about 7 ms a frame, a daub with its splat about 8 ms, the title about 5 ms. None measured on the board.
 - Saving: the two flash pages below the bootloader's metadata survive re-uploads; records alternate between them with a sequence number and a CRC.
 
@@ -100,7 +100,7 @@ Files:
     config.h             build switches
     src/game/Bingo.*     the rules: no graphics, no sound, host-tested
     src/fx/Presenter.*   events to motion: the caller, the carousel, the wins
-    src/fx/Fx.*          particles, banners, floating text
+    src/fx/Fx.*          the library's chgame/Sizzle configured (64 particles, GOO) plus gack()
     src/render/          the wall (Table), the cards, the buy-in and the bar (Cards)
     src/states/          title, play, pause, options, stats, broke
     src/audio/           the sound effects (the CHGame library's sequencer plays them)

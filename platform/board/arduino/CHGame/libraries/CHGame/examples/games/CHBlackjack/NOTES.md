@@ -47,7 +47,7 @@ Agent-facing notes for continuing work on this game. Rules and controls are in [
 - Big outlined lettering (Mask: a 1 bpp mask, grown for the outline, painted in up to three layers) costs about 5-10 ms per word on the board. Draw it once, on still screens or static layers, never every frame.
 - The credits page draws its felt once and redraws only the wall band: 3.3 ms a frame measured on CHGfx 1.2.
 - Libraries:
-  - The CHGame library (`<CHGame.h>`, `platform/board/arduino/CHGame/libraries/CHGame`) gives the input core, the palette, the rounded rects and `panel()`, `remapRect`, `sprite4` spans (court and face art are converted in `tools/assets.py`), dither, the 3x5 font/`text35`, the Mask banners, `fx::` easing, sine, randomness and the shake, and the `fmt*` number formatting. The game's own effects (particles, banners, floating texts) stay in `src/fx/Fx.cpp`.
+  - The CHGame library (`<CHGame.h>`, `platform/board/arduino/CHGame/libraries/CHGame`) gives the input core, the palette, the rounded rects and `panel()`, `remapRect`, `sprite4` spans (court and face art are converted in `tools/assets.py`), dither, the 3x5 font/`text35`, the Mask banners, `fx::` easing, sine, randomness and the shake, and the `fmt*` number formatting. The particles, banners and floating texts are the library's `chgame/Sizzle` too (since later on 2026-10-02): `src/fx/Fx.h` sets its switches and `src/fx/Fx.cpp` compiles it; the release image is byte for byte the same.
   - From CHGfx 1.3 directly: ellipses and `copyRow`.
   - The shake is the library's `fx::applyShake()` without a fill: the rows and columns the move uncovers shift in place. The earlier `gfx_scroll` shake left them as they were; that edge is the only pixel difference (`sc_double_bust`'s `h_bust`).
 - Generated files, don't hand-edit:
@@ -79,7 +79,7 @@ Files:
     config.h                build switches
     src/game/Round.*        the rules and PPOT's ViewState flow (no graphics)
     src/fx/Presenter.*      events -> motion; band-level redraw
-    src/fx/Fx.*             particles, banners, floating text
+    src/fx/Fx.*             the library's chgame/Sizzle (particles, banners, floating text), configured here
     src/render/*            table, cards and chips, action bar, layout
     src/states/Screens.*    splash, title, play, options, stats, credits, win, lose
     src/audio/*             sound effects and music scores
