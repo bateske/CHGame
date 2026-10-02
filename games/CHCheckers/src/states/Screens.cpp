@@ -5,7 +5,7 @@
 #include "../../config.h"
 #include "Screens.h"
 #include "../fx/Fx.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../iso/Iso.h"
 #include "../engine/Engine.h"
 #include "../game/Match.h"
@@ -73,6 +73,15 @@ static uint16_t logoAt;              // when the title's lettering came down (0:
 static uint8_t demoStep;
 static uint16_t demoAt;
 
+// The title's tune, looping on every screen but Play. tune(true) starts it
+// from the top unless it is already playing; nothing plays with MUSIC off.
+static bool tuneOn;
+static void tune(bool play) {
+    if (play && tuneOn) return;
+    tuneOn = play && opt.music;
+    playSong(tuneOn ? Song::TITLE : Song::NONE);
+}
+
 static void enter(Scr s) {
     cur = s;
     stage::invalidate();
@@ -81,7 +90,7 @@ static void enter(Scr s) {
     fadeIn = 8;
     fx::clear();
     pal::setMode(pal::CASINO);
-    audio::tune(s != Scr::Play);
+    tune(s != Scr::Play);
     if (s == Scr::Title) {
         stage::setView(stage::NORMAL);
         titleBoard();
@@ -104,7 +113,8 @@ static void persist(bool withGame) {
 
 static void applyOptions() {
     audio::setOn(opt.sound != 0);
-    audio::setMusic(opt.music != 0);
+    audio::setMusic(opt.music ? audio::LEAD : audio::MUSIC_OFF);
+    if (!opt.music) tune(false);
     pal::setTheme(opt.felt);
     stage::setFast(opt.speed != 0);
 }
@@ -649,7 +659,7 @@ static void optionsUpdate() {
         uint8_t n = (uint8_t)(optField(optText(sel), 0, tmp) - 1);
         optSet(sel, (uint8_t)((optGet(sel) + n + d) % n));
         applyOptions();
-        audio::tune(true);
+        tune(true);
         audio::sfx(Sfx::Coin);
     }
     if ((arduboy.justPressed(A_BUTTON) && sel == back) || arduboy.justPressed(B_BUTTON)) {

@@ -153,6 +153,8 @@ other's save).
   and trays, combos, the crowning, the HUD. `src/iso`: the board and table.
 - `src/Frame`: while the CPU thinks, frames are drawn from inside the
   search on a stack of their own, in bursts, with a soft clock ticking.
+- `src/audio/Sounds`: the effects and the title's tune, played by the
+  CHGame library's piezo sequencer (`chgame/Audio`).
 
 ## Development
 
@@ -166,6 +168,7 @@ g++, or name one in `CHSIM_CXX` (for example `CHSIM_CXX="C:\zig\zig.exe c++"`).
     python tools/device.py build         # release build + size report
     python tools/assets.py               # art (tools/art) -> src/assets
     python tools/sheet.py export         # the art as one sheet to edit; import reads it back
+    python ../../tools/audio/preview.py . out/audio   # the effects and the title's tune to WAV
 
 - **Host tests** (`tools/tests/test_checkers.cpp`): move counts from the
   opening against the published numbers (7, 49, 302, 1469, 7361, 36768,

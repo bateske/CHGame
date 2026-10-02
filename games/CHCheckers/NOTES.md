@@ -32,7 +32,7 @@ Made by the owner:
   - Render profile with `say Y`. The simulator's estimate of about 14 ms max when zoomed is unreliable.
   - CPU speed with `say W` (ms, nodes). This sets the level node budgets and `SIM_US_PER_POLL` in `src/Frame.cpp`, which currently guesses about 6,000 nodes/s.
   - Stack high-water marks with `perf`, the frame stack included.
-  - Sound and the title tune by ear.
+  - Sound and the title tune by ear (`python ../../tools/audio/preview.py . out/audio` renders them on the PC).
   - No `device_*.txt` scripts exist yet; `check.py` already skips that name pattern. On the board only `G`, `M`, `W` and `Y` exist among the game's commands, so device scripts must start games with `say G` and play with `say M` or the pad.
 - Choices approved only as plan assumptions, which the owner has not yet seen on screen:
   - Must-jump UI: the D-pad still visits every piece; pieces that can't jump say MUST JUMP and buzz; the ones that can are ringed. In the middle of a chain a single continuation plays itself and B is refused (KEEP JUMPING).
