@@ -14,8 +14,8 @@
 // A game lists its effects once, in the order of its own enum:
 //
 //     enum class Sfx : uint8_t { Cursor, Win, COUNT };
-//     static const audio::Step CURSOR[] = { AUDIO_STEP(2100, 0, 10) };
-//     static const audio::Step WIN[]    = { AUDIO_STEP(2093, 0, 60), AUDIO_STEP(4186, 0, 170) };
+//     AUDIO_STEPS(CURSOR) = { AUDIO_STEP(2100, 0, 10) };
+//     AUDIO_STEPS(WIN)    = { AUDIO_STEP(2093, 0, 60), AUDIO_STEP(4186, 0, 170) };
 //     const audio::Effect SOUNDS[] = { AUDIO_EFFECT(CURSOR, 0), AUDIO_EFFECT(WIN, 3) };
 //
 //     audio::begin(SOUNDS, (uint8_t)Sfx::COUNT);
@@ -37,6 +37,14 @@ struct Step { uint8_t hz, endHz, ms; };
 #define AUDIO_STEP(hz, end, ms) \
     { (uint8_t)(((hz) + 10) / 20), (uint8_t)(((end) + 10) / 20), (uint8_t)(((ms) + 1) / 2) }
 #define AUDIO_REST(ms) { 0, 0, (uint8_t)(((ms) + 1) / 2) }
+// An effect's steps, kept in flash. (A plain `static const` table of 8 bytes
+// or less is "small data" to the compiler, and this core's link script
+// copies small data into SRAM.)
+#if defined(__riscv) && !defined(CHSIM)
+#define AUDIO_STEPS(name) static const audio::Step name[] __attribute__((section(".rodata.audio." #name)))
+#else
+#define AUDIO_STEPS(name) static const audio::Step name[]
+#endif
 
 // An effect: its steps, and its priority (0-15) with these flags.
 enum : uint8_t {
@@ -68,7 +76,7 @@ bool playing();                     // an effect is sounding
 // its melody (channel 0) and lets the others fill only its real rests.
 // The music code is linked in only by a game that calls music() or melody().
 enum MusicMode : uint8_t { MUSIC_OFF, ARPEGGIO, LEAD };
-void setMusic(uint8_t mode);        // default ARPEGGIO; off and on again starts the tune over
+void setMusic(uint8_t mode);        // default ARPEGGIO; MUSIC_OFF holds the tune where it is
 void music(const uint8_t *score, bool loop = true);   // nullptr: stop
 
 // A melody: (MIDI note, length) pairs - note 0 is a rest, a length counts

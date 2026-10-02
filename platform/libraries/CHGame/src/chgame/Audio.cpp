@@ -281,15 +281,8 @@ void note(uint16_t hz, uint16_t ms, uint8_t priority) { one(hz, ms, priority & 1
 bool playing() { return fxSteps != nullptr; }
 
 void setMusic(uint8_t mode) {
-    if (mode == musicMode) return;
-    bool wasOff = !musicMode;
     musicMode = mode;
-    __disable_irq();
-    if (!mode) { for (auto &x : notes) x = 0; }
-    else if (wasOff && (score || mel)) {                     // from the top
-        scorePos = score ? score : mel->notes; scoreWait = 0; leadHold = 0; melI = 0; melT = 0;
-    }
-    __enable_irq();
+    if (!mode) for (auto &x : notes) x = 0;
 }
 
 void music(const uint8_t *s, bool loop) {
