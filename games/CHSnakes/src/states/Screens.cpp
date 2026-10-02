@@ -5,7 +5,7 @@
 #include "../../config.h"
 #include "Screens.h"
 #include "../fx/Fx.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../board/Board.h"
 #include "../game/Game.h"
 #include "../stage/Stage.h"

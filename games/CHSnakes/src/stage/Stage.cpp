@@ -7,7 +7,7 @@
 #include "../game/Game.h"
 #include "../board/Board.h"
 #include "../fx/Fx.h"
-#include "../audio/Audio.h"
+#include "../audio/Sounds.h"
 #include "../assets/Assets.h"
 #include "../debug/Debug.h"
 

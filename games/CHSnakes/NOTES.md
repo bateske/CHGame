@@ -35,6 +35,7 @@ Agent-facing notes for continuing work here; rules, controls and build are in RE
 ## Open items
 
 - Device run (pace, sound by ear, render time). It needs the owner's go-ahead.
+  - `python ../../tools/audio/preview.py . out/audio` renders the effects to WAV on the PC meanwhile.
   - The simulator estimates 5-14 ms a frame (the title about 20 ms), over the 8.3 ms budget during motion, so expect 30-60 fps.
   - Snakes and ladders are the main cost.
   - `tools/scripts/perf.txt` prints the per-moment estimates.

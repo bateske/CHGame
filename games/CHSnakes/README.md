@@ -151,8 +151,8 @@ C++ compiler (zig, clang++ or g++ on the PATH, `pip install ziglang`, or
   `tools/art/sheet.png`, an indexed PNG on the game's palette with every
   sprite in a labelled cell. Edit it, then `python tools/sheet.py import`
   writes what changed to `tools/art/` and rebuilds the assets.
-* `python tools/assets.py` packs the art, `python tools/audio/preview.py
-  out/` renders the sound effects to WAV.
+* `python tools/assets.py` packs the art, `python ../../tools/audio/preview.py
+  . out/audio` renders the sound effects to WAV.
 
 ## License
 
