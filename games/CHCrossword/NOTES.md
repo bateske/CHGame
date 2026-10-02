@@ -28,6 +28,7 @@ Agent-facing notes for continuing work here; rules, controls and build are in RE
 
 ## Open items
 
+- `docs/list.gif` no longer come out of any script (`tools/scripts/showcase.txt` has moved on since they were recorded), so the 2026-10-02 re-recording on the CHGame library skipped them: they still show the old 3x5 `M` and easing. Re-record them when the showcase is next revisited; the other README GIFs come straight from the scripts.
 - Awaiting the owner's verdict (built without explicit sign-off):
   - the whole grid at 8 px cells: white tiles on dark felt, cyan active word, gold locked words;
   - no numbers in the small cells (the clue bar shows 14A); the side HUD column; wide M/W glyphs in cells;

@@ -27,6 +27,7 @@ Agent-facing notes for continuing work on this game. Rules, controls and build s
 
 ## Open items
 
+- `docs/{cpu,cube,double,hit,opening}.gif` no longer come out of any script (`tools/scripts/showcase.txt` has moved on since they were recorded), so the 2026-10-02 re-recording on the CHGame library skipped them: they still show the old 3x5 `M` and easing. Re-record them when the showcase is next revisited; the other README GIFs come straight from the scripts.
 - Device run (kit ready, never run; follow "The device" in the root CLAUDE.md).
   - `python tools/device.py run tools/scripts/device_render.txt out/dev_render`: render cost per section (`say Y`) and whole-frame perf.
   - `python tools/device.py run tools/scripts/device_think.txt out/dev_think`: `say W` prints positions weighed, ms and `slice_us`. The longest slice should stay under about 8 ms; tune `QUANTUM` (64 positions a tick) in `src/game/Match.cpp`.
