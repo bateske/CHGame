@@ -2,13 +2,14 @@ CHCrossword
 Copyright 2026 bateske
 
 From CHBlackjack (https://github.com/bateske/CHBlackjack, Apache-2.0), by way
-of CHChess and CHBackgammon: the input and frame pacing (src/CHGame.*),
-palette, drawing, outlined lettering, effects, sound sequencer, flash saving,
-debug protocol and the PC simulator and tools, adapted here; CHChess's
-pointing glove (tools/art/hand.png) and CHBackgammon's display font
-(tools/art/font.txt). CHBlackjack is a derivative of "Blackjack" for the
-Arduboy by Press Play On Tape (Apache-2.0); the 3x5 pixel font in
-src/gfx/Draw.cpp is Press Play On Tape's.
+of CHChess and CHBackgammon: the input and frame pacing (the CHGame
+library's chgame/Input.*), palette, drawing, outlined lettering, effects,
+sound sequencer, flash saving, debug protocol and the PC simulator and tools,
+adapted here; CHChess's pointing glove (tools/art/hand.png) and
+CHBackgammon's display font (tools/art/font.txt). CHBlackjack is a derivative
+of "Blackjack" for the Arduboy by Press Play On Tape (Apache-2.0); the 3x5
+pixel font in the CHGame library
+(platform/libraries/CHGame/src/chgame/Draw.cpp) is Press Play On Tape's.
 
 The close-up's letters (tools/art/tilefont.txt) are rasterized from DejaVu
 Serif Bold by tools/tilefont.py. DejaVu is freely redistributable: Bitstream
