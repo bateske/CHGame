@@ -112,9 +112,8 @@ name is shown instead of a title.
   Copy `MYGAME.CHG` to `GAMES/`. [chg-format.md](chg-format.md) describes the
   file and what a game needs to know. In short: nothing changes for your
   sketch.
-- **Returning to the menu from a game.** Every game in this repository has it built in.
-  The shared core (`src/CHGame.*`) checks for START held 3 s in
-  `pollButtons()`.
+- **Returning to the menu from a game.** Every sketch on the CHGame library
+  has it built in: `arduboy.pollButtons()` checks for START held 3 s.
   - `arduboy.exitToMenu()` leaves on purpose, for example from a QUIT item.
   - `arduboy.startExits = false` in `setup()` turns the hold off, for a game
     that needs long START holds for itself.
