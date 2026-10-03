@@ -1,0 +1,63 @@
+# The README's one picture (docs/gameplay.gif): the intro, then clips of the
+# card list, a model spinning, the modes, turning and zooming, and a big
+# model drawn as a draft while it turns. Each clip is its own recording,
+# named in the order it is shown; `chgame gif` runs this script and joins
+# them. The card is the samples' (tools/make_card.py).
+rec start 3
+wait 96
+rec stop 01_intro
+# Into MODELS, down to the gear.
+rec start 3
+tap DOWN 4
+wait 6
+tap A
+wait 12
+tap DOWN 4
+wait 4
+tap DOWN 4
+wait 4
+tap DOWN 4
+wait 12
+rec stop 02_browse
+# The gear opens spinning; SELECT shows only the faces towards you.
+rec start 3
+tap A
+wait 110
+tap SELECT
+wait 90
+rec stop 03_gear
+# Turned with the D-pad, zoomed in with A, the view reset with A + B.
+rec start 3
+hold UP
+wait 24
+release
+hold LEFT
+wait 30
+release
+hold A
+wait 40
+release
+wait 10
+hold A+B
+wait 4
+release
+wait 50
+rec stop 04_turn
+# The knot: 12,800 triangles, too many to stream while it turns, so it
+# turns as a draft and is drawn in full when it comes to rest.
+hold START
+wait 40
+release
+wait 4
+tap DOWN 4
+wait 4
+tap DOWN 4
+wait 4
+rec start 3
+tap A
+wait 30
+hold RIGHT
+wait 50
+release
+wait 40
+rec stop 05_knot

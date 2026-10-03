@@ -63,7 +63,7 @@ installs it from this machine instead.
 | The CHGame library (`CHGame.h`: buttons, pacing, palette, drawing, sound, saving, debug protocol) | `platform/board/arduino/CHGame/libraries/CHGame/`; every game is built on it | yes, in the package's `libraries/`: nothing to install |
 | CHGfx, the graphics library | `platform/board/arduino/CHGame/libraries/CHGfx/` (1.3.0) | yes, with its examples |
 | CHSd, the SD/FAT reader | `platform/board/arduino/CHGame/libraries/CHSd/` (1.0.0) | yes |
-| The casino games and CHSDtoUSB as examples | `platform/board/arduino/CHGame/libraries/CHGame/examples/Games/`, `apps/` | yes: *File > Examples > CHGame > Games*, *Apps* |
+| The casino games and two apps (CHStlView, CHSDtoUSB) as examples | `platform/board/arduino/CHGame/libraries/CHGame/examples/Games/`, `apps/` | yes: *File > Examples > CHGame > Games*, *Apps* |
 | Games for the SD menu (`.CHG`) | `tools/sdcard/`, `tools/chgpack.py` | yes: every build writes one, and *Export Compiled Binary* puts it by the sketch. The card with all twenty games is a zip beside the package on the release page |
 | PC tools | `tools/`, `platform/bootloader/host/` | the ones an Arduino user needs, in `chgame-upload`: upload, burn the bootloader, pack for the SD menu. The developer tools (simulator, scripted runs, screenshots, GIFs, sound preview, card builder) are Python and work from a clone (`pip install -e .`) |
 
@@ -172,7 +172,7 @@ CHGame/
 │   ├── bootloader/      the bootloader with the SD game menu: sources, PC test suite, binaries,
 │   │                    and the uploader's source (host/go)
 │   │   └── arduino/CHGame/libraries/  CHGame (CHGame.h), CHGfx (graphics), CHSd (SD/FAT), beside SPI, Wire, EEPROM
-│   │       └── CHGame/examples/   Hello, games/ (the 20 casino games), apps/ (CHSDtoUSB)
+│   │       └── CHGame/examples/   Hello, games/ (the 20 casino games), apps/ (CHStlView, CHSDtoUSB)
 │   └── hardware/        Rev 0 schematic and netlist
 ├── tools/             the PC tools shared by every game (device.py, the simulator and script
 │                      driver, sound preview, size report, serial, chgpack.py for game
@@ -270,7 +270,9 @@ measured limits.
 A small read-only SD library: a polled SPI block driver plus a FAT16/FAT32
 reader, about 1.7 KB of flash and 24 B of RAM. CHWords, CHCrossword and
 CHWordWheel use it to read their dictionary, puzzle packs and phrase bank
-from the card. The games include it as a library (`<Fat.h>`, `<SdSpi.h>`); the
+from the card, and the app CHStlView browses the card's folders and streams
+3D models off it every frame (`sd::stream()`: one command, 24 MHz, DMA).
+The games include it as a library (`<Fat.h>`, `<SdSpi.h>`); the
 simulator swaps its SPI driver for a pretend card (`$CHSD_CARD`). CHSDtoUSB has its own faster, read-write SD driver, which
 is GPL-3.0 and stays inside that sketch.
 
@@ -340,6 +342,7 @@ Each folder carries its own licence:
 | `platform/board/arduino/CHGame/libraries/CHGfx/` | MIT; some fonts carry their own notices (in its `LICENSE`, e.g. the 3x5 font is Apache-2.0) |
 | `platform/board/arduino/CHGame/libraries/CHSd/` | MIT |
 | `platform/board/arduino/CHGame/libraries/CHGame/examples/Apps/CHSDtoUSB/` | GPL-3.0 (its SD layer comes from sdfatlib) |
+| `platform/board/arduino/CHGame/libraries/CHGame/examples/Apps/CHStlView/` | MIT |
 | `platform/hardware/` | No licence stated yet (schematic and netlist) |
 | `docs/`, root files | Apache-2.0 (`LICENSE`, `NOTICE`) |
 

@@ -205,6 +205,57 @@ static int runImage(const char *imagePath, const char *specPath) {
             printf("\n");
         }
     }
+    // list(): the root holds the root files and the folders (no label, no
+    // long-name parts); a folder's listing is its every-name match (no "."
+    // or "..", no hidden file). Each entry agrees with find()/folder().
+    {
+        struct Seen { std::vector<std::string> names; std::vector<fat::File> f; std::vector<bool> dir; };
+        auto collect = [](const char *n, const fat::File &f, bool isDir, void *ctx) {
+            Seen &s = *(Seen *)ctx;
+            s.names.push_back(std::string(n, 11));
+            s.f.push_back(f);
+            s.dir.push_back(isDir);
+            return true;
+        };
+        fat::File rootDir;
+        CHECK_EQ(fat::root(rootDir), fat::OK);
+        Seen seen;
+        CHECK_EQ(fat::list(rootDir, collect, &seen, buf), fat::OK);
+        std::vector<std::string> want;
+        for (const XFile &x : files) want.push_back(x.name);
+        for (const std::string &d : dirs) want.push_back(d);
+        std::vector<std::string> got = seen.names;
+        std::sort(got.begin(), got.end());
+        std::sort(want.begin(), want.end());
+        if (!files.empty()) CHECK(got == want);       // (the chain cards list only their broken file)
+        for (size_t i = 0; i < seen.names.size(); i++) {
+            fat::File g;
+            if (seen.dir[i]) {
+                CHECK_EQ(fat::folder(seen.names[i].c_str(), g, buf), fat::OK);
+            } else {
+                CHECK_EQ(fat::find(seen.names[i].c_str(), g, buf), fat::OK);
+                CHECK_EQ(g.size, seen.f[i].size);
+            }
+            CHECK_EQ(g.cluster, seen.f[i].cluster);
+        }
+        // Stopping early: fn's false ends the walk at once.
+        int calls = 0;
+        auto stop = [](const char *, const fat::File &, bool, void *ctx) { ++*(int *)ctx; return false; };
+        CHECK_EQ(fat::list(rootDir, stop, &calls, buf), fat::OK);
+        CHECK_EQ(calls, (int)(seen.names.empty() ? 0 : 1));
+        for (const XMatch &m : matches) {
+            if (m.pattern != "???????????") continue;
+            fat::File dir;
+            CHECK_EQ(fat::folder(m.dir.c_str(), dir, buf), fat::OK);
+            Seen sub;
+            CHECK_EQ(fat::list(dir, collect, &sub, buf), fat::OK);
+            std::vector<std::string> g2 = sub.names, w2 = m.names;
+            std::sort(g2.begin(), g2.end());
+            std::sort(w2.begin(), w2.end());
+            CHECK(g2 == w2);
+            for (bool d : sub.dir) CHECK(!d);
+        }
+    }
     for (const std::string &n : missing) CHECK_EQ(fat::find(n.c_str(), file, buf), fat::E_NOTFOUND);
     for (auto &c : chains) {
         CHECK_EQ(fat::find(c.first.c_str(), file, buf), fat::OK);

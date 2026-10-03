@@ -12,6 +12,7 @@ It is the one SD library of the games that read text off the card:
 | CHWords | `WORDS.DIC` in the root (the full ENABLE word list) | `fat::open`, `fat::read` |
 | CHWordWheel | `PHRASES.BNK` in the root (the phrase bank) | `fat::open`, `fat::read` |
 | CHCrossword | `CHCW/*.CWD` (puzzle packs) | `mount`, `folder`, `match`, `runs`, `fat::read` |
+| CHStlView (an app) | any `.STL` in any folder, read whole every frame | `mount`, `root`, `list`, `runs`, `sd::stream` |
 
 ## How a game uses it
 
@@ -36,6 +37,14 @@ It is the one SD library of the games that read text off the card:
   come. exFAT (64 GB and up) is reported as `E_EXFAT` so a game can say
   "reformat as FAT32". A file in more pieces than the game's run list is
   refused (`E_FRAG`). Copying it to a freshly formatted card always works.
+
+**Browsing and streaming** (2026-10-02, for CHStlView): `fat::root()` and
+`fat::list()` walk any folder, files and folders alike, through a
+callback; `sd::stream()` reads a run of blocks with one CMD18 at 24 MHz,
+each block landing by DMA (channels 2 and 3, borrowed between flushes)
+while the caller's function works on the one before: about 0.17 ms a block
+instead of ~1.5 ms. The games call neither, so their images are byte for
+byte what they were.
 
 The full API is in [src/Fat.h](src/Fat.h) and [src/SdSpi.h](src/SdSpi.h).
 
@@ -136,7 +145,9 @@ Static RAM is unchanged in all three. Where the bytes came from:
 
 **Considered and not done:**
 
-- **A faster clock (24 MHz), pipelined SPI or DMA.** A block is about
+- **A faster clock (24 MHz), pipelined SPI or DMA for `read()`.** (A
+  streaming reader that does all three, for a sketch that reads whole files
+  every frame, is `sd::stream()`, which the games do not use.) A block is about
   0.5 ms of polled bytes, and the card's own access time (0.1-1 ms or more)
   comes on top, so these would save under 0.3 ms per block. Nobody would
   notice that in these games. There is also no CRC on the wire to catch a

@@ -9,7 +9,7 @@ Arduino setup is not touched), and checks:
 
   - Boards Manager installs CHGame from the one URL, with its three tools;
   - CHGame, CHGfx and CHSd come with it (platform libraries, nothing to add);
-  - File > Examples has CHGame's Hello, the twenty games and CHSDtoUSB;
+  - File > Examples has CHGame's Hello, the twenty games, CHStlView and CHSDtoUSB;
   - Tools > Bootloader offers the three bootloaders, and their files are there;
   - Tools > Programmer offers CHGame USB and the WCH factory ISP;
   - examples copied to the sketchbook (what the IDE does when one is saved)
@@ -145,7 +145,7 @@ def run(dist: Path, port: int, build_all: bool, card: Path | None, jobs: int) ->
     apps = [r for r in rel if r.startswith("Apps/")]
     check("Hello" in rel, "CHGame > Hello")
     check(len(games) == 20, "CHGame > Games", f"{len(games)}: " + " ".join(g.split("/")[1] for g in games))
-    check("Apps/CHSDtoUSB" in apps, "CHGame > Apps", " ".join(apps))
+    check("Apps/CHSDtoUSB" in apps and "Apps/CHStlView" in apps, "CHGame > Apps", " ".join(apps))
     gfx = cli("lib", "examples", "CHGfx", "-b", FQBN, json_out=True).get("examples", [])
     check(sum(len(e.get("examples", [])) for e in gfx) > 0, "CHGfx's examples",
           str(sum(len(e.get("examples", [])) for e in gfx)))

@@ -185,6 +185,19 @@ differences from 0.2.4, building, testing and installing.
 
 ## Changes since the copies were taken
 
+- 2026-10-02: CHSd gained `fat::root()`, `fat::list()` (any folder's files
+  and folders, through a callback) and `sd::stream()` (a CMD18 run of blocks
+  at 24 MHz by DMA, each block handed over while the next arrives), for the
+  new app CHStlView; the simulator's card (`host/sd_host.cpp`) has
+  `stream()` too. `tests/run_tests.py` checks `list()` against every image.
+  Checked: CHWords, CHWordWheel and CHCrossword release images byte for byte
+  the same (they call none of it).
+- 2026-10-02: `chgame/Sizzle.inl`: the pop-in banner's rainbow outline is
+  behind `SIZZLE_IS_RAINBOW()`, so a sketch whose `SIZZLE_STYLES` leaves
+  the rainbow out compiles (it named `B_RAINBOW` unconditionally; every game
+  has the style, the two apps do not). Checked: all twenty release images
+  byte for byte the same.
+
 - 2026-10-02: `chgame/Sizzle` (`libraries/CHGame/src/chgame/Sizzle.h` and
   `Sizzle.inl`): the particle pool, the banners and the floating texts the
   twenty games each carried in `src/fx/Fx.cpp` are one body in the

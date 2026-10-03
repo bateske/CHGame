@@ -12,8 +12,8 @@ pacing in the Arduboy style, the house palette, drawing helpers and the 3x5
 font, outlined lettering, effects maths, one sound engine, saving to flash,
 and the serial debug protocol that the simulator and the tools drive a game
 through. The games are its examples: `examples/Games/` holds the twenty of
-them, `examples/Apps/` the sketches that are not games (CHSDtoUSB, which is
-GPL-3.0 and carries its own licence), and `examples/Hello` the smallest
+them, `examples/Apps/` the sketches that are not games (CHStlView, a 3D model
+viewer, and CHSDtoUSB, which is GPL-3.0 and carries its own licence), and `examples/Hello` the smallest
 complete sketch.
 
 Coming from the Arduboy? Read [docs/getting-started.md](../../../../../../docs/getting-started.md)

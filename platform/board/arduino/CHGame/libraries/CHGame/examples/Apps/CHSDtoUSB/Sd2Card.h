@@ -23,6 +23,21 @@
    \file
    Sd2Card class
 */
+#ifdef CHSIM
+// The simulator's Arduino has no SPI pins; the board's (PA4-PA7) stand in,
+// for the declarations below (tools/chsim/host/card_host.cpp is the card).
+#define SS 4
+#define SCK 5
+#define MISO 6
+#define MOSI 7
+#define PIN_SPI_SS SS
+#define PIN_SPI_SCK SCK
+#define PIN_SPI_MISO MISO
+#define PIN_SPI_MOSI MOSI
+#ifndef PIN_SD_CS
+#define PIN_SD_CS 27
+#endif
+#endif
 #include "Sd2PinMap.h"
 #include "SdInfo.h"
 /*
@@ -67,7 +82,7 @@
  * Define SD_CH32_DISABLE_FAST before including SD.h to get the stock
  * SPI-library transport back, e.g. to A/B the two.
  */
-#if defined(CH32X035) && !defined(SD_CH32_DISABLE_FAST)
+#if defined(CH32X035) && !defined(SD_CH32_DISABLE_FAST) && !defined(CHSIM)
   #define SD_CH32_FAST 1
 #else
   #define SD_CH32_FAST 0

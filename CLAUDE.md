@@ -123,7 +123,7 @@ Manager), then `pip install -e .[sim]` in the repository root.
 
 The games are the CHGame library's examples:
 `platform/board/arduino/CHGame/libraries/CHGame/examples/Games/<Name>/`
-(apps, such as CHSDtoUSB, are beside them in `examples/Apps/`). Run these
+(apps, CHStlView and CHSDtoUSB, are beside them in `examples/Apps/`). Run these
 from a game's folder (or any folder below it): `chgame` finds the sketch by
 itself. From anywhere else it takes a game or app by name or folder
 (`chgame --sketch CHFour build`). `pip install -e .[sim]` in the repository
@@ -330,6 +330,7 @@ the menu (B now resets instead of entering the bootloader).
 - CHWords: `WORDS.DIC` in the root.
 - CHWordWheel: `PHRASES.BNK` in the root.
 - CHCrossword: `CHCW/*.CWD`.
+- CHStlView (an app): any `.STL`, in any folder (samples in `sdcard/MODELS`).
 
 Each is in the game's `sdcard/` folder. See [docs/sd-card.md](docs/sd-card.md).
 

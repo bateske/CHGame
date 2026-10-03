@@ -35,6 +35,7 @@
  * Originally this file began with "#define USE_SPI_LIB". That decision now
  * lives in Sd2Card.h, which knows whether the CH32 transport is in use.
  */
+#ifndef CHSIM   // the simulator has no USB or card: tools/chsim/host/ stands in
 #include <Arduino.h>
 #include "Sd2Card.h"
 
@@ -1533,3 +1534,4 @@ uint8_t Sd2Card::readBlocksPipelined(uint32_t block, uint16_t count,
   #endif
   return ok;
 }
+#endif  // CHSIM

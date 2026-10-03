@@ -1,0 +1,25 @@
+# The README's reel (docs/gameplay.gif, `chgame gif`): the pretend PC's
+# demo session (tools/chsim/pcsession.py) in clips: the reader waiting, the
+# PC mounting the card and copying photos in, small files, renames and
+# deletes, the STATS and CARD pages, the eject and the card pulled.
+rec start 3
+pcto standby
+rec stop 01_standby
+rec start 3
+pcto copying
+rec stop 02_copying
+rec start 3
+pcto events
+rec stop 03_files
+rec start 3
+pcto stats
+wait 12
+pcto card
+wait 12
+rec stop 04_pages
+rec start 3
+pcto ejected
+wait 6
+pcto nocard
+wait 12
+rec stop 05_eject

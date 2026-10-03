@@ -174,6 +174,46 @@ int8_t match(const File &dir, const char *pattern, uint8_t skip, File &f, char *
     return (int8_t)lookup(dir.cluster, (const uint8_t *)pattern, f, b, 0, skip, nameOut);
 }
 
+int8_t root(File &dir) {
+    dir.cluster = v.rootSecs ? 0 : v.root;
+    dir.size = 0;
+    return v.end ? (int8_t)OK : (int8_t)E_NOTFOUND;
+}
+
+// lookup()'s walk, handing every visible entry to fn. Kept apart from it so
+// the games, which never list, keep their code as it was.
+int8_t list(const File &d, ListFn fn, void *ctx, uint8_t *b) {
+    if (!v.end) return E_NOTFOUND;
+    uint32_t dir = d.cluster, sec = 0;
+    for (uint32_t guard = 4096; guard--;) {
+        uint32_t lba;
+        if (!dir) {
+            if (sec == v.rootSecs) break;
+            lba = v.root + sec;
+        } else {
+            if (sec >> v.shift) {
+                uint32_t none = ~0u;
+                int32_t n = next(dir, b, none);
+                if (n < 2) return n < 0 ? (int8_t)n : (int8_t)OK;
+                dir = (uint32_t)n;
+                sec = 0;
+            }
+            lba = clusLba(dir) + sec;
+        }
+        sec++;
+        if (!sd::read(lba, b)) return E_READ;
+        for (const uint8_t *e = b; e < b + 512; e += 32) {
+            if (!e[0]) return OK;
+            if (e[0] == 0xE5 || e[0] == '.' || (e[11] & (ATTR_TEST & ~ATTR_DIR))) continue;
+            File f;
+            f.cluster = u16at(e + 26) | (v.rootSecs ? 0u : u16at(e + 20) << 16);
+            f.size = u32at(e + 28);
+            if (!fn((const char *)e, f, (e[11] & ATTR_DIR) != 0, ctx)) return OK;
+        }
+    }
+    return OK;
+}
+
 int8_t runs(const File &f, Run *out, uint8_t maxRuns, uint8_t *b) {
     if (maxRuns > 127) maxRuns = 127;                 // the count comes back in an int8_t
     uint32_t left = (f.size >> 9) + ((f.size & 511) != 0), c = f.cluster, cached = ~0u;

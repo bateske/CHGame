@@ -1,0 +1,11 @@
+# The awkward cases (pcsession.py's `edge`): a CRC retry, Linux's dirty
+# flag, read-only on and off, the card pulled and put back, a quick format.
+pcto edge
+snap edge
+state
+tap RIGHT
+wait 4
+snap edge_stats
+tap RIGHT
+wait 4
+snap edge_card

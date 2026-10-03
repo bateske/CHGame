@@ -198,7 +198,7 @@ Each game was copied, without history, from the head of its repository at
 | CHDominoes | ddace41 | CHWordWheel | 7c97419 |
 | CHFour | 6c3fd6a | CHYacht | 751b026 |
 
-CHSDtoUSB came from `bateske/CHSDtoUSB` at 379583e. CHGfx is tag 1.3.0
+CHSDtoUSB came from `bateske/CHSDtoUSB` at 379583e; on 2026-10-02 it was replaced by CHCasino's later version (`utilities/CHSDtoUSB` at 53e5064: the instrument panel and file events), moved onto the CHGame library without its sparks. CHStlView came from `bateske/CHStlView` at b3d6430 the same day. CHGfx is tag 1.3.0
 (838bbb0), the board package is CH32SerialBoot tag v0.2.4 (5de3006), and
 CHSd is version 1.0.0.
 
