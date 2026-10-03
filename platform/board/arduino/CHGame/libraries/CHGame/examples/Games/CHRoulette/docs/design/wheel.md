@@ -1,6 +1,8 @@
 # CHRoulette wheel view and ball: implementation spec
 
-I checked this against CHGfx 1.3.0 (installed copy), the Demoscene tunnel, both games' `Audio.cpp`, `Iso.cpp`, `Fx.cpp`, `Table.cpp` and `Layout.h`. I also ran two read-only Python checks:
+*Written while designing CHRoulette; paths and names brought up to date on 2026-10-02. The game built from it is in `WheelArt.cpp`, `Ball.cpp`, `Wheel.cpp` and `tools/wheel.py`.*
+
+I checked this against CHGfx 1.3.0, the Demoscene tunnel, both games' `Audio.cpp`, `Iso.cpp`, `Fx.cpp`, `Table.cpp` and `Layout.h`. I also ran two read-only Python checks:
 - The geometry was rendered as ASCII using CHGfx's own `EllipseRows` arithmetic. That render is where the map size (515 B) comes from.
 - The pocket colour rules were checked against both wheel orders. Both match.
 
@@ -8,7 +10,7 @@ All other cycle and ms figures are estimates; none were measured on hardware.
 
 ## 0. Decisions that change the draft
 
-1. **The angle map is centred on a pixel centre, not a pixel corner.** CHGfx ellipses are always odd-sized around a pixel centre. With the map on the same centre, the ring, cone and bowl layers line up exactly with no half-pixel seam. The generator uses CHGfx's `EllipseRows` formula (`CHGfx_extras.cpp:100-113`) to decide which ring each pixel is in.
+1. **The angle map is centred on a pixel centre, not a pixel corner.** CHGfx ellipses are always odd-sized around a pixel centre. With the map on the same centre, the ring, cone and bowl layers line up exactly with no half-pixel seam. The generator uses CHGfx's `EllipseRows` formula (`struct EllipseRows` in `CHGfx_extras.cpp`) to decide which ring each pixel is in.
 2. **The four quadrant mirrorings move out of the pixel loop and into four lookup tables.** The 256-entry table (LUT) is built per quadrant, so each pixel costs one map byte read and one table read.
 3. **The LUT lives in `gfx_chunkScratch()`, so it costs no static SRAM.** It is 1,024 B, rebuilt every frame between `gfx_wait()` and the ring draw.
 4. **The landing solver shifts the rotor, not the ball.**
@@ -107,7 +109,7 @@ extern const uint8_t WHEEL_MAP[515];     // rows packed together, 1 byte per pix
 - Keep `--bins` as a generator option.
 
 ### 2.3 Generator: `tools/wheel.py`
-- Pure Python using `math`. numpy 2.5.2 is installed but is not in `tools/requirements.txt`, so don't depend on it. Pillow is only used for previews.
+- Pure Python using `math`. numpy 2.5.2 is installed but is not in the repository's `tools/requirements.txt`, so don't depend on it. Pillow is only used for previews.
 - `ell_rows(rx, ry)` copies CHGfx `EllipseRows` exactly: `lim = rx²·(ry² − dy² + ry>>1)`, stepping x down.
 - `inside(R, i, j) = j ≤ R/2 and i ≤ ell_rows(R, R/2)[j]`.
 - A pixel is in the ring when `inside(44)` and not `inside(26)`. Its band:
@@ -118,7 +120,7 @@ extern const uint8_t WHEEL_MAP[515];     // rows packed together, 1 byte per pix
   - otherwise 0
 - Output:
   - `WheelMap.{h,cpp}`, with `static_assert` checks on the sizes.
-  - `build/assets/wheel_eu.png` and `wheel_us.png` at three rotor angles, drawing every layer from §1.2 in the real palette. Use these to check the near-side tucking and how it reads.
+  - Previews at several rotor angles (as built: `out/wheel/`, `wheel_sheet.png` and others), drawing every layer from §1.2 in the real palette. Use these to check the near-side tucking and how it reads.
 
 ### 2.4 Per-frame LUT
 - Layout in scratch: 4 quadrant blocks × 4 bands × 64 = 1,024 B. Block = `s>>6`: RD, LD, LU, RU.
@@ -178,17 +180,17 @@ RAMFUNC(wheelring) void ring(int cx, int cy, const uint8_t *lut, int x0, int x1,
   }
 }
 ```
-- **Pixel packing:** even x is the low nibble and rows are 64 B (`CHGfx_internal.h:46-53`).
+- **Pixel packing:** even x is the low nibble and rows are 64 B (`gfx__row` in `CHGfx_internal.h`).
 - **Right half:** pairs (i even, i+1) share a byte.
 - **Left half:** pairs (i odd, i+1) share a byte, mirrored.
 - **Cycles:** about 13 instructions per 2 px, plus 2 map reads from flash with wait states. That is about 10.5 cycles/px × 2,000 px plus row overhead, so **about 0.5 ms**.
 - **About 260 B in SRAM.** These bytes also count against flash, because SRAM code is copied from flash at boot.
 - **It needs about 18 live values,** so GCC will save s-registers. Under `-msave-restore` that is one call to the flash helper on entry and exit per frame, which is fine.
 - **No calls inside the loop.** Check the objdump for any `jal` other than the save/restore helpers.
-- **Section name:** `.gnu.linkonce.r.chrl.wheelring`. Do not copy Demoscene's `.srodata.ramfunc`.
+- **Section name:** `.gnu.linkonce.r.chrl.wheelring` as planned; the game's `RAMFUNC(wheelring)` from the CHGame library's `chgame/RamFunc.h` gives `.gnu.linkonce.r.app.wheelring`. Do not copy Demoscene's `.srodata.ramfunc`.
 
 ## 3. Ball physics and landing solver
-Put the simulation in `src/game/BallSim.{h,cpp}`: pure integer code with no gfx, so `run_tests.py` can test it on the PC.
+Put the simulation in `BallSim.{h,cpp}` (as built: `Ball.{h,cpp}`): pure integer code with no gfx, so a host test (as built: `tools/tests/run_ball_tests.py`) can test it on the PC.
 
 ### 3.1 State and units
 ```cpp
@@ -242,7 +244,7 @@ void spinStart(Ball &live, uint8_t target /*wheel index*/, uint32_t seed, uint8_
   - Pace and n are copied into `Ball` at spin start, so changing options while paused can't affect a spin in progress.
 - The dry run also gives `t_leave`, useful for timing "NO MORE BETS!" when the ball leaves the track.
 - **Debug check:** assert `live.pocket == target` at settle.
-- **Host test (`test_ball.cpp`):** 10k seeds × all targets × {37, 38} × {FUN, QUICK}. Check exact landing, duration limits, and \|v\| below one pocket per frame.
+- **Host test (`tools/tests/test_ball.cpp`):** 10k seeds × all targets × {37, 38} × {FUN, QUICK}. Check exact landing, duration limits, and \|v\| below one pocket per frame.
 
 ### 3.4 Projection and hops
 ```cpp
@@ -259,7 +261,7 @@ y  = ys - ((b.z * 7) >> 11);                   // hop: z · 7/8 (cos 30°) rows 
 - **After settling,** snap the drawn angle to the step grid (`((rho+psi)/n & ~255) + 128`) so ball and pocket move together with no ±1 px wobble.
 
 ### 3.5 Sounds (merged BJ blip with chess's soft pulse)
-- Add `blip(hz, ms, bool soft=false)`, which sets chess's `soft` flag inside the IRQ-off section. Soft means duty = period/8 (CHChess `Audio.cpp:89,135`).
+- Add `blip(hz, ms, bool soft=false)`, which sets chess's `soft` flag inside the IRQ-off section. Soft means duty = period/8 (then CHChess's `src/audio/Audio.cpp`; the CHGame library's engine, `chgame/Audio.h`, now has `blip(hz, ms, soft)`).
 
 | Event | Sound |
 |---|---|
@@ -372,8 +374,8 @@ Blips are prio 0, so they are dropped automatically under Whoosh or Thunk.
 9. **Event amounts.** BJ's `Event.amount` is int16. Widen it for 35:1 payouts (also noted in the blackjack report).
 
 ### Critical Files for Implementation
-- <sketchbook>\libraries\CHGfx\src\CHGfx_extras.cpp (EllipseRows to copy in `wheel.py`; `gfx_fillEllipse`/`gfx_ellipse`)
-- <sketchbook>\libraries\CHGfx\examples\Demoscene\Demoscene.ino (tunnel quadrant runs, lines 278-380; avoid its `.srodata.ramfunc` FX macro)
-- CHChess\src\audio\Audio.cpp (soft pulse flag) and CHBlackjack\src\audio\Audio.cpp (`blip`, priorities)
-- CHChess\src\iso\Iso.cpp and CHChess\src\fx\Fx.cpp (RAMFUNC nibble-span conventions, `shiftRows` shake)
-- CHBlackjack\src\render\Table.cpp / Layout.h and CHChess\src\stage\Stage.cpp (wall/rail band, glove with `RM_CPU`, `zoomDrawn` per-drawn-frame stepping, fade dip)
+- `platform/board/arduino/CHGame/libraries/CHGfx/src/CHGfx_extras.cpp` (EllipseRows to copy in `wheel.py`; `gfx_fillEllipse`/`gfx_ellipse`)
+- `platform/board/arduino/CHGame/libraries/CHGfx/examples/Demoscene/Demoscene.ino` (tunnel quadrant runs, part 2; avoid its `.srodata.ramfunc` FX macro)
+- The sound engine, now the CHGame library's `chgame/Audio.cpp` (then CHChess's soft pulse flag and CHBlackjack's `blip` and priorities, each in its `src/audio/Audio.cpp`)
+- `../CHChess/Iso.cpp` and the shake, now the CHGame library's `chgame/Shake.cpp` (RAMFUNC nibble-span conventions; `shiftRows`, once CHChess's)
+- `../CHBlackjack/Table.cpp` / `Layout.h` and `../CHChess/Stage.cpp` (wall/rail band, glove with `RM_CPU`, `zoomDrawn` per-drawn-frame stepping, fade dip)

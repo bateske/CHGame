@@ -39,7 +39,7 @@ class CrapsDriver(Driver):
             self.frames(int(args[0]) if args else 0)
         elif name == "goto":
             # goto ZONE [GAP]: walk the cursor to spot ZONE (an index in
-            # src/render/Zones.cpp's table) with D-pad taps, GAP frames
+            # Zones.cpp's table) with D-pad taps, GAP frames
             # apart (default 8); the game plans the route (simulator).
             route = self.query(f"Z {args[0]}", "ROUTE").split()[1:]
             steps = route[0] if route else ""

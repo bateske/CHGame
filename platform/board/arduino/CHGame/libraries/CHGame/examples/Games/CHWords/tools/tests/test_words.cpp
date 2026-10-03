@@ -9,11 +9,11 @@
 #include <set>
 #include <string>
 #include <vector>
-#include "../../src/ai/Ai.h"
-#include "../../src/dict/Dict.h"
+#include "../../Ai.h"
+#include "../../Dict.h"
 #include "../../src/dict/DictData.h"
-#include "../../src/game/Game.h"
-#include "../../src/rules/Words.h"
+#include "../../Game.h"
+#include "../../Words.h"
 
 static int fails = 0, checks = 0;
 #define CHECK(x) do { checks++; if (!(x)) { fails++; printf("FAIL %s:%d: %s\n", __FILE__, __LINE__, #x); } } while (0)

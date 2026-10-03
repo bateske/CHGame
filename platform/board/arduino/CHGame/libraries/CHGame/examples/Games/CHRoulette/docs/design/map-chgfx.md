@@ -1,35 +1,35 @@
 # CHGfx library and platform performance: reference for building CHRoulette
 
+*Written while designing CHRoulette; paths and names brought up to date on 2026-10-02.*
+
 ## 0. Which copy and version to use
 
 | Copy | Path | Version | Status |
 |---|---|---|---|
-| Project copy | `CHGfx` | **1.1.0** (`library.properties`) | **Stale.** It has no clip, sprite4, ellipse, dither, remap, scroll/copyRow, palette staging, fade, textFx, GFXfonts or flushRow/waitRow. It uses the old `.srodata.ramfunc` section and rebuilds the palette LUT immediately. Do not build against it. |
-| Installed (what the games use) | `<sketchbook>\libraries\CHGfx` | **1.3.0** | Has the extra files `CHGfx_extras.cpp`, `CHGfx_palette.cpp`, `CHGfx_textfx.cpp`, `CHGfx_internal.h`, `CHGfx_gfxfont.h`, `src/fonts/*`, `extras/sim`, `extras/sprite4.py`, `extras/fontconvert.py`, `FONTS.md`, and the `examples/GameKit` and `examples/Fonts` examples. |
+| The one copy (the board package 0.3.0 brings it) | `platform/board/arduino/CHGame/libraries/CHGfx` | **1.3.0** | Has `CHGfx_extras.cpp`, `CHGfx_palette.cpp`, `CHGfx_textfx.cpp`, `CHGfx_internal.h`, `CHGfx_gfxfont.h`, `src/fonts/*`, `extras/sprite4.py`, `extras/fontconvert.py`, `FONTS.md`, and the `examples/GameKit` and `examples/Fonts` examples. |
 
-- The sketchbook is the folder `arduino-cli config get directories.user` reports (on this machine it is not the plain Documents\Arduino), and there is no `CHGfx-main` folder.
-- The games' simulators (`CHBlackjack/tools/chsim/chsim.py:46-53`) look for `libraries/CHGfx` or `libraries/CHGfx*/src/CHGfx_draw.cpp`. They compile every `src/*.cpp` except `CHGfx.cpp`, with `host/chgfx_host.cpp` standing in for it.
-- CHChess's README states the requirements: "CHGfx library, 1.3.0" and board package 0.2.4+.
+- When this was written there was also a stale 1.1.0 project copy (no clip, sprite4, ellipse, palette staging or textFx) and the 1.3.0 installed in the sketchbook. Both are gone: `chgame build` passes the repository's copy with `--library`, and nothing is installed in the sketchbook.
+- The simulator (the repository's `tools/chsim/chsim.py`) uses the same copy. It compiles every `src/*.cpp` except `CHGfx.cpp`, with `tools/chsim/host/chgfx_host.cpp` standing in for it.
 
-All line references below are to the **installed 1.3.0** files unless marked otherwise (`I:` = `<sketchbook>\libraries\CHGfx\src\`).
+All line references below are to CHGfx **1.3.0** (`I:` = `platform/board/arduino/CHGame/libraries/CHGfx/src/`), checked against it on 2026-10-02.
 
 ## 1. Board package, FQBN and toolchain
 
-**Package location:** `<Arduino15>\packages\CHGame\hardware\ch32v\0.2.4\`. It contains one board, `CHGame`. Toolchain is `riscv-none-embed-gcc 8.2.0`; other tools are `chgame-upload 0.1.0` and `wchisp 0.3.0`.
+**Package:** board package 0.3.0 (`platform/board` in the repository). It contains one board, *CHGame Rev0* (`rev0`). Toolchain is `riscv-none-embed-gcc 8.2.0`; other tools are `chgame-upload` and `wchisp 0.3.0`.
 
-**FQBN used by both games** (READMEs; `tools/device.py:25`):
+**FQBN used by the games** (`tools/device.py`, `FQBN_RELEASE`):
 ```
-arduino-cli compile -b CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly <Sketch>
-arduino-cli upload  -b CHGame:ch32v:CHGame -p COMx <Sketch>
+arduino-cli compile -b CHGame:ch32v:rev0:opt=oslto,rtlib=nano,periph=game,usb=uploadonly <Sketch>
+arduino-cli upload  -b CHGame:ch32v:rev0 -p COMx <Sketch>
 ```
 
 **Menus** (`boards.txt`):
 
 - **opt**
-  - `osstd` = `-Os`, the default
-  - `oslto` = `-Os -flto`, "typically 1-5 KB smaller"; CHChess only fits with it
-  - `o1std`, `o2std` = `-O2`; the README recommends it for speed, since `-Os` costs 10–50% on primitives
-  - `o3std` = `-O3`; about 8 KB more flash than `-O2` (PERFORMANCE.md:97)
+  - `oslto` = `-Os -flto`, *Smallest + LTO*, the default since 0.3.0; CHChess only fits with it
+  - `osstd` = `-Os` (the default in 0.2.4)
+  - `o1std` = `-O1`; `o2std` = `-O2`; CHGfx's README recommends it for speed, since `-Os` costs 10–50% on primitives
+  - `o3std` = `-O3`; about 8 KB more flash than `-O2` (`docs/performance.md`, "Build and run")
   - `ogstd`
 - **rtlib**: `nano` (default), `nanofp`, `full`.
 - **periph**
@@ -47,9 +47,9 @@ arduino-cli upload  -b CHGame:ch32v:CHGame -p COMx <Sketch>
   - FLASH starts at `0x3000`, length 50944 (the first 12 KB are the bootloader's).
   - RAM starts at `0x20000010`, length 20464.
   - `__stack_size = 2048`, fixed.
-  - `*(.gnu.linkonce.r.*)` is placed **first** in `.data` (line 101), ahead of `.srodata*` (line 114). This is why RAM functions use that section name.
-- **Save pages:** the last two 256 B flash pages are save slots, so an app that saves must end at **≤ 50,432 B** (CHChess `check_size.py` message).
-- **CHGfx `-D` macros must be passed as build properties, not `#define`d in the sketch**, because they compile into the library's own files. Example: `--build-property build.extra_flags=-DCHGFX_ISR_IN_SRAM` (README:485-487).
+  - `*(.gnu.linkonce.r.*)` is placed **first** in `.data`, ahead of `.srodata*`. This is why RAM functions use that section name.
+- **Save pages:** the last two 256 B flash pages are save slots, so an app that saves must end at **≤ 50,432 B** (the repository's `tools/check_size.py` prints "save pages free").
+- **CHGfx `-D` macros must be passed as build properties, not `#define`d in the sketch**, because they compile into the library's own files. Example: `--build-property build.extra_flags=-DCHGFX_ISR_IN_SRAM` (CHGfx README, "Configuration").
 
 ## 2. Framebuffer model and fixed RAM cost
 
@@ -60,7 +60,7 @@ arduino-cli upload  -b CHGame:ch32v:CHGame -p COMx <Sketch>
   - Colours are palette indices 0–15, never RGB565.
 - **No 8 bpp, no double buffer, no strips.**
   - RGB565 would be 32 KB.
-  - 8 bpp (16 KB) was rejected (PERFORMANCE.md:84).
+  - 8 bpp (16 KB) was rejected (`docs/performance.md`, "Dead ends I checked so you don't have to").
   - A second 4 bpp buffer (8 KB) does not fit.
   - **Drawing must not touch the framebuffer while a flush is reading it.** Call `gfx_wait()` or `gfx_waitRow(y)` first.
 - **Expansion LUT:** `static uint32_t s_lut[256]` = 1,024 B (`CHGfx.cpp:179`). Each entry turns one framebuffer byte (2 px) into one 32-bit store at 16 bpp, or 3 packed bytes at 12 bpp (`buildLut`, `CHGfx.cpp:500`).
@@ -68,10 +68,10 @@ arduino-cli upload  -b CHGame:ch32v:CHGame -p COMx <Sketch>
   - This 1 KB is also `gfx_chunkScratch()` (`CHGfx.h:546-551`). It is only free between `gfx_wait()` and the next flush.
   - `gfx_sprite4Rot` and `gfx_textFx` clobber it, and both call `gfx_wait()` internally.
 - **Palette:** `gfx_pal[16]` = 32 B (`CHGfx_palette.cpp:17`).
-- **Totals:** CHGfx fixed RAM is about 10.3 KB before any code. `HelloGraphics` uses 11.9 KB of SRAM including the core; `GameKit` uses 13.9 KB (README:502-505).
+- **Totals:** CHGfx fixed RAM is about 10.3 KB before any code. `HelloGraphics` uses 11.9 KB of SRAM including the core; `GameKit` uses 13.9 KB (CHGfx README, "What it costs in SRAM").
 
 ### SRAM code sizes
-Measured from `CHBlackjack/build/release/CHBlackjack.ino.map` (oslto). Each function sits in its own `.gnu.linkonce.r.chgfx.<name>` section and is GC-able.
+Measured from CHBlackjack's release link map (oslto), at design time. Each function sits in its own `.gnu.linkonce.r.chgfx.<name>` section and is GC-able.
 
 | Function | Size (B) |
 |---|---:|
@@ -88,7 +88,7 @@ Measured from `CHBlackjack/build/release/CHBlackjack.ino.map` (oslto). Each func
 | pixel | 52 |
 | copywords | 26 |
 
-`-DCHGFX_ISR_IN_SRAM` adds about 330 B of SRAM and saves 4–9% of flush CPU (`CHGfx.cpp` comment above line 1009).
+`-DCHGFX_ISR_IN_SRAM` adds about 330 B of SRAM and saves 4–9% of flush CPU (`CHGfx.cpp`, the comment above `DMA1_Channel3_IRQHandler`).
 
 ### Real budgets from the shipped games
 Measured with `riscv-none-embed-size` on the release ELFs.
@@ -98,7 +98,7 @@ Measured with `riscv-none-embed-size` on the release ELFs.
 | CHBlackjack | 42,712 | 2,864 | **45,576** | 2,864 + 12,872 = **15,736** | **2,680 B** |
 | CHChess | 44,940 | 3,688 | **48,628** | 3,688 + 14,184 = **17,872** | **544 B** |
 
-Both also have the 2 KB stack. CHGfx costs about **8.7 KB flash** in Blackjack without LTO (CHBlackjack README:107-108).
+Both also have the 2 KB stack. CHGfx costs about **8.7 KB flash** in Blackjack without LTO (CHBlackjack's `NOTES.md`, "Flash is the wall").
 
 **Flash is the wall; SRAM is the second wall.** A roulette game sized like Blackjack has about 4.8 KB of flash (keeping save pages) and about 2.7 KB of SRAM to spend on new things.
 
@@ -106,27 +106,27 @@ Both also have the 2 KB stack. CHGfx costs about **8.7 KB flash** in Blackjack w
 
 | Call | Signature / location | Notes |
 |---|---|---|
-| `gfx_begin` | `(uint8_t spiDiv=GFX_DIV2, uint8_t colorMode=GFX_16BPP)`, `CHGfx.h:165` | **Both games call `gfx_begin(GFX_DIV2, GFX_12BPP)`** (`CHBlackjack.ino:40`, `CHChess.ino:16`). |
+| `gfx_begin` | `(uint8_t spiDiv=GFX_DIV2, uint8_t colorMode=GFX_16BPP)`, `CHGfx.h:165` | **Both games call `gfx_begin(GFX_DIV2, GFX_12BPP)`** (in `CHBlackjack.ino` and `CHChess.ino`). |
 | `gfx_flush` / `gfx_flushAsync` | `CHGfx.h:208-209` | The async version returns immediately; the DMA TC ISR converts the next 2-row chunk. |
 | `gfx_busy` / `gfx_wait` | `CHGfx.h:210-211` | |
 | `gfx_flushRect` / `gfx_flushRectAsync` | `(int x,int y,int w,int h)`, `CHGfx.h:309-310` | x/w are rounded **outward to a multiple of 8 at 12 bpp**, 2 at 16 bpp, 4 at 18 bpp (`CHGfx.cpp:837`). |
-| `gfx_flushRow` / `gfx_waitRow` | `CHGfx.h:250-251` | "Racing the beam": rows above `flushRow()` are already converted and free to draw into. Measured 10–14% faster frames (README:221). |
+| `gfx_flushRow` / `gfx_waitRow` | `CHGfx.h:250-251` | "Racing the beam": rows above `flushRow()` are already converted and free to draw into. Measured 10–14% faster frames (CHGfx README, "Racing the beam"). |
 | `gfx_stream` | `(gfx_streamFn fn, void *user)`, `typedef void (*gfx_streamFn)(uint8_t *dst,int y0,int rows,void*)`, `CHGfx.h:283-284` | Direct mode with no framebuffer; switches 12 bpp to 16 bpp. Budget is **32 cycles/px** at 16 bpp, 48 at 18 bpp. |
 | `gfx_directFillRect` | `CHGfx.h:528` | DMA with `MINC=0`; 16 bpp only. |
 
 **Palette changes are staged.** `syncLut()` (`CHGfx.cpp:551`) runs inside `setupJob()` (`CHGfx.cpp:826`) at the start of the next flush, after `gfx_wait()`. So `gfx_setPalette` and `gfx_setPaletteEntry` (`CHGfx.h:189-190`) are safe to call at any time, and each frame shows exactly one palette.
 
-`gfx_setFade(uint8_t amount, uint16_t rgb565=0)` (`CHGfx.h:196`) fades toward the target while the LUT is built (`fadeOne`, `CHGfx_palette.cpp:45-55`). Linking it costs about 150 B; the games fade their RGB444 colours themselves (CHGfx-notes.md:234).
+`gfx_setFade(uint8_t amount, uint16_t rgb565=0)` (`CHGfx.h:196`) fades toward the target while the LUT is built (`fadeOne`, `CHGfx_palette.cpp:45-55`). Linking it costs about 150 B; the games fade their RGB444 colours themselves (now in the CHGame library's `chgame/Palette.cpp`) (`CHChess/docs/CHGfx-notes.md`, "On CHGfx 1.3.0: text, banners and the palette").
 
 **Animating the palette costs one LUT rebuild per frame and no drawing.** The rebuild is 16 fades plus 256 entries, estimated at about 0.05–0.1 ms (not measured).
 
 **Panel:**
 
 - The panel scan rate defaults to FRMCTR `{0x05,0x3A,0x3A}` (`CHGfx.cpp:322`).
-- The TE pin is not broken out, so there is no vsync (PERFORMANCE.md:86).
+- The TE pin is not broken out, so there is no vsync (`docs/performance.md`, "Dead ends I checked so you don't have to").
 - The SPI clock is 24 MHz, which is out of the ST7735 spec (15.1 MHz); `GFX_DIV4` is the fallback.
 
-### Measured transport (board, -O2, 24 MHz; `benchmark-results.txt`, README tables)
+### Measured transport (board, -O2, 24 MHz; `docs/performance.md`, "Measured results", and the CHGfx README)
 
 | | 16 bpp | 12 bpp |
 |---|---:|---:|
@@ -141,7 +141,7 @@ Both also have the 2 KB stack. CHGfx costs about **8.7 KB flash** in Blackjack w
 
 **Frame budget at 60 Hz with the games' loop** (`wait → draw → flushAsync → logic`): draw time + 8.37 ms ≤ 16.7 ms, so **draw ≤ about 8.3 ms per frame at 12 bpp**. The ISR's 2.5–2.9 ms comes out of the logic time during the flush.
 
-For comparison, CHBlackjack's heaviest frame (a bust with shake and a banner) takes 11 ms to draw on 1.3 (CHBlackjack README:123).
+For comparison, CHBlackjack's heaviest frame (a bust with shake and a banner) takes 11 ms to draw on 1.3 (CHBlackjack's `NOTES.md`).
 
 ## 4. Drawing API (1.3.0) and measured costs
 
@@ -181,29 +181,30 @@ All primitives clip to `gfx__clip` (`I:CHGfx_internal.h:43-44`; `gfx_setClip/res
 | SansBold16 | 1,866 B | |
 | Mono11 | 1,233 B | |
 
-The games keep their own `text35` and `Mask.cpp`. Using CHGfx's text instead costs **+2,260 B flash**, because `gfx_textScaled`/`gfx_textFx` force-link the 5×7 font and renderer (739 B), and `textFx` is 1,014 B of flash plus 462 B of SRAM code (CHGfx-notes.md:202-223).
+The games keep their own `text35` and `Mask.cpp` (now the CHGame library's `chgame/Draw.cpp` and `chgame/Mask.cpp`). Using CHGfx's text instead costs **+2,260 B flash**, because `gfx_textScaled`/`gfx_textFx` force-link the 5×7 font and renderer (739 B), and `textFx` is 1,014 B of flash plus 462 B of SRAM code (`CHChess/docs/CHGfx-notes.md`, "On CHGfx 1.3.0: text, banners and the palette").
 
 **Missing from CHGfx:**
 
-- No polygon or triangle fill. `examples/Demoscene/Demoscene.ino:581-604` has a copyable `triangle()` made of hlines.
+- No polygon or triangle fill. CHGfx's `examples/Demoscene/Demoscene.ino` has a copyable flat-shaded `triangle()` made of hlines.
 - No rotated or tilted ellipse.
 - No arc or wedge.
 - No public sine. `gfx__sin14(uint8_t)` (Q14, 256 steps per turn, 130 B quarter table, `CHGfx_palette.cpp:89-103`) has external linkage but is declared only in `CHGfx_internal.h:81`.
 
 ## 5. Reusable idioms (copy as-is)
 
-**RAM function macro.** This is the current form; CHChess `src/RamFunc.h` and CHBlackjack `src/RamFunc.h:20-22` are identical apart from the prefix:
+**RAM function macro.** The games' copies (CHChess's and CHBlackjack's `src/RamFunc.h` at the time) are now one, the CHGame library's `chgame/RamFunc.h`; a sketch's `RAMFUNC(name)` gets its own prefix:
 ```cpp
-#ifdef CHSIM
-#define RAMFUNC(name) __attribute__((noinline))
+#if defined(__riscv) && !defined(CHSIM)
+#define CHGAME_APP_RAMFUNC(name) __attribute__((section(".gnu.linkonce.r.app." #name), noinline))
 #else
-#define RAMFUNC(name) __attribute__((section(".gnu.linkonce.r.chrl." #name), noinline))
+#define CHGAME_APP_RAMFUNC(name) __attribute__((noinline))
 #endif
+#define RAMFUNC(name) CHGAME_APP_RAMFUNC(name)
 ```
 - **Give every function its own name**, so linkonce does not merge them and `--gc-sections` can drop unused ones.
-- Do **not** use `.srodata.ramfunc`, which `Demoscene.ino:53` and the 1.3 README:158 still show. It lands after `.sdata`, pushes variables out of the 4 KB global-pointer window, and cost CHChess 192 B (CH32SerialBoot-notes.md:119-124).
-- **Keep hot SRAM functions as leaves.** `-msave-restore` routes register save/restore through libgcc helpers in **flash**, so an SRAM function that calls anything or spills registers detours to flash (`CHGfx_draw.cpp:68-76`). CHGfx uses `GFX_INLINE` (always_inline, `CHGfx_internal.h:38`) for exactly this reason.
-- **Cost of flash code:** about 5 cycles per instruction from flash against about 2 from SRAM (CH32SerialBoot-notes.md:111-113). A function call per pixel from flash costs 2–3 µs (CHBlackjack README:117).
+- Do **not** use `.srodata.ramfunc`, which `Demoscene.ino`'s `FX` macro and the CHGfx README ("Getting more frame rate") still show. It lands after `.sdata`, pushes variables out of the 4 KB global-pointer window, and cost CHChess 192 B (`CHChess/docs/CH32SerialBoot-notes.md`, "4. A proper RAM-function section").
+- **Keep hot SRAM functions as leaves.** `-msave-restore` routes register save/restore through libgcc helpers in **flash**, so an SRAM function that calls anything or spills registers detours to flash (the note on SRAM functions at the top of `CHGfx_draw.cpp`). CHGfx uses `GFX_INLINE` (always_inline, `CHGfx_internal.h:38`) for exactly this reason.
+- **Cost of flash code:** about 5 cycles per instruction from flash against about 2 from SRAM (`CHChess/docs/CH32SerialBoot-notes.md`, "4. A proper RAM-function section"). A function call per pixel from flash costs 2–3 µs (CHBlackjack's `NOTES.md`).
 
 **Direct framebuffer writes** (from `CHGfx_internal.h:46-71`; the `gfx__` helpers are internal but linkable):
 ```cpp
@@ -214,10 +215,10 @@ static inline void plot(uint8_t *r,int x,uint8_t c){ uint8_t*p=r+(x>>1);
 
 **Other patterns:**
 
-- **Integer trig only.** libm `sinf`/`cosf` cost **8.5 KB of flash** and capped the demo at 29 fps; a 64-entry table restored 68 fps (PERFORMANCE.md:200-203).
-- **Quadrant-symmetric polar tables** with branch-free mirroring, as in the `Demoscene.ino:278-380` tunnel: two runs of 64 per row, with angle fix-ups right-down `a`, left-down `128-a`, right-up `-a`, left-up `128+a`. The brute-force `iatan2_q1` (lines 116-128) costs 65 candidates per pixel and is for boot time only.
-- **Skip unchanged frames.** If nothing changed, skip drawing and just flush again; palette animation still moves (README:190-203).
-- **Raw pin writes.** GPIOB `CFGHR` (PB8..15: buttons, LED, buzzer, SD_CS, LCD_RST) is **write-only**. Raw pin configuration must go through the core's `CFGHR_tmpB` shadow (README:512-530; `CHGfx.cpp` `cfgPin`).
+- **Integer trig only.** libm `sinf`/`cosf` cost **8.5 KB of flash** and capped the demo at 29 fps; a 64-entry table restored 68 fps (`docs/performance.md`, "Optimisations the benchmark itself found").
+- **Quadrant-symmetric polar tables** with branch-free mirroring, as in `Demoscene.ino`'s tunnel (part 2): two runs of 64 per row, with angle fix-ups right-down `a`, left-down `128-a`, right-up `-a`, left-up `128+a`. The brute-force `iatan2_q1` costs 65 candidates per pixel and is for boot time only.
+- **Skip unchanged frames.** If nothing changed, skip drawing and just flush again; palette animation still moves (CHGfx README, "What a flush costs the CPU").
+- **Raw pin writes.** GPIOB `CFGHR` (PB8..15: buttons, LED, buzzer, SD_CS, LCD_RST) is **write-only**. Raw pin configuration must go through the core's `CFGHR_tmpB` shadow (CHGfx README, "A note about GPIOB pins 8–15"; `CHGfx.cpp` `cfgPin`).
 
 ## 6. Roulette wheel: candidate techniques evaluated
 
@@ -237,7 +238,7 @@ This is the Demoscene tunnel technique applied to a 4 bpp ring.
   ```
   About 256 × 8–10 cycles ≈ **45–55 µs** (est.). Rotation precision is limited only by `wheelAng` (16-bit); boundaries step in 1/256 turn, which is about 1.5 px at r = 60. Use a 9- or 10-bit `uint16_t` table and LUT if the final slow-down looks steppy.
 - **Ring loop (RAMFUNC, leaf):** load the angle byte, apply the mirrored fix-up hoisted per run, look up the LUT, pack two pixels per byte.
-  - Estimated **8–12 cycles/px**. For reference, the Demoscene rotozoomer is about 10 cycles/px (`Demoscene.ino:392`), and the tunnel fits its 32-cycle budget at 82 fps.
+  - Estimated **8–12 cycles/px**. For reference, the Demoscene rotozoomer (part 3) is about 10 cycles/px, and the tunnel fits its 32-cycle budget at 82 fps.
 
 | Wheel geometry | Ring pixels | Draw/frame (est.) | Table (ring-only quadrant) | Table (full quadrant box) |
 |---|---:|---:|---:|---:|
@@ -257,14 +258,14 @@ This is the Demoscene tunnel technique applied to a 4 bpp ring.
 
 ### B. Palette rotation / colour cycling of a static wheel (supplement only)
 
-- The palette has 16 slots. Blackjack's is fully allocated (`CHBlackjack/src/gfx/Palette.h:12-15`: `INK, WHITE, FELT_DK, FELT, FELT_LT, SILVER, RED, WINE, GOLD, WOOD, BLUE, NAVY, SKIN, CYAN, FX_A, FX_B`). Only `FX_A`/`FX_B` are animatable.
+- The palette has 16 slots. Blackjack's is fully allocated (now the CHGame library's `chgame/Palette.h`, shared by the games: `INK, WHITE, FELT_DK, FELT, FELT_LT, SILVER, RED, WINE, GOLD, WOOD, BLUE, NAVY, SKIN, CYAN, FX_A, FX_B`). Only `FX_A`/`FX_B` are animatable.
 - A K-phase cycle needs K dedicated slots and gives a step of `2/(37K)` turn: K = 2 gives a 1-pocket (≈ 10 px) jump; K = 8 eats half the palette.
 - It cannot move the green 0, the numbers, the frets or the ball.
 - **Use the palette for things that cost nothing instead:**
   1. **Motion blur.** Draw pockets with two dedicated wheel-red and wheel-black slots and lerp them toward each other with angular speed. The cost is one LUT rebuild.
   2. **Winning-pocket pulse.** Point that pocket's LUT bins at `FX_A` and cycle `FX_A`.
   3. Chasing marquee lights and diamond glints.
-  4. `gfx_setFade` or the game's own fade for transitions.
+  4. `gfx_setFade` or the CHGame library's palette fade (`chgame/Palette.h`) for transitions.
 
 ### C. Rejected or limited options
 

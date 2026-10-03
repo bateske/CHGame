@@ -44,7 +44,7 @@ import serve  # noqa: E402
 import chgpack  # noqa: E402
 import mkcard  # noqa: E402
 
-FQBN = "CHGame:ch32v:CHGame"
+FQBN = "CHGame:ch32v:rev0"
 RELEASE_FQBN = mkcard.RELEASE_FQBN
 NEWUSER = OUT / "newuser"
 DOWNLOADS = OUT / "arduino-downloads"     # kept between runs: the toolchain is ~100 MB; our archives are deleted
@@ -243,7 +243,7 @@ for 3 seconds in a game goes back to the menu.
 
 The menu is part of the CHGame bootloader. A board that does not show it
 needs the menu bootloader once: in the Arduino IDE, choose Tools > Board >
-CHGame, Tools > Bootloader > SD Game Menu (Rainbow, Plain or Casino),
+CHGame Boards > CHGame Rev0, Tools > Bootloader > SD Game Menu (Rainbow, Plain or Casino),
 Tools > Programmer > CHGame USB,
 then Tools > Burn Bootloader.
 

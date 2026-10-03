@@ -1,7 +1,7 @@
 /*
  * chgfx.cpp - SPI1 + DMA1_CH3 + ST7735 transport for the CHGame board.
  *
- * Pin roles come from variants/CH32X035/CHGame/variant_CHGame.h:
+ * Pin roles come from variants/CH32X035/CHGame_Rev0/variant_CHGame_Rev0.h:
  *   PA5 = SCK, PA7 = MOSI, PA6 = MISO (unused by the panel)
  *   PA4 = LCD_CS, PB0 = LCD_DC, PB12 = LCD_RST, PB11 = SD_CS
  * The panel and the microSD slot share SPI1, so SD_CS is parked high.

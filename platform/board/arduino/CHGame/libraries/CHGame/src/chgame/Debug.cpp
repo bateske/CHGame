@@ -194,7 +194,7 @@ static void execute() {
             break;
         case 'S': {
             gfx_wait();
-            p = kv(p, "FB ", arduboy.frameCount);
+            p = kv(p, "FB ", chgame.frameCount);
             fmtStr(p, " 8224\n");
             print(buf);
             out(gfx_fb, GFX_FB_BYTES);
@@ -218,16 +218,16 @@ static void execute() {
             print(buf);
             break;
         case 'K':
-            arduboy.injected = (uint8_t)parseNum(args, 16);
+            chgame.injected = (uint8_t)parseNum(args, 16);
             print("OK\n");
             break;
         case 'L':
-            arduboy.lockstep = (*args == '1') ? 0 : -1;
+            chgame.lockstep = (*args == '1') ? 0 : -1;
             print("OK\n");
             break;
         case 'N':
-            if (arduboy.lockstep < 0) arduboy.lockstep = 0;
-            arduboy.lockstep += (int32_t)parseNum(args, 10);
+            if (chgame.lockstep < 0) chgame.lockstep = 0;
+            chgame.lockstep += (int32_t)parseNum(args, 10);
             ackPending = true;
             break;
         case 'P': {
@@ -295,10 +295,10 @@ void poll() {
         runHook(held);
         held[0] = 0;
     }
-    if (ackPending && arduboy.lockstep == 0) {
+    if (ackPending && chgame.lockstep == 0) {
         ackPending = false;
         char buf[20];
-        fmtStr(fmtInt(fmtStr(buf, "OK "), (int32_t)arduboy.frameCount), "\n");
+        fmtStr(fmtInt(fmtStr(buf, "OK "), (int32_t)chgame.frameCount), "\n");
         print(buf);
     }
     while (Serial.available()) {
@@ -330,7 +330,7 @@ extern "C" __attribute__((noreturn)) void chgame_fault_park() {
 
 void markUpdateStart() {
     uint32_t now = micros();
-    if (frames && arduboy.lockstep < 0 && now - lastFrameStart > 17500) late++;
+    if (frames && chgame.lockstep < 0 && now - lastFrameStart > 17500) late++;
     lastFrameStart = now;
 }
 void markRenderStart() {

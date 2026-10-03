@@ -16,8 +16,8 @@ All of the art is new for this game:
   * The reel symbols, 22x22 each, drawn by the recipes below (shapes on a
     small canvas, then a one-pixel ink outline) so they stay easy to adjust.
     LUCKY 7's fifteen use the casino's green palette; DRAGON FORTUNE's ten are
-    drawn for its own (render/Cabinet.cpp swaps the three felt colours for
-    maroon, jade and orange while that machine is on screen).
+    drawn for its own (mach::THEMES in Machine.cpp swaps the three felt colours
+    for maroon, jade and orange while that machine is on screen).
 
 Outputs:
   src/assets/Assets.h / Assets.cpp   - generated, do not edit
@@ -39,7 +39,7 @@ PREVIEW = ROOT / "build" / "assets"
 # (platform/board/arduino/CHGame/libraries/CHGame/src/chgame/Palette.cpp).
 PALETTE = [0x000, 0xFFF, 0x042, 0x173, 0x4B5, 0xBBC, 0xE12, 0x702,
            0xFC2, 0x741, 0x26E, 0x125, 0xFB8, 0x6EF, 0xF0F, 0xFC2]
-# The felts must match mach::THEMES (src/render/Machine.cpp).
+# The felts must match mach::THEMES (Machine.cpp).
 FORTUNE_FELT = [0x401, 0x2A6, 0xF82]        # indices 2..4 on DRAGON FORTUNE: maroon, jade, orange
 SWEET_FELT = [0xF7A, 0x7DB, 0xA6E]          # ... and on SWEET: pink, mint, lilac
 THEMES = [None, FORTUNE_FELT, SWEET_FELT]   # per sheet row

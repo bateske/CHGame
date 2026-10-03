@@ -7,10 +7,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <vector>
-#include "../../src/rules/Dominoes.h"
-#include "../../src/ai/Ai.h"
-#include "../../src/game/Match.h"
-#include "../../src/table/Layout.h"
+#include "../../Dominoes.h"
+#include "../../Ai.h"
+#include "../../Match.h"
+#include "../../Layout.h"
 
 static long checks, failures;
 #define CHECK(c) do { checks++; if (!(c)) { failures++; if (failures < 20) printf("FAIL %s:%d: %s\n", __FILE__, __LINE__, #c); } } while (0)

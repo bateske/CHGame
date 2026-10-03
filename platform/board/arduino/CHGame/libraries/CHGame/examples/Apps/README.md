@@ -13,12 +13,12 @@ comes from sdfatlib, which is why the sketch is GPL. Keep that code inside
 this sketch. The games use the MIT-licensed, read-only
 [CHSd](../../../CHSd) instead.
 
-Build it from this folder against the repository's CHGfx:
+Build it from this folder (the board package 0.3.0 brings CHGfx; it has been tested on the board with `-Os`, hence `opt=osstd`):
 
 ```bash
 cd platform/board/arduino/CHGame/libraries/CHGame/examples/Apps/CHSDtoUSB
-arduino-cli compile -b CHGame:ch32v:CHGame --library ../../../../CHGfx .
-arduino-cli upload  -b CHGame:ch32v:CHGame -p <PORT> .
+arduino-cli compile -b CHGame:ch32v:rev0:opt=osstd .
+arduino-cli upload  -b CHGame:ch32v:rev0:opt=osstd -p <PORT> .
 ```
 
 `tools/chsd_test.py` is its hardware test suite. It needs a test build

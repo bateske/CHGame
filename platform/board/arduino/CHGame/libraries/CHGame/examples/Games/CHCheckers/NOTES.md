@@ -5,8 +5,8 @@ Agent-facing notes for continuing work on this game. Rules and controls are in [
 ## Snapshot
 
 - Imported from https://github.com/bateske/CHCheckers at commit a9ec530 (2026-10-01). Develop here now, not in the old repo.
-- Release build (`CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly`, core 0.2.4, CHGfx 1.3.0): flash 41,768 of 50,944 B (9,176 spare), static RAM 17,436 of 18,416 B (980 spare). RAM is the tight budget here. It includes the 1 KB think-frame stack.
-- Save pages: `../../../../../../../../../tools/check_size.py` puts the image at about 42.0 KB, so both A/B save pages fit with about 8.4 KB to spare.
+- Release build (`CHGame:ch32v:rev0:opt=oslto,rtlib=nano,periph=game,usb=uploadonly`, board package 0.3.0, 2026-10-02): flash 41,901 of 50,944 B (9,043 spare), static RAM 17,108 of 18,416 B (1,308 spare). RAM is the tight budget here. It includes the 1 KB think-frame stack.
+- Save pages: the repository's `tools/check_size.py` puts the image at 42,240 B, so both A/B save pages fit with about 8.2 KB to spare.
 - Verification as of 2026-10-01: simulator only. `chgame check` passes:
   - Host tests: perft from the opening (7 … 179,740), a second naive move generator across all 8 rule sets, both kinds of draw, and 2,000 random games with undo and save/load.
   - The CPU: legal moves, inside its budget, abortable, repeatable from a seed, stronger at a higher level.
@@ -24,38 +24,38 @@ Made by the owner:
   - Rejected: an inlay line around the table.
   - Each mat is in its owner's colours: White's is SILVER with WHITE trim, Black's BLUE with INK trim.
   - In view space, the left mat holds what the viewer took. Chips stack 3 piles of 4, with a HUD tally; the map shows a row of chips seen from above.
-- The engine (`src/engine`) is the project's own Apache-2.0 code. No third-party engine or licence file is involved.
+- The engine (`Engine.*`) is the project's own Apache-2.0 code. No third-party engine or licence file is involved.
 
 ## Open items
 
 - Device run, never done (follow "The device" in the root CLAUDE.md).
   - Render profile with `say Y`. The simulator's estimate of about 14 ms max when zoomed is unreliable.
-  - CPU speed with `say W` (ms, nodes). This sets the level node budgets and `SIM_US_PER_POLL` in `src/Frame.cpp`, which currently guesses about 6,000 nodes/s.
+  - CPU speed with `say W` (ms, nodes). This sets the level node budgets and `SIM_US_PER_POLL` in `Frame.cpp`, which currently guesses about 6,000 nodes/s.
   - Stack high-water marks with `perf`, the frame stack included.
   - Sound and the title tune by ear (`chgame audio out/audio` renders them on the PC).
-  - No `device_*.txt` scripts exist yet; `check.py` already skips that name pattern. On the board only `G`, `M`, `W` and `Y` exist among the game's commands, so device scripts must start games with `say G` and play with `say M` or the pad.
+  - No `device_*.txt` scripts exist yet; `chgame check` already skips that name pattern. On the board only `G`, `M`, `W` and `Y` exist among the game's commands, so device scripts must start games with `say G` and play with `say M` or the pad.
 - Choices approved only as plan assumptions, which the owner has not yet seen on screen:
   - Must-jump UI: the D-pad still visits every piece; pieces that can't jump say MUST JUMP and buzz; the ones that can are ringed. In the middle of a chain a single continuation plays itself and B is refused (KEEP JUMPING).
-  - The opponents TOURIST {300, 60}, DEALER {4000, 12} and THE HOUSE {30000, 0} (node budget and margin, `LEVEL` in `src/game/Match.cpp`) are untimed guesses.
+  - The opponents TOURIST {300, 60}, DEALER {4000, 12} and THE HOUSE {30000, 0} (node budget and margin, `LEVEL` in `Match.cpp`) are untimed guesses.
   - Slow motion only on a combo's last hop and on the winning capture. The banners are DOUBLE!/TRIPLE!/QUAD!/RAMPAGE!, KING ME! and SWEEP!.
   - Title:
     - Chips drop in, and CHECKERS slams down in the PPOT 3x5 font at scale 3.
     - An attract game plays: `src/states/DemoLine.h`, from `tools/tests/demo_line.cpp`, ending in a triple jump and a crowning.
     - A looping single-voice tune plays (MUSIC option).
   - Departures from the plan: no 1 bpp logo sprite, no plaque, and no decorative carpet chip stacks (just the tray mats).
-- The owner's art redraw through `tools/sheet.py`, covering `tools/art/chip.txt`, `chiptop.txt` and `hand.png`.
+- The owner's art redraw through `tools/sheet.py`, covering `tools/art/chip.txt`, `chiptop.txt` and the glove (the shared `tools/art/common/hand.png`; an import saves an edited glove back there, for every game).
 
 ## Gotchas
 
 - The engine works in steps, not whole moves. A multiple jump is several steps, with the turn staying on the piece.
   - Undo and saves store each step as its index among the steps legal at that moment (`Match.cpp`, `Record::m`).
-  - If the order of move generation changes, bump `VERSION` in `src/save/Save.cpp`, or old saves will replay the wrong moves.
-- While the CPU thinks, frames are drawn from inside the search (a poll every `eng::POLL_NODES` = 32 nodes), on their own 1 KB stack (`frameStack` in `src/Frame.cpp`).
+  - If the order of move generation changes, bump `VERSION` in `Save.cpp`, or old saves will replay the wrong moves.
+- While the CPU thinks, frames are drawn from inside the search (a poll every `eng::POLL_NODES` = 32 nodes), on their own 1 KB stack (`frameStack` in `Frame.cpp`).
   - The search can run about 1.5 KB deep in the 2 KB main stack, and a frame needs about 800 B more.
-  - With only about 1 KB of RAM free, find the RAM before adding buffers.
+  - With only about 1.3 KB of RAM free, find the RAM before adding buffers.
 - In lockstep (scripts, simulator) a frame is drawn every three polls (96 nodes), so a scripted CPU move always takes the same frames. Keep the search deterministic for a given seed.
 - Debug protocol:
-  - The game's commands are documented above `debugHook()` in `src/states/Screens.cpp`.
+  - The game's commands are documented above `debugHook()` in `Screens.cpp`.
   - `J Q R H A V X` are simulator-only. Positions are set up with `say X <32 cells> <w|b> <rules>`, and chdrive's `auto N` relies on `A`.
   - The protocol itself is the CHGame library's (`chgame/Debug.h`, on in `CHGAME_DEBUG` builds); `dbg::holdWhile(searching)` holds the game's commands while the CPU searches, and `dbg::frameStack()` reports the frame stack's high-water mark as `fstk=` in P (board only).
   - Device debug builds are `CHCK_LEAN` (no saving, no Options or Rules screen: Setup's RULES row steps through the rule sets instead); `-DCHCK_FULL` overrides that.
@@ -67,21 +67,21 @@ Made by the owner:
   - `src/assets/` is generated by `tools/assets.py`.
 - There is about 9 KB of flash room. Only `#pragma GCC optimize("Os")` is used; CHBackgammon's further trims (`no-ipa-sra`, etc.) have not been applied here and are available if needed.
 - Saves use magic "CHCK" in pages shared with every other CHGame game; saving here replaces another game's save, and vice versa (README).
-- Shared tools: the simulator is `../../../../../../../../../tools/chsim/chsim.py` (game-side driver: `tools/chsim/chdrive.py`). Set `CHSIM_CXX` or have zig/clang++/g++ on PATH (see root CLAUDE.md).
+- Shared tools: the simulator is the repository's `tools/chsim/chsim.py` (game-side driver: `tools/chsim/chdrive.py`). Set `CHSIM_CXX` or have zig/clang++/g++ on PATH (see root CLAUDE.md).
 
 ## How it fits
 
-- `src/engine`: the rules and the CPU. The board is the 32 dark squares in a padded row, moves are single steps, and the search is alpha-beta over those steps with iterative deepening inside a node budget, only stopping on positions with no jump pending. About 3 KB.
-- `src/game/Match`: turns, the events the presentation shows, undo and saved games (a snapshot plus one byte per step since).
-- `src/stage`: the play screen - camera, glove, movers, the flying chips and trays, combos, the crowning, the HUD. `src/iso`: the board and table.
-- `src/Frame`: while the CPU thinks, frames are drawn from inside the search on a stack of their own, in bursts, with a soft clock ticking.
-- `src/audio/Sounds`: the effects and the title's tune, played by the CHGame library's piezo sequencer (`chgame/Audio`).
+- `Engine`: the rules and the CPU. The board is the 32 dark squares in a padded row, moves are single steps, and the search is alpha-beta over those steps with iterative deepening inside a node budget, only stopping on positions with no jump pending. About 3 KB.
+- `Match`: turns, the events the presentation shows, undo and saved games (a snapshot plus one byte per step since).
+- `Stage`: the play screen - camera, glove, movers, the flying chips and trays, combos, the crowning, the HUD. `Iso`: the board and table.
+- `Frame`: while the CPU thinks, frames are drawn from inside the search on a stack of their own, in bursts, with a soft clock ticking.
+- `Sounds`: the effects and the title's tune, played by the CHGame library's piezo sequencer (`chgame/Audio`).
 - The save goes through the library's `chgame/Save`, in the last two flash pages.
 - On the play screen the piece under the glove fades its outline black to white, the one picked up gets a rainbow outline, and the piece a jump would take flashes. With nothing in the pressed direction the glove wraps round to the farthest spot the other way. Holding a piece and B, a bar under the top line fills before the inspection zoom: let go before it is full and the piece goes back.
 
 ## Development
 
-Everything can be checked on a PC (Python 3 with `pip install -r ../../../../../../../../../tools/requirements.txt`, and a C++ compiler for the host builds: root CLAUDE.md).
+Everything can be checked on a PC (Python 3 with `pip install -e .[sim]` in the repository root, and a C++ compiler for the host builds: root CLAUDE.md).
 
     chgame check                # everything below except the board, in one go
     chgame test      # host tests

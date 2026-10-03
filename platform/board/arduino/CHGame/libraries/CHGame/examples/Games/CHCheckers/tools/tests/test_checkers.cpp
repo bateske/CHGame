@@ -9,8 +9,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <vector>
-#include "../../src/engine/Engine.cpp"
-#include "../../src/game/Match.h"
+#include "../../Engine.cpp"
+#include "../../Match.h"
 
 static int fails, checks;
 #define CHECK(c) do { checks++; if (!(c)) { fails++; printf("FAIL %s:%d: %s\n", __FILE__, __LINE__, #c); } } while (0)

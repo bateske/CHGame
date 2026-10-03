@@ -66,15 +66,13 @@ changing that game.
      the exception: `chgame build`, `chgame card` and the simulator pass
      them explicitly, so an edit there takes effect at once.
    - `libraries/CHGame/src/chgame/Sizzle.inl` (particles, banners, floats)
-     is not compiled in the library but inside each game's `src/fx/Fx.cpp`,
-     under that game's size pragma and `SIZZLE_*` switches (its `src/fx/Fx.h`).
+     is not compiled in the library but inside each game's `Fx.cpp`,
+     under that game's size pragma and `SIZZLE_*` switches (its `Fx.h`).
      A change there is a change to every game's image: rebuild all 20 and
      compare sizes and frames, as for the rest of the library.
    - `platform/bootloader/src/sd.c` and `src/fat.c` are a C fork of CHSd: a
      fix to one belongs in the other too.
-7. **Credits stay exactly as each game's `NOTICE` and README give them.** Do
-   not add names from upstream projects' credit lists.
-8. **Every game needs its own save magic, debug handshake id and
+7. **Every game needs its own save magic, debug handshake id and
    `config.h` prefix.** All games share the same two flash save pages. The
    last collisions were fixed on 2026-10-01 (docs/status.md); check a new
    game's values against every other game's.
@@ -170,7 +168,7 @@ it, `python tools/chgame.py` is the same thing. The shared tools under
 | A release, dry or real (`platform/board/docs/building.md`) | `python tools/release/release.py [--dry-run]` |
 
 The release FQBN is
-`CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly`. A debug
+`CHGame:ch32v:rev0:opt=oslto,rtlib=nano,periph=game,usb=uploadonly`. A debug
 build drops `usb=uploadonly` and adds
 `--build-property build.extra_flags=-DCHGAME_DEBUG=1` (the library's switch;
 a game's `config.h` derives its own, such as `<PFX>_LEAN`, from it). Pass
@@ -205,7 +203,8 @@ override `compiler.cpp.extra_flags`.
 The one simulator: the games, CHGfx's examples and CHGfx's own tests all
 run on it (`chgame sim`, `chgame sim --free`, `chgame --sketch CHGfx test`;
 `python tools/chsim/chsim.py build|run|test` without the entry point).
-`chsim.py build <sketch>` compiles the sketch's `.ino` and `src/` plus
+`chsim.py build <sketch>` compiles the sketch's `.ino`, the `.cpp` files
+beside it and `src/`, plus
 CHGfx's portable code and, when the sketch includes it, the CHGame library.
 `host/chgfx_host.cpp` stands in for the SPI/DMA part with a model of the
 panel (the wire rate and setup the board measured, scaled by the SPI
@@ -272,8 +271,8 @@ buttons are needed.
 - **Uploads work while the menu is on screen**, and so do `chgame run
   --device` and the debug protocol.
 - **Holding START for 3 s** in any game goes back to the menu (the shared
-  core's `pollButtons()`; `arduboy.startExits = false` opts out,
-  `arduboy.exitToMenu()` leaves on purpose). The games don't show it; it is
+  core's `pollButtons()`; `chgame.startExits = false` opts out,
+  `chgame.exitToMenu()` leaves on purpose). The games don't show it; it is
   the platform's gesture. In the simulator the exit prints a line and ends
   the run, so no script should hold START that long by accident.
 - **Holding B at power-on** skips the card and the panel: USB mode.
@@ -307,9 +306,12 @@ and other sessions may share it.
 [`platform/board/arduino/CHGame/libraries/CHGame/examples/Apps/CHSDtoUSB`](platform/board/arduino/CHGame/libraries/CHGame/examples/Apps/CHSDtoUSB) turns the board into a USB card
 reader, with its serial port still working beside the drive:
 
-1. Upload it from `platform/board/arduino/CHGame/libraries/CHGame/examples/Apps/CHSDtoUSB`:
-   `arduino-cli compile -b CHGame:ch32v:CHGame --library ../../platform/board/arduino/CHGame/libraries/CHGfx .`
-   then `arduino-cli upload -b CHGame:ch32v:CHGame -p <PORT> .`.
+1. Upload it from its folder (not with `chgame upload`, whose release
+   options it has not been tried with):
+   `arduino-cli compile -b CHGame:ch32v:rev0:opt=osstd .` then
+   `arduino-cli upload -b CHGame:ch32v:rev0:opt=osstd -p <PORT> .` (with a
+   package older than 0.3.0, add `--library` for the repository's CHGfx).
+   It is tested on the board with `-Os` (`opt=osstd`), not yet with LTO.
    After it starts, the board enumerates on a new serial port.
 2. A removable drive appears whose SCSI vendor is "CHGame" and product "SD
    Card Reader" (`tools/chsd_test.py`'s `find_drive()` finds it on Windows).
@@ -341,16 +343,16 @@ Then:
 1. Rename the folder, the `.ino`, the `config.h` prefix (`<PFX>_VERSION`,
    `<PFX>_LEAN` ...), the debug hello (`dbg::begin("<ID> " ...)`, and
    `IDENT` in `tools/chsim/chdrive.py`) and the save magic
-   (`save::magic("....")` in `src/save/Save.cpp`); check them against every
-   other game (rule 8).
-2. Give it its own sounds (`src/audio/Sounds.cpp`) and save data.
-   Its effects are the library's `chgame/Sizzle`: keep in `src/fx/Fx.h`
+   (`save::magic("....")` in `Save.cpp`); check them against every
+   other game (rule 7).
+2. Give it its own sounds (`Sounds.cpp`) and save data.
+   Its effects are the library's `chgame/Sizzle`: keep in `Fx.h`
    only the `SIZZLE_*` switches it needs (pool size, kinds, banner, floats).
    Its `tools/game.py` tells `chgame test`, `check` and `redraw` what to
    run (the schema is `tools/gamecfg.py`'s docstring; an empty file is
    every default); `tools/chsim/chdrive.py` holds its own script commands.
 3. Keep the START-held-3-s exit to the menu (the library's) unless the game
-   needs a long START hold for itself (`arduboy.startExits = false` in
+   needs a long START hold for itself (`chgame.startExits = false` in
    `setup()`).
 4. Write its README in the one format ([docs/game-readme.md](docs/game-readme.md))
    and record its one GIF with `chgame gif`.

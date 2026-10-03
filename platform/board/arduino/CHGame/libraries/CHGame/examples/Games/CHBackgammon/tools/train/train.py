@@ -17,19 +17,19 @@ ROOT = HERE.parent.parent
 sys.path.insert(0, str(HERE.parents[10] / "tools" / "chsim"))  # the repository's tools/chsim (find_cxx)
 from chsim import find_cxx  # noqa: E402
 
-AI = ROOT / "src" / "ai"
-SOURCES = [HERE / "train.cpp", ROOT / "src" / "rules" / "Board.cpp", AI / "Net.cpp", AI / "Race.cpp",
-           AI / "RaceData.cpp", AI / "Ai.cpp"]
-RACE = [HERE / "race.cpp", ROOT / "src" / "rules" / "Board.cpp", AI / "Race.cpp"]
+SOURCES = [HERE / "train.cpp", ROOT / "Rules.cpp", ROOT / "Net.cpp", ROOT / "Race.cpp",
+           ROOT / "src" / "ai" / "RaceData.cpp", ROOT / "Ai.cpp"]
+RACE = [HERE / "race.cpp", ROOT / "Rules.cpp", ROOT / "Race.cpp"]
+LIB = ROOT.parents[2] / "src"     # the CHGame library (chgame/RamFunc.h)
 
 
 def compile_(exe, sources, flags):
     exe.parent.mkdir(exist_ok=True)
-    newest = max(p.stat().st_mtime for p in list((ROOT / "src").rglob("*.h")) + sources)
+    newest = max(p.stat().st_mtime for p in list(ROOT.glob("*.h")) + sources)
     if exe.exists() and exe.stat().st_mtime > newest:
         return exe
     cmd = find_cxx() + ["-std=gnu++17", "-O3", "-march=native", "-ffast-math", "-Wall", "-Wno-unknown-pragmas",
-                        *flags, *[str(s) for s in sources], "-o", str(exe)]
+                        "-I", str(LIB), *flags, *[str(s) for s in sources], "-o", str(exe)]
     r = subprocess.run(cmd, capture_output=True, text=True)
     if r.returncode:
         sys.stderr.write(r.stdout + r.stderr)

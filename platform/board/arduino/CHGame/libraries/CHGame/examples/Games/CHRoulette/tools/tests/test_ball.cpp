@@ -1,11 +1,11 @@
-// Host tests for the ball simulation and landing solver (src/wheel/Ball.cpp).
+// Host tests for the ball simulation and landing solver (Ball.cpp).
 //   python tools/tests/run_ball_tests.py            all checks + histograms
 //   test_ball.exe --trace SEED N QUICK TARGET       one spin, a line per tick
 //   test_ball.exe --stats [SPINS]                   tuning tables only
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../../src/wheel/Ball.h"
+#include "../../Ball.h"
 
 static int fails = 0, checks = 0;
 #define CHECK(c) do { checks++; if (!(c)) { fails++; if (fails < 40) printf("FAIL %s:%d  %s\n", __FILE__, __LINE__, #c); } } while (0)

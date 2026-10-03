@@ -5,7 +5,7 @@
 // The rules are checked against a second, deliberately naive implementation
 // written here in another representation (one signed array in White's
 // coordinates, plain recursion over every order of the dice into a set):
-// every play src/rules/Board.cpp gives for a roll must be one the reference
+// every play Rules.cpp gives for a roll must be one the reference
 // gives, and the other way round.
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,7 +14,7 @@
 #include <array>
 #include <set>
 #include <vector>
-#include "../../src/rules/Board.h"
+#include "../../Rules.h"
 
 static int failures = 0;
 #define CHECK(c) do { if (!(c)) { printf("FAIL %s:%d: %s\n", __FILE__, __LINE__, #c); failures++; } } while (0)

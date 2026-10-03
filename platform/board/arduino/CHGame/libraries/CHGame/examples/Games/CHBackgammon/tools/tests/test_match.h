@@ -1,11 +1,11 @@
-// Tests of the game flow (src/game/Match.cpp) and the CPU (src/ai/), part of
+// Tests of the game flow (Match.cpp) and the CPU (Ai.cpp and Net.cpp), part of
 // test_backgammon.cpp: whole games played through the same calls the screens
 // make, with a second board kept from the events alone.
-#include "../../src/game/Match.h"
-#include "../../src/ai/Net.h"
-#include "../../src/ai/Race.h"
-#include "../../src/ai/Cube.h"
-#include "../../src/game/Notation.h"
+#include "../../Match.h"
+#include "../../Net.h"
+#include "../../Race.h"
+#include "../../Cube.h"
+#include "../../Notation.h"
 
 struct Driven {
     uint32_t rng;               // the "player": its choices

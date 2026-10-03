@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""spin_preview: one ball spin, simulated by the real src/wheel/Ball.cpp and
+"""spin_preview: one ball spin, simulated by the real Ball.cpp and
 drawn with tools/wheel.py's reference renderer, as an animated GIF.
 
     python tools/spin_preview.py                     # out/spin/spin_eu.gif + spin_us.gif

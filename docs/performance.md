@@ -91,7 +91,7 @@ MOSI. Clean stripes = good. Speckle or horizontal shear = back off to
 ## Build and run
 
 ```bash
-arduino-cli compile -b CHGame:ch32v:CHGame:opt=o2std,rtlib=nano CHGfx/examples/Benchmark
+arduino-cli compile -b CHGame:ch32v:rev0:opt=o2std,rtlib=nano CHGfx/examples/Benchmark
 ```
 
 In the IDE, set **Tools ▸ Optimize ▸ Faster (-O2)**. The board default is
@@ -106,7 +106,7 @@ what it calls.
 To upload:
 
 ```bash
-arduino-cli upload -b CHGame:ch32v:CHGame -p COMx CHGfx/examples/Benchmark
+arduino-cli upload -b CHGame:ch32v:rev0 -p COMx CHGfx/examples/Benchmark
 ```
 
 Then open the Serial Monitor (USB CDC — the baud rate is ignored). The

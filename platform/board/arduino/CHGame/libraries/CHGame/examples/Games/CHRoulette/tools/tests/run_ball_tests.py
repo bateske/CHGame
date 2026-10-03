@@ -1,4 +1,4 @@
-"""Build and run the ball simulation tests (src/wheel/Ball.cpp).
+"""Build and run the ball simulation tests (Ball.cpp).
 
     python tools/tests/run_ball_tests.py            all checks + duration histograms
     python tools/tests/run_ball_tests.py --stats    tuning tables only (4,000 spins)
@@ -17,7 +17,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 LIB = HERE.parents[10] / "platform" / "board" / "arduino" / "CHGame" / "libraries" / "CHGame" / "src"   # the CHGame library
-SOURCES = [HERE / "test_ball.cpp", ROOT / "src" / "wheel" / "Ball.cpp", LIB / "chgame" / "Ease.cpp"]
+SOURCES = [HERE / "test_ball.cpp", ROOT / "Ball.cpp", LIB / "chgame" / "Ease.cpp"]
 EXE = HERE / "build" / "test_ball.exe"
 
 

@@ -5,9 +5,9 @@
 #include <string.h>
 #include <string>
 #include <vector>
-#include "../../src/game/Show.h"
-#include "../../src/game/Spin.h"
-#include "../../src/game/Cpu.h"
+#include "../../Show.h"
+#include "../../Spin.h"
+#include "../../Cpu.h"
 #include <chgame/Input.h>
 
 static long checks, failures;

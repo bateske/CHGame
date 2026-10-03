@@ -5,8 +5,8 @@ Agent-facing notes for continuing work on this game. Rules and controls are in [
 ## Snapshot
 
 - Imported from https://github.com/bateske/CHBingo at commit dd6295b (2026-10-01). The public history was squashed to that single commit. Develop here now, not in the old repo.
-- Release build (`CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly`, core 0.2.4, CHGfx 1.3.0): flash 36,468 of 50,944 B (14,476 spare), static RAM 15,208 of 18,416 B (3,208 spare).
-- Save pages: `../../../../../../../../../tools/check_size.py` reports the image as 36,724 B, so both A/B save pages fit with about 13.7 KB to spare. This game has real flash room.
+- Release build (`CHGame:ch32v:rev0:opt=oslto,rtlib=nano,periph=game,usb=uploadonly`, board package 0.3.0, 2026-10-02): flash 36,047 of 50,944 B (14,897 spare), static RAM 14,912 of 18,416 B (3,504 spare).
+- Save pages: the repository's `tools/check_size.py` reports the image as 36,388 B, so both A/B save pages fit with about 14 KB to spare. This game has real flash room.
 - Verification as of 2026-10-01: simulator only. These all passed:
   - `chgame test`: rules, races against the hall, money, power-ups, jackpot odds, round set-up against `tools/tests/ref_bingo.py`; about 1.24M checks.
   - `tools/tests/sim_save.py`: save mid-round, power-cycle, continue.
@@ -31,13 +31,13 @@ Made by the owner:
   - Rejected: chips on the title, and a spotlight at the top.
   - The menu sits on a FELT_DK dither band at a pitch of 12.
   - The menu glove is CHChess's glove pointing right (`HAND_R`), thumb on top, cuffed in the dauber colour.
-- Title balls (the owner loves them; tuned over four rounds, see `titleBalls()` in `src/states/Screens.cpp`):
+- Title balls (the owner loves them; tuned over four rounds, see `titleBalls()` in `Screens.cpp`):
   - A continuous stream spelling BINGO travels right to left with B leading. "Left to right" was a slip in the owner's earlier request.
   - All balls are the same size and bounce at one rate and height (`BOUNCE` 48 ticks), each a beat behind the ball ahead.
   - Each ball has its own slow ±3 px swing, which can never make one overtake another (`PITCH` 27).
 - The DAUBER option (red/blue/green/cyan/peach) colours the daubs, their splat and the glove's cuff.
 - A daub is CHChess's DUST puff, plus GOO "gack" particles (a Nickelodeon feel), plus a small shake.
-- After a daub the glove holds on the cell with a press-and-kick `RECOIL` curve (22 ticks, `src/fx/Presenter.cpp`), then slides on. A swipe cancels the hold.
+- After a daub the glove holds on the cell with a press-and-kick `RECOIL` curve (22 ticks, `Presenter.cpp`), then slides on. A swipe cancels the hold.
 
 ## Open items
 
@@ -50,16 +50,16 @@ Made by the owner:
   - A call every 2 s (1.3 s on FAST, 3 s on SLOW).
   - The rare banner comes 1 win in 10 (`RARE_ONE_IN`). The jackpot pays within 10 calls (`JACKPOT_CALLS`).
   - The power-ups are WILD, FREEZE and 2X POT.
-  - The caller has nicknames for 13 numbers (`LINGO` in `src/fx/Presenter.cpp`).
+  - The caller has nicknames for 13 numbers (`LINGO` in `Presenter.cpp`).
   - No music, and no win screen: play is endless until broke.
 
 ## Gotchas
 
 - The skeleton was forked from CHRoulette (wheel, glove and music removed): macro prefix `CHBN_`, save magic "CHBN", and the protocol handshake is `CHBN`.
-- A saved round is just its seed plus the daubs; the draw, the cards and the hall are dealt again from the seed. Any change to dealing order or random-number use breaks saved rounds, so bump `VERSION` in `src/save/Save.cpp`. The save pages are shared with every other CHGame game.
+- A saved round is just its seed plus the daubs; the draw, the cards and the hall are dealt again from the seed. Any change to dealing order or random-number use breaks saved rounds, so bump `VERSION` in `Save.cpp`. The save pages are shared with every other CHGame game.
 - The hall costs no RAM: each rival card is reduced to the call on which it completes, and only the earliest call is kept.
 - Redraws are incremental, by band (wall, plaque, felt, bar).
-  - `-DFORCE_FULL` (`src/fx/Presenter.cpp`) forces full redraws.
+  - `-DCHSIM_FORCE_FULL` (`Presenter.cpp`; `chgame redraw` sets it) forces full redraws.
   - After touching render or presenter code, run `chgame redraw tools/scripts/diff/diff_soak.txt out/diff`.
   - The title draws its felt and logo once (`titleReady`) and redraws only the ball band and the menu.
 - Rainbow outlines, pips and the winning line all use one cycling palette entry. Animate through the palette, not with redraws.
@@ -67,15 +67,15 @@ Made by the owner:
   - The game's commands are listed at the top of `CHBingo.ino`; `Q` (calibration) is simulator-only.
   - Device debug builds do not write the save pages unless a script sends `say E 1`, because the pages are shared with the release and other games.
   - `CHBN_LEAN` (device debug) drops only the broke screen's lettering; saving stays in.
-  - The protocol itself is the CHGame library's (`chgame/Debug.h`, on with `CHGAME_DEBUG`); the save record's pages and CRC are the library's too (`chgame/Save.cpp`), the game's `src/save/Save.*` says what goes in it.
+  - The protocol itself is the CHGame library's (`chgame/Debug.h`, on with `CHGAME_DEBUG`); the save record's pages and CRC are the library's too (`chgame/Save.cpp`), the game's `Save.*` says what goes in it.
 - `python tools/chsim/autoplay.py out/autoplay.gif` is a buttons-only bot: it plays a round as a person would (reaction times, swiping toward the rainbow frames, power-ups in the quiet moments), searches for a seed the player wins, then records that seed. It made the README's GIF before the README had one reel of clips; that is `tools/scripts/gameplay.txt` now.
-- Sound is the CHGame library's sequencer (`chgame/Audio.h`); the game's effect tables are `src/audio/Sounds.*`. There is no music. Adding some costs flash (the library links its music code only for a game that calls `audio::music()`), but there is room: give the game generated scores and a `playSong()` in `Sounds.*`, which the shared preview (`chgame audio out/audio`) uses to render them. The SOUND option already asks for the lead rendering.
-- `src/assets/Assets.cpp` is generated by `python tools/assets.py` from `tools/art/` (dealer, faces, hand, logo, broke lettering). Don't hand-edit it.
-- Shared tools: the simulator is `../../../../../../../../../tools/chsim/chsim.py` (game-side driver: `tools/chsim/chdrive.py`). Set `CHSIM_CXX` or have zig/clang++/g++ on PATH (see root CLAUDE.md).
+- Sound is the CHGame library's sequencer (`chgame/Audio.h`); the game's effect tables are `Sounds.*`. There is no music. Adding some costs flash (the library links its music code only for a game that calls `audio::music()`), but there is room: give the game generated scores and a `playSong()` in `Sounds.*`, which the shared preview (`chgame audio out/audio`) uses to render them. The SOUND option already asks for the lead rendering.
+- `src/assets/Assets.cpp` is generated by `python tools/assets.py` from `tools/art/` (the logo) and the repository's shared `tools/art/common/` (dealer, faces, hand, broke lettering). Don't hand-edit it.
+- Shared tools: the simulator is the repository's `tools/chsim/chsim.py` (game-side driver: `tools/chsim/chdrive.py`). Set `CHSIM_CXX` or have zig/clang++/g++ on PATH (see root CLAUDE.md).
 
 ## Development
 
-Everything can be checked on a PC (Python 3 with `pip install -r ../../../../../../../../../tools/requirements.txt`, and a C++ compiler for the simulator and tests: root CLAUDE.md).
+Everything can be checked on a PC (Python 3 with `pip install -e .[sim]` in the repository root, and a C++ compiler for the simulator and tests: root CLAUDE.md).
 
     chgame test     # the rules (below)
     python tools/tests/sim_save.py      # in the simulator: save mid-round, power off and on, continue; options; going broke
@@ -83,7 +83,7 @@ Everything can be checked on a PC (Python 3 with `pip install -r ../../../../../
     chgame run tools/scripts/smoke.txt out/smoke
     chgame redraw tools/scripts/diff/diff_soak.txt out/diff   # incremental redraw against a full redraw, frame by frame
     chgame gif    # tools/scripts/gameplay.txt -> docs/gameplay.gif (the README's one GIF, <= 1 MB)
-    python tools/assets.py              # art in tools/art -> src/assets/Assets.*
+    python tools/assets.py              # art in tools/art and tools/art/common -> src/assets/Assets.*
     chgame audio out/audio    # the sound effects as WAVs
     chgame build [--debug]                            # also upload, run --device SCRIPT OUTDIR, shot OUT.png
     chgame size     # flash and RAM from the map
@@ -98,11 +98,13 @@ Files:
 
     CHBingo.ino          the frame loop and the debug commands
     config.h             build switches
-    src/game/Bingo.*     the rules: no graphics, no sound, host-tested
-    src/fx/Presenter.*   events to motion: the caller, the carousel, the wins
-    src/fx/Fx.*          the library's chgame/Sizzle configured (64 particles, GOO) plus gack()
-    src/render/          the wall (Table), the cards, the buy-in and the bar (Cards)
-    src/states/          title, play, pause, options, stats, broke
-    src/audio/           the sound effects (the CHGame library's sequencer plays them)
-    src/save/            what a save holds (the CHGame library keeps it in flash)
+    Bingo.*              the rules: no graphics, no sound, host-tested
+    Presenter.*          events to motion: the caller, the carousel, the wins
+    Fx.*                 the library's chgame/Sizzle configured (64 particles, GOO) plus gack()
+    Table.*, Cards.*     the wall; the cards, the buy-in and the bar
+    Layout.h             every coordinate of the play screen
+    Screens.*            title, play, pause, options, stats, broke
+    Sounds.*             the sound effects (the CHGame library's sequencer plays them)
+    Save.*               what a save holds (the CHGame library keeps it in flash)
+    src/assets/          generated art (tools/assets.py)
     tools/               simulator, tests, scripts and art tools

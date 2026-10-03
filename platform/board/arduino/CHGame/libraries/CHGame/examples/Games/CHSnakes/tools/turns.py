@@ -1,9 +1,9 @@
 """The SHARK's table: from each square, how many ARCADE turns the best
 play still needs to reach 100, on average (in eighths of a turn).
 
-    python tools/turns.py          # prints the table for src/game/Cpu.cpp
+    python tools/turns.py          # prints the table for Cpu.cpp
 
-Reads the ladders and snakes from src/game/Layout.cpp. The host tests work
+Reads the ladders and snakes from Layout.cpp. The host tests work
 the same table out again and compare (tools/tests/test_rules.cpp).
 """
 import re

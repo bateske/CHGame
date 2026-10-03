@@ -394,7 +394,7 @@ def main():
         faces[nm] = rebase(face_patch(f))
 
     # Chips as span sprites, coloured per use by a remap (the shapes are
-    # CHBlackjack's chip, captured; render/Chips.cpp).
+    # CHBlackjack's chip, captured; Chips.cpp).
     for f in ["chip_top", "chip_side", "chip_small_top", "chip_small_side"]:
         img = load_art(f)
         o.array(f.upper(), pack_span4(img), comment=f"{f} {len(img[0])}x{len(img)}, row spans")

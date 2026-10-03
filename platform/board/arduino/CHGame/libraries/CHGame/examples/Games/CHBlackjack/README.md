@@ -45,11 +45,11 @@ To put it on the handheld: in the Arduino IDE, with the CHGame board package ins
 
 ## Developer notes
 
-- **Rules with no graphics.** `src/game/Round.cpp` is the whole game flow and includes nothing from the library but the button masks, so `tools/tests/test_rules.cpp` runs it on the PC: every payout, and a 16,000-hand fuzz that checks money is conserved.
-- **Events become motion.** The rules emit events and `src/fx/Presenter.cpp` turns them into card flights, flips and chip payouts, so the animation never holds up the logic.
+- **Rules with no graphics.** `Round.cpp` is the whole game flow and includes nothing from the library but the button masks, so `tools/tests/test_rules.cpp` runs it on the PC: every payout, and a 16,000-hand fuzz that checks money is conserved.
+- **Events become motion.** The rules emit events and `Presenter.cpp` turns them into card flights, flips and chip payouts, so the animation never holds up the logic.
 - **Band-level redraw.** The framebuffer survives between frames, so `Presenter.cpp` redraws only the bands (wall, felt, button bar) that changed or that something moving touched. Every frame is still flushed, which makes the palette effects (the rainbow BLACKJACK!, the felt colour option) free.
 - **Art stored as differences.** `tools/assets.py` keeps the dealer's normal face as a patch and every other expression as only the pixels that differ.
-- **A/B saves in shared flash pages.** `src/save/Save.cpp` says what a save holds; the library's `chgame/Save.h` keeps it in two pages with a sequence number and CRC, so a power cut mid-save loses nothing.
+- **A/B saves in shared flash pages.** `Save.cpp` says what a save holds; the library's `chgame/Save.h` keeps it in two pages with a sequence number and CRC, so a power cut mid-save loses nothing.
 - More in [NOTES.md](NOTES.md): design decisions, how it fits, tests, the script commands and open items.
 
 ## Credits

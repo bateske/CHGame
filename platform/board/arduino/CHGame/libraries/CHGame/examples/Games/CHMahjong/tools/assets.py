@@ -252,7 +252,7 @@ def preview(name, img, scale=6, bg=3):
 
 
 def draw_tile(img, x0, y0, face, face_col, shade_col, edge=9, side=12, back=9, t=1):
-    """A tile as src/gfx/Tile.cpp draws it (body bands t px, edge, embossed face)."""
+    """A tile as Tile.cpp draws it (body bands t px, edge, embossed face)."""
     cw, ch = len(face[0]) + 1, len(face) + 1
     for d, c in ((2 * t, back), (t, side)):
         for y in range(ch):

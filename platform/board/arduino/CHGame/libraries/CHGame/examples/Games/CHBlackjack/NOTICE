@@ -20,10 +20,10 @@ Modifications made for the CHGame port (2026):
     cards are 22x28 (PPOT's width and 12 px overlap), bet circle, chip rack,
     shoe and printed felt.
   * All art in colour: PPOT's dealer (recoloured, then retouched by hand in
-    tools/art/dealer.png), suit glyphs, title logo, splash logo and win/lose
+    tools/art/common/dealer.png), suit glyphs, title logo, splash logo and win/lose
     lettering; new card ranks, pips, court-card portraits, chips, and new
     dealer expressions.
-  * Game logic separated from rendering (src/game/Round.cpp keeps PPOT's
+  * Game logic separated from rendering (Round.cpp keeps PPOT's
     ViewState flow) and covered by host unit tests.
   * Rules: casino preset (six-deck shoe, dealer stands on all 17s, peeks on
     ace and ten, blackjack beats 21) with a "Classic" preset keeping PPOT's

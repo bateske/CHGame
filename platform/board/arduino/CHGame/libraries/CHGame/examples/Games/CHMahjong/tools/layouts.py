@@ -8,7 +8,7 @@ name order. Each layout is checked before it is written:
 
   * an even number of tiles, 144 at most, none overlapping;
   * every tile above the table rests on tiles under all four of its corners;
-  * it fits the screen (src/stage/Stage.cpp's geometry, mirrored below);
+  * it fits the screen (Stage.cpp's geometry, mirrored below);
   * a deal can be found for it (the game's own method: take a full table
     apart two free tiles at a time), and how often that method runs into a
     dead end;
@@ -182,7 +182,7 @@ def main():
     (OUT / "Layouts.h").write_text("\n".join(h), encoding="utf-8", newline="\n")
     (OUT / "Layouts.cpp").write_text("\n".join(c), encoding="utf-8", newline="\n")
     if len(layouts) != 4:
-        print(f"note: board::LAYOUTS in src/game/Board.h must be {len(layouts)}", file=sys.stderr)
+        print(f"note: board::LAYOUTS in MahjongBoard.h must be {len(layouts)}", file=sys.stderr)
 
 
 if __name__ == "__main__":

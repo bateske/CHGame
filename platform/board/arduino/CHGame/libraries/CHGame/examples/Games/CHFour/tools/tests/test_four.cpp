@@ -8,10 +8,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include "../../src/rules/Board.h"
-#include "../../src/ai/Ai.h"
-#include "../../src/game/Game.h"
-#include "../../src/game/Taunt.h"
+#include "../../Rules.h"
+#include "../../Ai.h"
+#include "../../Game.h"
+#include "../../Taunt.h"
 
 static int failures = 0;
 #define CHECK(c) do { if (!(c)) { printf("FAIL %s:%d: %s\n", __FILE__, __LINE__, #c); failures++; } } while (0)

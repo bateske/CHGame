@@ -41,6 +41,8 @@
 //   SIZZLE_HUES                {RED, GOLD, FELT_LT, CYAN, BLUE}      the casino rainbow
 //   SIZZLE_HUES_EXPORT         1       exported as `extern const uint8_t SIZZLE_HUES_NAME[5]` (RAIN)
 //   SIZZLE_CONFETTI_COLOURS    {RED, GOLD, FELT_LT, CYAN, BLUE, WHITE}
+//   SIZZLE_NO_PARTICLES        0       1: spawn(), burst(), fountain() and drawParticles() do nothing
+//                                      (a game's device debug build sets it to make room)
 //   SIZZLE_FLOATS              1       floatText()/drawFloats(); SIZZLE_FLOAT_CHARS 8 (the text, with its 0),
 //                                      SIZZLE_FLOAT_CLAMP 0 (keep it on screen), SIZZLE_FLOAT_BLINK_FIRST 0
 //   SIZZLE_BANNER_DROP         0       0: letters of the 3x5 font pop in at 2x, 4x, 3x (maskText35);
@@ -124,6 +126,9 @@
 #endif
 #ifndef SIZZLE_CONFETTI_COLOURS
 #define SIZZLE_CONFETTI_COLOURS {RED, GOLD, FELT_LT, CYAN, BLUE, WHITE}
+#endif
+#ifndef SIZZLE_NO_PARTICLES
+#define SIZZLE_NO_PARTICLES 0
 #endif
 #ifndef SIZZLE_FLOATS
 #define SIZZLE_FLOATS 1

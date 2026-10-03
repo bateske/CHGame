@@ -2,7 +2,7 @@
 # how long the CPU thinks. W prints the positions it weighed, the time its
 # turn's thinking took (the stage's minimum included) and the longest slice
 # of a tick it used: that slice should stay under ~8 ms (QUANTUM in
-# src/game/Match.cpp). perf says whether frames were late meanwhile.
+# Match.cpp). perf says whether frames were late meanwhile.
 
 # The grandmaster's reply to an opening.
 say V 1 2 w 24:2 13:5 8:3 6:5 r 24:2 13:5 8:3 6:5

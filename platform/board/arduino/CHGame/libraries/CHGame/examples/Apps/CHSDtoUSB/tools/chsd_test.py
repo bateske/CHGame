@@ -7,7 +7,7 @@
 Most tests need the test build, which adds serial commands that stand in
 for the buttons and inject faults (see CHSDtoUSB.ino, CHSD_TEST):
 
-    arduino-cli compile -b CHGame:ch32v:CHGame --build-path build/test \
+    arduino-cli compile -b CHGame:ch32v:rev0 --build-path build/test \
         --build-property build.extra_flags=-DCHSD_TEST=1 .
 
 With the release build (compiled into build/release) the tests that need
@@ -649,7 +649,7 @@ def image_for(dev):
 
 def upload(dev, image):
     dev.close()
-    r = subprocess.run(["arduino-cli", "upload", "-b", "CHGame:ch32v:CHGame", "-p", dev.port,
+    r = subprocess.run(["arduino-cli", "upload", "-b", "CHGame:ch32v:rev0", "-p", dev.port,
                         "--input-dir", str(image), str(SKETCH)], capture_output=True, text=True, timeout=120)
     if r.returncode:
         print(r.stdout[-800:] + r.stderr[-800:])

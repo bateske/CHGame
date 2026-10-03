@@ -23,31 +23,31 @@ bool dirty;
 int16_t x = 64, y = 72;
 
 void setup() {
-    arduboy.boot();                       // buttons, and START held 3 s goes back to the menu
+    chgame.boot();                       // buttons, and START held 3 s goes back to the menu
     dbg::begin("HELO 1.0");               // the debug protocol's hello (CHGAME_DEBUG builds)
     gfx_begin(GFX_DIV2, GFX_12BPP);       // the panel: 128x128, 16 colours on screen
     pal::init();                          // the house colours (INK, WHITE, FELT, GOLD ...)
     audio::begin(SOUNDS, 1);
     save::load(MAGIC, 1, data);           // leaves data as it was if nothing is saved
-    arduboy.setFrameRate(60);
+    chgame.setFrameRate(60);
 }
 
 void loop() {
     dbg::poll();                          // the simulator and tools/device.py talk through this
-    if (!arduboy.nextFrame()) return;
+    if (!chgame.nextFrame()) return;
 
     // Logic.
-    arduboy.pollButtons();
-    if (arduboy.pressed(LEFT_BUTTON) && x > 8) x--;
-    if (arduboy.pressed(RIGHT_BUTTON) && x < 119) x++;
-    if (arduboy.pressed(UP_BUTTON) && y > 30) y--;
-    if (arduboy.pressed(DOWN_BUTTON) && y < 119) y++;
-    if (arduboy.justPressed(A_BUTTON)) {
+    chgame.pollButtons();
+    if (chgame.pressed(LEFT_BUTTON) && x > 8) x--;
+    if (chgame.pressed(RIGHT_BUTTON) && x < 119) x++;
+    if (chgame.pressed(UP_BUTTON) && y > 30) y--;
+    if (chgame.pressed(DOWN_BUTTON) && y < 119) y++;
+    if (chgame.justPressed(A_BUTTON)) {
         audio::sfx(0);
         data.count++;
         dirty = true;
     }
-    if (arduboy.justPressed(B_BUTTON)) pal::setTheme((pal::theme() + 1) % pal::THEME_COUNT);
+    if (chgame.justPressed(B_BUTTON)) pal::setTheme((pal::theme() + 1) % pal::THEME_COUNT);
     pal::tick();
     audio::update();
 

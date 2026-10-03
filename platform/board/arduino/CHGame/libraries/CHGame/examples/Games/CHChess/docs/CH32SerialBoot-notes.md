@@ -1,10 +1,14 @@
 # CH32SerialBoot / CHGame board package: notes from CHChess
 
-CHChess is the biggest sketch on the board so far: 48.9 KB of the
-50,944-byte application region and 17.9 KB of static RAM on CHGfx 1.3
-(50.3 KB and 18.0 KB when these notes were first written). Getting it there
-changed one thing in the board package and turned up a few more worth
-doing. Paths are relative to the CH32SerialBoot repository.
+*Written while designing CHChess; paths and names brought up to date on 2026-10-02.*
+
+CHChess was the biggest sketch on the board when these notes were
+written: 49.0 KB of the 50,944-byte application region and 17.5 KB of
+static RAM on board package 0.3.0 (50.3 KB and 18.0 KB when these notes
+were first written). Getting it there changed one thing in the board
+package and turned up a few more worth doing. The notes were written
+against the CH32SerialBoot repository; the paths below are this
+repository's, where the board package is `platform/board`.
 
 ## The change: a *Smallest + LTO* optimisation option
 
@@ -30,12 +34,12 @@ and anything unreachable goes. `build.flags.optimize` is used for both
 compiling and linking, so the one menu entry is enough: GCC sees the LTO
 objects at link time and runs the plugin itself.
 
-What it buys: CHChess is 48.9 KB with it and does not fit without it (the
+What it buys: CHChess is 49.0 KB with it and does not fit without it (the
 link fails, 348 B over; it was 5.2 KB over when these notes were first
 written). On packages without the menu entry, the same
 build works from the command line:
 
-    arduino-cli compile -b CHGame:ch32v:CHGame:opt=osstd,rtlib=nano,periph=game \
+    arduino-cli compile -b CHGame:ch32v:rev0:opt=osstd,rtlib=nano,periph=game \
         --build-property build.extra_flags=-flto CHChess
 
 Tested with it: CHChess, release and debug builds, through all of its
@@ -46,7 +50,7 @@ serial, and flash page writes all work under LTO.
 **Released** in 0.2.3 (CH32SerialBoot commit `b8ccc78`), after 15 sketches
 were built with it and checked on the board.
 
-It could reasonably become the default for game builds. The costs are
+It became the default in 0.3.0 (*Smallest + LTO*, `opt=oslto`). The costs are
 slower links and a map file that is harder to read, since functions merge
 and take `.constprop`/`.part` suffixes.
 
@@ -57,7 +61,7 @@ In rough order of how much they would have saved on CHChess.
 ### 1. Report RAM against the real budget
 
 `boards.txt` sets `upload.maximum_data_size=20480`, the whole SRAM. But the
-linker script (`system/CH32X035/SRC/Ld/link_chgame_app.ld`) reserves a
+linker script (`platform/board/arduino/CHGame/system/CH32X035/SRC/Ld/link_chgame_app.ld`) reserves a
 fixed 2 KB stack at the top, so static data really has about 18,416 bytes.
 The IDE's "Global variables use 18008 bytes (87%) ... leaving 2472 bytes
 for local variables" reads as if the stack had 2.4 KB of headroom, when
@@ -74,7 +78,7 @@ split next to the size report. **Done in 0.2.3.**
 `__stack_size = 2048` is fixed in the app linker script. CHChess's chess
 search runs about 1.5 KB deep, and drawing a frame from inside it needs
 about 800 bytes more. The game works around this by switching to a 1 KB
-stack of its own for those frames (`src/Frame.cpp`, a few lines of inline
+stack of its own for those frames (`Frame.cpp`, a few lines of inline
 assembly). Other options:
 
 * a Tools menu entry (2 / 3 / 4 KB) that passes
@@ -93,9 +97,9 @@ it was how the 2 KB limit was found.
 Sketches can keep data in flash pages above their image; it survives
 re-uploading, as the platform notes record. CHChess and CHBlackjack each
 carry a copy of the flash controller sequence mirrored from
-`bootloader/src/flash.c`, plus page selection, A/B pages and a CRC
-(`CHChess/src/save/Save.cpp`, about 1 KB; now one copy in the CHGame
-library, `chgame/Save.cpp`).
+`platform/bootloader/src/flash.c`, plus page selection, A/B pages and a CRC
+(then CHChess's `src/save/Save.cpp`, about 1 KB; now one copy in the
+CHGame library, `chgame/Save.cpp`).
 
 A small core library would remove that duplication and the risk of
 getting the flash sequence subtly wrong: "give me the free pages above my
@@ -105,7 +109,7 @@ check and the free-page count visible to sketches through a symbol
 instead of arithmetic.
 
 A post-build line saying how many save pages are left would help too
-(CHChess's `tools/check_size.py` prints "save pages free: 2; two need
+(the repository's `tools/check_size.py` prints "save pages free: 2; two need
 <= 50432"). Right now you find out you lost one only if you look.
 
 ### 4. A proper RAM-function section
@@ -136,7 +140,8 @@ newlib-nano's `memmove` is a byte loop, and it and `memcpy` and `memset`
 4 bpp framebuffer that adds up: CHChess's screen
 shake first used `memmove` on framebuffer rows and cost about 10 ms a
 frame; a word-copy loop placed in SRAM (`fx::shiftRows`) made it cheap
-enough not to show up in the frame budget. Word-aligned versions
+enough not to show up in the frame budget (now the CHGame library's
+`fx::applyShake()`, `chgame/Shake.cpp`). Word-aligned versions
 placed in RAM (or at least a word-wise `memmove`) in the core would
 speed up every sketch that clears, scrolls or copies buffers.
 

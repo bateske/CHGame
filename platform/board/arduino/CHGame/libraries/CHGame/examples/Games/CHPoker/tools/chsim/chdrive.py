@@ -40,7 +40,7 @@ class PokerDriver(Driver):
             self.frames(int(args[0]) if args else 0)
         elif name == "playto":
             # Check or call (A) whenever it is your turn, until the table
-            # reaches phase P (src/game/Table.h: 11 showdown, 12 award,
+            # reaches phase P (Table.h: 11 showdown, 12 award,
             # 13 hand over), then W frames more.
             want = int(args[0])
             for _ in range(20000):

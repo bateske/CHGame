@@ -1,10 +1,19 @@
 // CHWords - a casino crossword tile game for the CHGame handheld (CH32X035,
 // 128x128 ST7735, piezo, microSD), in the look of CHBlackjack and its tables.
 //
-// The rules are in src/rules, the dictionary (a compressed list in flash,
-// and the full one on the SD card) in src/dict and src/sd, the CPU in
-// src/ai, the game's flow in src/game, and everything you see and hear in
-// src/stage and src/states.
+// The files, by role:
+//   rules       Words (where tiles may go, what a play scores), Game (racks,
+//               bag, turns, the end)
+//   dictionary  FlashDict (the built-in list's decoder; the list itself is
+//               generated, src/dict/DictData.*), Dict (the full list on the SD card)
+//   CPU         Ai
+//   screens     Screens (title, setup, play, options), Stage (the play screen:
+//               board, rack, camera and the show a play puts on)
+//   drawing     Font (the display face), Tiles (the tiles' serif letters),
+//               Fx (particles and banners); the art is generated, src/assets/
+//   sound       Sounds
+//   saving      Save
+//   main loop   Frame; config.h holds the build switches
 #include <CHGame.h>
 #include "config.h"
 
@@ -14,13 +23,13 @@
 #if defined(USE_CHGAME_USB_CDC) && !CHGAME_DEBUG
 #error "CHWords needs Tools > USB > Upload only to fit in the flash (and Tools > Optimize > Smallest + LTO, the default)"
 #endif
-#include "src/Frame.h"
+#include "Frame.h"
 
 void setup() {
-    arduboy.boot();
+    chgame.boot();
     gfx_begin(GFX_DIV2, GFX_12BPP);
     frame::begin();
-    arduboy.setFrameRate(CHWD_FPS);
+    chgame.setFrameRate(CHWD_FPS);
 }
 
 void loop() {

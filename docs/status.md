@@ -17,26 +17,26 @@
 
 | Game | Image | Save room | RAM | Simulator | Device |
 |---|---|---|---|---|---|
-| CHBackgammon | 50,296 | 136 | 16,892 | `chgame check` | debug build: `gameplay` ran; render times and stack measured |
+| CHBackgammon | 50,328 | 104 | 16,892 | `chgame check` | debug build: `gameplay` ran; render times and stack measured |
 | CHBingo | 36,388 | 14,044 | 14,912 | `chgame check`, sim_save, redraw | debug build: `gameplay` and `perf` ran; 5 of 6 clips equal the simulator's |
-| CHBlackjack | 45,640 | 4,792 | 15,436 | `chgame check` | **runs; render times measured**; debug build: `gameplay` ran, every clip equal to the simulator's |
-| CHBoardwalk | 49,732 | 700 | 15,052 | `chgame check` | debug build: `gameplay` and `perf` ran |
-| CHCheckers | 42,232 | 8,200 | 17,108 | `chgame check` | debug build: `perf` ran; `gameplay` needs a command the lean build lacks |
-| CHChess | 48,832 | 1,600 | 17,544 | `chgame check` | **runs; render and think times, stack measured**; `gameplay` needs a command the lean build lacks |
+| CHBlackjack | 45,668 | 4,764 | 15,436 | `chgame check` | **runs; render times measured**; debug build: `gameplay` ran, every clip equal to the simulator's |
+| CHBoardwalk | 49,604 | 828 | 15,052 | `chgame check` | debug build: `gameplay` and `perf` ran |
+| CHCheckers | 42,240 | 8,192 | 17,108 | `chgame check` | debug build: `perf` ran; `gameplay` needs a command the lean build lacks |
+| CHChess | 48,992 | 1,440 | 17,544 | `chgame check` | **runs; render and think times, stack measured**; `gameplay` needs a command the lean build lacks |
 | CHCraps | 49,940 | 492 | 15,568 | `chgame check`, sim_save | debug build: `perf` ran (23 ms worst); `gameplay` needs a command the lean build lacks |
 | CHCrossword | 50,416 | 16 | 17,276 | `chgame check` (incl. FAT card images) | debug build: `gameplay` and `perf` ran |
-| CHDominoes | 42,796 | 7,636 | 16,864 | `chgame check` | debug build: `gameplay` and `perf` ran |
-| CHFour | 36,792 | 13,640 | 16,348 | `chgame check` | debug build: `gameplay`, `perf` and `ui` ran; the release build starts |
-| CHMahjong | 48,580 | 1,852 | 17,812 | `chgame check` | debug build: starts, part of `perf` ran; the scripts need a command the lean build lacks |
-| CHPoker | 48,544 | 1,888 | 15,500 | `chgame check` | debug build: `gameplay` and `perf` ran |
-| CHRoulette | 49,916 | 516 | 16,072 | `chgame check`, ball tests, redraw | debug build: `gameplay` and `perf` ran; 4 of 5 clips equal the simulator's |
-| CHSlots | 47,664 | 2,768 | 14,916 | `chgame check`, redraw | debug build: `gameplay` and `perf` ran (24 ms worst); every clip equal to the simulator's |
-| CHSnakes | 37,272 | 13,160 | 15,360 | `chgame check` | **debug build runs the title; title render time and stack measured** (2026-10-02); the release build was played briefly |
-| CHSolitaire | 30,876 | 19,556 | 16,188 | `chgame check` | debug build: `gameplay` ran, most of `perf` |
+| CHDominoes | 42,888 | 7,544 | 16,864 | `chgame check` | debug build: `gameplay` and `perf` ran |
+| CHFour | 36,832 | 13,600 | 16,348 | `chgame check` | debug build: `gameplay`, `perf` and `ui` ran; the release build starts |
+| CHMahjong | 48,592 | 1,840 | 17,812 | `chgame check` | debug build: starts, part of `perf` ran; the scripts need a command the lean build lacks |
+| CHPoker | 48,540 | 1,892 | 15,500 | `chgame check` | debug build: `gameplay` and `perf` ran |
+| CHRoulette | 49,836 | 596 | 16,072 | `chgame check`, ball tests, redraw | debug build: `gameplay` and `perf` ran; 4 of 5 clips equal the simulator's |
+| CHSlots | 47,656 | 2,776 | 14,916 | `chgame check`, redraw | debug build: `gameplay` and `perf` ran (24 ms worst); every clip equal to the simulator's |
+| CHSnakes | 37,320 | 13,112 | 15,360 | `chgame check` | **debug build runs the title; title render time and stack measured** (2026-10-02); the release build was played briefly |
+| CHSolitaire | 30,904 | 19,528 | 16,188 | `chgame check` | debug build: `gameplay` ran, most of `perf` |
 | CHTicTacToe | 49,712 | 720 | 14,580 | `chgame check`, redraw | debug build: `gameplay` and `perf` ran; every clip equal to the simulator's |
-| CHWords | 50,388 | 44 | 15,788 | `chgame check` (incl. the SD dictionary) | debug build: four of `gameplay`'s clips; the CPU's `auto` outlasts the driver |
-| CHWordWheel | 50,380 | 52 | 14,956 | `chgame check` (incl. the SD bank), redraw | debug build: `gameplay` and `perf` ran; 4 of 5 clips equal the simulator's |
-| CHYacht | 44,100 | 6,332 | 15,260 | `chgame check`, sim_save | debug build: `gameplay` and `perf` ran; every clip equal to the simulator's |
+| CHWords | 50,404 | 28 | 15,788 | `chgame check` (incl. the SD dictionary) | debug build: four of `gameplay`'s clips; the CPU's `auto` outlasts the driver |
+| CHWordWheel | 50,376 | 56 | 14,956 | `chgame check` (incl. the SD bank), redraw | debug build: `gameplay` and `perf` ran; 4 of 5 clips equal the simulator's |
+| CHYacht | 44,104 | 6,328 | 15,260 | `chgame check`, sim_save | debug build: `gameplay` and `perf` ran; every clip equal to the simulator's |
 
 When the games were brought into this repository, every simulator script (211), host
 test, audio preview, redraw check and release build was re-run and compared

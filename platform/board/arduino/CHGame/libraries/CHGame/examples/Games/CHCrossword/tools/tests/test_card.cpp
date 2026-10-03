@@ -1,4 +1,4 @@
-// Host tests of the card side: CHSd's Fat.cpp and src/pack/Pack.cpp reading
+// Host tests of the card side: CHSd's Fat.cpp and Pack.cpp reading
 // packs out of real FAT images (made by tools/tests/cwtests.py with tools/puzzles/
 // mkcard.py: FAT16 and FAT32, long names, decoy entries, fragmented files,
 // files that are not packs), and what happens when the card stops answering.
@@ -11,8 +11,8 @@
 #include <string.h>
 #include <string>
 #include <vector>
-#include "../../src/game/Puzzle.h"
-#include "../../src/pack/Pack.h"
+#include "../../Puzzle.h"
+#include "../../Pack.h"
 #include <SdSpi.h>
 
 static long checks, fails;

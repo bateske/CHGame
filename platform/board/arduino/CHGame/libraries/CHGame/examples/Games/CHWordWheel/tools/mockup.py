@@ -1,5 +1,5 @@
 """P0 mockups: WORD WHEEL's screens drawn with pixkit at the geometry the
-game will use (src/render/Layout.h), written to out/mockups/.
+game will use (Layout.h), written to out/mockups/.
 
     python tools/mockup.py            # every scene
     python tools/mockup.py wheel      # scenes whose name contains 'wheel'

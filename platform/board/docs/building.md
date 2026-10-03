@@ -244,8 +244,8 @@ arduino-cli core uninstall CHGame:ch32v
 rm -rf "$ARDUINO15/packages/CHGame"
 arduino-cli core update-index --additional-urls https://github.com/bateske/CHGame/releases/latest/download/package_chgame_index.json
 arduino-cli core install CHGame:ch32v --additional-urls https://github.com/bateske/CHGame/releases/latest/download/package_chgame_index.json
-arduino-cli compile -b CHGame:ch32v:CHGame -u -p <port> platform/board/arduino/CHGame/libraries/CHGame/examples/Hello
-arduino-cli burn-bootloader -b CHGame:ch32v:CHGame -P chgameusb -p <port>
+arduino-cli compile -b CHGame:ch32v:rev0 -u -p <port> platform/board/arduino/CHGame/libraries/CHGame/examples/Hello
+arduino-cli burn-bootloader -b CHGame:ch32v:rev0 -P chgameusb -p <port>
 ```
 
 The compile line has no `--library`: the package must deliver the

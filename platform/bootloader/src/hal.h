@@ -5,7 +5,7 @@
  * (test/native) provides the same names as functions over its models of the
  * card, the panel and the flash.
  *
- * Pins (platform/board/docs/hardware-pinmap.md, variant_CHGame.h):
+ * Pins (platform/board/docs/hardware-pinmap.md, variant_CHGame_Rev0.h):
  *   SPI1   SCK PA5, MISO PA6, MOSI PA7 - shared by the panel and the card
  *   panel  CS PA4, DC PB0, RST PB12
  *   card   CS PB11

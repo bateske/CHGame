@@ -40,11 +40,11 @@ To put it on the handheld: in the Arduino IDE, with the CHGame board package ins
 
 ## Developer notes
 
-- **A search that never stops the frame loop.** The alpha-beta search in `src/ai/Ai.cpp` keeps its own stack in an array and runs a 5 ms slice per tick, so the game needs no second stack and the screen keeps moving while he thinks.
+- **A search that never stops the frame loop.** The alpha-beta search in `Ai.cpp` keeps its own stack in an array and runs a 5 ms slice per tick, so the game needs no second stack and the screen keeps moving while he thinks.
 - **`RAMFUNC` where it pays.** The search's two inner functions run from SRAM, about twice as fast as from flash. Nothing in them calls libgcc: the board is two 64-bit sets of discs, and a cell's bit is made with a 32-bit shift.
 - **A still screen is not redrawn.** `stage::render()` returns false when nothing changed and the framebuffer is sent again, while the palette effects keep moving.
 - **A camera from integer scaling.** The whip-zoom on the winning four is a zoom in fifths about a world point, with a 20x20 disc for the close-up. The endings draw the dealer at twice the size by scaling his sprite's row spans.
-- **Commentary you can test.** His 98 lines in `src/game/Taunt.cpp` are picked from what the search and the board analysis report, and the host tests check that an announced forced win comes true.
+- **Commentary you can test.** His 98 lines in `Taunt.cpp` are picked from what the search and the board analysis report, and the host tests check that an announced forced win comes true.
 - More in [NOTES.md](NOTES.md): design decisions, tests, the script commands and open items.
 
 ## Credits

@@ -9,7 +9,8 @@ This is the repository's one simulator: every game builds with it (a sketch
 may be a folder or a game's, app's or CHGfx example's name: `build CHFour`,
 `run GameKit`), and so does any other sketch on CHGfx or the CHGame library.
 
-`build` compiles the sketch's .ino and every .cpp/.c under its src/ folder,
+`build` compiles the sketch's .ino, the .cpp/.c beside it and every .cpp/.c
+under its src/ folder,
 CHGfx's portable code (every src/*.cpp except CHGfx.cpp, unmodified:
 drawing, extras, text effects, palette), the CHGame library (every .cpp
 under its src/) when the sketch includes <CHGame.h>, and the host shims in
@@ -136,7 +137,8 @@ def chgame_dir():
 def uses(sketch, inos, pattern):
     """Does any source of the sketch include something matching `pattern`?"""
     rx = re.compile(pattern)
-    files = list(inos) + [p for p in (sketch / "src").rglob("*") if p.suffix in (".cpp", ".c", ".h", ".hpp")]
+    files = list(inos) + [p for p in list(sketch.glob("*")) + list((sketch / "src").rglob("*"))
+                          if p.suffix in (".cpp", ".c", ".h", ".hpp")]
     return any(rx.search(p.read_text(encoding="utf-8", errors="replace")) for p in files)
 
 
@@ -219,6 +221,7 @@ def build(sketch, defines=(), out=None):
             f.write(ino.read_text(encoding="utf-8"))
             f.write("\n")
     srcs = [unit]
+    srcs += sorted(p for p in sketch.glob("*") if p.suffix in (".cpp", ".c"))      # beside the .ino, as Arduino does
     srcs += sorted(p for p in (sketch / "src").rglob("*") if p.suffix in (".cpp", ".c")) if (sketch / "src").exists() else []
     srcs += sorted(p for p in chgfx.glob("*.cpp") if p.name != "CHGfx.cpp")
     includes = [d for d in (own, HERE / "host") if d.is_dir()] + [sketch, chgfx]

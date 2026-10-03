@@ -102,7 +102,7 @@
  * The three control pins are yours to move - redefine any of these
  * before including CHGfx.h, or with -D build flags.
  *
- * Defaults are the CHGame board (see variant_CHGame.h):
+ * Defaults are the CHGame board (see variant_CHGame_Rev0.h):
  *   PA4 = LCD_CS, PB0 = LCD_DC, PB12 = LCD_RST, PB11 = SD_CS
  * SD_CS is driven high at begin() because the microSD slot shares SPI1.
  */

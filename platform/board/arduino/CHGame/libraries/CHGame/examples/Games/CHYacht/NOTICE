@@ -13,7 +13,7 @@ licensed under the Apache License, Version 2.0, by way of CHBlackjack
 (https://github.com/bateske/CHBlackjack, the same author's colour port):
 
   * The dealer: PPOT's bust and face expressions, recoloured and retouched
-    (tools/art/dealer.png), plus expressions drawn for CHBlackjack.
+    (the repository's tools/art/common/dealer.png), plus expressions drawn for CHBlackjack.
     tools/assets.py builds them into src/assets/Assets.cpp from the
     original's assets/ PNGs.
   * The 3x5 font (in the CHGame library,

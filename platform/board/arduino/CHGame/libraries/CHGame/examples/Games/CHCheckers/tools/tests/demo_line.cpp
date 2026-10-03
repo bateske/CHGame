@@ -5,7 +5,7 @@
 //     zig c++ -std=gnu++17 -O2 -DCHTEST tools/tests/demo_line.cpp -o demo_line.exe
 #include <stdio.h>
 #include <vector>
-#include "../../src/engine/Engine.cpp"
+#include "../../Engine.cpp"
 
 int main() {
     uint32_t r = 2463534242u;

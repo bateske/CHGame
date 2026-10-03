@@ -1,5 +1,7 @@
 # CHRoulette spec: betting layout, glove navigation, chips and limits
 
+*Written while designing CHRoulette; paths and names brought up to date on 2026-10-02.*
+
 I checked the geometry with a throwaway Python model that only printed to stdout: real FONT35 glyphs, the `hand.png` glove, the real spot set, and a simulation of `nearest()`. All coordinates are screen pixels, inclusive. Colours are palette names.
 
 ## 0. Things that do not fit as drafted
@@ -8,7 +10,7 @@ I checked the geometry with a throwaway Python model that only printed to stdout
    - Two-digit numbers (7 px) sit 1 px from one side of their cell and touch the other.
    - "00" fills its 7 px cell exactly.
    - "2:1" and "19-36" need custom kerning (§1.4). "19-36" fills its 17 px cell exactly.
-2. **Glyph set.** The task lists `;`, but FONT35 has no `;` (`IDX35[';' - 32] == -1`, `CHChess/src/gfx/Draw.cpp:216`). Also `&`, `"` and `@` are missing.
+2. **Glyph set.** The task lists `;`, but FONT35 had no `;` (`IDX35[';' - 32] == -1` in CHChess's copy of the font). Also `&`, `"` and `@` were missing. The font is now the CHGame library's (`chgame/Draw.cpp`, `glyph35()`), which has since gained `;`, `&` and `"`; `@` is still blank.
 3. **Plate overflow.** One plate is too wide: TOP LINE with numbers and an amount is 121 px, against 120 available. Rule: if the words exceed 120 px, drop the number list ("TOP LINE $100 6 TO 1").
 4. **Chess `nearest()` copied as-is does not work here.** Three failures showed up in simulation:
    - From wide cells it skips rows (UP from `$10` jumps to 2nd 12, missing RED).
@@ -272,7 +274,7 @@ A generated table would cost about 1 KB for geometry plus 795 B for 40-bit masks
 - The BJ `Fly[16]` pool is reused with `seat` renamed to `spot`: 16 × 20 B.
 - Net new RAM is about 210 B plus the pool. Removing cards frees about 860 B.
 
-## 3. Navigation (`nearest()`, adapted from CHChess `Screens.cpp:340-358`)
+## 3. Navigation (`nearest()`, adapted from CHChess `Screens.cpp`)
 
 **Glove position:**
 - Normally the chip anchor.
@@ -436,8 +438,8 @@ Purse, total and returns are int32.
 **Cost estimate:** about 1.9 KB flash (Spots 0.6, layout draw 0.6, chips 0.2, nav and input 0.35, plate 0.25). A full table-band redraw takes about 1.5–2 ms, plus about 2 ms for the wall when the glove reaches it.
 
 ### Critical Files for Implementation
-- CHChess\src\states\Screens.cpp
-- CHChess\src\stage\Stage.cpp
-- CHBlackjack\src\fx\Presenter.cpp
-- CHBlackjack\src\render\CardArt.cpp
-- CHBlackjack\src\render\Bar.cpp
+- CHChess\Screens.cpp
+- CHChess\Stage.cpp
+- CHBlackjack\Presenter.cpp
+- CHBlackjack\CardArt.cpp
+- CHBlackjack\Bar.cpp

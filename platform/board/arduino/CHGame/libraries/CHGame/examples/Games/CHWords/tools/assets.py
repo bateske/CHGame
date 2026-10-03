@@ -11,7 +11,7 @@ Sources, all in tools/art/:
   * tilefont.txt: the tiles' letters close up and in the rack (DejaVu Serif
     Bold, from CHCrossword).
 
-The tiles, the board and the rack are drawn by the game itself (src/stage),
+The tiles, the board and the rack are drawn by the game itself (Stage.cpp),
 letters in the 3x5 font: 27 kinds of tile would not fit as art.
 
 To redraw the glove in an image editor: save it as tools/art/hand.png, edit it with the 16 palette colours only (see the

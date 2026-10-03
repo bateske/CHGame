@@ -137,7 +137,7 @@ def build_index(version: str, archive: Path, base_url: str, out: Path = DIST,
         "archiveFileName": archive.name,
         "checksum": "SHA-256:" + sha256(archive),
         "size": str(archive.stat().st_size),
-        "boards": [{"name": "CHGame"}],
+        "boards": [{"name": "CHGame Rev0"}],
         "toolsDependencies": [{"packager": "CHGame", "name": t["name"], "version": t["version"]}
                               for t in (gcc, wchisp, uploader)],
     }

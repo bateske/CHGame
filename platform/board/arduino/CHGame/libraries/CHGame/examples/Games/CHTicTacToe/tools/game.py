@@ -2,5 +2,6 @@
 the repository's tools/gamecfg.py; `chgame test`, `chgame check`,
 `chgame redraw` read this)."""
 
-TESTS = {"test_rules": dict(sources=["tools/tests/test_rules.cpp", "src/game/*.cpp"])}
+TESTS = {"test_rules": dict(sources=["tools/tests/test_rules.cpp", "Cpu.cpp", "Match.cpp", "Rules.cpp",
+                                     "Text.cpp"])}
 QUICK_ARGS = []

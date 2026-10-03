@@ -23,7 +23,7 @@ platform/board/arduino/CHGame/libraries/CHGame/
   library.properties        name=CHGame, includes=CHGame.h, depends=CHGfx
   src/CHGame.h              the one include: CHGfx and every module below
   src/chgame/Config.h       CHGAME_DEBUG, CHGAME_PROFILE
-  src/chgame/Input.*        class CHGame, `arduboy`: buttons, pacing, exit to the menu
+  src/chgame/Input.*        class CHGame, `chgame`: buttons, pacing, exit to the menu
   src/chgame/Palette.*      the house colours, pal::
   src/chgame/Draw.*         panels, sprites, dither, the 3x5 font
   src/chgame/Mask.*         outlined, shadowed, gradient lettering
@@ -186,5 +186,8 @@ difference between two save pages and one. They are marked as such in
 
 - **What the package ships with the examples:** the sketches only, or
   their `tools/` and art too (roadmap step 4).
-- **The instance name** stays `arduboy`: every game uses it and Arduboy
-  developers already type it.
+- **The instance name** was `arduboy` until 2026-10-02, then became
+  `chgame` (`chgame.boot()`, `chgame.pressed()` ...): CHGame is the
+  platform and the product, Arduboy the maker and the brand. A sketch
+  ported from Arduboy2 renames `arduboy.` to `chgame.`
+  ([getting-started.md](getting-started.md)).

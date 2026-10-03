@@ -34,7 +34,7 @@ class SolitaireDriver(Driver):
 
     def op(self, name, args, outdir):
         if name == "waitstate":
-            # Run until the table is in state S (src/stage/Stage.h: 0
+            # Run until the table is in state S (Stage.h: 0
             # dealing, 1 play, 2 playing itself out, 3 cascade, 4 done),
             # then W frames more (default 0). Gives up after 20000 frames.
             for _ in range(20000):

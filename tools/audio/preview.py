@@ -4,11 +4,11 @@
     python tools/audio/preview.py <game dir> OUTDIR [--only NAME ...]
 
 Compiles the CHGame library's chgame/Audio.cpp with the game's sounds
-(src/audio/*.cpp: SOUNDS, its effects in Sfx order, and for a game with
+(Sounds.cpp beside the .ino, and src/audio/: SOUNDS, its effects in Sfx order, and for a game with
 music playSong(Song, bool)) and a model of the piezo timer (host/), then
 writes one WAV per effect, and one per song for each music rendering
 (arpeggio and lead). The names come from the game's own enums (Sfx and
-Song, in src/audio/*.h), in their order. For each it prints how often a sounding tone was cut off mid-cycle
+Song, in Sounds.h/Music.h or src/audio/), in their order. For each it prints how often a sounding tone was cut off mid-cycle
 and restarted (audible clicks) and a hash of the pin's waveform, so two
 versions of the code can be compared exactly; a song also gets a .log of
 its pitch, one line per millisecond.
@@ -39,11 +39,18 @@ def enum_names(text, name):
     return [n.lower() for n in names if n and n != "COUNT"]
 
 
+def audio_files(game, suffix):
+    """The game's sound sources: Sounds.* and Music.* beside the .ino (where the
+    examples keep their code), and anything in src/audio/ (generated scores)."""
+    root = [game / f"{n}{suffix}" for n in ("Sounds", "Music")]
+    return [p for p in root if p.is_file()] + sorted((game / "src" / "audio").glob(f"*{suffix}"))
+
+
 def build(game, out, music):
     exe = out / "harness.exe"
     audio = game / "src" / "audio"
     srcs = [HERE / "host" / "harness.cpp", LIB / "chgame" / "Audio.cpp"]
-    srcs += sorted(p for p in audio.glob("*.cpp"))
+    srcs += audio_files(game, ".cpp")
     cmd = find_cxx() + ["-std=gnu++17", "-O2", "-w", f"-I{HERE / 'host'}", f"-I{LIB}", f"-I{audio}",
                         f"-I{game}"]
     if music:
@@ -73,12 +80,11 @@ def main(argv=None):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     import paths
     game = paths.sketch(a.game)
-    audio = game / "src" / "audio"
-    headers = "".join(h.read_text(encoding="utf-8") for h in sorted(audio.glob("*.h")))
+    headers = "".join(h.read_text(encoding="utf-8") for h in audio_files(game, ".h"))
     sfx = enum_names(headers, "Sfx")
     songs = enum_names(headers, "Song") if "playSong" in headers else []
     if not sfx:
-        raise SystemExit(f"{audio}: no `enum class Sfx` found")
+        raise SystemExit(f"{game}: no `enum class Sfx` in Sounds.h or src/audio/")
     out = Path(a.outdir)
     out.mkdir(parents=True, exist_ok=True)
     exe = build(game, out, bool(songs))

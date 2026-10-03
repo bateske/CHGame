@@ -1,10 +1,10 @@
-// Host tests for src/game: every table's rules, the dealer, the match flow.
+// Host tests: every table's rules, the dealer, the match flow.
 #include <stdio.h>
 #include <string.h>
-#include "../../src/game/Rules.h"
-#include "../../src/game/Cpu.h"
-#include "../../src/game/Match.h"
-#include "../../src/game/Text.h"
+#include "../../Rules.h"
+#include "../../Cpu.h"
+#include "../../Match.h"
+#include "../../Text.h"
 
 static int checks = 0, failures = 0;
 #define CHECK(c) do { checks++; if (!(c)) { failures++; printf("FAIL %s:%d: %s\n", __FILE__, __LINE__, #c); } } while (0)

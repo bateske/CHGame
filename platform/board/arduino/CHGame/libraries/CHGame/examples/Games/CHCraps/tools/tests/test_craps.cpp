@@ -1,4 +1,4 @@
-// Host tests for the craps rules (src/game/Craps.cpp).
+// Host tests for the craps rules (Craps.cpp).
 //
 //   chgame test
 //
@@ -14,7 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "../../src/game/Craps.h"
+#include "../../Craps.h"
 
 static int fails = 0, checks = 0;
 #define CHECK(cond, ...) do { checks++; if (!(cond)) { fails++; printf("FAIL %s:%d: ", __FILE__, __LINE__); \

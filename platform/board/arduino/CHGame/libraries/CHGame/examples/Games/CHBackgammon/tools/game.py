@@ -7,15 +7,15 @@ import re
 # The pure-logic sources, compiled beside the tests as they are. With the
 # match sources present (the trained network and its tables), the whole
 # match is tested too.
-_MATCH = ["src/ai/Net.cpp", "src/ai/NetData.cpp", "src/ai/Race.cpp", "src/ai/RaceData.cpp", "src/ai/Ai.cpp",
-          "src/ai/Cube.cpp", "src/ai/MetData.cpp", "src/game/Match.cpp", "src/game/Notation.cpp", "lib/chgame/Fmt.cpp"]
+_MATCH = ["Net.cpp", "src/ai/NetData.cpp", "Race.cpp", "src/ai/RaceData.cpp", "Ai.cpp",
+          "Cube.cpp", "src/ai/MetData.cpp", "Match.cpp", "Notation.cpp", "lib/chgame/Fmt.cpp"]
 
 
 def TESTS():
     from pathlib import Path
     here = Path(__file__).resolve().parent
     game = here.parent
-    sources = ["tools/tests/test_backgammon.cpp", "src/rules/Board.cpp"]
+    sources = ["tools/tests/test_backgammon.cpp", "Rules.cpp"]
     defines = ["CHTEST"]
     if (here / "tests" / "test_match.h").exists() and all((game / m).exists() for m in _MATCH if not m.startswith("lib/")):
         sources += _MATCH

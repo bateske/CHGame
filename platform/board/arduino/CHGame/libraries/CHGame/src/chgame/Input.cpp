@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include "Input.h"
 
-CHGame arduboy;
+CHGame chgame;
 
 #ifndef CHSIM
 // Direct INDR reads: one register load per port instead of eight

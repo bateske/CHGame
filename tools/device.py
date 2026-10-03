@@ -37,7 +37,7 @@ sys.path.insert(0, str(REPO / "tools"))
 import paths  # noqa: E402
 
 LIBRARIES = paths.LIBRARIES
-FQBN_DEBUG = "CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game"
+FQBN_DEBUG = "CHGame:ch32v:rev0:opt=oslto,rtlib=nano,periph=game"
 FQBN_RELEASE = FQBN_DEBUG + ",usb=uploadonly"
 
 
@@ -74,7 +74,7 @@ def upload(sketch, out, port=None, arduino=False):
     if not port:
         raise SystemExit("no CHGame found on USB (VID 16C0:27DD): plug it in, or pass --port")
     if arduino:
-        r = subprocess.run(["arduino-cli", "upload", "-b", "CHGame:ch32v:CHGame", "-p", port,
+        r = subprocess.run(["arduino-cli", "upload", "-b", "CHGame:ch32v:rev0", "-p", port,
                             "--input-dir", str(out), str(sketch)], capture_output=True, text=True)
         if r.returncode:
             sys.stderr.write(r.stdout + r.stderr)

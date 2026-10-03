@@ -2,11 +2,11 @@
 the repository's tools/gamecfg.py; `chgame test`, `chgame check`,
 `chgame redraw` read this)."""
 
-_GAME = ["src/game/*.cpp", "lib/chgame/Fmt.cpp"]
+_GAME = ["Cpu.cpp", "Puzzle.cpp", "Show.cpp", "Spin.cpp", "Wedges.cpp", "lib/chgame/Fmt.cpp"]
 TESTS = {
     "test_show": dict(sources=["tools/tests/test_show.cpp", *_GAME], includes=["lib", "chsd", "chsd-host"],
                       cwd="game", optional=True),
-    "test_bank": dict(sources=["tools/tests/test_bank.cpp", *_GAME, "src/bank/FlashBank.cpp", "src/bank/SdBank.cpp",
+    "test_bank": dict(sources=["tools/tests/test_bank.cpp", *_GAME, "FlashBank.cpp", "SdBank.cpp",
                                "src/bank/BankData.cpp", "chsd/Fat.cpp"], includes=["lib", "chsd", "chsd-host"],
                       cwd="game", optional=True),
 }

@@ -52,11 +52,11 @@ To put it on the handheld: in the Arduino IDE, with the CHGame board package ins
 
 ## Developer notes
 
-- **The roll never comes from the physics.** `src/game/Yacht.cpp` rolls the dice. The dice cam then simulates the whole throw ahead (`src/cam/Dice3D.cpp`), sees which face of each die will land on top, and repaints the pips at the back wall so the tumble ends on the rolled numbers.
-- **Five 3D dice.** `src/cam/Dice3D.cpp` and `src/cam/Cam.cpp` are CHCraps's dice and camera grown from two dice to five. Held dice are out of the simulation and wait on a plate in the corner of the screen.
-- **A computer player spread over frames.** `ai::step()` in `src/game/Yacht.cpp` looks one roll ahead over all 32 ways to hold, a few holds per call while the dealer "shakes", valuing each outcome by its best box against that box's par. The solo paytable is set against its scores (`tools/tests/test_yacht.cpp` prints the figures).
-- **Band redraw.** In `src/states/Screens.cpp` the seats and card, the tray and the bar are repainted only when what they show changes; only the dice cam repaints the whole screen every frame.
-- **A small save record.** `src/save/Save.cpp` says only what the record holds; the CHGame library's `chgame/Save.h` does the flash pages.
+- **The roll never comes from the physics.** `Yacht.cpp` rolls the dice. The dice cam then simulates the whole throw ahead (`Dice3D.cpp`), sees which face of each die will land on top, and repaints the pips at the back wall so the tumble ends on the rolled numbers.
+- **Five 3D dice.** `Dice3D.cpp` and `Cam.cpp` are CHCraps's dice and camera grown from two dice to five. Held dice are out of the simulation and wait on a plate in the corner of the screen.
+- **A computer player spread over frames.** `ai::step()` in `Yacht.cpp` looks one roll ahead over all 32 ways to hold, a few holds per call while the dealer "shakes", valuing each outcome by its best box against that box's par. The solo paytable is set against its scores (`tools/tests/test_yacht.cpp` prints the figures).
+- **Band redraw.** In `Screens.cpp` the seats and card, the tray and the bar are repainted only when what they show changes; only the dice cam repaints the whole screen every frame.
+- **A small save record.** `Save.cpp` says only what the record holds; the CHGame library's `chgame/Save.h` does the flash pages.
 - More in [NOTES.md](NOTES.md): design decisions, tests, the script commands and open items.
 
 ## Credits

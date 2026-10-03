@@ -1,4 +1,4 @@
-// Host tests for the rules (src/game/Yacht.cpp).
+// Host tests for the rules (Yacht.cpp).
 //
 // 1. Every box against an independent oracle, for all 7,776 rolls.
 // 2. The joker rule, the upper bonus, bonus yachts, turn order, the money.
@@ -10,7 +10,7 @@
 #include <string.h>
 #include <algorithm>
 #include <vector>
-#include "../../src/game/Yacht.h"
+#include "../../Yacht.h"
 
 static int fails = 0, checks = 0;
 #define CHECK(cond, ...) do { checks++; if (!(cond)) { fails++; printf("FAIL %s:%d: ", __FILE__, __LINE__); \

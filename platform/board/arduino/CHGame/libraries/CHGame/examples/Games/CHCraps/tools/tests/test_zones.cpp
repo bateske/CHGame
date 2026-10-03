@@ -1,4 +1,4 @@
-// Host tests for the layout's spots and the cursor (src/render/Zones.cpp).
+// Host tests for the layout's spots and the cursor (Zones.cpp).
 //
 // 1. Every bet a table offers has a spot, and every spot's chips sit inside
 //    the screen's felt (or the bar).
@@ -7,8 +7,8 @@
 // 3. DOWN from the bottom of the felt lands in the bar; ROLL is reachable.
 #include <stdio.h>
 #include <string.h>
-#include "../../src/game/Craps.h"
-#include "../../src/render/Zones.h"
+#include "../../Craps.h"
+#include "../../Zones.h"
 
 static int fails = 0, checks = 0;
 #define CHECK(cond, ...) do { checks++; if (!(cond)) { fails++; printf("FAIL %s:%d: ", __FILE__, __LINE__); \

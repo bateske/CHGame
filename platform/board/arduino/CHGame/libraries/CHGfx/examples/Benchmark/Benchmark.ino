@@ -10,7 +10,7 @@
  *   Tools > Optimize > Faster (-O2)
  * The board's default is -Os, which costs roughly 10-20% on the drawing
  * primitives. From the command line:
- *   arduino-cli compile -b CHGame:ch32v:CHGame:opt=o2std .
+ *   arduino-cli compile -b CHGame:ch32v:rev0:opt=o2std .
  *
  * PRINTF WARNING
  * ---------------

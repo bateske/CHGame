@@ -65,8 +65,7 @@ Exactly as the game's NOTICE gives them.
   copying, where the size or speed was won. Sizes, test instructions,
   script commands and open items live in `NOTES.md`; the list ends with a
   link to it.
-- **Credits.** Last. The same names, works and licences as `NOTICE`
-  (CLAUDE.md, rule 7): nothing added from upstream projects' credit lists.
+- **Credits.** Last. The same names, works and licences as `NOTICE`.
 
 No banner, no installing section, no development section, no sizes that
 go stale. Plain hyphens, LF line endings.

@@ -1,9 +1,9 @@
 """Look-dev: the board mocked up in Python, to choose colours and chip art
-before (and beside) the real renderer in src/table.
+before (and beside) the real renderer in Table.cpp.
 
     python tools/lookdev.py            -> docs/mockups/board_*.png
 
-Not part of the build. The layout numbers mirror src/table/Table.h.
+Not part of the build. The layout numbers mirror Table.h.
 """
 import sys
 from pathlib import Path

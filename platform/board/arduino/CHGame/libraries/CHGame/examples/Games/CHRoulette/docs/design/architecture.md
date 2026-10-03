@@ -1,5 +1,7 @@
 # CHRoulette: architecture, reuse, budget and phased plan
 
+*Written while designing CHRoulette; paths and names brought up to date on 2026-10-02.*
+
 I based this on the seven map reports. I then checked them against the source. Diffs were run with `--strip-trailing-cr` on both games, and `check_size.py` was run on the existing BJ and CC build maps. `BJ` means `CHBlackjack` and `CC` means `CHChess`.
 
 ## 0. Refinements to the draft (decisions this plan takes)
@@ -20,10 +22,10 @@ I based this on the seven map reports. I then checked them against the source. D
    - Fallback if the user prefers simplicity: drop the FELT option (about 150 B less, no swap).
 4. **Fonts.** Keep BJ's 5×7 `gfx_text` for the plaque purse, menus and selected bar labels, for the BJ look. It is cut candidate #2 (−0.74 KB flash, −264 B SRAM).
 5. **No splash.** BJ's splash is "PPOT presents", and Roulette is not a PPOT port. This drops `PPOT_LOGO` (288 B) and the splash code.
-6. **Pure split of `fx::ease/isin/rnd`** into `src/fx/Ease.*`. The ball simulation and the host tests can then link it without CHGfx. LTO makes this free.
-7. **The rules own the cursor** (as BJ's `Round` does). Navigation is pure (`game/Nav.*`, CC's `nearest()` over a spot-position table). The host fuzz can then drive the real input path with buttons.
+6. **Pure split of `fx::ease/isin/rnd`** into `Ease.*` (now the CHGame library's `chgame/Ease.cpp`). The ball simulation and the host tests can then link it without CHGfx. LTO makes this free.
+7. **The rules own the cursor** (as BJ's `Round` does). Navigation is pure (`Nav.*`, CC's `nearest()` over a spot-position table). The host fuzz can then drive the real input path with buttons.
 8. **Use CC's own `sprite4`, `dither` and `shiftRows` shake** instead of BJ's `gfx_sprite4` / `gfx_dither` / `gfx_scroll`. CC measured +244/+8/+164 B flash and +160/+176 B SRAM for the library versions.
-9. **Debug builds on the device do not write flash** unless a script enables it with the hook `Y 1`. Debug builds use the same save pages, and the pages are shared by every CHGame game (§5, etiquette).
+9. **Debug builds on the device do not write flash** unless a script enables it with the hook `E 1` (planned as `Y 1`; see §1.2). Debug builds use the same save pages, and the pages are shared by every CHGame game (§5, etiquette).
 10. **SELECT cycles the chip denomination** (user decision), so it is no longer a mute toggle. Mute moves to Options (SOUND OFF only).
 
 ---
@@ -37,59 +39,66 @@ Legend:
 - **[N]**: new.
 - **[G]**: generated.
 
+The left column says where each piece is now. What the plan copied into the game (input and pacing, Fmt, Palette, Draw, Mask, Ease, the sound engine, the flash code of Save, Debug, RamFunc) has been the CHGame library's `chgame/` since 2026-10-02; the game's own files sit beside the `.ino`, and the tools every game shares are the repository's `tools/`.
+
 ```
-CHRoulette.ino        [P BJ CHBlackjack.ino:38-69] loop unchanged; debugHook R/F/J/G/W/M/Y
-config.h              [P BJ config.h] CHRL_VERSION "0.1", CHRL_DEBUG, CHRL_LEAN (= DEBUG && !CHSIM && !CHRL_FULL:
-                      drops music scores + credits page ONLY; saving stays), CHRL_PROFILE 0, CHRL_FPS 60
+CHRoulette.ino        [P BJ CHBlackjack.ino loop()] loop unchanged; debugHook R/F/J/G/W/M/E
+config.h              [P BJ config.h] CHRL_VERSION "0.1", CHRL_LEAN (= CHGAME_DEBUG && !CHSIM && !CHRL_FULL:
+                      drops music scores + credits page ONLY; saving stays), CHRL_FPS 60
+                      (the debug and profile switches are now the library's CHGAME_DEBUG, CHGAME_PROFILE)
 LICENSE .gitattributes .gitignore   [V-BJ] (identical in both)
 NOTICE README.md      [N] (§3.6)
-src/CHGame.h/.cpp     [V-BJ]  (diff vs CC: 2 comment lines)
-src/RamFunc.h         [V-BJ comment] tag "chrl"
-src/gfx/Fmt.*         [V]  (0 diff lines)
-src/gfx/Palette.*     [M]  (§1.1)
-src/gfx/Draw.*        [M]  CC Draw.cpp/.h + BJ panel()
-src/gfx/Mask.*        [M]  (§1.1)
-src/fx/Ease.*         [N split] ease/CURVES, isin/SIN, rnd/rndRange/reseed (moved out of Fx; identical in both games)
-src/fx/Fx.*           [M]  (§1.1)
-src/fx/Presenter.*    [P BJ Presenter] event drain, Fly pool, chipsIn/sweep/collectT/pending, rolling purse,
+chgame/Input.*        [V-BJ]  was the games' own CHGame.h/.cpp (diff vs CC: 2 comment lines)
+chgame/RamFunc.h      [V-BJ comment] was a game copy tagged "chrl"; a game's RAMFUNC now gets the library's "app" tag
+chgame/Fmt.*          [V]  (0 diff lines)
+chgame/Palette.*      [M]  (§1.1)
+chgame/Draw.*         [M]  CC Draw.cpp/.h + BJ panel()
+chgame/Mask.*         [M]  (§1.1)
+chgame/Ease.cpp       [N split] ease/CURVES, isin/SIN, rnd/rndRange/reseed (moved out of Fx; identical in both games)
+Fx.*                  [M]  (§1.1); the body is now the library's chgame/Sizzle, Fx.h keeps the switches
+Presenter.*           [P BJ Presenter] event drain, Fly pool, chipsIn/sweep/collectT/pending, rolling purse,
                       speechBubble, face/blink/look, band signatures/movingRows/overlay + NEW whip camera,
                       payout script, dolly, croupier glove, tote updates
-src/audio/Audio.*     [M]  BJ Audio.cpp + CC soft pulse (§1.1)
-src/audio/Music.*     [G]  tools/make_music.py (guard #if !CHRL_LEAN)
-src/save/Save.*       [M]  (§1.1)
-src/debug/Debug.*     [M]  (§1.1)
-src/game/Roulette.*   [N, P BJ Round] rules (§2)
-src/game/Spots.*      [N]  pure spot model: kinds, coverage, payout, names, positions (+ SpotData tables)
-src/game/Nav.*        [N, P CC Screens.cpp:340-358 nearest()] pure, over Spots positions
-src/game/Wheel.*      [N]  pure: EU_ORDER[37], US_ORDER[38] (37 = 00), isRed, colour class
-src/wheel/Ball.*      [N]  pure ball sim + solver (Ease only; host-tested)
-src/wheel/WheelArt.*  [N]  ring RAMFUNC, pocket LUT, body/turret/diamonds, ball/shadow draw
-src/wheel/WheelMap.cpp [G] tools/wheelmap.py: per-row spans + quadrant angle bytes + geometry consts
-src/render/Layout.h   [P BJ render/Layout.h] lay:: wall/rail from BJ; table band; grid; plate; bar
-src/render/Table.*    [M BJ subset] wall(), dealer(), rail(), plaque(), arcText/arcLine + NEW tote()
-src/render/Felt.*     [N]  betting layout: grid, numbers, outside labels, coverage glow, bet stacks, dolly
-src/render/ChipArt.*  [P BJ CardArt.cpp:122-159] chip, chipStack, chipDenom, CHIP_* + NEW miniChip/miniStack
-src/render/Bar.*      [P BJ Bar.cpp] button()+layout() accordion kept; NEW bet bar ($1 $5 $10 $25 $100 CLR SPIN), ox param
-src/render/Glove.*    [P CC Stage.cpp:618-625,749-757] Q4 glide, bob, tap, deny; RM_ID/RM_CPU/RM_ALERT/RM_HIT
-src/states/Screens.*  [P BJ Screens.cpp] go/enter/fade (CC's (fadeOut-1)*2 to full black), still-screen sig,
+chgame/Audio.*        [M]  BJ Audio.cpp + CC soft pulse (§1.1); the game's effects are Sounds.*
+src/audio/Music.*     [G]  tools/make_music.py (guard #if !CHGAME_DEBUG)
+Save.*, chgame/Save.* [M]  (§1.1)
+chgame/Debug.*        [M]  (§1.1)
+Roulette.*            [N, P BJ Round] rules (§2)
+Spots.*               [N]  pure spot model: kinds, coverage, payout, names, positions (+ SpotData tables)
+Nav.*                 [N, P CC Screens.cpp nearest()] pure, over Spots positions
+Wheel.*               [N]  pure: EU_ORDER[37], US_ORDER[38] (37 = 00), isRed, colour class
+Ball.*                [N]  pure ball sim + solver (Ease only; host-tested)
+WheelArt.*            [N]  ring RAMFUNC, pocket LUT, body/turret/diamonds, ball/shadow draw
+src/assets/WheelMap.* [G] tools/wheel.py: per-row spans + quadrant angle bytes + geometry consts
+Layout.h              [P BJ Layout.h] lay:: wall/rail from BJ; table band; grid; plate; bar
+Table.*               [M BJ subset] wall(), dealer(), rail(), plaque(), arcText/arcLine + NEW tote()
+Felt.*                [N]  betting layout: grid, numbers, outside labels, coverage glow, bet stacks, dolly
+ChipArt.*             [P BJ CardArt.cpp chip()/chipStack()] chip, chipStack, chipDenom, CHIP_* + NEW miniChip/miniStack
+Bar.*                 [P BJ Bar.cpp] button()+layout() accordion kept; NEW bet bar ($1 $5 $10 $25 $100 CLR SPIN), ox param
+Presenter.cpp, Remap.* (the glove; planned as Glove.*)
+                      [P CC Stage.cpp update()/drawFinger()] Q4 glide, bob, tap, deny; RM_ID/RM_CPU/RM_ALERT/RM_HIT
+Screens.*             [P BJ Screens.cpp] go/enter/fade (CC's (fadeOut-1)*2 to full black), still-screen sig,
                       optField options, stats + hold-SELECT reset, pause, toast, Win/Lose, demo, credits; new Title
 src/assets/Assets.*   [G]  tools/assets.py
-tools/chsim/          [V-CC] whole folder incl. gifsheet.py, host/main.cpp+sim.h (sim_waitInput);
-                      chdrive --id default "CHRL"; drop goto/board/waitturn, add 'goto SPOT' -> "G <id>"
-tools/check_size.py serialcap.py requirements.txt  [V]
-tools/device.py       [V-CC] FQBN/RELEASE names, -DCHRL_DEBUG=1
-tools/tests/run_tests.py [V-CC] SOURCES = test_rules.cpp + src/game/*.cpp + src/wheel/Ball.cpp + src/fx/Ease.cpp, -DCHTEST
+tools/chsim/chdrive.py [P CC] the game's script commands ("CHRL"; 'goto SPOT' -> "G <id>") on the repository's
+                      tools/chsim (its gifsheet tool, and host/ with CC's sim_waitInput), which every game shares
+tools/check_size.py tools/serialcap.py tools/requirements.txt tools/device.py   [V] now the repository's, shared
+tools/game.py         `chgame test`'s sources (was tools/tests/run_tests.py [V-CC]): test_rules.cpp + Nav, Roulette,
+                      Spots, Wheel + chgame/Ease.cpp, -DCHTEST; tools/tests/run_ball_tests.py for Ball.cpp
 tools/tests/test_rules.cpp [N, P BJ test_rules.cpp idioms]   tools/tests/ref_roulette.py [N]
-tools/audio/{preview.py,host/harness.cpp,host/Arduino.h} [V-BJ] (music-capable), SFX name list updated
+tools/audio/{preview.py,host/harness.cpp,host/Arduino.h} [V-BJ] (music-capable): now the repository's, for every game
 tools/make_music.py   [P BJ] new TITLE, VICTORY+BROKE kept (BJ's own originals: "All tunes here are original")
-tools/assets.py       [P BJ] palette/letters/load_png/pack_span4/pack_rows1 + BJ dealer pipeline (PPOT pinned clone
-                      72a6b1b in tools/.cache/ppot, gitignored) + tools/art/{dealer.png (from BJ), hand.png (from CC), logo.txt (new)}
-tools/pixkit.py       [N] shared Python: PALETTE/NAMES, FONT35 (ported from Draw.cpp), chip(), sprite loader
-tools/wheelmap.py     [N] generator + preview PNG     tools/mockup.py [N] Phase-0 PNGs
+tools/assets.py       [P BJ] palette/letters/load_png/pack_span4/pack_rows1 + BJ dealer pipeline (the PPOT lettering
+                      is now tools/art/common/{youwon,broke}*.txt) + tools/art/common/{dealer.png (from BJ), hand.png
+                      (from CC)} + tools/art/logo.txt (new)
+tools/pixkit.py       [N] shared Python, now the repository's: PALETTE/NAMES, FONT35 (parsed from chgame/Draw.cpp), chip(), sprite loader
+tools/wheel.py        [N] generator + preview PNG (planned as wheelmap.py)     tools/mockup.py [N] Phase-0 PNGs
 tools/scripts/*.txt   [N] smoke, bet_tour, spin_forced, american, sc_*, save1/2, pace, showcase
 ```
 
 ### 1.1 Merges, function by function (verified by diff)
+
+The merges were made in the game's copies. Since 2026-10-02 the merged Palette, Mask, Draw, Audio, Save and Debug are the CHGame library's `chgame/` files, and the body of Fx is `chgame/Sizzle`.
 
 **`Palette.*`**: `Palette.cpp` differs by 67 lines and `Palette.h` by 23.
 
@@ -97,10 +106,10 @@ tools/scripts/*.txt   [N] smoke, bet_tour, spin_forced, american, sc_*, save1/2,
 |---|---|
 | Both, identical | `BASE[16]`, `RAINBOW[12]`, `init`, `setTheme`/`theme`, `setFade`/`fade`, `setFx`, `setCycling`, `resetClock`, `rgb444` |
 | CC | `setMode()` with `Mode { CASINO, HOVER }`. Drop `TARGETS` and the `SHIMMER`/`PULSE` tables. |
-| CC | `tri()`, and the dirty-only `tick()` (CC `Palette.cpp:71-95`), which marks dirty only when FX_A/FX_B move |
+| CC | `tri()`, and the dirty-only `tick()`, which marks dirty only when FX_A/FX_B move |
 | CC | `memcpy` init |
 | BJ | `setDesaturate()` (Lose screen) and `flash(idx, rgb, frames)` with its countdown in `tick()` |
-| BJ | the `commit()` pipeline: flash → desaturate → fade → `to565` (BJ `Palette.cpp:91-104`). Drop BJ's `gfx_pal[]` compare: CC's dirty tracking replaces it (−44 B flash, −32 B SRAM). |
+| BJ | the `commit()` pipeline: flash → desaturate → fade → `to565`. Drop BJ's `gfx_pal[]` compare: CC's dirty tracking replaces it (−44 B flash, −32 B SRAM). |
 | Edited | `THEMES` becomes {green, blue, purple} |
 
 **`Mask.*`**: `Mask.cpp` differs by 151 lines.
@@ -108,10 +117,10 @@ tools/scripts/*.txt   [N] smoke, bet_tour, spin_forced, american, sc_*, save1/2,
 | Function | Source | Notes |
 |---|---|---|
 | `maskBegin` | CC | memset |
-| `maskText35` | CC | ORs whole scaled bit patterns per row (CC `Mask.cpp:20-43`) |
+| `maskText35` | CC | ORs whole scaled bit patterns per row |
 | `runs` (RAMFUNC `maskruns`) | CC | writes nibbles directly |
 | `dilateRow` (RAMFUNC `maskdilate`) | CC | |
-| `maskBlit1` | BJ | `Mask.cpp:55-67`, for the logo and YOUWON/BROKE |
+| `maskBlit1` | BJ | for the logo and YOUWON/BROKE |
 | `maskDraw` | BJ signature on CC's two-pass body | Signature `(m, x, y, fill, outline=-1, shadow=-1, ramp=nullptr)`. Body: shadow+outline per row, then fills. Layers are optional (no dilate if `outline < 0`). |
 | Header | BJ | |
 
@@ -129,7 +138,7 @@ tools/scripts/*.txt   [N] smoke, bet_tour, spin_forced, american, sc_*, save1/2,
 | CC | `particles()` (BJ's `particlesAlive` renamed) |
 | CC | DUST `vy/2` in `burst` |
 | CC | `drawParticles(uint8_t dust)` puff |
-| CC | RAMFUNC `shake` `shiftRows` used by `applyShake` (CC `Fx.cpp:190-216`) |
+| CC | RAMFUNC `shake` `shiftRows` used by `applyShake` (now `chgame/Shake.cpp`) |
 | Dropped | BJ `bannerLen` |
 | New | `B_BLACK`: ramp r<3 SILVER, then INK; outline WHITE; shadow NAVY |
 | New | `B_GREEN`: ramp r<3 WHITE, then FELT_LT, low rows FELT; outline INK; shadow FELT_DK |
@@ -140,8 +149,8 @@ tools/scripts/*.txt   [N] smoke, bet_tour, spin_forced, american, sc_*, save1/2,
 - BJ call sites change: `gfx_sprite4(x, …, nullptr)` → `sprite4(…, RM_ID)` and `gfx_dither` → `dither`.
 
 **`Audio.*`**: take all of BJ's `Audio.cpp`: sequencer, music, `blip`, `setMode`, `mute`, LED, `tone(hz, smooth)`, hwInit. Add from CC:
-- the `soft` narrow-pulse duty (`period/8`, CC `Audio.cpp:89,135`);
-- `soft = s >= Sfx::Tick`;
+- the `soft` narrow-pulse duty (`period/8`, CC's `tone()`);
+- `soft = s >= Sfx::Tick` (now an effect's `audio::SOFT` flag);
 - `blip(hz, ms, bool soft = false)` for ball ticks.
 
 The new enum:
@@ -161,7 +170,7 @@ Songs are `Title` (new), `Victory` and `Broke`.
 | CC | the page built in `gfx_chunkScratch()` (no static 256 B buffer: −256 B SRAM), and `best()` |
 | Both (common) | RAMFUNC `pageWrite`, `crc32`, `imageEnd`/`twoPages`/`available`, sim `simFlash` |
 | New | `MAGIC 0x4C524843` ("CHRL"), `VERSION 1`, the extended Record (§2.9) |
-| New | `#if CHRL_DEBUG && !CHSIM`: `store()` is a no-op unless `dbg::allowSave` |
+| New | `#if CHGAME_DEBUG && !CHSIM`: `store()` is a no-op unless the hook allows it (`save::allowWrites`) |
 
 **`Debug.*`**: `Debug.cpp` differs by 90 lines.
 
@@ -173,7 +182,7 @@ Songs are `Title` (new), `Victory` and `Broke`.
 
 ### 1.2 Debug hook letters
 
-The reserved protocol letters are `? S K L N P T B`. The game hook uses:
+The reserved protocol letters are `? S K L N P T B` (the library's `chgame/Debug.h` now also takes `!` and `Q`). The game hook uses:
 
 | Cmd | Meaning |
 |---|---|
@@ -183,13 +192,13 @@ The reserved protocol letters are `? S K L N P T B`. The game hook uses:
 | `G <spot>` | teleport the glove |
 | `W <spot> <amount>` | place a bet through `Roulette::place` (money conserved) |
 | `M <amount>` | set the purse |
-| `Y 1/0` | allow device flash writes |
+| `E 1/0` | allow device flash writes (planned as `Y`, which CC uses for its render profile) |
 
-`J` resets `frameCount`, `pal::resetClock()` and `fx::reseed()`, as BJ's `debugJump` does (`Screens.cpp:116-131`).
+`J` resets `frameCount`, `pal::resetClock()` and `fx::reseed()`, as BJ's `debugJump` does.
 
 ---
 
-## 2. Rules: `src/game/Roulette.*` (+ Spots, Nav, Wheel)
+## 2. Rules: `Roulette.*` (+ Spots, Nav, Wheel)
 
 ### 2.1 Spot model (pure, shared ids)
 
@@ -231,17 +240,17 @@ struct Event { Ev type; uint8_t a, b, c; int32_t amount; };                     
 class Roulette {
 public: Options opt; Stats stats; int32_t purse;
   Bet bets[24], last[24]; uint8_t history[8], pocket, cursor, chip; Phase phase;
-  void newGame(); void resume(); void seed(uint32_t s);            // seed: BJ Round.h:127 idiom
+  void newGame(); void resume(); void seed(uint32_t s);            // seed: BJ Round::seed() idiom
   void update(uint8_t pressed, uint8_t repeat, bool fxBusy);
   bool popEvent(Event&); int32_t onTable() const; int32_t goal() const; uint8_t pockets() const;
   int32_t returnFor(const Bet&, uint8_t pocket) const; const char *lineText(uint8_t line, char *buf) const;
   bool place(uint8_t spot, uint16_t v); void force(uint8_t p); void setWheel(uint8_t w);   // refunds bets, clears last
 private: uint32_t rng; uint16_t wait; uint8_t step, forced[8], nForced; Event q[16]; uint8_t qHead, qLen;
-  uint32_t rand32();   // BJ Round.cpp:41-45 xorshift32, zero -> 0x9E3779B9
+  uint32_t rand32();   // BJ Round::rand32() xorshift32, zero -> 0x9E3779B9
 };
 ```
 
-- RNG: seeded at the first title selection with `micros()*2654435761u ^ frameCount`, as BJ `Screens.cpp:133-137` does.
+- RNG: seeded at the first title selection with `micros()*2654435761u ^ frameCount`, as BJ's `seedOnce()` does.
 - Pocket: `forced` if any, else `rand32() % pockets()`. The bias of 2^32 mod 37 is negligible; tests check it.
 - Demo mode seeds with `fx::rnd()`. Presentation randomness (ball variation) uses `fx::rnd` only.
 
@@ -258,7 +267,7 @@ Paces are in frames and halve on QUICK through `pace()`, the BJ idiom.
 | Result | `spins++`, `hits[p]++`, push to history, emit `Result(p)`, `say(L_RESULT, F_NORMAL, c = p)` ("17 RED"), pace 60 | Settle |
 | Settle | per bet: `ret = returnFor`, set `won`; `purse += Σret`; update stats (`wagered`, `spinsWon` if Σret > stake, `biggestWin` = max net, `straightHits`); emit `Settle(amount = Σret)`; `say(L_WINNER, F_ANGRY` / `L_BIG, F_SURPRISED` / `L_HOUSE, F_SMILE)` | `!fxBusy` (payout script done) → EndOfSpin |
 | EndOfSpin | copy bets to `last`, clear `bets`, update `bestPurse`; `purse ≥ goal` → `gamesWon++`, `GameOver(1)` → GameWon; `purse < 1` → `gamesBroke++`, `GameOver(0)` → GameLost; else rebet if `Σlast ≤ purse` (emit `Rebet(Σ)`), `say(L_PLACE)` | Betting |
-| GameWon / GameLost / Quit | terminal; `Screens` persists and changes screen (BJ `Screens.cpp:378-384`) | |
+| GameWon / GameLost / Quit | terminal; `Screens` persists and changes screen (BJ `playUpdate()`) | |
 
 The croupier keeps BJ's personality: he smiles when you lose and scowls when you win.
 
@@ -315,7 +324,7 @@ Lines (at most 12 characters × 4 lines):
 - THE HOUSE\nTHANKS YOU
 - GOOD LUCK
 
-### 2.7 Ball (`src/wheel/Ball.*`, pure)
+### 2.7 Ball (`Ball.*`, pure)
 
 **State:**
 - Ball: `θb` (u16 turn), `ωb` (Q16/tick), radius `ρ` (Q8: rim to pocket ring).
@@ -332,7 +341,7 @@ Lines (at most 12 characters × 4 lines):
 
 The `step()` used by the solver and by the presenter is the same code, so landing is exact by construction and checked in tests.
 
-**Quantisation.** `wheelmap.py` stores quadrant angles as 0..127, which is 512 per turn and free in flash.
+**Quantisation.** The map generator (`tools/wheel.py`) stores quadrant angles as 0..127, which is 512 per turn and free in flash.
 - Default: a 256-entry LUT indexed with `>>1`, at 256 B SRAM.
 - Upgrade: a 512-entry LUT (+256 B SRAM) if the slow rotor looks steppy.
 - A seated ball is drawn at its quantised pocket centre, so it never jitters against its pocket.
@@ -375,7 +384,7 @@ Hot/cold costs 76 B; it is cut candidate #4.
 
 ### 2.10 Demo (attract mode)
 
-As in BJ (`Screens.cpp:245-251, 312-340`), the demo starts after 600 idle frames on the title once the tune has ended.
+As in BJ (`titleUpdate()`, `demoInput()`), the demo starts after 600 idle frames on the title once the tune has ended.
 - `demoInput()` builds a plan of 2–4 showy spots (a straight, a split, RED, a dozen).
 - It walks the glove there with synthetic D-pad taps every 12 frames, chosen with `Nav` (the `toward()` idiom), and taps A 1–3 times.
 - It then walks to SPIN and presses A. After 3 spins it returns to the title.
@@ -403,7 +412,7 @@ As in BJ (`Screens.cpp:245-251, 312-340`), the demo starts after 600 idle frames
    - Whip: 12 frames `IN_OUT`, each scene drawn with `ox`, plus speed streaks and `Whoosh`.
    - Pause: RESUME / OPTIONS / SAVE & QUIT (5×7 has `&`).
 4. **Options and Stats:** BJ layouts. Stats has the hold-SELECT 90-frame reset bar.
-5. **Credits, the "back room":** keep (BJ `Screens.cpp:533-602`), gated `#if !CHRL_LEAN`. Credit lines:
+5. **Credits, the "back room":** keep (BJ `creditsUpdate()`/`creditsRender()`), gated `#if !CHRL_LEAN`. Credit lines:
    - "Thanks for\nplaying!"
    - "Croupier and\nlettering by\nvampirics"
    - "Press Play\nOn Tape"
@@ -413,11 +422,11 @@ As in BJ (`Screens.cpp:245-251, 312-340`), the demo starts after 600 idle frames
    It is cut candidate #1.
 6. **Win and Lose:** BJ's sunburst + YOUWON1/2 and desaturate + BROKE1/2, unchanged. Win plays `Song::Victory`; Lose plays `Song::Broke` and shows the croupier `E_SMILE`.
 
-### 3.6 Attribution (checked against BJ `NOTICE` and `README.md:22-24`, and the PPOT clone)
+### 3.6 Attribution (checked against BJ's `NOTICE` and its README's credits, and the PPOT clone)
 
 - PPOT Blackjack: "Simon Holmes (filmote), code, and Stephane C (vampirics), art". The PPOT repo's own README names no artist (its commits are by filmote), so **mirror BJ's NOTICE wording exactly**.
-- The croupier is PPOT's dealer, recoloured and retouched by hand in BJ's `tools/art/dealer.png`. FACE_EDITS come from PPOT's expression PNGs.
-- YOUWON / BROKE lettering: PPOT `YouWon_01/02.png` and `YouAreBroke_01/02.png`.
+- The croupier is PPOT's dealer, recoloured and retouched by hand in `dealer.png` (then BJ's `tools/art/`, now the shared `tools/art/common/`). FACE_EDITS come from PPOT's expression PNGs.
+- YOUWON / BROKE lettering: PPOT `YouWon_01/02.png` and `YouAreBroke_01/02.png` (now `tools/art/common/youwon1.txt`, `youwon2.txt`, `broke1.txt`, `broke2.txt`).
 - 3×5 font: PPOT (`Font3x5.cpp`). The font file carries no Pharap header; PPOT's `Game.*` and `GameContext.*` do, but none of that code is used. **Pharap appears nowhere.**
 - The glove (`hand.png`) and everything else are new (bateske).
 - NOTICE text:
@@ -429,7 +438,7 @@ As in BJ (`Screens.cpp:245-251, 312-340`), the demo starts after 600 idle frames
 **Music.** BJ's sequencer + `make_music.py`.
 - A new TITLE: a Parisian musette waltz in 3/4, 8 bars, loops, about 450 B, written to sit in the 1–4 kHz band like BJ's.
 - Keep VICTORY (169 B) and BROKE (164 B); they are BJ originals.
-- The user auditions the WAVs from `tools/audio/preview.py` in P6.
+- The user auditions the WAVs from `chgame audio` (`tools/audio/preview.py`) in P6.
 
 ---
 
@@ -515,26 +524,26 @@ The stack is checked with CC's `stk=` in `P`. The deepest path is render → `ma
 ## 5. Phased plan
 
 **Host setup:**
-- Every phase uses `CHSIM_CXX="<zig> c++"`. There is no native compiler, and the path has no spaces, as `chsim.py` needs.
-- The sim builds with `python tools/chsim/chsim.py build .`, run in CHRoulette.
-- Scripts run with `python tools/chsim/chdrive.py --sim . tools/scripts/X.txt out/X --id CHRL`. Any `BUG:` line (drawing during a flush, or scratch use mid-flush) fails the run.
-- Device compiles use `python tools/device.py build [--debug]`, which runs `check_size.py`.
+- Every phase uses `CHSIM_CXX="<zig> c++"`. There is no native compiler, and the path has no spaces, as `tools/chsim/chsim.py` needs.
+- The sim builds with `chgame sim`, run in CHRoulette (then `python tools/chsim/chsim.py build .`).
+- Scripts run with `chgame run tools/scripts/<s>.txt out/<s>` (then `chdrive.py --sim . ... --id CHRL`). Any `BUG:` line (drawing during a flush, or scratch use mid-flush) fails the run.
+- Device compiles use `chgame build [--debug]` (then `python tools/device.py build`), which runs `tools/check_size.py`.
 
 **Device etiquette (every phase that touches the board):**
 1. Announce before each upload: "uploading a DEBUG build to COMx: the board reboots".
 2. Batch device work into short sessions.
-3. Finish with `python tools/device.py upload` (release) and say that it is restored.
-4. Debug builds don't write flash unless a script sends `Y 1`. The save tests (`save1`/`save2`) overwrite the board's save; the two pages are shared with any other CHGame game. Run them only with the user's explicit OK.
+3. Finish with `chgame upload` (release) and say that it is restored.
+4. Debug builds don't write flash unless a script sends `E 1`. The save tests (`save1`/`save2`) overwrite the board's save; the two pages are shared with any other CHGame game. Run them only with the user's explicit OK.
 
 | Phase | Deliverable | Verification / what the user sees |
 |---|---|---|
-| **P0 Mockups** | `tools/pixkit.py` + `tools/mockup.py` + `tools/wheelmap.py` (preview mode). They use the real palette, FONT35, `dealer.png`, `hand.png`, the `art::chip` algorithm and the real wheel geometry. Output `docs/mockups/*.png` at 3× (gitignored): title (logo A/B), betting (glove on SPLIT 17/20 with plate), corner hover with coverage glow, US layout, NO MORE BETS bubble, 3-frame whip strip, wheel mid-spin, result "17 RED" (B_RED/B_BLACK/B_GREEN), payout (dolly + flying chips + rolling purse), big win, felt themes strip. Also reports the wheel-map byte count. | **Approval gate:** the user picks cell geometry, wheel radii, logo, edge wrap, palette decision. Budget line 4.1 is updated with the real map size. |
+| **P0 Mockups** | `tools/pixkit.py` + `tools/mockup.py` + `tools/wheel.py` (preview mode). They use the real palette, FONT35, `dealer.png`, `hand.png`, the `art::chip` algorithm and the real wheel geometry. Output `docs/mockups/*.png` at 3× (gitignored): title (logo A/B), betting (glove on SPLIT 17/20 with plate), corner hover with coverage glow, US layout, NO MORE BETS bubble, 3-frame whip strip, wheel mid-spin, result "17 RED" (B_RED/B_BLACK/B_GREEN), payout (dolly + flying chips + rolling purse), big win, felt themes strip. Also reports the wheel-map byte count. | **Approval gate:** the user picks cell geometry, wheel radii, logo, edge wrap, palette decision. Budget line 4.1 is updated with the real map size. |
 | **P1 Skeleton + infra** | `git init`; verbatim copies, merges (§1.1), renames; `config.h`, `.ino`; `assets.py` (DEALER/FACE_*/ALT/YOUWON/BROKE/HAND/logo); Save (CHRL), Debug; Screens: title stub, options, stats, pause, toast, Win/Lose; Play shows wall/dealer/plaque/tote/rail on empty felt. | `assets.py` output **byte-identical** to BJ's `Assets.cpp` for the dealer arrays and CC's HAND. Sim builds; `smoke.txt` makes a screen sheet with no BUG. Release and debug compile; `check_size` baseline (expect about 34 KB). The user sees the sheet and the size report. |
-| **P2 Rules + host tests** | `Ease`, `Wheel`, `Spots`, `Nav`, `Roulette`; `test_rules.cpp`; `ref_roulette.py` | `run_tests.py` → "N checks, 0 failures" (UBSan); reference cross-check "157/161 spots × 37/38 pockets match". The user sees the summary and a sample spot/plate list. |
+| **P2 Rules + host tests** | `Ease`, `Wheel`, `Spots`, `Nav`, `Roulette`; `test_rules.cpp`; `ref_roulette.py` | `chgame test` (then `run_tests.py`) → "N checks, 0 failures" (UBSan); reference cross-check "157/161 spots × 37/38 pockets match". The user sees the summary and a sample spot/plate list. |
 | **P3 Betting view** | Felt, ChipArt mini stacks, Glove (HOVER palette mode), coverage glow, plate, Bar (5 chips, CLR, SPIN), presenter betting flights (drop from the glove, remove, clear, rebet from the player), plaque total, tote | `bet_tour.txt` (taps through every spot class, repeat-skips-lines, bar) → snaps + GIF; sim perf estimate (`perf`/`cal`) ≤ 4 ms; size check |
-| **P4 Wheel + ball** | `wheelmap.py` → `WheelMap.cpp`; WheelArt (ring RAMFUNC leaf, word reads from flash, x-clip); LUT (pocket colour pairs as nibbles, frets, win → FX_A); body/turret/diamonds; Ball + solver; croupier glove launch; whip; forced-green swap; Spin/Rattle/Tick/Tock/Thunk | Host ball tests (§6.4). `spin_forced.txt` (`F 17`, `F 0`, `F 37`) → EU/US spin GIFs. **First device session:** debug upload, whip and spin frames, `P` max < 8.3 ms and `late=0`, then restore release. |
+| **P4 Wheel + ball** | `tools/wheel.py` → `src/assets/WheelMap.cpp`; WheelArt (ring RAMFUNC leaf, word reads from flash, x-clip); LUT (pocket colour pairs as nibbles, frets, win → FX_A); body/turret/diamonds; Ball + solver; croupier glove launch; whip; forced-green swap; Spin/Rattle/Tick/Tock/Thunk | Host ball tests (§6.4). `spin_forced.txt` (`F 17`, `F 0`, `F 37`) → EU/US spin GIFs. **First device session:** debug upload, whip and spin frames, `P` max < 8.3 ms and `late=0`, then restore release. |
 | **P5 Payout** | Result banner + pocket rainbow + tote; whip back; croupier glove places the dolly; staggered losing sweeps (STACK_TO_TRAY); per-spot `chipsIn` from the rack → `collectT` → STACK_TO_PLAYER; rolling purse with `pending`; big win (B_RAINBOW, confetti + coin fountains, LED_PARTY, BigWin fanfare); faces and lines | `sc_win_straight`, `sc_lose_all`, `sc_mixed` (10 bets), `sc_zero` (even money loses), `sc_bigwin` → GIFs. A script checks the plaque settles at exactly `rules.purse` (`M`/snap). No BUG lines. |
-| **P6 Screens / save / options / music / demo / credits** | Final title, options, stats + hot/cold + reset, CONTINUE, demo, credits, Win/Lose, new TITLE tune | `sc_screens.txt`; `save1` → rebuild sim → `save2`; `preview.py` WAVs in `out/audio` for audition; release ≤ 48,500 and **debug ≤ 50,432** |
+| **P6 Screens / save / options / music / demo / credits** | Final title, options, stats + hot/cold + reset, CONTINUE, demo, credits, Win/Lose, new TITLE tune | `sc_screens.txt`; `save1` → rebuild sim → `save2`; `chgame audio out/audio` WAVs for audition; release ≤ 48,500 and **debug ≤ 50,432** |
 | **P7 Device bring-up** | Debug upload (announced): `pace.txt` (~300 frames / 5 s, `late=0`), worst-frame script, `stk`; save persistence across re-upload only with permission; then the release upload | PERF table to the user; the user plays the release build |
 | **P8 README + GIFs** | `showcase.txt` → `docs/{title,betting,spin,payout,win,broke}.gif`; README in series format (pitch, GIF table, credits, install, controls, rules/options, "How it fits" with final sizes and perf, development); NOTICE | The user reviews the README; commits only when the user asks |
 
@@ -570,7 +579,7 @@ The stack is checked with CC's `stk=` in `P`. The deepest path is render → `ma
    - Forced pocket honoured; stats increments.
    - Goal → GameWon; broke → GameLost.
    - Rebet is exact, skipped if unaffordable, and cleared on a wheel change.
-6. **Money conservation fuzz** (port of BJ `test_rules.cpp:246-300`): 40 seeds × 400 spins, random buttons, both wheels.
+6. **Money conservation fuzz** (port of BJ `test_rules.cpp`'s `testFuzz()`): 40 seeds × 400 spins, random buttons, both wheels.
    - `purse + Σbets == money` from Betting to Settle.
    - After Settle, `money' = money − stake + Σret`.
    - `purse ≥ 0`, no stall (>20,000 frames), and the event queue never drops (a test hook counts drops).
@@ -580,8 +589,8 @@ The stack is checked with CC's `stk=` in `P`. The deepest path is render → `ma
 8. **Save:** `static_assert(sizeof(Record) ≤ 256)`. The sim `save1`/`save2` scripts cover CRC, alternating seq and the CONTINUE round trip.
 
 ### Critical files for implementation
-- CHBlackjack\src\fx\Presenter.cpp (Fly pool, chipsIn/sweep/collectT, rolling purse, band signatures, speech bubble)
-- CHBlackjack\src\game\Round.cpp (and Round.h: phase machine, `pace()`/`go()`, event queue, RNG, bet input; the template for `Roulette`)
-- CHChess\src\stage\Stage.cpp (glove glide/bob/tap/deny, `RM_*` remaps, `plate()`) and CHChess\src\states\Screens.cpp (`nearest()` at 340-358)
-- CHBlackjack\src\states\Screens.cpp (screen skeleton, options, stats, pause, demo, credits, Win/Lose, `persist`)
-- CHChess\src\save\Save.cpp, CHBlackjack\src\fx\Fx.cpp and CHChess\src\gfx\Mask.cpp (the merge sources), plus CHBlackjack\tools\assets.py and CHChess\tools\chsim\chdrive.py
+- CHBlackjack\Presenter.cpp (Fly pool, chipsIn/sweep/collectT, rolling purse, band signatures, speech bubble)
+- CHBlackjack\Round.cpp (and Round.h: phase machine, `pace()`/`go()`, event queue, RNG, bet input; the template for `Roulette`)
+- CHChess\Stage.cpp (glove glide/bob/tap/deny, `RM_*` remaps, `plate()`) and CHChess\Screens.cpp (`nearest()`)
+- CHBlackjack\Screens.cpp (screen skeleton, options, stats, pause, demo, credits, Win/Lose, `persist`)
+- CHChess\Save.cpp, CHBlackjack\Fx.cpp and CHChess's Mask.cpp (the merge sources; the merged Save, Fx body and Mask are now the library's `chgame/Save.cpp`, `chgame/Sizzle.inl`, `chgame/Mask.cpp`), plus CHBlackjack\tools\assets.py and CHChess\tools\chsim\chdrive.py

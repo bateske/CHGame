@@ -31,7 +31,7 @@ COLOURS = {
     (179, 142, 72): "y",                                 # beak -> GOLD
 }
 # Where each animation plays on the sheet (a box round it, in sheet pixels),
-# in the order src/stage/Stage.cpp numbers them.
+# in the order Stage.cpp numbers them.
 ANIMS = [
     ("fly", (420, 640, 560, 770)), ("takeoff", (700, 900, 560, 745)), ("idle", (150, 330, 100, 275)),
     ("idle2", (400, 600, 100, 275)), ("idle3", (680, 900, 100, 275)), ("hop", (560, 740, 330, 495)),

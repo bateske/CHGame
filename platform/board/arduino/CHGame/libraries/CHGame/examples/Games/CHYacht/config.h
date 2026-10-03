@@ -1,7 +1,7 @@
 // CHYacht build switches.
 //
 // Keep feature switches here rather than in --build-property flags. The game
-// is built with the CHGame core 0.2.4+, Optimize "Smallest + LTO" and the
+// is built with the board package 0.3.0+, Optimize "Smallest + LTO" and the
 // default Peripherals setting ("Game", which compiles out
 // Serial1/tone/HardwareTimer); release builds also set USB "Upload only" (no
 // Serial). tools/device.py has the exact settings.
