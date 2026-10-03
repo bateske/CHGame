@@ -243,6 +243,14 @@ void holdBanner(bool on) { bannerHeld = on; }
 
 bool bannerActive() { return bannerFrames != 0; }
 
+// The rainbow's outline and shade, in a game that has the style (a game
+// without it, such as CHStlView, gets the INK outline).
+#if SIZZLE_STYLES & SIZZLE_RAINBOW
+#define SIZZLE_IS_RAINBOW(s) ((s) == B_RAINBOW)
+#else
+#define SIZZLE_IS_RAINBOW(s) false
+#endif
+
 // Which style's ramp is the switch's default: WHITE, else the last one the
 // game has (the cases come in the order RAINBOW, GOLD, RED, CYAN, BLACK, GREEN).
 #if SIZZLE_STYLE_RAMPS & SIZZLE_WHITE
@@ -349,7 +357,7 @@ void drawBanner() {
             default:        ramp[r] = SIZZLE_RAMP_DEFAULT; break;
         }
     }
-    uint8_t outline = bannerStyle == B_RAINBOW ? FX_A : INK;
+    uint8_t outline = SIZZLE_IS_RAINBOW(bannerStyle) ? FX_A : INK;
     maskDraw(m, 64 - w / 2, bannerCy - SIZZLE_FONT_H / 2 - off, SIZZLE_BANNER_FILL, outline, outline == INK ? -1 : INK, ramp);
     SIZZLE_BANNER_AFTER(64 - w / 2, bannerCy - SIZZLE_FONT_H / 2 - off, dy, gap);
 #else
@@ -388,8 +396,8 @@ void drawBanner() {
             default:        ramp[r] = SIZZLE_RAMP_DEFAULT; break;
         }
     }
-    uint8_t outline = bannerStyle == B_RAINBOW ? FX_A : INK;
-    maskDraw(m, 64 - w / 2, bannerCy - h / 2 - 2, SIZZLE_BANNER_FILL, outline, bannerStyle == B_RAINBOW ? INK : WINE, ramp);
+    uint8_t outline = SIZZLE_IS_RAINBOW(bannerStyle) ? FX_A : INK;
+    maskDraw(m, 64 - w / 2, bannerCy - h / 2 - 2, SIZZLE_BANNER_FILL, outline, SIZZLE_IS_RAINBOW(bannerStyle) ? INK : WINE, ramp);
 #endif
 }
 

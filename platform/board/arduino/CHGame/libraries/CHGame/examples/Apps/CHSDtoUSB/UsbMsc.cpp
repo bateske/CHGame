@@ -5,6 +5,7 @@
 // used), EP2 IN/OUT bulk (CDC data), EP3 IN/OUT bulk (MSC).
 // With both directions enabled an endpoint's buffer is 128 bytes: OUT data
 // arrives at the DMA address, IN data is sent from DMA + 64.
+#ifndef CHSIM   // the simulator has no USB: tools/chsim/host/pc_host.cpp plays the PC instead
 #include <Arduino.h>
 #include <string.h>
 #include "UsbMsc.h"
@@ -592,6 +593,8 @@ void detach() {
     st = OFF;
 }
 
+uint8_t *buffer() { return sector; }
+
 int cdcRead() {
     int b = cdcRxByte;
     cdcRxByte = -1;
@@ -661,3 +664,4 @@ void poll() {
 }
 
 }  // namespace usbmsc
+#endif  // CHSIM

@@ -21,6 +21,7 @@
     {"dir": "platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHWords",      "file": "WORDS.CHG",    "title": "WORDS", "data": ["sdcard/WORDS.DIC"]},
     {"dir": "platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHWordWheel",  "file": "WORDWHL.CHG",  "title": "WORD WHEEL", "data": ["sdcard/PHRASES.BNK"]},
     {"dir": "platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHYacht",      "file": "YACHT.CHG",    "title": "YACHT DICE"},
+    {"dir": "platform/board/arduino/CHGame/libraries/CHGame/examples/Apps/CHStlView", "file": "STLVIEW.CHG", "title": "STL VIEWER", "data": ["sdcard/MODELS"]},
     {"dir": "platform/board/arduino/CHGame/libraries/CHGame/examples/Apps/CHSDtoUSB", "file": "SDTOUSB.CHG", "title": "SD CARD READER",
      "fqbn": "CHGame:ch32v:rev0:opt=osstd"}
   ]

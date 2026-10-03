@@ -1,0 +1,21 @@
+# The pretend PC's demo session (tools/chsim/pcsession.py): a folder of
+# photos copied in, small files, reading back, renames, a move, deletes,
+# the other pages, eject, the card pulled. Each pcto runs the PC to the
+# session's marker of that name; the README's docs/screens.png is five of
+# these (tools/screens.py).
+pcto standby
+snap standby
+pcto copying
+snap copying
+state
+pcto events
+snap events
+pcto stats
+snap stats
+pcto card
+snap card
+pcto ejected
+snap ejected
+pcto nocard
+snap nocard
+state

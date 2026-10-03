@@ -29,7 +29,7 @@ This page records what is in place and what each step involved.
 | Graphics | `platform/board/arduino/CHGame/libraries/CHGfx` | 1.3.0 |
 | SD card / FAT | `platform/board/arduino/CHGame/libraries/CHSd` | 1.0.0; never yet run against a real card on a board |
 | The `CHGame` library: buttons and pacing, palette, drawing, the 3x5 font, lettering, effects maths, sound, saving, the debug protocol, `RAMFUNC` | `platform/board/arduino/CHGame/libraries/CHGame` | every game is built on it ([its README](../platform/board/arduino/CHGame/libraries/CHGame/README.md)); in the board package's `libraries/` folder with CHGfx and CHSd |
-| Twenty games, one app | the CHGame library's examples: `platform/board/arduino/CHGame/libraries/CHGame/examples/Games/`, `apps/CHSDtoUSB` | building; verification per game in [status.md](status.md) |
+| Twenty games, two apps | the CHGame library's examples: `platform/board/arduino/CHGame/libraries/CHGame/examples/Games/`, `apps/CHStlView`, `apps/CHSDtoUSB` | building; verification per game in [status.md](status.md) |
 | PC tools | `tools/` (one entry point, `chgame`; `pip install -e .`), per game a `tools/game.py`, a `chdrive.py` and scripts | in use; one simulator for the games, CHGfx's examples and its tests |
 
 ## What the first release needs
@@ -135,7 +135,7 @@ in it. The CHGame library's examples are:
 |---|---|---|
 | `examples/Hello` | the smallest complete sketch | *CHGame > Hello* |
 | `examples/Games/<Name>` | the twenty casino games | *CHGame > Games > CHFour* ... |
-| `examples/Apps/<Name>` | sketches that are not games: CHSDtoUSB | *CHGame > Apps > CHSDtoUSB* |
+| `examples/Apps/<Name>` | sketches that are not games: CHStlView, CHSDtoUSB | *CHGame > Apps > CHStlView*, *CHSDtoUSB* |
 
 Each game keeps its whole folder there: sketch, `src/`, `tools/`, `docs/`,
 `NOTES.md`. The shared tools stay in the repository's `tools/`; a game

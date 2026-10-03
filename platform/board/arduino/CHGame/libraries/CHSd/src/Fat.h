@@ -48,6 +48,19 @@ int8_t folder(const char *name, File &dir, uint8_t *buf);
 // E_NOTFOUND: there are no more.
 int8_t match(const File &dir, const char *pattern, uint8_t skip, File &f, char *nameOut, uint8_t *buf);
 
+// The root directory as a folder, for match() and list(). E_NOTFOUND: not
+// mounted.
+int8_t root(File &dir);
+
+// Every file and folder in dir, in directory order: fn gets each one's
+// 11-character short name (no NUL), its first cluster and size, and whether
+// it is a folder; returning false stops the walk. ".", "..", deleted
+// entries, volume labels, long-name parts and hidden entries are left out.
+// fn must not touch buf (the directory sector is in it) nor read the card.
+// Returns OK or an error. (For a browser: CHStlView.)
+typedef bool (*ListFn)(const char *name, const File &f, bool isDir, void *ctx);
+int8_t list(const File &dir, ListFn fn, void *ctx, uint8_t *buf);
+
 // Walks f's cluster chain once and returns its extents: up to maxRuns runs
 // of consecutive blocks, the last one trimmed to the file's size (a file of
 // 0 bytes has 0 runs). Returns the run count or an error. The walk is bounded

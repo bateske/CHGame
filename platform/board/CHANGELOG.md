@@ -31,9 +31,11 @@ package's maintainer is shown as **bateske**.
   frame pacing, palette, drawing, sound, saving, the debug protocol), CHGfx
   (graphics) and CHSd (SD card / FAT) are in the package's `libraries/`,
   beside SPI, Wire and EEPROM. Nothing to copy into the sketchbook.
-- **Twenty casino games and the SD card reader as examples:** *File >
-  Examples > CHGame > Games* (CHBlackjack, CHChess, CHPoker ...) and *Apps >
-  CHSDtoUSB*, with *Hello*, the smallest complete sketch.
+- **Twenty casino games and two apps as examples:** *File > Examples >
+  CHGame > Games* (CHBlackjack, CHChess, CHPoker ...) and *Apps*:
+  **CHStlView**, a 3D wireframe viewer for the `.STL` files on the SD card,
+  and **CHSDtoUSB**, the SD card reader; with *Hello*, the smallest complete
+  sketch.
 - **SD menu packages from the IDE.** Every build also writes
   `<sketch>.ino.chg`, the package the bootloader's game menu installs from
   the card's `GAMES` folder; *Sketch > Export Compiled Binary* puts it in the

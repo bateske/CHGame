@@ -1,0 +1,72 @@
+# A look at every screen: the intro, the card's root, the MODELS folder,
+# the torus spinning, its HUD gone, FRONT mode, the knot (a slow model) at
+# rest and turned (the draft), back to the list, the refusals.
+wait 30
+snap 01_intro
+wait 70
+snap 02_root
+state
+tap DOWN
+wait 6
+tap A
+wait 10
+snap 03_models
+tap DOWN 3
+tap DOWN 3
+tap DOWN 3
+tap DOWN 3
+tap DOWN 3
+tap DOWN 3
+wait 8
+snap 04_torus_sel
+tap A
+wait 4
+snap 05_torus
+state
+wait 200
+snap 06_torus_nohud
+tap SELECT
+wait 10
+snap 07_front_banner
+wait 60
+snap 08_front
+hold START
+wait 40
+release
+wait 6
+snap 09_back
+tap UP
+wait 4
+tap A
+wait 6
+snap 10_knot
+state
+hold RIGHT
+wait 20
+snap 11_knot_draft
+release
+wait 30
+snap 12_knot_full
+state
+hold START
+wait 40
+release
+wait 4
+tap UP 3
+tap UP 3
+tap UP 3
+tap UP 3
+tap UP 3
+tap A
+wait 8
+snap 13_old
+tap A
+wait 30
+snap 14_ascii
+tap A
+wait 10
+tap B
+wait 10
+tap B
+wait 10
+snap 15_root_again

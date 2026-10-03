@@ -41,14 +41,32 @@ namespace sd {
 
 bool init() { return card() != nullptr; }
 
-bool read(uint32_t lba, uint8_t *dst) {
+// A block, taking `us` of virtual time.
+static bool fetch(uint32_t lba, uint8_t *dst, uint32_t us) {
     FILE *f = card();
     if (!f || lba >= sim_cardBlocks()) return false;
-    sim_advance(900);               // about what a polled block read takes on the board
+    sim_advance(us);
     long k = s_image ? (long)lba : s_vc.read(lba, dst);
     if (k < 0) return true;
     memset(dst, 0, 512);            // (a file's last block, past its end)
     return !fseek(f, k * 512, SEEK_SET) && fread(dst, 1, 512, f) > 0;
+}
+
+bool read(uint32_t lba, uint8_t *dst) {
+    return fetch(lba, dst, 900);    // about what a polled block read takes on the board
+}
+
+// One command's latency, then each block at the 24 MHz wire rate; the
+// board's fn runs while the next block arrives, so only the wire is timed.
+bool stream(uint32_t lba, uint32_t n, uint8_t *buf0, uint8_t *buf1, BlockFn fn, void *ctx) {
+    if (!n) return true;
+    sim_advance(600);
+    for (uint32_t k = 0; k < n; k++) {
+        uint8_t *b = (k & 1) ? buf1 : buf0;
+        if (!fetch(lba + k, b, 170)) return false;
+        fn(b, ctx);
+    }
+    return true;
 }
 
 }  // namespace sd
