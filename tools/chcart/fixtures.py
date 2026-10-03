@@ -143,6 +143,7 @@ def bad():
         "bad-image": z(cart([g(cartImage="c.png")]), [("c.png", png(shot, 64))]),
         "bad-background": z(cart([g()], menu={"background": "bg.png"}), [("bg.png", b.getvalue())]),
         "bad-launch": z(cart([g()], launch="nobody")),
+        "full-folder": z(cart([g(f"g{i}", f"G{i}") for i in range(model.FOLDER_ENTRIES + 1)])),
     }
 
 

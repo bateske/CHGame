@@ -16,8 +16,12 @@ void menu_usb_notice(void);
 /* Install progress (install.c). */
 void menu_progress(uint32_t done, uint32_t total);
 
+/* Entries a folder can list (games and folders): each is 32 B of RAM, and
+ * 224 fill what the framebuffer, the buffers and the 2 KB stack leave of the
+ * 20 KB (SIZES.md). More games go in folders, which have no limit. The tools
+ * refuse a cart with a fuller folder (spec/card.md). */
 #ifndef MENU_MAX_GAMES
-#define MENU_MAX_GAMES 128
+#define MENU_MAX_GAMES 224
 #endif
 
 #endif

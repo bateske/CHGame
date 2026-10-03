@@ -49,6 +49,21 @@ def zoo(pk):
     return z
 
 
+def cart_background_png():
+    """The cart cards' picture: dark blue, a band in the rainbow colour at the
+    top, a green block, a yellow strip at the foot."""
+    import io
+    from PIL import Image, ImageDraw
+    im = Image.new("RGB", (128, 128), (0, 0, 64))
+    d = ImageDraw.Draw(im)
+    d.rectangle([0, 0, 127, 15], fill=(255, 0, 255))
+    d.rectangle([100, 30, 127, 127], fill=(0, 96, 0))
+    d.rectangle([0, 120, 60, 127], fill=(200, 200, 0))
+    buf = io.BytesIO()
+    im.save(buf, "PNG")
+    return buf.getvalue()
+
+
 def cart_cards(build_dir, pk):
     """Three cards made by the reference implementation (tools/chcart), as
     test_boot.c's t_cart_* expect them:
@@ -64,25 +79,16 @@ def cart_cards(build_dir, pk):
 
     Returns ({name: image path}, {pkg name: CHG bytes}) for the extra
     payloads (MIKE, EXTRA)."""
-    from PIL import Image, ImageDraw
     from chcart import model, runtime
     def payload(n):
         return pk[n][0][512:512 + chgpack.parse(pk[n][0])["payload_bytes"]]
     alpha, bravo = payload("ALPHA.CHG"), payload("BRAVO.CHG")
     mike = bytes((i * 7 + 3) & 0xFF for i in range(6000))
     extra = bytes((i * 13 + 5) & 0xFF for i in range(3000))
-    im = Image.new("RGB", (128, 128), (0, 0, 64))
-    d = ImageDraw.Draw(im)
-    d.rectangle([0, 0, 127, 15], fill=(255, 0, 255))
-    d.rectangle([100, 30, 127, 127], fill=(0, 96, 0))
-    d.rectangle([0, 120, 60, 127], fill=(200, 200, 0))
-    import io
-    buf = io.BytesIO()
-    im.save(buf, "PNG")
 
     def cart(launch=""):
         G = model.Game
-        return model.Cart(title="TEST CART", launch=launch, background=buf.getvalue(), games=[
+        return model.Cart(title="TEST CART", launch=launch, background=cart_background_png(), games=[
             G("zulu", "ZULU", {"rev0": bravo}),
             G("alpha", "ALPHA GAME", {"rev0": alpha}, folder="FOLDER ONE"),
             G("bravo", "BRAVO", {"rev0": bravo}, folder="FOLDER ONE/INNER"),
@@ -99,6 +105,13 @@ def cart_cards(build_dir, pk):
         fatimg.build_image(str(out[name]), files, fs="fat32", lfn=True, fragment={"GAMES/MENU.BG": 3})
     extras["MIKE.CHG"] = chgpack.pack(mike, "MIKE")
     extras["EXTRA.CHG"] = chgpack.pack(extra, "AAA EXTRA")
+    # cartbig: 230 games in GAMES/, more than a folder lists (MENU_MAX_GAMES,
+    # 224): the menu keeps the first 224 the directory holds, GAME 000-223
+    big = {f"GAMES/G{i:03d}.CHG": chgpack.pack(bytes((j * 7 + i * 13) & 0xFF for j in range(64 + i)), f"GAME {i:03d}")
+           for i in range(230)}
+    out["cartbig"] = build_dir / "cartbig.img"
+    fatimg.build_image(str(out["cartbig"]), big, fs="fat32")
+    extras["G223.CHG"] = big["GAMES/G223.CHG"]
     return out, extras
 
 
@@ -145,7 +158,34 @@ def run_all(build_dir, build, run, imgs, lay, pk, quick, pin=False):
     else:
         print(f"{'boot_real':12s} {'skip':6s} no out/sdcard.img (python tools/sdcard/mkcard.py --image out/sdcard.img)")
     ok &= check_frames(fdir, pin)
+    ok &= check_preview(fdir)
     return ok
+
+
+def check_preview(fdir):
+    """`chgame background --preview` (tools/chcart/background.py) draws the
+    menu as the bootloader does: the cart card's frame against its preview,
+    every pixel but the rainbow's (their hue depends on the time)."""
+    from PIL import Image
+    from chcart import background, runtime
+    frame = fdir / "cart_menu.png"
+    png = cart_background_png()
+    ui = dict(background.model.UI_COLORS)
+    pv = background.preview(png, ui, titles=["ZULU", "FOLDER ONE", "MIKE", "AAA EXTRA"], scale=1,
+                            installed=(), folders=(1,))
+    idx = runtime.menu_background(png, ui)
+    real = Image.open(frame).convert("RGB").load()
+    mine = pv.load()
+    diff = 0
+    for y in range(128):
+        for x in range(128):
+            b = idx[512 + y * 64 + x // 2]
+            if (b >> 4 if x % 2 == 0 else b & 15) == 15 or 20 <= y < 30:
+                continue
+            diff += real[x, y] != mine[x, y]
+    print(f"{'preview':12s} {'ok' if not diff else 'FAILED':6s} chcart's menu preview vs the bootloader's frame"
+          + (f": {diff} pixels differ" if diff else ""))
+    return not diff
 
 
 def run_real(build_dir, exe, img, fdir):

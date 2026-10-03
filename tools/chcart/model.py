@@ -46,6 +46,7 @@ DEVICES = {
 BOOT_SIG, BOOT_SIG_OFFSET = 0x4C424843, 8      # "CHBL": a bootloader image, not a program
 
 TITLE_MAX, TITLE_SHOWN, FOLDER_MAX, FOLDER_DEPTH = 31, 19, 19, 4
+FOLDER_ENTRIES = 224                           # rows a folder of the menu holds (menu.h MENU_MAX_GAMES)
 CHG_AUTHOR_MAX, CHG_VERSION_MAX = 15, 7
 ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,31}$")
 SD_CHARS = "A-Z0-9!#$%&'()\\-@^_`{}~"
@@ -263,6 +264,17 @@ def validate(cart):
         if name not in folders:
             warn("unused-file", f"menu.folders[{name!r}]", "no game is in this folder")
         out += _check_background(png, ui, f"menu.folders[{name!r}].background")
+    # a folder of the menu lists 224 entries, games and folders
+    count = {}
+    for g in cart.games:
+        count[g.folder] = count.get(g.folder, 0) + 1
+    for f in folders:
+        parent = f.rsplit("/", 1)[0] if "/" in f else ""
+        count[parent] = count.get(parent, 0) + 1
+    for f, n in count.items():
+        if n > FOLDER_ENTRIES:
+            err("full-folder", f"folder {f!r}" if f else "top level",
+                f"{n} entries; a folder of the menu lists {FOLDER_ENTRIES}: put some in folders")
     # the card holds one file per path
     owner = {}
     for g in cart.games:

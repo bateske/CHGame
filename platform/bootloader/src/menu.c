@@ -66,12 +66,11 @@ static uint8_t buf[512] __attribute__((aligned(4)));
 
 static uint32_t w32(const uint8_t *p) { return *(const uint32_t *)(const void *)p; }
 
-/* The menu's own colours when there is no MENU.BG (the panel black and dark
-   grey; the rest by shared/chgame_card.h's roles). */
+/* The menu's own colours when there is no MENU.BG (black behind; the rest
+   by shared/chgame_card.h's roles). */
 static const uint16_t pal0[16] = {
-    [0] = RGB565(0, 0, 0), [1] = RGB565(64, 64, 64),
     [CARD_C_TEXT] = RGB565(255, 244, 214), [CARD_C_DIM] = RGB565(128, 128, 128),
-    [CARD_C_INK] = RGB565(0, 0, 0), [CARD_C_MARK] = RGB565(214, 32, 32),
+    [CARD_C_MARK] = RGB565(214, 32, 32),
 };
 
 /* ---- the card --------------------------------------------------------------- */
@@ -223,8 +222,9 @@ static void flush(uint32_t y0, uint32_t y1)
     if (lit) lcd_flush(y0, y1);             /* before lcd_on(), the picture waits for it */
 }
 
-/* The background: MENU.BG, or the menu's own when there is none (or it is
-   not one): black, a grey band and the title. */
+/* The background: MENU.BG, with the logo and anything else in it (the
+   menu draws nothing over its top 20 rows and bottom 8), or plain black when
+   there is none (or it is not one). */
 static void background(void)
 {
     if (bg.clus && bg.size == CARD_BG_BYTES) {
@@ -244,8 +244,6 @@ static void background(void)
     }
     for (uint32_t i = 0; i < 16; i++) lcd_pal[i] = pal0[i];
     lcd_fill(0, 0, LCD_W, LCD_H, 0);
-    lcd_fill(0, 0, LCD_W, LIST_Y - 2, 1);
-    lcd_text((LCD_W - 6 * 12) / 2, 2, "CHGAME", 6, LCD_RAINBOW, 2);
 }
 
 static void draw_list(void)
@@ -261,8 +259,8 @@ static void draw_list(void)
             c = CARD_C_INK;
         } else if (g->flags & G_BAD) c = CARD_C_DIM;
         if (g->flags & G_INSTALLED) lcd_fill(2, y + 2, 3, 6, CARD_C_MARK);     /* the chip */
-        lcd_text(8, y + 1, g->title, TITLE_COLS, c, 1);
-        if (g->flags & G_DIR) lcd_text(LCD_W - 6, y + 1, ">", 1, c, 1);
+        lcd_text(8, y + 1, g->title, TITLE_COLS, c);
+        if (g->flags & G_DIR) lcd_text(LCD_W - 6, y + 1, ">", 1, c);
     }
     flush(0, LCD_H);
 }
@@ -272,7 +270,7 @@ static void text_c(uint32_t y, const char *s, uint32_t c)
 {
     uint32_t n = 0;
     while (s[n] && n < TITLE_COLS) n++;
-    lcd_text((LCD_W - n * 6) / 2, y, s, n, c, 1);
+    lcd_text((LCD_W - n * 6) / 2, y, s, n, c);
 }
 
 /* A game's title is padded to TITLE_COLS, so text_c() always draws it 114

@@ -76,9 +76,10 @@ changing that game.
      compare sizes and frames, as for the rest of the library.
    - `platform/bootloader/src/sd.c` and `src/fat.c` are a C fork of CHSd: a
      fix to one belongs in the other too.
-   - The bootloader's flash is full: 12,016 of 12,288 B, and gate A keeps
-     256 B spare. Every byte added must be paid for
-     (`platform/bootloader/SIZES.md` lists where). Measure with
+   - The bootloader is full: flash 11,948 of 12,288 B (gate A keeps 256 B
+     spare), and RAM 20,444 of 20,480 B, since a menu folder lists as many
+     entries (224, `MENU_MAX_GAMES`) as RAM allows. Every byte added must be
+     paid for (`platform/bootloader/SIZES.md` lists where). Measure with
      `platform/bootloader/build.sh release`.
 7. **Every game needs its own save magic, debug handshake id and
    `config.h` prefix.** All games share the same two flash save pages. The
@@ -175,6 +176,7 @@ it, `python tools/chgame.py` is the same thing. The shared tools under
 | The casino cart, `out/CHGame-Casino.chgame` (`tools/sdcard/casino.json`), and its card in `out/sdcard/` (+ FAT32 image) | `chgame card [--no-build] [--image out/sdcard.img]` |
 | A sketch as a `.chgame` (`build/<Name>.chgame`, from its `chgame.json`) | `chgame export` (in its folder) |
 | Carts: inspect, check, combine, edit, prepare a card, flash, deploy | `chgame cart info\|verify\|new\|add\|remove\|order\|set\|launch\|background\|prepare\|flash\|deploy` |
+| The menu's picture (logo included): the default to edit, any image converted, a preview of the menu on it, onto a card (docs/menu-image.md) | `chgame background --template F`, `chgame background IMAGE [--preview F.gif] [--out F] [--card DRIVE]` |
 | chcart's tests (the conformance fixtures included) / remake the fixtures | `python -m unittest discover -s tools/chcart/tests` / `python tools/chcart/fixtures.py` |
 | CHG files (the menu's install files): make one, check them, list a card | `chgame pack pack\|verify\|info` |
 | Install the menu bootloader on a board | `platform/bootloader/HARDWARE.md` (self-update over USB) |

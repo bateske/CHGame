@@ -11,7 +11,8 @@
     chgame cart order PKG ID ...                  these first, in this order; the rest after
     chgame cart set PKG [--game ID] KEY=VALUE ... (KEY= clears; title, folder, author, ...)
     chgame cart launch PKG ID|none                the game started at power-on
-    chgame cart background PKG PNG|none [--folder F]
+    chgame cart background PKG IMAGE|none [--folder F] [--color KEY=#RRGGBB]
+                                                  the menu's picture (any image: converted, chcart/background.py)
     chgame cart prepare PKG OUTDIR [--image IMG]  the card's files (spec/card.md), and a FAT32 image
     chgame cart flash PKG [--game ID] [--port P]  upload one game
     chgame cart deploy PKG [--card DIR] [--port P] [--clean] [--no-flash]
@@ -28,7 +29,7 @@ import json
 import pathlib
 import sys
 
-from . import deploy, model, runtime, sources, zipio
+from . import background, deploy, model, runtime, sources, zipio
 from .model import CartError
 
 GAME_SET = ("title", "folder", "version", "author", "description", "genre", "license", "url", "sourceUrl", "id")
@@ -152,11 +153,20 @@ def build_recipe(recipe_path, build=True, platform_dir=None, binary=None, only=N
                       colors=menu.get("colors", {}))
     for k in CART_SET[1:]:
         setattr(cart, k, r.get(k, ""))
+    ui = cart.ui_colors()
     if menu.get("background"):
-        cart.background = (base / menu["background"]).read_bytes()
+        cart.background = _picture(base / menu["background"], ui)
     for f in menu.get("folders", []):
-        cart.folder_backgrounds[f["name"]] = (base / f["background"]).read_bytes()
+        cart.folder_backgrounds[f["name"]] = _picture(base / f["background"], ui)
     return cart
+
+
+def _picture(path, ui, fit="cover", dither=False):
+    """A menu picture from any image, converted if it needs to be (saying how)."""
+    png, notes = background.convert(path, ui, fit, dither)
+    for n in notes:
+        print(f"{pathlib.Path(path).name}: {n}")
+    return png
 
 
 def _in_platform(name, platform_dir):
@@ -233,7 +243,9 @@ def cmd_launch(a):
 
 def cmd_background(a):
     cart = _load(a.pkg)
-    png = None if a.png == "none" else pathlib.Path(a.png).read_bytes()
+    if a.color:
+        cart.colors = {k: v for k, v in background.colors_arg(a.color).items() if v != model.UI_COLORS[k]}
+    png = None if a.png == "none" else _picture(a.png, cart.ui_colors(), a.fit, a.dither)
     if a.folder:
         if png is None:
             cart.folder_backgrounds.pop(a.folder, None)
@@ -322,10 +334,14 @@ def parser():
     p = sub.add_parser("launch", help="the game started at power-on")
     p.add_argument("pkg")
     p.add_argument("id")
-    p = sub.add_parser("background", help="the menu's background (a 128x128 PNG)")
+    p = sub.add_parser("background", help="the menu's picture (any image; converted to fit)")
     p.add_argument("pkg")
-    p.add_argument("png")
-    p.add_argument("--folder")
+    p.add_argument("png", metavar="image")
+    p.add_argument("--folder", help="a folder's own picture instead of the menu's")
+    p.add_argument("--color", action="append", metavar="KEY=#RRGGBB",
+                   help="the menu's text, disabled, selectedText or mark colour")
+    p.add_argument("--fit", choices=["cover", "contain"], default="cover")
+    p.add_argument("--dither", action="store_true")
     p = sub.add_parser("prepare", help="the card's files")
     p.add_argument("pkg")
     p.add_argument("outdir")
@@ -347,6 +363,60 @@ def main(argv=None):
     a = parser().parse_args(argv)
     try:
         return globals()[f"cmd_{a.cmd}"](a)
+    except CartError as e:
+        print(e, file=sys.stderr)
+        return 1
+    except (OSError, ValueError) as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
+
+
+def background_main(argv):
+    """`chgame background`: the menu's picture (docs/menu-image.md)."""
+    ap = argparse.ArgumentParser(prog="chgame background", description=background.__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("image", nargs="?", help="any picture: PNG, JPEG, BMP, GIF ...")
+    ap.add_argument("--template", metavar="OUT.png", help="write the default picture (the CHGAME logo), to edit")
+    ap.add_argument("--out", metavar="OUT.png", help="write the picture as the menu will use it")
+    ap.add_argument("--preview", metavar="FILE", help="the menu drawn on it: .png, or .gif with the rainbow turning")
+    ap.add_argument("--card", metavar="DIR", help="write it to a mounted card (GAMES/MENU.BG)")
+    ap.add_argument("--fit", choices=["cover", "contain"], default="cover",
+                    help="not 128x128: crop to fill (cover) or add black bars (contain)")
+    ap.add_argument("--dither", action="store_true", help="dither when reducing colours (photos)")
+    ap.add_argument("--color", action="append", metavar="KEY=#RRGGBB",
+                    help="the menu's text, disabled, selectedText or mark colour, for --preview and --card")
+    ap.add_argument("--redraw-default", metavar="TTF", help=argparse.SUPPRESS)
+    a = ap.parse_args(argv)
+    try:
+        if a.redraw_default is not None:
+            from fonts.serif import find_ttf
+            background.draw_default(find_ttf("DejaVuSans-Bold.ttf", a.redraw_default or None)).save(
+                runtime.DEFAULT_BACKGROUND, optimize=True)
+            print(runtime.DEFAULT_BACKGROUND)
+            return 0
+        if a.template:
+            pathlib.Path(a.template).write_bytes(background.template())
+            print(f"{a.template}: the default picture, 128x128. Edit it, then: chgame background {a.template} --preview preview.gif")
+            if not a.image:
+                return 0
+        if not a.image:
+            ap.error("give an image (or --template OUT.png)")
+        ui = background.colors_arg(a.color)
+        png, notes = background.convert(a.image, ui, a.fit, a.dither)
+        print(f"{a.image}: " + ("ready as it is" if not notes else "converted"))
+        for n in notes:
+            print(f"  {n}")
+        if a.out:
+            pathlib.Path(a.out).write_bytes(png)
+            print(f"{a.out}: written")
+        if a.preview:
+            background.save_preview(png, a.preview, ui)
+            print(f"{a.preview}: the menu on it")
+        if a.card:
+            print(f"{background.write_to_card(png, a.card, ui)}: written (eject the card before the CHGame reads it)")
+        if not (a.out or a.preview or a.card):
+            print("nothing written: add --preview FILE to see it, --out FILE to keep it, --card DRIVE to use it")
+        return 0
     except CartError as e:
         print(e, file=sys.stderr)
         return 1

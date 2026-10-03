@@ -81,6 +81,8 @@ class Format(unittest.TestCase):
             ("bad-background", Cart("C", [game("a")], background=png(colors=[(i, i, i) for i in range(1, 14)]))),
             ("missing-field", Cart("C", [])),
             ("bad-device", Cart("C", [Game("a", "A", {"rev9": image(10)})])),
+            ("full-folder", Cart("C", [game(f"g{i}", f"G{i}", n=8) for i in range(model.FOLDER_ENTRIES + 1)])),
+            ("full-folder", Cart("C", [game(f"g{i}", f"G{i}", n=8, folder=f"F{i}") for i in range(model.FOLDER_ENTRIES + 1)])),
         ]
         for code, c in bad:
             with self.subTest(code=code):
@@ -253,6 +255,63 @@ class Runtime(unittest.TestCase):
         row = bg[512:512 + 3]
         # magenta 15, (10,20,30) 0, cream 11 (text), (40,50,60) 1, (10,20,30) 0, then black 13 (selectedText)
         self.assertEqual(row, bytes([0xF0, 0xB1, 0x0D]))
+
+
+class Background(unittest.TestCase):
+    def test_convert(self):
+        from chcart import background
+        from PIL import Image, ImageDraw
+        default = background.template()
+        self.assertEqual(background.convert(default), (default, []))      # ready: kept byte for byte
+        im = Image.new("RGB", (300, 200))
+        for x in range(300):
+            for y in range(200):
+                im.putpixel((x, y), (x * 255 // 299, y * 255 // 199, 90))
+        ImageDraw.Draw(im).rectangle([140, 0, 160, 20], fill=(250, 12, 240))
+        b = io.BytesIO()
+        im.save(b, "PNG")
+        png, notes = background.convert(b.getvalue())
+        self.assertTrue(background.ready(png))
+        self.assertEqual(len(notes), 3)                                   # scaled, magenta, colours
+        px = model.rgb_pixels(png)
+        self.assertIn(model.RAINBOW_RGB, px)
+        self.assertLessEqual(len(model.background_colors(png, dict(model.UI_COLORS))), 11)
+        big = Image.open(io.BytesIO(default)).resize((256, 256), Image.NEAREST)
+        b = io.BytesIO()
+        big.save(b, "PNG")
+        self.assertEqual(model.rgb_pixels(background.convert(b.getvalue())[0]), model.rgb_pixels(default))
+        rgba = Image.new("RGBA", (128, 128), (255, 255, 255, 0))
+        b = io.BytesIO()
+        rgba.save(b, "PNG")
+        self.assertEqual(set(model.rgb_pixels(background.convert(b.getvalue())[0])), {(0, 0, 0)})
+
+    def test_preview_and_card(self):
+        from chcart import background
+        im = background.preview(background.template())
+        self.assertEqual(im.size, (384, 384))
+        with tempfile.TemporaryDirectory() as d:
+            f = background.write_to_card(background.template(), d)
+            self.assertEqual(f.read_bytes(), runtime.menu_background(background.template(), dict(model.UI_COLORS)))
+            background.save_preview(background.template(), pathlib.Path(d) / "p.gif")
+            self.assertGreater((pathlib.Path(d) / "p.gif").stat().st_size, 0)
+        self.assertEqual(background.colors_arg(["text=#ffffff"])["text"], "#FFFFFF")
+        with self.assertRaises(ValueError):
+            background.colors_arg(["txt=#FFFFFF"])
+
+    def test_cart_command_converts(self):
+        from PIL import Image
+        with tempfile.TemporaryDirectory() as d:
+            d = pathlib.Path(d)
+            (d / "a.bin").write_bytes(image(100))
+            pkg = str(d / "c.chgame")
+            Image.new("RGB", (64, 32), (200, 30, 30)).save(d / "pic.jpg")
+            self.assertEqual(cli.main(["new", pkg, str(d / "a.bin")]), 0)
+            self.assertEqual(cli.main(["background", pkg, str(d / "pic.jpg"), "--color", "text=#FFFFFF"]), 0)
+            c = zipio.load(pkg)
+            self.assertEqual(model.image_info(c.background)[1:3], (128, 128))
+            self.assertEqual(c.colors, {"text": "#FFFFFF"})
+            self.assertEqual(cli.background_main([str(d / "pic.jpg"), "--card", str(d / "card")]), 0)
+            self.assertEqual(len((d / "card" / "GAMES" / "MENU.BG").read_bytes()), runtime.BG_BYTES)
 
 
 class Deploy(unittest.TestCase):

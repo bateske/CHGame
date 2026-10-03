@@ -58,16 +58,16 @@ practice you can switch games as often as you like.
 
 ## The menu's look
 
-The picture behind the menu comes from the card, so every card can look its
-own way. A card made by the tools carries the CHGAME logo, whose colours
-turn: anything a card's picture paints in pure magenta (`#FF00FF`) turns
-through the colours the same way, as does the selection bar. A folder can
-have a picture of its own.
+Everything behind the list is one picture on the card, the CHGAME logo
+included, so every card can look its own way. Anything the picture paints
+in pure magenta (`#FF00FF`) turns through the colours, as the default
+logo and the selection bar do. A folder can have a picture of its own.
 
-![The menu on other cards: a background of the card's own, a folder, and a card without one](../platform/bootloader/docs/menu_cards.png)
+![The menu on the default picture, on a picture of a card's own, and on a card with none](../platform/bootloader/docs/menu_cards.png)
 
-A card with no picture gets the menu's own look: black, a grey band and the
-title.
+A card with no picture shows the list on black. To change the picture,
+`chgame background` converts any image, previews the menu on it and puts it
+on a card: [menu-image.md](menu-image.md) has the steps.
 
 ## Preparing a card
 
@@ -108,8 +108,9 @@ title.
     so the file name only has to be a short `NAME.CHG` (8 letters at most).
   - A game copied in by hand is listed after the card's own order, sorted
     by title.
-  - Up to 128 entries a folder, 4 folders deep. Files can be copied in any
-    order and can be fragmented.
+  - Up to 224 entries (games and folders) in a folder, 4 folders deep,
+    and as many folders as you like. Files can be copied in any order and
+    can be fragmented.
   - `MENU.IDX` and `MENU.BG` are made by the tools from a `.chgame`
     ([spec/card.md](../spec/card.md)).
 

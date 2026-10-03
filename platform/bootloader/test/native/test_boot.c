@@ -12,7 +12,7 @@
 static struct { char name[16]; int code; uint32_t len, crc; char path[512]; } pk[MAXP];
 static int npk;
 static char img_fat32[512], img_fat16[512], img_nogames[512], img_boot[512];
-static char img_cart[512], img_cartlaunch[512], img_cartbadbg[512];
+static char img_cart[512], img_cartlaunch[512], img_cartbadbg[512], img_cartbig[512];
 static const char *frames, *frame_prefix = "";
 static uint8_t payload[CHGAME_APP_MAX_SIZE];
 
@@ -467,6 +467,23 @@ static void t_cart_bad_background(void)
     snap("cart_bad_bg");
 }
 
+/* 230 games in one folder: the menu lists the 224 it has room for
+   (MENU_MAX_GAMES), sorted, and UP from the first row wraps to the last. */
+static void t_cart_full_folder(void)
+{
+    card(img_cartbig);
+    B->limit_us = 4000000;
+    CHECK(host_boot() == END_HANG, "a folder of 230: the menu");
+    lcd_sane("full folder");
+    snap("cart_full");
+    host_init();
+    card(img_cartbig);
+    press(1500, BTN_UP);
+    press(1900, BTN_A);
+    B->limit_us = 8000000;
+    CHECK(host_boot() == END_RESET && installed_is("G223.CHG"), "the last row is GAME 223, and it installs");
+}
+
 /* The real card from tools/sdcard/mkcard.py: install every program in menu
    order, each over the one before, and check what is installed each time. */
 static void t_real_card(void)
@@ -511,6 +528,7 @@ int main(int argc, char **argv)
             if (!strcmp(b, "cart")) snprintf(img_cart, sizeof img_cart, "%s", c);
             if (!strcmp(b, "cartlaunch")) snprintf(img_cartlaunch, sizeof img_cartlaunch, "%s", c);
             if (!strcmp(b, "cartbadbg")) snprintf(img_cartbadbg, sizeof img_cartbadbg, "%s", c);
+            if (!strcmp(b, "cartbig")) snprintf(img_cartbig, sizeof img_cartbig, "%s", c);
         } else if (!strcmp(a, "pkg") && npk < MAXP) {
             sscanf(line, "%*s %15s %d %u %x %511s", pk[npk].name, &pk[npk].code, &pk[npk].len, &pk[npk].crc, pk[npk].path);
             npk++;
@@ -548,5 +566,6 @@ int main(int argc, char **argv)
     TEST(t_cart_launch_start_held);
     TEST(t_cart_launch_soft_reset);
     TEST(t_cart_bad_background);
+    TEST(t_cart_full_folder);
     return test_summary();
 }

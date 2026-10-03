@@ -158,14 +158,14 @@ void lcd_fill(uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t c)
         }
 }
 
-void lcd_text(uint32_t x, uint32_t y, const char *s, uint32_t n, uint32_t c, uint32_t scale)
+void lcd_text(uint32_t x, uint32_t y, const char *s, uint32_t n, uint32_t c)
 {
-    for (; n && *s; n--, s++, x += 6 * scale) {
+    for (; n && *s; n--, s++, x += 6) {
         uint32_t ch = (uint8_t)*s;          /* ('~' and the like: a folder's 8.3 name, CARDGA~1;
                                                8.3 names have no control characters) */
         const uint8_t *g = font5x7 + ((ch > FONT5X7_LAST ? '?' : ch) - 32) * 5;
         for (uint32_t gc = 0; gc < 5; gc++)
             for (uint32_t gr = 0; gr < 7; gr++)
-                if (g[gc] >> gr & 1) lcd_fill(x + gc * scale, y + gr * scale, scale, scale, c);
+                if (g[gc] >> gr & 1) lcd_fill(x + gc, y + gr, 1, 1, c);
     }
 }

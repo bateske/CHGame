@@ -32,6 +32,8 @@ same thing uninstalled.
   cart    ...                            .chgame files: info, verify, new, build, add, remove, order,
                                          set, launch, background, prepare, flash, deploy (tools/chcart)
   card    ...                            the repository's casino cart and its SD card (tools/sdcard/mkcard.py)
+  background IMAGE [--preview F] [--out F] [--card DIR] | --template F
+                                         the SD menu's picture: convert, preview, put on a card (docs/menu-image.md)
   uploader ARGS ...                      the uploader itself: probe, info, flash, selfupdate, burn ...
   pack    ...                            CHG files, the menu's install files (tools/chgpack.py)
 
@@ -180,6 +182,11 @@ def cmd_export(a, sketch):
     return cli.export_main(list(a.rest), sketch)
 
 
+def cmd_background(a, _sketch):
+    from chcart import cli
+    return cli.background_main(list(a.rest))
+
+
 def cmd_cart(a, _sketch):
     from chcart import cli
     return cli.main(list(a.rest))
@@ -240,7 +247,8 @@ def main(argv=None):
                         ("cart", ".chgame files: make, inspect, edit, prepare a card, deploy"),
                         ("uploader", "the uploader: probe, info, flash, selfupdate, burn ..."),
                         ("pack", "CHG files (the menu's install files)"),
-                        ("card", "the casino cart and its SD card")):
+                        ("card", "the casino cart and its SD card"),
+                        ("background", "the SD menu's picture: convert, preview, put on a card")):
         sub.add_parser(name, help=help_, add_help=False)
     p = sub.add_parser("gif", help="record the README's GIF", add_help=False)
     p.add_argument("--check", action="store_true")

@@ -117,6 +117,21 @@ The WCH driver and the BOOT button are only for recovery.
 onto a FAT32 card, or deploy `CHGame-Casino-<version>.chgame` to it
 (`chgame cart deploy ... --card E:\`; [docs/sd-menu.md](docs/sd-menu.md)).
 
+**Your own menu picture.** Everything behind the menu's list, the CHGAME
+logo included, is one 128x128 picture on the SD card, so you can redraw it
+or replace it with anything you like:
+
+```bash
+chgame background --template my-menu.png          # the default picture, to edit in any paint program
+chgame background my-menu.png --preview p.gif     # see the menu on it (any image is converted to fit)
+chgame background my-menu.png --card E:\          # put it on a mounted card
+```
+
+The menu leaves the top 20 rows (the logo) and the bottom 8 (key hints) to
+the picture, and anything painted in pure magenta (#FF00FF) turns through
+the rainbow. [docs/menu-image.md](docs/menu-image.md) walks through it step
+by step, including putting a picture into a `.chgame` cart.
+
 **This repository** is for working on the platform and the games: clone it
 and `pip install -e .[sim]` (see *Quick start* below). `chgame build`
 compiles against the repository's own copies of the libraries, so an edit

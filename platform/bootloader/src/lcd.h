@@ -36,8 +36,8 @@ void lcd_flush(uint32_t y0, uint32_t y1);
 /* Turns the colour wheel a step and sends the rows that show it. */
 void lcd_step(void);
 /* Drawing into the framebuffer (nothing is sent). Text is the 5x7 font in
-   6-pixel cells, scale 1 or 2, glyph pixels only. */
+   6-pixel cells, glyph pixels only. */
 void lcd_fill(uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t c);
-void lcd_text(uint32_t x, uint32_t y, const char *s, uint32_t n, uint32_t c, uint32_t scale);
+void lcd_text(uint32_t x, uint32_t y, const char *s, uint32_t n, uint32_t c);
 
 #endif

@@ -14,10 +14,16 @@ a boot image of at most 12,288 B with at least 256 B to spare.
 
 | Build | `.text` | `.ramfunc` | `.data` | Boot image | Free | `.bss` | RAM in use |
 |---|---|---|---|---|---|---|---|
-| **release** (menu + USB upload + self-update) | 11,336 | 596 | 84 | **12,016** | **272** | 14,628 | 17,372 |
-| locked (menu + USB upload) | 11,120 | 496 | 80 | 11,696 | 592 | 14,628 | 17,268 |
+| **release** (menu + USB upload + self-update) | 11,268 | 596 | 84 | **11,948** | **340** | 17,700 | **20,444** |
+| locked (menu + USB upload) | 11,048 | 496 | 80 | 11,624 | 664 | 17,700 | 20,340 |
 | nomenu (USB upload + self-update, for HW2a) | 4,728 | 596 | 76 | 5,400 | 6,888 | 984 | 3,720 |
-| app (the menu as a program at 0x3000, dry run) | 6,496 | 0 | 16 | 6,512 | - | 13,504 | 15,584 |
+| app (the menu as a program at 0x3000, dry run) | 6,424 | 0 | 16 | 6,440 | - | 16,576 | 18,656 |
+
+**RAM is full on purpose.** A folder of the menu lists `MENU_MAX_GAMES`
+entries (`src/menu.h`), 32 B each, and 224 take what the framebuffer, the
+buffers and the 2 KB stack leave: 36 B of the 20,480 are left. Anything that
+adds RAM to the menu build lowers that number (8 B more of RAM, one entry
+fewer). A folder had 128 until 2026-10-03.
 
 The colour themes (`--theme=plain`, `casino`) went with menu v2: the look
 is the card's `MENU.BG` now.
@@ -28,7 +34,7 @@ Notes:
 - RAM in use is the 16 B retained block, `.ramfunc`, `.data`, `.bss` and the
   2 KB stack, out of 20,480 B.
 - The release `.bss` is mostly the menu's framebuffer (8,192 B), its game
-  table (128 x 32 B), the colour wheel's row of 255 colours (510 B), one
+  table (224 x 32 B), the colour wheel's row of 255 colours (510 B), one
   512 B sector buffer, the protocol's 512 B frame buffer and its 256 B page
   buffer.
 - The binaries, with SHA-256 sums, are in [release/](release). They use the
@@ -55,6 +61,7 @@ Notes:
 | READ removed | 12,008 | 280 | `-verify`'s readback; END's CRC of the flash stays. Gate A passes |
 | Tested on cards from the tools | 12,012 | 276 | Keys held at power-on count only after a release again (`k_prev` starts with every key down); a bad file's name shown as stored (`BADFILE CHG`) |
 | Review | 12,016 | 272 | The font guard back for characters after `_` (a hand-made folder's 8.3 name, `CARDGA~1`); INSTALLED PROGRAM written by `set_title()` |
+| The logo only in the picture; 224 a folder | 11,948 | 340 | No title drawn by the bootloader (the card's picture has the logo; without one the list is on black), so text is never scaled; the game table from 128 entries to 224 (RAM 17,372 to 20,444 B) |
 
 ## Where the release bytes go
 
@@ -89,8 +96,6 @@ The release map contains:
 ## If bytes are needed later
 
 Largest first:
-- **The fallback look's title at scale 2, about 40 B.** It shows only on a
-  card without `MENU.BG`, and on the USB notice.
 - **Nested folders, about 30 B.** One level would do for most carts.
 - **The INSTALLED PROGRAM row, about 60 B.** An uploaded sketch that is not
   on the card would then have to be found another way (a key).

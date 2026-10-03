@@ -114,7 +114,10 @@ background.
 | 40-511 | 0 |
 | 512-8703 | 128 rows of 64 bytes, top row first; two pixels a byte, the left one in the high nibble; each a palette index |
 
-**From the PNG** (128x128, opaque, read as 8-bit RGB). The menu's colours
+**From the PNG** (128x128, opaque, read as 8-bit RGB). Carts hold PNGs
+that already follow these rules; `chgame background` (tools/chcart/background.py)
+converts any image into one, outside this format, so its choices (scaling,
+reducing colours) never have to be repeated by another implementation. The menu's colours
 are the cart's `menu.colors`, defaults filled in. Each pixel's index is:
 
 1. **15** if the pixel is exactly `#FF00FF`. Colour 15 is drawn as the
@@ -161,8 +164,11 @@ What bootloader v2 does with these files (docs/sd-menu.md tells players):
 - **START held at power-on, or a reset by a game** (its 3 s START exit):
   the menu, never the launch game.
 - **A list** is a folder's directory: its `*.CHG` files and subfolders,
-  except hidden and system entries and names starting with `.` or `_`, 128
-  at most.
+  except hidden and system entries and names starting with `.` or `_`, 224
+  at most (each row takes 32 B of the bootloader's RAM). Beyond that, the
+  first 224 the directory holds are listed. Runtime preparation never
+  writes a fuller folder: a cart with one is refused (`full-folder`,
+  chgame.md), and more games go in folders, which have no limit.
   - Entries named in `MENU.IDX` come first, in record order.
   - The rest follow, sorted by title (a folder's title is its index title,
     or its 8.3 name). So a game copied onto the card by hand still shows,
@@ -173,9 +179,18 @@ What bootloader v2 does with these files (docs/sd-menu.md tells players):
 - **Keys:** A or START opens a folder or plays a game, and B goes back.
 - **Backgrounds:** a folder without `MENU.BG` keeps its parent's. A
   `MENU.BG` that is not 8,704 bytes, or does not start with `CHB1`, is
-  ignored, and the menu uses its own look: black, a grey band, the title
-  CHGAME.
-- **Text:** titles are drawn over the background in colours 11-14. The
+  ignored, and the list is drawn on black (the logo is the picture's:
+  without one there is none).
+- **What the menu draws over the picture**, and nothing else:
+  - the list, over rows 20-119: ten rows of ten pixels, titles in colours
+    11-14 from x 8;
+  - the selection bar, the whole width;
+  - the installed game's chip at x 2-4 (rows 2-7 of its row);
+  - a folder's `>` at x 122;
+  - message boxes over rows 36-87.
+
+  Rows 0-19 and 120-127 are the picture's alone: the CHGAME logo of the
+  default picture is part of it, as is anything a cart puts there. The
   selection bar, the boxes and every colour-15 pixel turn through the colour
   wheel, the hue moving with x + y and with time.
 - **Errors** are shown as a number (docs/sd-menu.md lists them). Nothing

@@ -58,7 +58,7 @@ same when the card's layout changes.
 
 | Key | Value |
 |---|---|
-| `background` | path of a PNG, 128x128, opaque: the picture behind the menu. Pixels of exactly `#FF00FF` are drawn as the menu's moving rainbow. Besides `#FF00FF` and the four menu colours below, at most 11 colours (card.md says why, and how it is converted) |
+| `background` | path of a PNG, 128x128, opaque: the whole picture behind the menu, its title or logo included. The menu draws over rows 20-119 only (card.md). Pixels of exactly `#FF00FF` are drawn as the menu's moving rainbow. Besides `#FF00FF` and the four menu colours below, at most 11 colours (card.md says why, and how it is converted). `chgame background` makes any image into one (docs/menu-image.md) |
 | `colors` | the menu's own colours, `#RRGGBB`: `text` (titles, default `#FFF4D6`), `disabled` (a file the menu cannot install, `#808080`), `selectedText` (the title on the selection bar, `#000000`), `mark` (the installed game's chip, `#D62020`) |
 | `folders` | a list of `{"name": "CARD GAMES", "background": "path.png"}`: a folder's own background, the same kind of PNG. Folders without one show their parent's |
 
@@ -80,6 +80,9 @@ same when the card's layout changes.
 ### Order and folders
 
 - **The order of `games` is the menu's order.**
+- **A folder lists at most 224 entries** (games and folders), and so does
+  the top level (`full-folder`). Folders hold any number of games between
+  them.
 - **A folder** takes its place in its parent's list where its first game
   is, in that order.
 - **`menu.folders` only adds a background.** It never orders anything.
@@ -145,6 +148,7 @@ Example: `"sdcard": "chwords/sdcard/"` and the ZIP entry
 | `bad-image` | error | a picture of the wrong kind or size; a background with transparent pixels |
 | `bad-background` | error | a background with too many colours |
 | `bad-launch` | error | `launch` names no game |
+| `full-folder` | error | a menu folder (or the top level) holds more than 224 entries, games and folders together: the menu could not list them all |
 | `unknown-key` | warning | a key this version does not define: ignored |
 | `unused-file` | warning | a file the manifest does not name; an `sdcard` folder with nothing in it; a folder background for a folder no game is in |
 | `long-title` | warning | a title over 19 characters (the menu shows the first 19) |

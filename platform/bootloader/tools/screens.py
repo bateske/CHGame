@@ -6,8 +6,8 @@
 
 docs/menu.png          the menu with the casino card (out/sdcard.img: `chgame card --image`)
 docs/menu_screens.png  the menu with a game installed, and three messages
-docs/menu_cards.png    the menu on other cards: a background of the card's own, a
-                       folder, and a card without one (the menu's own look)
+docs/menu_cards.png    the menu on the default picture (the casino card), on a
+                       picture of a card's own, and on a card with none
 docs/menu_rainbow.gif  the rainbow colour turning on the casino card (4 s)
 """
 import subprocess
@@ -35,7 +35,7 @@ def strip(names):
 def main():
     frame("real_menu").save(DOCS / "menu.png")
     strip(["real_menu_installed", "error_box", "usb_notice", "install_failed"]).save(DOCS / "menu_screens.png")
-    strip(["cart_menu", "cart_folder", "menu_installed"]).save(DOCS / "menu_cards.png")
+    strip(["real_menu", "cart_menu", "menu_installed"]).save(DOCS / "menu_cards.png")
     # the boot test binary in its picture mode, on the casino card
     native = HERE / "test" / "native" / "build"
     # (through run_tests' launcher: on Windows the binary is a Linux one, run under WSL)

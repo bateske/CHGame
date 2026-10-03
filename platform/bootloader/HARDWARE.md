@@ -70,6 +70,9 @@ first menu bootloader (or any bootloader with self-update).
      - Hold START while switching on: the menu.
      - Hold START 3 s in the game: the menu, not the game again.
      - Undo with `chgame cart launch ... none` and deploy.
+   - **A picture of your own.** `chgame background --template m.png`, paint
+     on it, `chgame background m.png --card <drive>`: the menu shows it, and
+     it looks like `--preview`.
    - **B at power-on** still gives USB mode.
    - **The uploaders.** `UP flash <some .bin> -verify` ends with
      "readback: not available".
