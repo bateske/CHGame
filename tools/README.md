@@ -1,12 +1,12 @@
 # tools/: the shared tools
 
 Everything in this folder serves every game (the CHGame library's examples,
-`platform/board/arduino/CHGame/libraries/CHGame/examples/games/`), every app
+`platform/board/arduino/CHGame/libraries/CHGame/examples/Games/`), every app
 and the libraries. The one entry point is `chgame`:
 
 ```bash
 pip install -e .[sim]        # once, in the repository root: Pillow, pyserial, zig; the `chgame` command
-cd platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHFour
+cd platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHFour
 chgame build                 # release build + size
 chgame check                 # everything checkable without a board
 chgame run tools/scripts/gameplay.txt out/gameplay
@@ -50,7 +50,7 @@ about itself is in its `tools/game.py` (below), its `tools/chsim/chdrive.py`
 | `chgpack.py` | `chgame pack`: game packages for the SD menu (`docs/chg-format.md`): `pack`, `verify` (exactly as the bootloader does), `info` (a card, folder or image). |
 | `sdcard/mkcard.py` | `chgame card`: builds every game in `sdcard/games.json` (and CHSDtoUSB), packs them and lays out a whole card in `out/sdcard/`; `--image` also writes a FAT32 image. |
 | `libzip.py` | Packs one bundled library as `out/<Name>-<version>.zip` for the IDE's *Add .ZIP Library*. |
-| `release/` | Cutting a board package release, in Python: `build_uploader.py` (the Go `chgame-upload` for five hosts), `make_tool_archives.py`, `make_package.py` (the platform archive from `git ls-files` and the Boards Manager index), `release.py` (checks, builds, packages and publishes with `gh`; `--dry-run`). The steps are in `platform/board/docs/building.md`. |
+| `release/` | Cutting a board package release, in Python: `build_uploader.py` (the Go `chgame-upload` for five hosts), `make_tool_archives.py`, `make_package.py` (the platform archive from `git ls-files` and the Boards Manager index), `release.py` (checks, builds, packages, runs the new-user test and publishes with `gh`; `--dry-run`), `stage.py` (the same as a local `-local` pre-release, tested), `serve.py` (serves a built release to the Arduino IDE on localhost), `acceptance.py` (the new-user test: a fresh arduino-cli installs the package, every example compiles from it, the SD card zip is packed from those builds). The steps are in `platform/board/docs/building.md` and `trying-a-release.md`. |
 
 `pyproject.toml` in the repository root installs all of it as the
 `chgame-tools` package (`pip install -e .`; extras `sim` for zig, `words`
@@ -118,7 +118,7 @@ off. The full schema with the defaults is the docstring of `gamecfg.py`.
 | `platform/bootloader/test/native/run_tests.py` | The bootloader's PC test suite. |
 | `platform/board/arduino/CHGame/libraries/CHGfx/extras/tests/` | CHGfx's own tests, run on the simulator above (`chgame --sketch CHGfx test`); `extras/fontconvert.py`, `sprite4.py` are its converters. |
 | `platform/board/arduino/CHGame/libraries/CHSd/tools/fatimg.py`, `tests/run_tests.py` | FAT16/FAT32 card images, and CHSd's host tests on them. |
-| `platform/board/arduino/CHGame/libraries/CHGame/examples/apps/CHSDtoUSB/tools/chsd_test.py`, `scsi.py` | Hardware test suite for the SD-to-USB sketch (Windows, SCSI pass-through). `find_drive()` locates the board's drive. |
+| `platform/board/arduino/CHGame/libraries/CHGame/examples/Apps/CHSDtoUSB/tools/chsd_test.py`, `scsi.py` | Hardware test suite for the SD-to-USB sketch (Windows, SCSI pass-through). `find_drive()` locates the board's drive. |
 
 ## Candidates to share later
 

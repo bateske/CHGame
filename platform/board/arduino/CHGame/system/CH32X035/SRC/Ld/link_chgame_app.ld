@@ -1,8 +1,9 @@
 /* CHGame application link script.
  * Sketches for the CHGame board link here instead of at flash origin, because
- * the first 8 KB belong to the bootloader.
+ * the first 12 KB belong to the bootloader.
  * Numbers mirror bootloader/src/chgame_map.h — keep them in sync.
- *   FLASH 0x00002000 + 55040 (0xD700)   application region
+ *   FLASH 0x00003000 + 50944 (0xC700)   application region (the metadata page
+ *                                       at 0xF700 follows it)
  *   MAGIC 0x20000000 + 16               retained boot-request block, shared
  *                                       with the bootloader at the SAME address
  *   RAM   0x20000010 + 20K-16

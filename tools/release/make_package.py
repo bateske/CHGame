@@ -36,6 +36,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -47,7 +48,7 @@ from _common import (DIST, PACKAGE_EXCLUDE_DIRS, PACKAGE_EXCLUDE_NAMES, PACKAGE_
 
 PACKAGER = {
     "name": "CHGame",
-    "maintainer": "Kevin Bates",
+    "maintainer": "bateske",
     "websiteURL": "https://github.com/bateske/CHGame",
     "email": "",
     "help": {"online": "https://github.com/bateske/CHGame/issues"},
@@ -69,7 +70,16 @@ def keep(path: Path) -> bool:
     return not any(part in PACKAGE_EXCLUDE_DIRS for part in rel.parts[:-1])
 
 
+def nested_sketches(files: list[Path]) -> list[str]:
+    """Sketches (X/X.ino) inside another sketch's folder, below a library's examples/."""
+    sketches = {p.parent for p in files if p.suffix == ".ino" and p.stem == p.parent.name}
+    return sorted(s.relative_to(PLATFORM).as_posix() for s in sketches
+                  if "examples" in s.relative_to(PLATFORM).parts and any(a in sketches for a in s.parents))
+
+
 def build_archive(version: str, out: Path = DIST) -> Path:
+    """version is platform.txt's for a release. stage.py passes another (0.3.0-local):
+    the archive's platform.txt then says that, as the folder it installs to does."""
     root = f"CHGame-ch32v-{version}"
     files = [p for p in tracked_files() if keep(p)]
     for p in files:
@@ -77,7 +87,15 @@ def build_archive(version: str, out: Path = DIST) -> Path:
             fail(f"refusing to package {p.relative_to(REPO)}: a build directory")
         if not p.is_file():
             fail(f"{p.relative_to(REPO)} is tracked but missing from the working tree")
+    nested = nested_sketches(files)
+    if nested:
+        fail("these sketches sit inside another example's folder, so File > Examples would show them nested in it:\n  "
+             + "\n  ".join(nested) + "\nmove them, or exclude their folder (_common.PACKAGE_EXCLUDE_DIRS)")
     members = [(f"{root}/{p.relative_to(PLATFORM).as_posix()}", p) for p in files]
+    if version != platform_version():
+        txt = PLATFORM.joinpath("platform.txt").read_bytes()
+        txt = re.sub(rb"(?m)^version=.*$", b"version=" + version.encode(), txt, count=1)
+        members = [(a, txt if a == f"{root}/platform.txt" else p) for a, p in members]
     archive = Path(out) / f"{root}.tar.bz2"
     deterministic_tar(archive, members, head_commit_time())
     total = sum(p.stat().st_size for p in files)
@@ -94,10 +112,10 @@ def tool_def(name: str) -> dict:
     return json.loads(f.read_text(encoding="utf-8"))
 
 
-def uploader_def(base_url: str) -> dict:
-    if not UPLOADER_TOOL_JSON.exists():
-        fail(f"missing {UPLOADER_TOOL_JSON}: run build_uploader.py, then make_tool_archives.py --base-url ...")
-    tool = json.loads(UPLOADER_TOOL_JSON.read_text(encoding="utf-8"))
+def uploader_def(base_url: str, tool_json: Path = UPLOADER_TOOL_JSON) -> dict:
+    if not Path(tool_json).exists():
+        fail(f"missing {tool_json}: run build_uploader.py, then make_tool_archives.py --base-url ...")
+    tool = json.loads(Path(tool_json).read_text(encoding="utf-8"))
     prefix = base_url.rstrip("/")
     bad = [s["url"] for s in tool["systems"] if not s["url"].startswith(prefix + "/")]
     if bad:
@@ -106,8 +124,9 @@ def uploader_def(base_url: str) -> dict:
     return tool
 
 
-def build_index(version: str, archive: Path, base_url: str, out: Path = DIST) -> Path:
-    gcc, wchisp, uploader = tool_def("riscv-none-embed-gcc"), tool_def("wchisp"), uploader_def(base_url)
+def build_index(version: str, archive: Path, base_url: str, out: Path = DIST,
+                tool_json: Path = UPLOADER_TOOL_JSON) -> Path:
+    gcc, wchisp, uploader = tool_def("riscv-none-embed-gcc"), tool_def("wchisp"), uploader_def(base_url, tool_json)
     platform = {
         "name": "CHGame Boards",
         "architecture": "ch32v",

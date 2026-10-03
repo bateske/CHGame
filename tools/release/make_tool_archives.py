@@ -28,8 +28,12 @@ from _common import (BIN_DIR, DIST, HOSTS, UPLOADER_TOOL_JSON, deterministic_tar
                      fail, head_commit_time, say, sha256, uploader_version)
 
 
-def package_tool(base_url: str, bin_dir: Path = BIN_DIR, out: Path = DIST) -> dict:
-    version = uploader_version()
+def package_tool(base_url: str, bin_dir: Path = BIN_DIR, out: Path = DIST, version: str | None = None,
+                 tool_json: Path = UPLOADER_TOOL_JSON) -> dict:
+    """version: the Go tool's unless given (stage.py gives a -local one, so a
+    staged install is never mistaken for the release); tool_json: where the
+    definition goes (the committed file unless given)."""
+    version = version or uploader_version()
     mtime = head_commit_time()
     systems = []
     for triplet, _goos, _goarch, suffix in HOSTS:
@@ -50,8 +54,8 @@ def package_tool(base_url: str, bin_dir: Path = BIN_DIR, out: Path = DIST) -> di
         })
         say(f"  {triplet:22s} {size:>9,} B  {name}")
     tool = {"name": "chgame-upload", "version": version, "systems": systems}
-    UPLOADER_TOOL_JSON.write_text(json.dumps(tool, indent=2) + "\n", encoding="utf-8", newline="\n")
-    say(f"wrote {UPLOADER_TOOL_JSON.relative_to(UPLOADER_TOOL_JSON.parents[2])} (chgame-upload {version}, {base_url})")
+    Path(tool_json).write_text(json.dumps(tool, indent=2) + "\n", encoding="utf-8", newline="\n")
+    say(f"wrote {tool_json} (chgame-upload {version}, {base_url})")
     return tool
 
 

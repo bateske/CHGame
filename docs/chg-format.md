@@ -19,7 +19,8 @@ in front.
 
 Build exactly as for an upload: the board package `CHGame:ch32v` (0.2.4 or
 later); the games use
-`opt=oslto,rtlib=nano,periph=game,usb=uploadonly`.
+`opt=oslto,rtlib=nano,periph=game,usb=uploadonly`. From 0.3.0 every build
+also writes the package, `<sketch>.ino.chg`, beside the `.bin` (below).
 
 ## The file (format version 1)
 
@@ -73,9 +74,14 @@ python tools/chgpack.py verify MYGAME.CHG
 python tools/chgpack.py info E:\        # list the packages on a card (or a folder, or a FAT image)
 ```
 
-`chgpack.py` needs only Python 3. In the Arduino IDE, *Sketch > Export
-compiled Binary* writes `MyGame.ino.bin` next to the sketch. Copy the
-package into the card's `GAMES/` folder, with an 8.3 file name.
+`chgpack.py` needs only Python 3. With the board package 0.3.0 or later
+nothing else is needed: every build runs `chgame-upload pack` (the
+uploader the package installs; `-title`, `-author`, `-gameversion`, `-out`)
+and *Sketch > Export Compiled Binary* copies `MyGame.ino.chg` into the
+sketch's `build/` folder, titled with the sketch's name in capitals. The
+two tools make the same bytes (the uploader's shared test vectors check
+it). Copy the package into the card's `GAMES/` folder, with an 8.3 file
+name.
 
 For the games in this repository, `python tools/sdcard/mkcard.py` builds and packs all of
 them (titles in `tools/sdcard/games.json`).

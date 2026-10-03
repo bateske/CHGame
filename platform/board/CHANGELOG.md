@@ -6,22 +6,43 @@ bumps it. `python tools/release/release.py --repo bateske/CHGame` (in the
 repository root) publishes the release and uses the matching section of this
 file as the GitHub release notes.
 
-## Unreleased
+## 0.3.0 (not yet released)
+
+The first release from the CHGame repository: one Boards Manager URL now
+installs the core, the menu bootloader, the libraries and the games. The
+package's maintainer is shown as **bateske**.
 
 ### Added
 
+- **The libraries come with the package.** `#include <CHGame.h>` (buttons,
+  frame pacing, palette, drawing, sound, saving, the debug protocol), CHGfx
+  (graphics) and CHSd (SD card / FAT) are in the package's `libraries/`,
+  beside SPI, Wire and EEPROM. Nothing to copy into the sketchbook.
+- **Twenty casino games and the SD card reader as examples:** *File >
+  Examples > CHGame > Games* (CHBlackjack, CHChess, CHPoker ...) and *Apps >
+  CHSDtoUSB*, with *Hello*, the smallest complete sketch.
+- **SD menu packages from the IDE.** Every build also writes
+  `<sketch>.ino.chg`, the package the bootloader's game menu installs from
+  the card's `GAMES` folder; *Sketch > Export Compiled Binary* puts it in the
+  sketch's `build` folder. Its title is the sketch's name in capitals.
+  (`chgame-upload pack`, with `-title`, `-author` and `-gameversion` when
+  run by hand.)
+- **The SD card's contents** for every game, as a zip beside the release
+  (`CHGame-sdcard-<version>.zip`): built from this package's own examples.
 - **Tools > Bootloader** chooses what *Burn Bootloader* writes: the SD game
-  menu (default), the same bootloader without the menu, or the 0.2.4 one.
-- **Programmer "CHGame USB"**: *Burn Bootloader* through the bootloader that
+  menu in one of three colour themes, **SD Game Menu (Rainbow)** (the
+  default), **(Plain)** or **(Casino)**, or **USB Only**, the same
+  bootloader without the menu. The 0.2.4 bootloader is no longer shipped.
+- **Programmer "CHGame USB (requires CHGame bootloader, no drivers)"**:
+  *Burn Bootloader* through the bootloader that
   is already on the board. No driver and no buttons; a port must be
   selected, as for Upload. The installed sketch is erased. *Upload Using
-  Programmer* does the same and then uploads the sketch. "WCH factory ISP"
-  remains for a board whose bootloader is missing, damaged or locked, and no
+  Programmer* does the same and then uploads the sketch. "WCH factory ISP
+  (Hold BOOT on power-up, requires driver)" remains for a board whose bootloader is missing, damaged or locked, and no
   longer needs a port selected.
-- `chgame-upload` 0.2.0: `selfupdate <boot.bin>` and `burn -method usb|isp`.
-  It refuses an image that is not a bootloader for this board. Its source
-  is in this repository now (`platform/bootloader/host/go`).
-- The CHGame, CHGfx and CHSd libraries are in the package's `libraries/`.
+- `chgame-upload` 0.2.0: `selfupdate <boot.bin>`, `burn -method usb|isp`
+  and `pack`. It refuses an image that is not a bootloader for this board.
+  Its source is in this repository now (`platform/bootloader/host/go`).
 
 ### Fixed
 
@@ -37,6 +58,9 @@ file as the GitHub release notes.
   the bottom of the stack. A sketch that provides `chgame_fault_park()` (the
   CHGame library's debug protocol) goes on answering its PC; otherwise a
   press of A restarts it, for the library's debug command `!` to report.
+- Comments that still described the 8 KB bootloader and a sketch at 0x2000
+  (`link_chgame_app.ld`, `chgame_map.h`), and one in `boards.txt` naming a
+  generator that does not exist.
 
 ## 0.2.4 (2026-09-30)
 

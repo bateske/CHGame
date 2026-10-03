@@ -35,7 +35,7 @@ checked.
   Manager index takes a repository with the library at its root, so a
   listing there would need a mirror repository filled from that ZIP.
 - **`architectures=ch32v`** for all three.
-- **Gone:** `CHSd/tools/vendor.py`; `platform/board/arduino/CHGame/libraries/CHGame/examples/games/{CHWords,CHCrossword,CHWordWheel}/src/sd/`
+- **Gone:** `CHSd/tools/vendor.py`; `platform/board/arduino/CHGame/libraries/CHGame/examples/Games/{CHWords,CHCrossword,CHWordWheel}/src/sd/`
   and their `tools/chsim/host/{VCard.h,sd_host.cpp}`; CHCrossword's
   `tools/puzzles/fatimg.py` (its `mkcard.py` imports CHSd's).
 - **Stays:** the bootloader's C fork of CHSd (`platform/bootloader/src/sd.c`,
@@ -77,7 +77,7 @@ every game's README reel.
 **Step 3, the games as examples** (roadmap step 4, the same day).
 
 `games/` and `utilities/CHSDtoUSB` moved into the CHGame library:
-`examples/games/<Name>` and `examples/apps/CHSDtoUSB`, beside
+`examples/Games/<Name>` and `examples/Apps/CHSDtoUSB`, beside
 `examples/Hello`. Each game kept its whole folder. What changed with it:
 
 - every path from a game up to the repository's `tools/` and `platform/`
@@ -92,13 +92,14 @@ Checked: all 20 release images byte for byte the ones from before this
 step; all 20 README reels identical; all 20 games' host tests; the nine
 `check.py`; the save tests; the card builder; the bootloader suite.
 
-## Still to do, with the first release
+## With the first release (done 2026-10-02, before publishing)
 
-- The package archive carries `libraries/CHGame`, `CHGfx`, `CHSd` (roadmap
-  step 1 brings the release scripts here).
-- Acceptance test: install it, build one game with plain
-  `arduino-cli compile` and no `--library`.
-- Then drop "copy CHGfx into your sketchbook" from the root README and the
-  `--library` flags from the plain `arduino-cli` lines in the docs.
-- The games as the library's examples (roadmap step 4) go in
-  `libraries/CHGame/examples/`.
+- The package archive carries `libraries/CHGame`, `CHGfx`, `CHSd`, and the
+  games and CHSDtoUSB as CHGame's examples.
+- The acceptance test is `tools/release/acceptance.py`: a fresh
+  `arduino-cli` installs the package and every game and app compiles from
+  it with plain `arduino-cli compile`, no `--library`. It passes against
+  0.3.0 staged locally (`tools/release/stage.py`), and `release.py` runs it
+  before publishing.
+- "Copy CHGfx into your sketchbook" is gone from the root README and
+  getting-started, except as what a 0.2.4 user does.

@@ -10,7 +10,7 @@ For every program in games.json it builds the release image (tools/device.py's
 build(), or arduino-cli for the utilities), wraps it in a .CHG
 package with tools/chgpack.py, and copies the data files the games read from
 the card. Copy the CONTENTS of out/sdcard/ to the root of a FAT16/FAT32 card
-(for example through platform/board/arduino/CHGame/libraries/CHGame/examples/apps/CHSDtoUSB): GAMES/ holds the packages, the
+(for example through platform/board/arduino/CHGame/libraries/CHGame/examples/Apps/CHSDtoUSB): GAMES/ holds the packages, the
 data files stay where the games look for them.
 
 The same inputs give the same bytes, so a card can be rebuilt and compared.
@@ -32,6 +32,8 @@ sys.path.insert(0, str(REPO / "tools"))
 import chgpack  # noqa: E402
 
 RELEASE_FQBN = "CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly"
+PLATFORM_REL = "platform/board/arduino/CHGame"
+PLATFORM = REPO / PLATFORM_REL
 
 
 def version_of(d: pathlib.Path) -> str:
@@ -61,25 +63,29 @@ def build(p: dict) -> pathlib.Path:
     return out / f"{name}.ino.bin"
 
 
-def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--out", default=str(REPO / "out" / "sdcard"))
-    ap.add_argument("--image", help="also write a FAT32 card image here")
-    ap.add_argument("--no-build", action="store_true", help="use the existing build/release/*.ino.bin")
-    ap.add_argument("--only", nargs="*", help="folder names to include (default: all)")
-    a = ap.parse_args(argv)
+def programs(only=None) -> list[dict]:
     progs = json.loads((pathlib.Path(__file__).parent / "games.json").read_text())["programs"]
-    if a.only:
-        progs = [p for p in progs if pathlib.Path(p["dir"]).name in a.only]
-    out = pathlib.Path(a.out)
+    return [p for p in progs if pathlib.Path(p["dir"]).name in only] if only else progs
+
+
+def folder(p: dict, platform_dir: pathlib.Path = PLATFORM) -> pathlib.Path:
+    """The program's sketch folder: in this repository, or in an installed board
+    package (tools/release/acceptance.py builds the release's card from that)."""
+    return platform_dir / pathlib.PurePosixPath(p["dir"]).relative_to(PLATFORM_REL)
+
+
+def make_card(progs: list[dict], out: pathlib.Path, binary, platform_dir: pathlib.Path = PLATFORM,
+              image: str | None = None) -> dict:
+    """Write the card's contents to out/: binary(p, d) gives the release image
+    of program p, whose sketch folder is d. Returns {card path: bytes}."""
     if out.exists():
         shutil.rmtree(out)
     (out / "GAMES").mkdir(parents=True)
     files = {}
     print(f"{'program':16s} {'file':13s} {'image':>7s}  crc32     title")
     for p in progs:
-        d = REPO / p["dir"]
-        binf = (d / "build" / "release" / f"{d.name}.ino.bin") if a.no_build else build(p)
+        d = folder(p, platform_dir)
+        binf = pathlib.Path(binary(p, d))
         if not binf.exists():
             raise SystemExit(f"{binf}: missing (build it, or drop --no-build)")
         pkg = chgpack.pack(binf.read_bytes(), p["title"], version=version_of(d))
@@ -97,11 +103,23 @@ def main(argv=None) -> int:
                     shutil.copyfile(f, dst)
                     files[str(dst_rel).replace(os.sep, "/")] = f.read_bytes()
     print(f"\n{len(progs)} packages in {out / 'GAMES'}")
-    if a.image:
-        sys.path.insert(0, str(REPO / "platform" / "board" / "arduino" / "CHGame" / "libraries" / "CHSd" / "tools"))
+    if image:
+        sys.path.insert(0, str(PLATFORM / "libraries" / "CHSd" / "tools"))
         import fatimg  # noqa: E402
-        fatimg.build_image(a.image, files, fs="fat32", label="CHGAME")
-        print(f"card image: {a.image}")
+        fatimg.build_image(image, files, fs="fat32", label="CHGAME")
+        print(f"card image: {image}")
+    return files
+
+
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--out", default=str(REPO / "out" / "sdcard"))
+    ap.add_argument("--image", help="also write a FAT32 card image here")
+    ap.add_argument("--no-build", action="store_true", help="use the existing build/release/*.ino.bin")
+    ap.add_argument("--only", nargs="*", help="folder names to include (default: all)")
+    a = ap.parse_args(argv)
+    built = (lambda p, d: d / "build" / "release" / f"{d.name}.ino.bin") if a.no_build else (lambda p, d: build(p))
+    make_card(programs(a.only), pathlib.Path(a.out), built, image=a.image)
     return 0
 
 

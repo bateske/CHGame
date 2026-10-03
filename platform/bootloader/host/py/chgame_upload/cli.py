@@ -8,6 +8,7 @@
     chgame-upload [flags] selfupdate <boot.bin> [--yes]
     chgame-upload [flags] provision -bootloader <boot.bin> [-app <app.bin>] [-wchisp <path>]
     chgame-upload [flags] burn -method usb|isp -bootloader <boot.bin> [-app <app.bin>] [-wchisp <path>]
+    chgame-upload [flags] pack <file.bin> [-out <file.chg>] [-title T] [-author A] [-gameversion V]
     chgame-upload [flags] noop
 
   flash       upload a sketch through the bootloader (what Upload does)
@@ -15,6 +16,8 @@
   provision   write the bootloader through the chip's factory ISP (hold BOOT, power cycle)
   burn        what Arduino's Burn Bootloader and Upload Using Programmer run:
               selfupdate (usb) or provision (isp), then the sketch if one is given
+  pack        wrap a sketch image in a .chg package for the SD game menu (every
+              build runs it, so Export Compiled Binary leaves one by the sketch)
 
 Flags: -port PORT, -timeout 10 (seconds; 500ms, 1m), -debug, -verbose, -quiet.
 They may appear before or after the verb, and with one dash or two: the
@@ -30,6 +33,7 @@ import sys
 import time
 
 from . import __version__
+from . import chg
 from .client import (Client, NoDevice, SeveralDevices, ensure_bootloader, find_ports, quick_hello,
                      resolve_port, upload_touch, wait_for_application, wait_for_bootloader)
 from .image import check_boot_image
@@ -93,6 +97,13 @@ def parse_args(argv=None):
     s = sub.add_parser("selfupdate", parents=[common], help="replace the bootloader itself, over USB")
     s.add_argument("image")
     s.add_argument("--yes", action="store_true", help="skip the confirmation prompt")
+
+    k = sub.add_parser("pack", parents=[common], help="wrap a sketch image in a .chg package for the SD game menu")
+    k.add_argument("image")
+    k.add_argument("--out", help="default: the image's name with .chg for .bin")
+    k.add_argument("--title", help="what the menu shows (default: the sketch's name in capitals)")
+    k.add_argument("--author", default="")
+    k.add_argument("--gameversion", default="", help="a short version string, e.g. 1.2")
 
     for name, help_ in (("provision", "first flash / recovery through the factory ISP (needs BOOT)"),
                         ("burn", "what Burn Bootloader runs: selfupdate (usb) or provision (isp), then the sketch")):
@@ -247,6 +258,16 @@ def cmd_provision(a) -> int:
     return 0
 
 
+def cmd_pack(a) -> int:
+    out = a.out or chg.default_output(a.image)
+    title = a.title or chg.default_title(a.image)
+    data = chg.pack(pathlib.Path(a.image).read_bytes(), title, a.author, a.gameversion)
+    pathlib.Path(out).write_bytes(data)
+    if not a.quiet:
+        print(f"SD menu package: {out} ({title}, {len(data) - chg.HEADER_BYTES} B)")
+    return 0
+
+
 def cmd_burn(a) -> int:
     if a.method == "usb":
         a.yes = True
@@ -261,7 +282,7 @@ def main(argv=None) -> int:
     try:
         return {"probe": cmd_probe, "info": cmd_info, "touch": cmd_touch, "run": cmd_run, "noop": cmd_noop,
                 "flash": cmd_flash, "selfupdate": cmd_selfupdate, "provision": cmd_provision,
-                "burn": cmd_burn}[a.cmd](a)
+                "burn": cmd_burn, "pack": cmd_pack}[a.cmd](a)
     except (NoDevice, SeveralDevices) as e:
         raise SystemExit(str(e))
     except StatusError as e:

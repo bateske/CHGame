@@ -1,10 +1,10 @@
 # The format of a game's README
 
-Every game (`platform/board/arduino/CHGame/libraries/CHGame/examples/games/`) has the same README: short, in the same order, with
+Every game (`platform/board/arduino/CHGame/libraries/CHGame/examples/Games/`) has the same README: short, in the same order, with
 one picture. A reader should know in a minute what the game is, how to play
 it, and what its code shows about the platform. Everything for someone
 *changing* the game goes in its `NOTES.md` instead.
-[platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHFour/README.md](../platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHFour/README.md) is the model.
+[platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHFour/README.md](../platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHFour/README.md) is the model.
 
 ```markdown
 # CHName: Subtitle        (or just # CHName)
@@ -55,8 +55,11 @@ Exactly as the game's NOTICE gives them.
 - **Rules.** What a player who has never met the game needs. Paytables and
   scoring tables belong here.
 - **How to play.** Modes, opponents, stakes, options, what is saved. It
-  ends with the same line in every game, pointing at the root README's
-  *Installing* and at `chgame upload`.
+  ends with the same line in every game: the Arduino IDE route (*File >
+  Examples*, *Tools > USB* **Upload only**), `chgame upload` from a clone,
+  and the release's SD card zip. Its link to *Installing* is absolute
+  (`https://github.com/bateske/CHGame#installing`): the README is also read
+  inside the installed board package, where the repository is not.
 - **Developer notes.** A short list for someone reading the game as an
   example sketch: which library module it shows off, a technique worth
   copying, where the size or speed was won. Sizes, test instructions,

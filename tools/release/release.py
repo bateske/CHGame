@@ -1,10 +1,13 @@
 """Build and publish a CHGame board package release.
 
     python tools/release/release.py [VERSION] [--repo bateske/CHGame] [--dry-run] [--skip-go] [--skip-tests]
+                                    [--no-accept]
 
 Checks the tree, runs the uploader's parity tests, builds the Go uploader
-for every host, archives it, packs the platform and writes the index, then
-publishes all of it as a GitHub release tagged v<version> (notes: the
+for every host, archives it, packs the platform and writes the index, runs
+the new-user test against them (acceptance.py: a fresh arduino-cli installs
+them from a local server, every example compiles from the installed package,
+and the SD card's contents are packed from those builds), then publishes all of it as a GitHub release tagged v<version> (notes: the
 matching section of platform/board/CHANGELOG.md) and re-uploads the index
 to every earlier v* release, so a user on an explicit version URL is
 offered the update too. --dry-run builds everything into out/dist/ and
@@ -17,7 +20,8 @@ from it, because an index whose URLs do not match where the assets land
 installs nothing, with a checksum error as the only clue.
 
 Preconditions (each is checked, with the fix in the message):
-  - platform/board/CHANGELOG.md has a `## <version>` section;
+  - platform/board/CHANGELOG.md has a `## <version>` section (to publish,
+    dated: `## 0.3.0 (2026-10-05)`, not `(not yet released)`);
   - the committed bootloader binaries in platform/board/arduino/CHGame/
     bootloaders/CHGame match platform/bootloader/release/SHA256SUMS (the
     bootloader is rebuilt with platform/bootloader/build.sh and
@@ -37,14 +41,16 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _common import (BIN_DIR, BOOTLOADER, CHANGELOG, DIST, GO_DIR, HOSTS, PLATFORM, PLATFORM_TXT, REPO,  # noqa: E402
                      changelog_section, fail, platform_version, python_uploader_version, run, say, sha256,
                      uploader_version)
+import acceptance  # noqa: E402
 import build_uploader  # noqa: E402
 import make_package  # noqa: E402
 import make_tool_archives  # noqa: E402
 
 BOOTLOADERS = PLATFORM / "bootloaders" / "CHGame"
 SUMS = BOOTLOADER / "release" / "SHA256SUMS"
-# committed name -> the name in release/SHA256SUMS (the 0.2.4 binary has no entry: it is history)
-BOOT_FILES = {"chgame_sdboot.bin": "chgame_sdboot.bin", "chgame_boot_nomenu.bin": "chgame_boot_nomenu.bin"}
+# committed name -> the name in release/SHA256SUMS
+BOOT_FILES = {n: n for n in ("chgame_sdboot.bin", "chgame_sdboot_plain.bin", "chgame_sdboot_casino.bin",
+                              "chgame_boot_nomenu.bin")}
 
 
 def check_preconditions(version: str, publish: bool) -> str:
@@ -55,14 +61,14 @@ def check_preconditions(version: str, publish: bool) -> str:
     notes = changelog_section(version)
     if not notes:
         fail(f"{CHANGELOG.relative_to(REPO)} has no '## {version}' section; move Unreleased under it first.")
-    sums = {ln.split()[1]: ln.split()[0] for ln in SUMS.read_text(encoding="utf-8").splitlines() if ln.strip()}
+    if publish and f"## {version} (not yet released)" in CHANGELOG.read_text(encoding="utf-8"):
+        fail(f"{CHANGELOG.relative_to(REPO)}: date the '## {version}' heading before publishing.")
+    sums = {ln.split()[1].lstrip("*"): ln.split()[0] for ln in SUMS.read_text(encoding="utf-8").splitlines() if ln.strip()}
     for committed, released in BOOT_FILES.items():
         f = BOOTLOADERS / committed
         if not f.exists() or sums.get(released) != sha256(f):
             fail(f"bootloaders/CHGame/{committed} does not match {SUMS.relative_to(REPO)}: run "
                  "platform/bootloader/build.sh and platform/bootloader/tools/dist.sh, commit, then release.")
-    if not (BOOTLOADERS / "chgame_bootloader.bin").exists():
-        fail("bootloaders/CHGame/chgame_bootloader.bin (the 0.2.4 bootloader) is missing")
     gv, pyv = uploader_version(), python_uploader_version()
     if gv != pyv:
         fail(f"chgame-upload versions differ: host/go/main.go says {gv}, host/py says {pyv}")
@@ -102,6 +108,8 @@ def main(argv=None) -> int:
     ap.add_argument("--dry-run", action="store_true", help="build everything, publish nothing")
     ap.add_argument("--skip-go", action="store_true", help="use the binaries already in out/chgame-upload/")
     ap.add_argument("--skip-tests", action="store_true")
+    ap.add_argument("--no-accept", action="store_true",
+                    help="skip the new-user test, and with it the SD card zip (not for a real release)")
     a = ap.parse_args(argv)
     version = a.version or platform_version()
     tag = f"v{version}"
@@ -125,6 +133,14 @@ def main(argv=None) -> int:
     index = make_package.build_index(version, archive, base_url)
 
     assets = [index, archive] + sorted(DIST.glob(f"chgame-upload-{uploader_version()}-*.tar.bz2"))
+    if a.no_accept:
+        if not a.dry_run:
+            fail("--no-accept is for dry runs: a release is tested as a new user would install it")
+    else:
+        card = DIST / f"CHGame-sdcard-{version}.zip"
+        if acceptance.run(DIST, acceptance.serve.DEFAULT_PORT, True, card, acceptance.DEFAULT_JOBS):
+            fail("the new-user test failed (above); nothing published")
+        assets.append(card)
     say("=== release assets ===")
     for f in assets:
         say(f"  {f.name:60s} {f.stat().st_size:>10,} B")

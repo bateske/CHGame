@@ -153,6 +153,18 @@ class Flags(unittest.TestCase):
         a = cli.parse_args(["probe", "--port", "COM1"])
         self.assertEqual(a.port, "COM1")
 
+    def test_pack(self):
+        a = cli.parse_args(["-quiet", "pack", "build/CHFour.ino.bin"])
+        self.assertEqual((a.cmd, a.image, a.out, a.title, a.quiet), ("pack", "build/CHFour.ino.bin", None, None, True))
+        a = cli.parse_args(["pack", "x.bin", "-out", "X.CHG", "-title", "MY GAME", "-author", "ME", "-gameversion", "1.2"])
+        self.assertEqual((a.out, a.title, a.author, a.gameversion), ("X.CHG", "MY GAME", "ME", "1.2"))
+        with tempfile.TemporaryDirectory() as d:
+            src = pathlib.Path(d) / "MyGame.ino.bin"
+            src.write_bytes(bytes(range(256)) * 4)
+            self.assertEqual(cli.main(["-quiet", "pack", str(src)]), 0)
+            from chgame_upload import chg
+            self.assertEqual((pathlib.Path(d) / "MyGame.ino.chg").read_bytes(), chg.pack(src.read_bytes(), "MYGAME"))
+
     def test_version_pinned_to_go(self):
         go = (BOOT / "host" / "go" / "main.go").read_text(encoding="utf-8")
         m = re.search(r'^\s*(?:const|var)?\s*version\s*=\s*"([^"]+)"', go, re.M)

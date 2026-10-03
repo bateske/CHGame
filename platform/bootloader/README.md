@@ -209,8 +209,10 @@ The hardware steps are in [HARDWARE.md](HARDWARE.md).
 ## Installing it on a board
 
 - **From the Arduino IDE, over USB** (any board that has a bootloader with
-  self-update, the 0.2.4 one included): *Tools > Bootloader* **SD game
-  menu**, *Tools > Programmer* **CHGame USB**, *Tools > Burn Bootloader*.
+  self-update, the 0.2.4 one included): *Tools > Bootloader* **SD Game
+  Menu (Rainbow)**, **(Plain)** or **(Casino)** (the `--theme` builds:
+  `release/chgame_sdboot.bin`, `_plain.bin`, `_casino.bin`), *Tools >
+  Programmer* **CHGame USB**, *Tools > Burn Bootloader*.
   No driver, no buttons. The installed sketch is erased. It needs a board
   package that carries this bootloader and `chgame-upload` 0.2.0 (the next
   release; [docs/roadmap.md](../../docs/roadmap.md)).

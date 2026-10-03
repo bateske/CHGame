@@ -3,8 +3,8 @@
 The games and apps are the CHGame library's examples, so that the Arduino
 IDE lists them under File > Examples > CHGame:
 
-    platform/board/arduino/CHGame/libraries/CHGame/examples/games/<Name>
-    platform/board/arduino/CHGame/libraries/CHGame/examples/apps/<Name>
+    platform/board/arduino/CHGame/libraries/CHGame/examples/Games/<Name>
+    platform/board/arduino/CHGame/libraries/CHGame/examples/Apps/<Name>
 
 That is a long way down, so the shared tools take a sketch by its name as
 well as by its folder (`chgame --sketch CHFour build`, `python
@@ -17,8 +17,8 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 LIBRARIES = REPO / "platform" / "board" / "arduino" / "CHGame" / "libraries"
 EXAMPLES = LIBRARIES / "CHGame" / "examples"
-GAMES = EXAMPLES / "games"
-APPS = EXAMPLES / "apps"
+GAMES = EXAMPLES / "Games"
+APPS = EXAMPLES / "Apps"
 # The Python uploader, the package chgame_upload (the bootloader's host side;
 # the Go tool in host/go is what the board package ships). On sys.path when
 # not installed: `import chgame_upload`.

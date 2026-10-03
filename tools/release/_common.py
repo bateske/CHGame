@@ -37,7 +37,10 @@ HOSTS = [
 # except these. (Build output is never tracked, so a walk of the working tree is
 # not used: the games' build/ and out/ folders alone would add hundreds of MB.)
 PACKAGE_EXCLUDE_NAMES = {".gitignore", "platform.local.txt"}
-PACKAGE_EXCLUDE_DIRS = {"build", "out", "__pycache__"}
+# "probes": hardware probe sketches kept in a game's tools/ (CHBlackjack's
+# FlashProbe). In the package they would show in File > Examples nested inside
+# the game; they are for developers and stay in the repository.
+PACKAGE_EXCLUDE_DIRS = {"build", "out", "__pycache__", "probes"}
 PACKAGE_EXCLUDE_SUFFIXES = {".pyc"}
 
 
@@ -97,13 +100,14 @@ def head_commit_time() -> int:
     return int(r.stdout.strip() or "0")
 
 
-def deterministic_tar(out_path: Path, members: list[tuple[str, Path]], mtime: int) -> None:
+def deterministic_tar(out_path: Path, members: list[tuple[str, Path | bytes]], mtime: int) -> None:
     """A .tar.bz2 whose bytes depend only on the files' contents and names:
-    sorted members, uid/gid 0, no owner names, one mtime, modes 0644/0755."""
+    sorted members, uid/gid 0, no owner names, one mtime, modes 0644/0755.
+    A member's source is a file, or its contents as bytes (mode 0644)."""
     out_path.parent.mkdir(parents=True, exist_ok=True)
     dirs_done = set()
     with tarfile.open(out_path, "w:bz2") as tf:
-        for arcname, src in sorted(members):
+        for arcname, src in sorted(members, key=lambda m: m[0]):
             parts = arcname.split("/")
             for i in range(1, len(parts)):
                 d = "/".join(parts[:i])
@@ -114,11 +118,12 @@ def deterministic_tar(out_path: Path, members: list[tuple[str, Path]], mtime: in
                     ti.mode = 0o755
                     ti.mtime = mtime
                     tf.addfile(ti)
-            data = Path(src).read_bytes()
+            data = src if isinstance(src, bytes) else Path(src).read_bytes()
             ti = tarfile.TarInfo(arcname)
             ti.size = len(data)
             ti.mtime = mtime
-            ti.mode = 0o755 if (Path(src).suffix in ("", ".exe", ".sh") and _looks_executable(src)) else 0o644
+            ti.mode = 0o755 if (not isinstance(src, bytes) and Path(src).suffix in ("", ".exe", ".sh")
+                                and _looks_executable(src)) else 0o644
             tf.addfile(ti, io.BytesIO(data))
 
 

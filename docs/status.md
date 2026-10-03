@@ -144,8 +144,8 @@ last one's record. [sd-menu.md](sd-menu.md) says so to players.
   The hardware session of 2026-10-02 ran both before those fixes were in.
 - **The games are the CHGame library's examples (2026-10-02).** `games/`
   and `utilities/CHSDtoUSB` moved to
-  `platform/board/arduino/CHGame/libraries/CHGame/examples/games/`
-  and `.../examples/apps/`. Every release image is byte for byte unchanged
+  `platform/board/arduino/CHGame/libraries/CHGame/examples/Games/`
+  and `.../examples/Apps/`. Every release image is byte for byte unchanged
   and every README reel frame for frame; all host tests pass from there.
 - **The bootloader's PC suite runs on Windows (2026-10-02)**, through zig
   and WSL. All of it passes; the twelve box frames owed since the first

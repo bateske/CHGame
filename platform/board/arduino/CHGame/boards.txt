@@ -35,8 +35,8 @@ CHGame.build.math_lib_gcc=-lm
 CHGame.build.ch_extra_lib=-lprintf
 
 # Relocated application: the first 12 KB of flash belong to the bootloader.
-# This script and the numbers below are generated from bootloader/src/chgame_map.h
-# by tools/gen_ld.py, so they cannot drift from what the bootloader enforces.
+# This script and the numbers below mirror platform/bootloader/src/chgame_map.h
+# in the CHGame repository. They are kept in step by hand: change them together.
 CHGame.build.ldscript=link_chgame_app.ld
 CHGame.upload.maximum_size=50944
 # RAM for .data + .bss (and the heap above them): the 20,464 B after the boot
@@ -71,15 +71,16 @@ CHGame.bootloader.tool=chgame_upload
 CHGame.vid.0=0x16C0
 CHGame.pid.0=0x27DD
 
-CHGame.menu.opt.osstd=Smallest (-Os default)
-CHGame.menu.opt.osstd.build.flags.optimize=-Os
 # Link-time optimisation: the core, the libraries and the sketch are optimised
 # as one program. The link needs no extra flag - gcc sees the LTO objects and
-# runs the plugin itself. Typically 1-5 KB smaller than -Os (CHChess only fits
-# with it). Not the default yet: links are slower and the map file is harder
-# to read, since functions merge and gain .constprop/.part suffixes.
-CHGame.menu.opt.oslto=Smallest + LTO (-Os -flto)
+# runs the plugin itself. Typically 1-5 KB smaller than -Os. The default since
+# 0.3.0: the casino games among the examples are written for it, and with -Os
+# alone the larger ones do not fit. -Os links faster and its map file is
+# easier to read (with LTO, functions merge and gain .constprop/.part names).
+CHGame.menu.opt.oslto=Smallest + LTO (-Os -flto, default)
 CHGame.menu.opt.oslto.build.flags.optimize=-Os -flto
+CHGame.menu.opt.osstd=Smallest (-Os)
+CHGame.menu.opt.osstd.build.flags.optimize=-Os
 CHGame.menu.opt.o1std=Fast (-O1)
 CHGame.menu.opt.o1std.build.flags.optimize=-O1
 CHGame.menu.opt.o2std=Faster (-O2)
@@ -132,16 +133,19 @@ CHGame.menu.usb.uploadonly=Upload only: no Serial (~0.7 KB smaller)
 CHGame.menu.usb.uploadonly.build.usb_flags=-DUSE_CHGAME_USB_BOOTONLY
 
 # Which bootloader Burn Bootloader writes. It changes nothing in a sketch: all
-# three keep the same memory map, USB identity and upload protocol, so a sketch
-# built for one runs under the others. The sources and what each one does are
-# in platform/bootloader; bootloaders/CHGame/README.md says where each binary
-# comes from.
-CHGame.menu.boot.sdmenu=SD game menu (default)
+# four keep the same memory map, USB identity and upload protocol, so a sketch
+# built for one runs under the others. The three menus differ only in their
+# colours (platform/bootloader/build.sh --theme=). The sources and what each
+# one does are in platform/bootloader; bootloaders/CHGame/README.md says where
+# each binary comes from.
+CHGame.menu.boot.sdmenu=SD Game Menu (Rainbow)
 CHGame.menu.boot.sdmenu.bootloader.file=CHGame/chgame_sdboot.bin
-CHGame.menu.boot.nomenu=USB only, no menu
+CHGame.menu.boot.sdplain=SD Game Menu (Plain)
+CHGame.menu.boot.sdplain.bootloader.file=CHGame/chgame_sdboot_plain.bin
+CHGame.menu.boot.sdcasino=SD Game Menu (Casino)
+CHGame.menu.boot.sdcasino.bootloader.file=CHGame/chgame_sdboot_casino.bin
+CHGame.menu.boot.nomenu=USB Only
 CHGame.menu.boot.nomenu.bootloader.file=CHGame/chgame_boot_nomenu.bin
-CHGame.menu.boot.classic=Classic 0.2.4 (before the SD menu)
-CHGame.menu.boot.classic.bootloader.file=CHGame/chgame_bootloader.bin
 
 CHGame.build.flags.debug=-DNDEBUG
 CHGame.build.flags.fp=

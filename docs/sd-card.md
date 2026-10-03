@@ -74,7 +74,7 @@ folder to the card. Follow the paths above exactly: the root for
 `WORDS.DIC` and `PHRASES.BNK`, `CHCW/` for crossword packs.
 
 **Without removing the card:** upload
-[CHSDtoUSB](../platform/board/arduino/CHGame/libraries/CHGame/examples/apps/CHSDtoUSB). The board becomes a USB drive with its
+[CHSDtoUSB](../platform/board/arduino/CHGame/libraries/CHGame/examples/Apps/CHSDtoUSB). The board becomes a USB drive with its
 serial port still working:
 1. Copy the files to the drive and eject it.
 2. Upload the game again. Upload works while the drive is mounted.
