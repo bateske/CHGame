@@ -76,7 +76,7 @@ of 2026-10-02 covered frame times and stack):
 
 | | Verified | Device |
 |---|---|---|
-| Menu v2 (BOOT_VERSION 3, release 11,948 B, 2026-10-03): folders of up to 224 entries, MENU.IDX order, MENU.BG (the logo is in the picture), launch at power-on | PC suite: flash/SD/panel models, every CHG error, power cuts at every flash operation of an install and of an upload, the real casino card's games installed in turn, cards made by `tools/chcart` (order, folders, launch, START held, a broken background), 16 pinned menu frames | not yet ([HARDWARE.md](../platform/bootloader/HARDWARE.md), "Menu v2") |
+| Menu v2 (BOOT_VERSION 3, release 11,908 B, 2026-10-03; Rainbow and White styles): folders of up to 240 entries, MENU.IDX order, MENU.BG (the logo is in the picture), launch at power-on | PC suite: flash/SD/panel models, every CHG error, power cuts at every flash operation of an install and of an upload, the real casino card's games installed in turn, cards made by `tools/chcart` (order, folders, launch, START held, a broken background), 16 pinned menu frames | not yet ([HARDWARE.md](../platform/bootloader/HARDWARE.md), "Menu v2") |
 | The first menu (BOOT_VERSION 2, 12,032 B; still the binary in `release/`) | the same suite as it was then | **installed and checked on 2026-10-01** ([RESULTS](../platform/bootloader/test/hil/RESULTS-2026-10-01.md)); on 2026-10-02 written from the Arduino side over USB (*Burn Bootloader*, programmer CHGame USB), to and from the 0.2.4 and no-menu bootloaders |
 | The casino cart (`chgame card`: `tools/sdcard/casino.json`, `tools/chcart`) | all 20 games and both apps built into `out/CHGame-Casino.chgame` and its card; the payloads are the release images | |
 

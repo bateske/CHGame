@@ -252,6 +252,7 @@ class Runtime(unittest.TestCase):
         self.assertEqual(pal[1], runtime.rgb565(40, 50, 60))
         self.assertEqual(pal[11], runtime.rgb565(255, 244, 214))
         self.assertEqual(pal[13], 0)                     # selectedText: black
+        self.assertEqual(pal[15], 0xFFFF)                # colour 15: white (the white style shows it)
         row = bg[512:512 + 3]
         # magenta 15, (10,20,30) 0, cream 11 (text), (40,50,60) 1, (10,20,30) 0, then black 13 (selectedText)
         self.assertEqual(row, bytes([0xF0, 0xB1, 0x0D]))
@@ -289,6 +290,10 @@ class Background(unittest.TestCase):
         from chcart import background
         im = background.preview(background.template())
         self.assertEqual(im.size, (384, 384))
+        white = background.preview(background.template(), scale=1, style="white")
+        self.assertEqual(white.getpixel((64, 25)), (255, 255, 255))   # the selection bar
+        bars = {background.preview(background.template(), phase=p, scale=1).getpixel((64, 25)) for p in (0, 64, 128)}
+        self.assertEqual(len(bars), 3)                                 # one colour, turning
         with tempfile.TemporaryDirectory() as d:
             f = background.write_to_card(background.template(), d)
             self.assertEqual(f.read_bytes(), runtime.menu_background(background.template(), dict(model.UI_COLORS)))
@@ -381,6 +386,9 @@ class Commands(unittest.TestCase):
             run("new", pkg, d / "ALPHA.bin", d / "BRAVO.bin", "--title", "MINE")
             run("add", pkg, d / "CHARLIE.bin", "--folder", "MORE", "--at", 0)
             self.assertEqual([g.id for g in zipio.load(pkg).games], ["charlie", "alpha", "bravo"])
+            run("order", pkg, "alpha", "MORE/")                       # a folder: its games
+            self.assertEqual([g.id for g in zipio.load(pkg).games], ["alpha", "charlie", "bravo"])
+            self.assertEqual(cli.main(["order", pkg, "NOPE/"]), 1)
             run("order", pkg, "bravo")
             run("set", pkg, "--game", "alpha", "title=ALPHA ONE", "folder=MORE")
             run("set", pkg, "author=me")

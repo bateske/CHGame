@@ -61,7 +61,9 @@ practice you can switch games as often as you like.
 Everything behind the list is one picture on the card, the CHGAME logo
 included, so every card can look its own way. Anything the picture paints
 in pure magenta (`#FF00FF`) turns through the colours, as the default
-logo and the selection bar do. A folder can have a picture of its own.
+logo and the selection bar do; on the bootloader's White style (*Tools >
+Bootloader > SD Game Menu (White)*) those parts are white. A folder can
+have a picture of its own.
 
 ![The menu on the default picture, on a picture of a card's own, and on a card with none](../platform/bootloader/docs/menu_cards.png)
 
@@ -108,7 +110,7 @@ on a card: [menu-image.md](menu-image.md) has the steps.
     so the file name only has to be a short `NAME.CHG` (8 letters at most).
   - A game copied in by hand is listed after the card's own order, sorted
     by title.
-  - Up to 224 entries (games and folders) in a folder, 4 folders deep,
+  - Up to 240 entries (games and folders) in a folder, 4 folders deep,
     and as many folders as you like. Files can be copied in any order and
     can be fragmented.
   - `MENU.IDX` and `MENU.BG` are made by the tools from a `.chgame`

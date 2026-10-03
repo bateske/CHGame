@@ -120,8 +120,9 @@ converts any image into one, outside this format, so its choices (scaling,
 reducing colours) never have to be repeated by another implementation. The menu's colours
 are the cart's `menu.colors`, defaults filled in. Each pixel's index is:
 
-1. **15** if the pixel is exactly `#FF00FF`. Colour 15 is drawn as the
-   rainbow, so its palette entry is 0.
+1. **15** if the pixel is exactly `#FF00FF`. Colour 15 is the menu's
+   own: a rainbow bootloader draws it as one colour turning through the
+   colour wheel, a white one as its palette entry, white.
 2. Otherwise, if it equals a menu colour, that colour's index: **11**
    `text`, **12** `disabled`, **13** `selectedText`, **14** `mark`. If
    several menu colours are equal, the lowest index wins.
@@ -130,7 +131,7 @@ are the cart's `menu.colors`, defaults filled in. Each pixel's index is:
    More than 11 such colours is an error (`bad-background`).
 
 **The palette:** entries 0-10 are those colours, the unused ones 0; 11-14
-are the menu colours; 15 is 0. Each colour is RGB565: red's top 5 bits
+are the menu colours; 15 is white (0xFFFF). Each colour is RGB565: red's top 5 bits
 (15-11), green's top 6 (10-5), blue's top 5 (4-0).
 
 No colours are reduced or merged: reducing is a choice of taste that two
@@ -164,9 +165,9 @@ What bootloader v2 does with these files (docs/sd-menu.md tells players):
 - **START held at power-on, or a reset by a game** (its 3 s START exit):
   the menu, never the launch game.
 - **A list** is a folder's directory: its `*.CHG` files and subfolders,
-  except hidden and system entries and names starting with `.` or `_`, 224
+  except hidden and system entries and names starting with `.` or `_`, 240
   at most (each row takes 32 B of the bootloader's RAM). Beyond that, the
-  first 224 the directory holds are listed. Runtime preparation never
+  first 240 the directory holds are listed. Runtime preparation never
   writes a fuller folder: a cart with one is refused (`full-folder`,
   chgame.md), and more games go in folders, which have no limit.
   - Entries named in `MENU.IDX` come first, in record order.
@@ -190,9 +191,14 @@ What bootloader v2 does with these files (docs/sd-menu.md tells players):
   - message boxes over rows 36-87.
 
   Rows 0-19 and 120-127 are the picture's alone: the CHGAME logo of the
-  default picture is part of it, as is anything a cart puts there. The
-  selection bar, the boxes and every colour-15 pixel turn through the colour
-  wheel, the hue moving with x + y and with time.
+  default picture is part of it, as is anything a cart puts there.
+- **Colour 15** is the selection bar, the boxes and every `#FF00FF` pixel
+  of the picture. The bootloader comes in two styles (*Tools > Bootloader*):
+  - **Rainbow**, the default: one colour, turning through the colour wheel
+    (a turn in about 4 s);
+  - **White**: the palette's entry, white.
+
+  Nothing else differs between them.
 - **Errors** are shown as a number (docs/sd-menu.md lists them). Nothing
   is erased until a game has passed every check.
 

@@ -76,9 +76,9 @@ changing that game.
      compare sizes and frames, as for the rest of the library.
    - `platform/bootloader/src/sd.c` and `src/fat.c` are a C fork of CHSd: a
      fix to one belongs in the other too.
-   - The bootloader is full: flash 11,948 of 12,288 B (gate A keeps 256 B
-     spare), and RAM 20,444 of 20,480 B, since a menu folder lists as many
-     entries (224, `MENU_MAX_GAMES`) as RAM allows. Every byte added must be
+   - The bootloader is full: flash 11,908 of 12,288 B (gate A keeps 256 B
+     spare), and RAM 20,448 of 20,480 B, since a menu folder lists as many
+     entries (240, `MENU_MAX_GAMES`) as RAM allows. Every byte added must be
      paid for (`platform/bootloader/SIZES.md` lists where). Measure with
      `platform/bootloader/build.sh release`.
 7. **Every game needs its own save magic, debug handshake id and
@@ -170,7 +170,7 @@ it, `python tools/chgame.py` is the same thing. The shared tools under
 
 | What | Command |
 |---|---|
-| Build the bootloader (+ size report) | `platform/bootloader/build.sh [release\|locked\|nomenu\|app]` |
+| Build the bootloader (+ size report) | `platform/bootloader/build.sh [release\|locked\|nomenu\|app] [--style=rainbow\|white]` |
 | Its PC test suite (flash/SD/panel models, power cuts, menu frames) | `python3 platform/bootloader/test/native/run_tests.py` |
 | Refresh the committed binaries | `platform/bootloader/tools/dist.sh` |
 | The casino cart, `out/CHGame-Casino.chgame` (`tools/sdcard/casino.json`), and its card in `out/sdcard/` (+ FAT32 image) | `chgame card [--no-build] [--image out/sdcard.img]` |

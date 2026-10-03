@@ -71,9 +71,10 @@ def cart_cards(build_dir, pk):
       cart        GAMES/ in MENU.IDX's order: ZULU (BRAVO's payload), the
                   folder FOLDER ONE (ALPHA GAME, then the folder INNER with
                   BRAVO), MIKE; then EXTRA.CHG ("AAA EXTRA"), copied in by
-                  hand and not in the index; the index also names GHOST.CHG,
-                  which is not on the card. A background of four colours with
-                  a band in the rainbow colour.
+                  hand and not in the index, and an empty folder EMPTY (by
+                  hand too); the index also names GHOST.CHG, which is not on
+                  the card. A background of four colours with a band in the
+                  rainbow colour.
       cartlaunch  the same cart launching ALPHA GAME (inside FOLDER ONE)
       cartbadbg   cart with its MENU.BG cut short: the menu's own look
 
@@ -98,6 +99,7 @@ def cart_cards(build_dir, pk):
     for name, c in (("cart", cart()), ("cartlaunch", cart("alpha")), ("cartbadbg", cart())):
         files = runtime.prepare(c)
         files["GAMES/EXTRA.CHG"] = chgpack.pack(extra, "AAA EXTRA")
+        files["GAMES/EMPTY/"] = None
         files["GAMES/MENU.IDX"] += b"GHOST   CHG".ljust(32, b"\0")
         if name == "cartbadbg":
             files["GAMES/MENU.BG"] = files["GAMES/MENU.BG"][:-512]
@@ -105,13 +107,13 @@ def cart_cards(build_dir, pk):
         fatimg.build_image(str(out[name]), files, fs="fat32", lfn=True, fragment={"GAMES/MENU.BG": 3})
     extras["MIKE.CHG"] = chgpack.pack(mike, "MIKE")
     extras["EXTRA.CHG"] = chgpack.pack(extra, "AAA EXTRA")
-    # cartbig: 230 games in GAMES/, more than a folder lists (MENU_MAX_GAMES,
-    # 224): the menu keeps the first 224 the directory holds, GAME 000-223
+    # cartbig: 250 games in GAMES/, more than a folder lists (MENU_MAX_GAMES,
+    # 240): the menu keeps the first 240 the directory holds, GAME 000-239
     big = {f"GAMES/G{i:03d}.CHG": chgpack.pack(bytes((j * 7 + i * 13) & 0xFF for j in range(64 + i)), f"GAME {i:03d}")
-           for i in range(230)}
+           for i in range(250)}
     out["cartbig"] = build_dir / "cartbig.img"
     fatimg.build_image(str(out["cartbig"]), big, fs="fat32")
-    extras["G223.CHG"] = big["GAMES/G223.CHG"]
+    extras["G239.CHG"] = big["GAMES/G239.CHG"]
     return out, extras
 
 
@@ -152,6 +154,9 @@ def run_all(build_dir, build, run, imgs, lay, pk, quick, pin=False):
     from run_tests import CORE, MENU   # noqa: E402
     exe = build("boot", "test_boot.c", ["-DCHBOOT_MENU=1", "-DCHGAME_ALLOW_SELFUPDATE=1"], CORE + MENU)
     ok = run("boot", exe, mpath, fdir)
+    wexe = build("boot_white", "test_boot.c", ["-DCHBOOT_MENU=1", "-DCHGAME_ALLOW_SELFUPDATE=1",
+                                              "-DMENU_STYLE=MENU_STYLE_WHITE"], CORE + MENU)
+    ok &= run("boot_white", wexe, mpath, fdir, "style", "white_")     # the white style still works and draws
     real = HERE.parents[3] / "out" / "sdcard.img"
     if real.exists():
         ok &= run_real(build_dir, exe, real, fdir)
@@ -164,28 +169,32 @@ def run_all(build_dir, build, run, imgs, lay, pk, quick, pin=False):
 
 def check_preview(fdir):
     """`chgame background --preview` (tools/chcart/background.py) draws the
-    menu as the bootloader does: the cart card's frame against its preview,
-    every pixel but the rainbow's (their hue depends on the time)."""
+    menu as the bootloader does: the cart card's frame against its preview.
+    The rainbow style: every pixel but colour 15's (its hue depends on the
+    time). The white style: every pixel."""
     from PIL import Image
     from chcart import background, runtime
-    frame = fdir / "cart_menu.png"
     png = cart_background_png()
     ui = dict(background.model.UI_COLORS)
-    pv = background.preview(png, ui, titles=["ZULU", "FOLDER ONE", "MIKE", "AAA EXTRA"], scale=1,
-                            installed=(), folders=(1,))
     idx = runtime.menu_background(png, ui)
-    real = Image.open(frame).convert("RGB").load()
-    mine = pv.load()
-    diff = 0
-    for y in range(128):
-        for x in range(128):
-            b = idx[512 + y * 64 + x // 2]
-            if (b >> 4 if x % 2 == 0 else b & 15) == 15 or 20 <= y < 30:
-                continue
-            diff += real[x, y] != mine[x, y]
-    print(f"{'preview':12s} {'ok' if not diff else 'FAILED':6s} chcart's menu preview vs the bootloader's frame"
-          + (f": {diff} pixels differ" if diff else ""))
-    return not diff
+    diff = {}
+    for style, frame in (("rainbow", "cart_menu.png"), ("white", "white_cart_menu.png")):
+        pv = background.preview(png, ui, titles=["ZULU", "FOLDER ONE", "MIKE", "AAA EXTRA", "EMPTY"], scale=1,
+                                installed=(), folders=(1, 4), style=style)
+        real = Image.open(fdir / frame).convert("RGB").load()
+        mine = pv.load()
+        n = 0
+        for y in range(128):
+            for x in range(128):
+                b = idx[512 + y * 64 + x // 2]
+                if style == "rainbow" and ((b >> 4 if x % 2 == 0 else b & 15) == 15 or 20 <= y < 30):
+                    continue
+                n += real[x, y] != mine[x, y]
+        diff[style] = n
+    bad = {k: v for k, v in diff.items() if v}
+    print(f"{'preview':12s} {'ok' if not bad else 'FAILED':6s} chcart's menu preview vs the bootloader's frames"
+          " (rainbow, white)" + (f": pixels differ {bad}" if bad else ""))
+    return not bad
 
 
 def run_real(build_dir, exe, img, fdir):

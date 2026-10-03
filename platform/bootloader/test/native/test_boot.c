@@ -467,13 +467,31 @@ static void t_cart_bad_background(void)
     snap("cart_bad_bg");
 }
 
-/* 230 games in one folder: the menu lists the 224 it has room for
+/* EMPTY, a folder with nothing in it (row 5, after AAA EXTRA): A opens it,
+   no key but B does anything there, B comes back to its row. */
+static void t_cart_empty_folder(void)
+{
+    static const uint32_t poke[] = { BTN_DOWN, BTN_DOWN, BTN_DOWN, BTN_DOWN, BTN_A, BTN_UP, BTN_A, BTN_DOWN, BTN_A };
+    static const uint32_t out[] = { BTN_DOWN, BTN_DOWN, BTN_DOWN, BTN_DOWN, BTN_A, BTN_A, BTN_B, BTN_UP, BTN_A };
+    card(img_cart);
+    keys_at(800, poke, 9);
+    B->limit_us = 4200000;
+    CHECK(host_boot() == END_HANG, "an empty folder: open, UP/DOWN/A do nothing");
+    CHECK(B->flash_ops == 0, "nothing installed from it");
+    snap("cart_empty");
+    host_init();
+    card(img_cart);
+    keys_at(800, out, 9);
+    CHECK(host_boot() == END_RESET && installed_is("EXTRA.CHG"), "B leaves it, on its row: UP, A installs AAA EXTRA");
+}
+
+/* 250 games in one folder: the menu lists the 240 it has room for
    (MENU_MAX_GAMES), sorted, and UP from the first row wraps to the last. */
 static void t_cart_full_folder(void)
 {
     card(img_cartbig);
     B->limit_us = 4000000;
-    CHECK(host_boot() == END_HANG, "a folder of 230: the menu");
+    CHECK(host_boot() == END_HANG, "a folder of 250: the menu");
     lcd_sane("full folder");
     snap("cart_full");
     host_init();
@@ -481,7 +499,7 @@ static void t_cart_full_folder(void)
     press(1500, BTN_UP);
     press(1900, BTN_A);
     B->limit_us = 8000000;
-    CHECK(host_boot() == END_RESET && installed_is("G223.CHG"), "the last row is GAME 223, and it installs");
+    CHECK(host_boot() == END_RESET && installed_is("G239.CHG"), "the last row is GAME 239, and it installs");
 }
 
 /* The real card from tools/sdcard/mkcard.py: install every program in menu
@@ -539,6 +557,18 @@ int main(int argc, char **argv)
         TEST(t_real_card);
         return test_summary();
     }
+    if (argc > 4 && !strcmp(argv[3], "style")) {    /* the white style: the same menu, its screens */
+        frame_prefix = argv[4];
+        TEST(t_no_card_no_app);
+        TEST(t_menu_waits);
+        TEST(t_install_then_run);
+        TEST(t_bad_packages);
+        TEST(t_usb_notice);
+        TEST(t_cart_menu);
+        TEST(t_cart_folders);
+        TEST(t_cart_launch_installed);
+        return test_summary();
+    }
     if (argc > 3 && !strcmp(argv[3], "anim")) {
         TEST(t_anim);
         return test_summary();
@@ -567,5 +597,6 @@ int main(int argc, char **argv)
     TEST(t_cart_launch_soft_reset);
     TEST(t_cart_bad_background);
     TEST(t_cart_full_folder);
+    TEST(t_cart_empty_folder);
     return test_summary();
 }

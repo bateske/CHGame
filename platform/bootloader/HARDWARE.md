@@ -73,6 +73,10 @@ first menu bootloader (or any bootloader with self-update).
    - **A picture of your own.** `chgame background --template m.png`, paint
      on it, `chgame background m.png --card <drive>`: the menu shows it, and
      it looks like `--preview`.
+   - **The White style.** `./build.sh release --style=white`, then
+     `UP selfupdate platform/bootloader/build/release-white/chgame_boot.bin --yes`:
+     the bar, the boxes and the logo are white and still; everything else as
+     before. Back to the rainbow the same way with `build/release/`.
    - **B at power-on** still gives USB mode.
    - **The uploaders.** `UP flash <some .bin> -verify` ends with
      "readback: not available".

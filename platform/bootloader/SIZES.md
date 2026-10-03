@@ -14,16 +14,18 @@ a boot image of at most 12,288 B with at least 256 B to spare.
 
 | Build | `.text` | `.ramfunc` | `.data` | Boot image | Free | `.bss` | RAM in use |
 |---|---|---|---|---|---|---|---|
-| **release** (menu + USB upload + self-update) | 11,268 | 596 | 84 | **11,948** | **340** | 17,700 | **20,444** |
-| locked (menu + USB upload) | 11,048 | 496 | 80 | 11,624 | 664 | 17,700 | 20,340 |
+| **release** (menu + USB upload + self-update; rainbow) | 11,228 | 596 | 84 | **11,908** | **380** | 17,704 | **20,448** |
+| release `--style=white` | 11,004 | 596 | 84 | 11,684 | 604 | 17,564 | 20,308 |
+| locked (menu + USB upload) | 11,012 | 496 | 80 | 11,588 | 700 | 17,704 | 20,344 |
 | nomenu (USB upload + self-update, for HW2a) | 4,728 | 596 | 76 | 5,400 | 6,888 | 984 | 3,720 |
-| app (the menu as a program at 0x3000, dry run) | 6,424 | 0 | 16 | 6,440 | - | 16,576 | 18,656 |
+| app (the menu as a program at 0x3000, dry run) | 6,392 | 0 | 16 | 6,408 | - | 16,580 | 18,660 |
 
 **RAM is full on purpose.** A folder of the menu lists `MENU_MAX_GAMES`
-entries (`src/menu.h`), 32 B each, and 224 take what the framebuffer, the
-buffers and the 2 KB stack leave: 36 B of the 20,480 are left. Anything that
-adds RAM to the menu build lowers that number (8 B more of RAM, one entry
-fewer). A folder had 128 until 2026-10-03.
+entries (`src/menu.h`), 32 B each, and 240 take what the framebuffer, the
+buffers and the 2 KB stack leave: 32 B of the 20,480 are left. Anything that
+adds RAM to the menu build lowers that number (every 32 B, one entry). A
+folder had 128 until 2026-10-03, then 224, then 240 once the rainbow's
+gradient table went.
 
 The colour themes (`--theme=plain`, `casino`) went with menu v2: the look
 is the card's `MENU.BG` now.
@@ -34,7 +36,7 @@ Notes:
 - RAM in use is the 16 B retained block, `.ramfunc`, `.data`, `.bss` and the
   2 KB stack, out of 20,480 B.
 - The release `.bss` is mostly the menu's framebuffer (8,192 B), its game
-  table (224 x 32 B), the colour wheel's row of 255 colours (510 B), one
+  table (240 x 32 B), one
   512 B sector buffer, the protocol's 512 B frame buffer and its 256 B page
   buffer.
 - The binaries, with SHA-256 sums, are in [release/](release). They use the
@@ -62,6 +64,8 @@ Notes:
 | Tested on cards from the tools | 12,012 | 276 | Keys held at power-on count only after a release again (`k_prev` starts with every key down); a bad file's name shown as stored (`BADFILE CHG`) |
 | Review | 12,016 | 272 | The font guard back for characters after `_` (a hand-made folder's 8.3 name, `CARDGA~1`); INSTALLED PROGRAM written by `set_title()` |
 | The logo only in the picture; 224 a folder | 11,948 | 340 | No title drawn by the bootloader (the card's picture has the logo; without one the list is on black), so text is never scaled; the game table from 128 entries to 224 (RAM 17,372 to 20,444 B) |
+| A solid rainbow; 240 a folder; the White style | 11,900 | 388 | Colour 15 one turning colour, not a gradient (no 510 B table); the table to 240 entries (RAM 20,448 B). `--style=white`: no animation, 11,684 B |
+| No games: USB mode; an empty folder | 11,908 | 380 | With nothing to list the menu hands over to USB mode again, as the first menu did (LED, B looks at the card again); in an empty folder only B works (it was a trap, and UP/A used stale rows) |
 
 ## Where the release bytes go
 

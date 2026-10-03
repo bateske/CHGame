@@ -21,7 +21,7 @@ command; `python tools/chgame.py background ...` is the same.)
        |  BACKGAMMON          (bar)   |   rows 20-119: the list, ten rows of ten
        |  BLACKJACK                   |   pixels. Titles in cream from x = 8; the
        | ▌CHESS                       |   selected row is a bar across the whole
-       |  ...                         |   width in the rainbow; a red chip at
+       |  ...                         |   width in the rainbow colour; a red chip at
        |  APPS                      > |   x = 2-4 marks the installed game, `>` at
  y 120 +------------------------------+   x = 122 a folder
        |  the picture's own: hints     |   rows 120-127: the menu never draws here
@@ -31,8 +31,10 @@ command; `python tools/chgame.py background ...` is the same.)
 Messages (INSTALLING, ERROR n, USB UPLOAD) are boxes over rows 36-87.
 
 - **The rainbow.** Paint anything in pure magenta, **#FF00FF**, and the menu
-  draws it in colours that turn, like the default logo and the selection
-  bar.
+  draws it in one colour that turns through the rainbow, like the default
+  logo and the selection bar. On a bootloader built in the White style
+  (*Tools > Bootloader > SD Game Menu (White)*) those parts are white
+  instead.
 - **Colours.** Besides magenta, a picture holds 11 colours. More are
   reduced to 11 for you; a picture with few, flat colours looks best.
 - **Readable titles.** Keep rows 20-119 dark and plain behind the text, or
@@ -60,7 +62,7 @@ Messages (INSTALLING, ERROR n, USB UPLOAD) are boxes over rows 36-87.
    ```
    The preview is the menu as the CHGame draws it (the bootloader's own tests
    check that it matches), three times the size, with the rainbow turning
-   (`.png` for a still). If the picture had to be changed to fit, the command
+   (`.png` for a still; `--style white` for the White bootloader). If the picture had to be changed to fit, the command
    says how. `--out ready.png` keeps the changed picture, and `--dither`
    helps photos.
 

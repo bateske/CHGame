@@ -15,7 +15,10 @@ folder. Rows 0-19 and 120-127 are the picture's alone: the logo at the top,
 key hints at the foot. Messages (INSTALLING, errors) are boxes over rows
 36-87.
 
-The colours. Pure magenta, #FF00FF, is drawn as the moving rainbow. Besides
+The colours. Pure magenta, #FF00FF, is drawn in the menu's colour 15: one
+colour turning through the rainbow, or white on a bootloader built in the
+white style (Tools > Bootloader: SD Game Menu (White); --style white here
+previews that). Besides
 it the picture may use 11 colours, plus the menu's own four (text #FFF4D6,
 greyed #808080, selected text #000000, chip #D62020, or the cart's
 `menu.colors`). convert() makes any image fit: it scales it to 128x128
@@ -137,10 +140,11 @@ def text(put, x, y, s, colour, g=None):
         x += 6
 
 
-def preview(png, ui=None, phase=0, titles=None, scale=3, installed=(2,), folders=(ROWS - 1,)):
+def preview(png, ui=None, phase=0, titles=None, scale=3, installed=(2,), folders=(ROWS - 1,), style="rainbow"):
     """A PIL image of the menu over the picture, as the panel shows it
     (RGB565): a list of titles, the first selected, a chip on the rows in
-    `installed`, a folder's `>` on those in `folders`."""
+    `installed`, a folder's `>` on those in `folders`. Colour 15 is the
+    rainbow's colour at `phase`, or the palette's white (style "white")."""
     from PIL import Image
     ui = ui or dict(model.UI_COLORS)
     bg = runtime.menu_background(png, ui)
@@ -171,19 +175,20 @@ def preview(png, ui=None, phase=0, titles=None, scale=3, installed=(2,), folders
         if i in folders:
             text(put, 122, y + 1, ">", c, g)
     im = Image.new("RGB", (128, 128))
-    im.putdata([rgb(hue(phase + x + y)) if idx[y][x] == 15 else pal[idx[y][x]]
-                for y in range(128) for x in range(128)])
+    if style == "rainbow":
+        pal[15] = rgb(hue(phase))
+    im.putdata([pal[idx[y][x]] for y in range(128) for x in range(128)])
     return im.resize((128 * scale, 128 * scale), Image.NEAREST)
 
 
-def save_preview(png, path, ui=None, scale=3):
+def save_preview(png, path, ui=None, scale=3, style="rainbow"):
     """A preview as a PNG, or as a GIF with the rainbow turning (.gif)."""
     path = pathlib.Path(path)
-    if path.suffix.lower() == ".gif":
+    if path.suffix.lower() == ".gif" and style == "rainbow":
         frames = [preview(png, ui, phase, scale=scale) for phase in range(0, 192, 8)]
         frames[0].save(path, save_all=True, append_images=frames[1:], duration=160, loop=0)
     else:
-        preview(png, ui, scale=scale).save(path)
+        preview(png, ui, scale=scale, style=style).save(path)
 
 
 def write_to_card(png, card, ui=None):

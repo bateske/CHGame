@@ -67,10 +67,10 @@ static uint8_t buf[512] __attribute__((aligned(4)));
 static uint32_t w32(const uint8_t *p) { return *(const uint32_t *)(const void *)p; }
 
 /* The menu's own colours when there is no MENU.BG (black behind; the rest
-   by shared/chgame_card.h's roles). */
+   by shared/chgame_card.h's roles; colour 15 white, for the white style). */
 static const uint16_t pal0[16] = {
     [CARD_C_TEXT] = RGB565(255, 244, 214), [CARD_C_DIM] = RGB565(128, 128, 128),
-    [CARD_C_MARK] = RGB565(214, 32, 32),
+    [CARD_C_MARK] = RGB565(214, 32, 32), [CARD_C_RAINBOW] = RGB565(255, 255, 255),
 };
 
 /* ---- the card --------------------------------------------------------------- */
@@ -391,23 +391,29 @@ void menu_main(int app, int launch)
         if (n == ngames) break;
         rc = start(n, app);
     }
-    proto_init();
 #endif
-    if (ngames) draw_list();
-    else {
+    if (!ngames && !depth) {                /* nothing to list: USB mode, saying so (B there looks again) */
         background();
         box("NO GAMES", 0);
+        light();
+        return;
     }
+#if !CHBOOT_APP
+    proto_init();
+#endif
+    draw_list();
     light();
 
     for (;;) {
         uint32_t old = sel, old_depth = depth;
 #if !CHBOOT_APP
+#if LCD_TURNS
         static uint32_t t_hue;
         if (sys_ticks() - t_hue >= 40u * SYS_TICKS_PER_MS) {   /* a turn of the wheel in ~3.8 s */
             t_hue = sys_ticks();
             lcd_step();
         }
+#endif
         proto_task();
         if (proto_claimed) {
             box("USB UPLOAD", "B: MENU");
@@ -425,8 +431,8 @@ void menu_main(int app, int launch)
             draw_list();
             continue;
         }
-        if (!ngames) continue;
         k = keys();
+        if (!ngames) k &= BTN_B;            /* an empty folder: B leaves it, nothing else */
         if (k & BTN_UP)    sel = sel ? sel - 1 : ngames - 1;
         if (k & BTN_DOWN)  sel = sel + 1 < ngames ? sel + 1 : 0;
         if (k & BTN_LEFT)  sel = sel >= ROWS ? sel - ROWS : 0;

@@ -10,7 +10,7 @@ Arduino setup is not touched), and checks:
   - Boards Manager installs CHGame from the one URL, with its three tools;
   - CHGame, CHGfx and CHSd come with it (platform libraries, nothing to add);
   - File > Examples has CHGame's Hello, the twenty games, CHStlView and CHSDtoUSB;
-  - Tools > Bootloader offers the two bootloaders, and their files are there;
+  - Tools > Bootloader offers the three bootloaders, and their files are there;
   - Tools > Programmer offers CHGame USB and the WCH factory ISP;
   - examples copied to the sketchbook (what the IDE does when one is saved)
     compile with plain `arduino-cli compile`, no --library, and Export
@@ -159,7 +159,7 @@ def run(dist: Path, port: int, build_all: bool, card: Path | None, jobs: int) ->
     say("=== Tools menus ===")
     det = cli("board", "details", "-b", FQBN, json_out=True)
     opts = {o["option"]: [v["value"] for v in o["values"]] for o in det.get("config_options", [])}
-    check(opts.get("boot", []) == ["sdmenu", "nomenu"], "Tools > Bootloader", ", ".join(opts.get("boot", [])))
+    check(opts.get("boot", []) == ["sdmenu", "sdwhite", "nomenu"], "Tools > Bootloader", ", ".join(opts.get("boot", [])))
     progs = {p["id"]: p["name"] for p in det.get("programmers", [])}
     check({"chgameusb", "wchisp"} <= set(progs), "Tools > Programmer", "; ".join(progs.values()))
     boards_txt = (plat / "boards.txt").read_text(encoding="utf-8", errors="replace")
@@ -253,7 +253,7 @@ for 3 seconds in a game goes back to the menu.
 
 The menu is part of the CHGame bootloader. A board that does not show it
 needs the menu bootloader once: in the Arduino IDE, choose Tools > Board >
-CHGame Boards > CHGame Rev0, Tools > Bootloader > SD Game Menu,
+CHGame Boards > CHGame Rev0, Tools > Bootloader > SD Game Menu (Rainbow or White),
 Tools > Programmer > CHGame USB,
 then Tools > Burn Bootloader.
 

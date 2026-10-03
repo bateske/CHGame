@@ -59,10 +59,10 @@ def rgb565(r, g, b):
 
 
 def menu_background(png, ui):
-    """MENU.BG from a background PNG (spec/card.md): #FF00FF is colour 15, the
-    rainbow; a colour equal to one of the menu's own takes its index (11-14,
-    the lowest if several match); every other colour gets 0-10 in order of
-    first appearance, row by row."""
+    """MENU.BG from a background PNG (spec/card.md): #FF00FF is colour 15 (the
+    rainbow, or white: its palette entry is white); a colour equal to one of
+    the menu's own takes its index (11-14, the lowest if several match); every
+    other colour gets 0-10 in order of first appearance, row by row."""
     index = {model.RAINBOW_RGB: RAINBOW_INDEX}
     for k in ("text", "disabled", "selectedText", "mark"):
         index.setdefault(model.hex_rgb(ui[k]), UI_INDEX[k])
@@ -74,6 +74,7 @@ def menu_background(png, ui):
         pal[k] = rgb565(*rgb)
     for k, i in UI_INDEX.items():
         pal[i] = rgb565(*model.hex_rgb(ui[k]))
+    pal[RAINBOW_INDEX] = 0xFFFF                     # what a white-style bootloader shows
     pix = [index[p] for p in model.rgb_pixels(png)]
     head = BG_MAGIC + bytes(4) + struct.pack("<16H", *pal)
     body = bytes(pix[i] << 4 | pix[i + 1] for i in range(0, len(pix), 2))

@@ -72,9 +72,10 @@ static const uint8_t init_seq[] = {
 
 uint8_t  lcd_fb[LCD_W * LCD_H / 2] __attribute__((aligned(4)));
 uint16_t lcd_pal[16];
-static uint16_t wheel[LCD_W + LCD_H - 1];   /* colour 15 at x + y */
+
+#if LCD_TURNS
 static uint8_t  shows[LCD_H];               /* 1: the row holds colour 15 */
-static uint32_t phase;
+static uint32_t phase, now15;               /* colour 15 at the moment */
 
 /* The colour wheel, 192 steps: each channel ramps up, stays full, ramps down
    and stays off, a third of a turn apart, lifted onto a floor (10 of 31) so
@@ -91,10 +92,13 @@ static uint32_t hue(uint32_t p)
     return (c & 0x7FE0) << 1 | (c & 0x1F);
 }
 
-static void turn(void)
+void lcd_step(void)
 {
-    for (uint32_t i = 0; i < sizeof wheel / sizeof wheel[0]; i++) wheel[i] = (uint16_t)hue(phase + i);
+    now15 = hue(phase += 2);         /* (hue() takes it modulo a turn) */
+    for (uint32_t y = 0; y < LCD_H; y++)
+        if (shows[y]) lcd_flush(y, y + 1);
 }
+#endif
 
 void lcd_on(void)
 {
@@ -108,7 +112,9 @@ void lcd_on(void)
         while (n--) out(*p++);
     }
     hal_lcd_select(0);
-    turn();
+#if LCD_TURNS
+    now15 = hue(phase);
+#endif
     lcd_flush(0, LCD_H);             /* never show the RAM's power-up noise */
     hal_lcd_select(1);
     cmd(0x29);                       /* DISPON */
@@ -130,23 +136,20 @@ void lcd_flush(uint32_t y0, uint32_t y1)
     px(y1 + 2);
     cmd(0x2C);                       /* RAMWR */
     for (uint32_t y = y0; y < y1; y++) {
+#if LCD_TURNS
         uint32_t f = 0;
         for (uint32_t x = 0; x < LCD_W; x++) {
             uint32_t i = x & 1 ? *p++ & 15 : *p >> 4;
-            if (i == LCD_RAINBOW) { f = 1; px(wheel[x + y]); }
+            if (i == LCD_RAINBOW) { f = 1; px(now15); }
             else px(lcd_pal[i]);
         }
         shows[y] = (uint8_t)f;
+#else
+        for (uint32_t x = 0; x < LCD_W; x++)
+            px(lcd_pal[x & 1 ? *p++ & 15 : *p >> 4]);
+#endif
     }
     hal_lcd_select(0);
-}
-
-void lcd_step(void)
-{
-    phase += 2;                      /* (hue() takes it modulo a turn) */
-    turn();
-    for (uint32_t y = 0; y < LCD_H; y++)
-        if (shows[y]) lcd_flush(y, y + 1);
 }
 
 void lcd_fill(uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t c)

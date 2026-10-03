@@ -24,7 +24,7 @@ One cart per error code, each named after it, each breaking that rule only:
 `missing-field`, `bad-field`, `missing-file`, `bad-id`, `duplicate-id`,
 `bad-title`, `bad-folder`, `bad-device`, `binary-size`, `bootloader-image`,
 `bad-sd-path`, `sd-conflict`, `bad-image`, `bad-background`, `bad-launch`,
-`full-folder` (225 games at the top level, sharing one binary).
+`full-folder` (241 games at the top level, sharing one binary).
 
 ## expected/
 

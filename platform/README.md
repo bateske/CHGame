@@ -90,9 +90,10 @@ staged package, sizes unchanged):
   The release FQBN names `oslto` already, so the games are unchanged.
   CHSDtoUSB's `tools/game.py` pins it to `opt=osstd` (`FQBN`), what it was
   tested with.
-- **Tools > Bootloader** offers the SD Game Menu and USB Only (2026-10-03:
-  the Plain and Casino colour themes went with menu v2, whose look comes
-  from the card); the 0.2.4 bootloader is no longer in the package (it is
+- **Tools > Bootloader** offers the SD Game Menu (Rainbow or White) and
+  USB Only (2026-10-03: the Plain and Casino colour themes went with menu
+  v2, whose look comes from the card; the two styles differ only in colour
+  15, turning or white); the 0.2.4 bootloader is no longer in the package (it is
   kept in `bootloader/release/0.2.4/` for rollback).
   The programmers are named for what they need.
 - **Examples** are under *CHGame > Games* and *CHGame > Apps* (the folders
@@ -177,7 +178,7 @@ background (`GAMES/MENU.IDX`, `MENU.BG`: [../spec/card.md](../spec/card.md)),
 a game started at power-on (START held: the menu), the moving rainbow as a
 colour of the picture. Errors are shown as numbers; `fault.c`, the STATUS
 and READ commands, the colour themes and the code-drawn title went for
-flash (11,948 B, 340 B free; a folder lists 224 entries, which fills the RAM: [bootloader/SIZES.md](bootloader/SIZES.md)). It passes the PC suite,
+flash (11,908 B, 380 B free; a folder lists 240 entries, which fills the RAM: [bootloader/SIZES.md](bootloader/SIZES.md)). It passes the PC suite,
 which boots it on cards made by `tools/chcart`; it has not run on a board
 yet. So `bootloader/release/` and `board/.../bootloaders/CHGame/` still hold
 the first menu, until that run ([bootloader/HARDWARE.md](bootloader/HARDWARE.md),
@@ -200,7 +201,7 @@ the first menu, until that run ([bootloader/HARDWARE.md](bootloader/HARDWARE.md)
 - 2026-10-03: the bootloader's menu v2 (above). Both uploaders skip
   `-verify`'s readback on BOOT_VERSION 3, which has no READ
   (`host/py/chgame_upload/upload.py`, `host/go/upload.go`); their parity
-  tests pass. Burn Bootloader offers SD Game Menu and USB Only
+  tests pass. Burn Bootloader offers SD Game Menu (Rainbow, White) and USB Only
   (`boards.txt`; the plain and casino binaries are gone). The examples each
   have a `chgame.json` (the `.chgame` format, [../spec/chgame.md](../spec/chgame.md)).
   Checked: the 22 release images unchanged (no library change); the

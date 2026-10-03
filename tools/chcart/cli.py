@@ -8,7 +8,8 @@
     chgame cart build RECIPE.json [OUT]           a cart from a recipe (games named by sketch)
     chgame cart add PKG ITEM ... [--folder F] [--at N]
     chgame cart remove PKG ID ...
-    chgame cart order PKG ID ...                  these first, in this order; the rest after
+    chgame cart order PKG ID|FOLDER/ ...          these first, in this order; the rest after (FOLDER/:
+                                                  that folder's games, which puts the folder there)
     chgame cart set PKG [--game ID] KEY=VALUE ... (KEY= clears; title, folder, author, ...)
     chgame cart launch PKG ID|none                the game started at power-on
     chgame cart background PKG IMAGE|none [--folder F] [--color KEY=#RRGGBB]
@@ -213,9 +214,21 @@ def cmd_remove(a):
 
 
 def cmd_order(a):
+    """Games, and folders (an item ending in '/'), first in the order given:
+    a folder sits where its first game is, so moving its games moves it."""
     cart = _load(a.pkg)
-    first = [_game(cart, gid) for gid in a.ids]
-    cart.games = first + [g for g in cart.games if g.id not in a.ids]
+    first = []
+    for item in a.ids:
+        if item.endswith("/"):
+            path = item.rstrip("/")
+            block = [g for g in cart.games if g.folder == path or g.folder.startswith(path + "/")]
+            if not block:
+                raise CartError([model.Issue("bad-folder", item, f"no game is in a folder {path!r} "
+                                             f"(folders: {', '.join(cart.folders()) or 'none'})")])
+        else:
+            block = [_game(cart, item)]
+        first += [g for g in block if g not in first]
+    cart.games = first + [g for g in cart.games if g not in first]
     _save(cart, a.pkg)
     return 0
 
@@ -324,9 +337,9 @@ def parser():
     p = sub.add_parser("remove", help="remove games")
     p.add_argument("pkg")
     p.add_argument("ids", nargs="+")
-    p = sub.add_parser("order", help="reorder games")
+    p = sub.add_parser("order", help="reorder games and folders")
     p.add_argument("pkg")
-    p.add_argument("ids", nargs="+")
+    p.add_argument("ids", nargs="+", metavar="ID|FOLDER/")
     p = sub.add_parser("set", help="edit details")
     p.add_argument("pkg")
     p.add_argument("pairs", nargs="+", metavar="KEY=VALUE")
@@ -385,6 +398,8 @@ def background_main(argv):
     ap.add_argument("--dither", action="store_true", help="dither when reducing colours (photos)")
     ap.add_argument("--color", action="append", metavar="KEY=#RRGGBB",
                     help="the menu's text, disabled, selectedText or mark colour, for --preview and --card")
+    ap.add_argument("--style", choices=["rainbow", "white"], default="rainbow",
+                    help="--preview as the rainbow bootloader (default) or the white one draws it")
     ap.add_argument("--redraw-default", metavar="TTF", help=argparse.SUPPRESS)
     a = ap.parse_args(argv)
     try:
@@ -410,7 +425,7 @@ def background_main(argv):
             pathlib.Path(a.out).write_bytes(png)
             print(f"{a.out}: written")
         if a.preview:
-            background.save_preview(png, a.preview, ui)
+            background.save_preview(png, a.preview, ui, style=a.style)
             print(f"{a.preview}: the menu on it")
         if a.card:
             print(f"{background.write_to_card(png, a.card, ui)}: written (eject the card before the CHGame reads it)")
