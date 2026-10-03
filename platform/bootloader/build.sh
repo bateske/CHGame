@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build the CHGame bootloader (Linux, macOS, or Git Bash on Windows).
 #
-#   ./build.sh [MODE] [--style=rainbow|white] [--nolto]
+#   ./build.sh [MODE] [--style=rainbow|static] [--nolto]
 #
 # MODE
 #   release   the SD game menu bootloader, with the developer self-update
@@ -15,10 +15,10 @@
 #             bootloader
 # --style     the menu's colour 15 (the selection bar, the boxes, #FF00FF in
 #             the card's picture): rainbow (the default), one colour turning
-#             through the colour wheel; or white
+#             through the colour wheel; or static
 # --nolto     build without LTO, for a per-object size breakdown
 #
-# Output: build/<MODE>[-white]/chgame_boot.{elf,bin,map,lst} and a size
+# Output: build/<MODE>[-static]/chgame_boot.{elf,bin,map,lst} and a size
 # report.
 set -euo pipefail
 
@@ -30,7 +30,7 @@ for a in "$@"; do
   case "$a" in
     release|locked|nomenu|app) MODE="$a" ;;
     --nolto) LTO= ;;
-    --style=rainbow|--style=white) STYLE="${a#--style=}" ;;
+    --style=rainbow|--style=static) STYLE="${a#--style=}" ;;
     *) echo "unknown argument: $a" >&2; exit 1 ;;
   esac
 done

@@ -23,7 +23,7 @@ it in order.
 fixtures; the release attaches every game as one cart. The bootloader's
 menu v2 reads what runtime preparation writes ([spec/card.md](../spec/card.md)):
 folders, the card's order and picture, a game started at power-on, in a
-Rainbow and a White style. It ran on the board on 2026-10-03
+Rainbow and a Static style. It ran on the board on 2026-10-03
 ([RESULTS](../platform/bootloader/test/hil/RESULTS-2026-10-03.md)), and
 `release/` and the board package carry it.
 
@@ -34,7 +34,7 @@ This page records what is in place and what each step involved.
 | | Where | State |
 |---|---|---|
 | Arduino core, variant, linker scripts, Tools menus | `platform/board/arduino/CHGame` | 0.3.0, built and tested, not yet published (0.2.4 is the published one) |
-| Bootloader with the SD game menu | `platform/bootloader` | menu v2 (2026-10-03), Rainbow and White: the PC suite, and installed and checked on a board the same day (`test/hil/RESULTS-2026-10-03.md`; the first menu on 2026-10-01) |
+| Bootloader with the SD game menu | `platform/bootloader` | menu v2 (2026-10-03), Rainbow and Static (White until that evening, when colour 15 became the picture's magenta as painted; that build has not run on a board): the PC suite, and installed and checked on a board the same day (`test/hil/RESULTS-2026-10-03.md`; the first menu on 2026-10-01) |
 | The `.chgame` format and the SD card's layout | `spec/`, `tools/chcart` | version 1 and layout 2; reference implementation, 20 unit tests, 25 conformance fixtures; the repository's games and release use it |
 | Uploader: `chgame-upload` in Go (the executable the board package installs; Windows, Linux, macOS) and the same tool in Python (`chgame_upload`, what the repository's tools use) | `platform/bootloader/host/go`, `host/py` | 0.2.0 here, with the bootloader update over USB and `burn`; the installed package has 0.1.0. Shared test vectors (`test/protocol/`) hold the two together |
 | Graphics | `platform/board/arduino/CHGame/libraries/CHGfx` | 1.3.0 |

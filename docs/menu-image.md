@@ -32,11 +32,17 @@ Messages (INSTALLING, ERROR n, USB UPLOAD) are boxes over rows 36-87.
 
 - **The rainbow.** Paint anything in pure magenta, **#FF00FF**, and the menu
   draws it in one colour that turns through the rainbow, like the default
-  logo and the selection bar. On a bootloader built in the White style
-  (*Tools > Bootloader > SD Game Menu (White)*) those parts are white
-  instead.
+  logo and the selection bar. On a bootloader built in the Static style
+  (*Tools > Bootloader > SD Game Menu (Static)*) nothing turns: the
+  picture is shown exactly as painted, magenta included, and the selection
+  bar is magenta.
 - **Colours.** Besides magenta, a picture holds 11 colours. More are
   reduced to 11 for you; a picture with few, flat colours looks best.
+- **The palette.** The default picture is an indexed PNG whose 16 colours
+  are laid out as the menu's: 0-10 are the picture's own (a starter set:
+  change them to whatever you like), 11-14 the menu's text, disabled,
+  selected-text and mark colours, 15 the rainbow's magenta. A picture need
+  not be indexed, though: any PNG that follows the rules above is taken.
 - **Readable titles.** Keep rows 20-119 dark and plain behind the text, or
   change the text's colour (step 4).
 
@@ -62,7 +68,7 @@ Messages (INSTALLING, ERROR n, USB UPLOAD) are boxes over rows 36-87.
    ```
    The preview is the menu as the CHGame draws it (the bootloader's own tests
    check that it matches), three times the size, with the rainbow turning
-   (`.png` for a still; `--style white` for the White bootloader). If the picture had to be changed to fit, the command
+   (`.png` for a still; `--style static` for the Static bootloader). If the picture had to be changed to fit, the command
    says how. `--out ready.png` keeps the changed picture, and `--dither`
    helps photos.
 

@@ -15,7 +15,7 @@ a boot image of at most 12,288 B with at least 256 B to spare.
 | Build | `.text` | `.ramfunc` | `.data` | Boot image | Free | `.bss` | RAM in use |
 |---|---|---|---|---|---|---|---|
 | **release** (menu + USB upload + self-update; rainbow) | 11,228 | 596 | 84 | **11,908** | **380** | 17,704 | **20,448** |
-| release `--style=white` | 11,004 | 596 | 84 | 11,684 | 604 | 17,564 | 20,308 |
+| release `--style=static` | 11,004 | 596 | 84 | 11,684 | 604 | 17,564 | 20,308 |
 | locked (menu + USB upload) | 11,012 | 496 | 80 | 11,588 | 700 | 17,704 | 20,344 |
 | nomenu (USB upload + self-update, for HW2a) | 4,728 | 596 | 76 | 5,400 | 6,888 | 984 | 3,720 |
 | app (the menu as a program at 0x3000, dry run) | 6,392 | 0 | 16 | 6,408 | - | 16,580 | 18,660 |

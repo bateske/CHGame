@@ -252,7 +252,7 @@ class Runtime(unittest.TestCase):
         self.assertEqual(pal[1], runtime.rgb565(40, 50, 60))
         self.assertEqual(pal[11], runtime.rgb565(255, 244, 214))
         self.assertEqual(pal[13], 0)                     # selectedText: black
-        self.assertEqual(pal[15], 0xFFFF)                # colour 15: white (the white style shows it)
+        self.assertEqual(pal[15], 0xF81F)                # colour 15: #FF00FF (the static style shows it)
         row = bg[512:512 + 3]
         # magenta 15, (10,20,30) 0, cream 11 (text), (40,50,60) 1, (10,20,30) 0, then black 13 (selectedText)
         self.assertEqual(row, bytes([0xF0, 0xB1, 0x0D]))
@@ -290,8 +290,8 @@ class Background(unittest.TestCase):
         from chcart import background
         im = background.preview(background.template())
         self.assertEqual(im.size, (384, 384))
-        white = background.preview(background.template(), scale=1, style="white")
-        self.assertEqual(white.getpixel((64, 25)), (255, 255, 255))   # the selection bar
+        static = background.preview(background.template(), scale=1, style="static")
+        self.assertEqual(static.getpixel((64, 25)), (255, 0, 255))    # the selection bar
         bars = {background.preview(background.template(), phase=p, scale=1).getpixel((64, 25)) for p in (0, 64, 128)}
         self.assertEqual(len(bars), 3)                                 # one colour, turning
         with tempfile.TemporaryDirectory() as d:

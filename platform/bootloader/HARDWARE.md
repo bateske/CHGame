@@ -26,8 +26,11 @@ how to install a bootloader. Menu v2 (README.md, "Menu v2") ran on a board
 on 2026-10-03 ([test/hil/RESULTS-2026-10-03.md](test/hil/RESULTS-2026-10-03.md):
 steps 1, 3 and the first points of step 4, in both styles). These steps
 install it on a board that has the first menu bootloader (or any bootloader
-with self-update); `release/chgame_sdboot.bin` and `chgame_sdboot_white.bin`
-are the images that ran, and `build/release/` gives the same bytes.
+with self-update); `release/chgame_sdboot.bin` and `chgame_sdboot_static.bin`
+are the images to install, and `build/release/` gives the same bytes.
+(They were rebuilt later on 2026-10-03, when the White style became Static:
+the images that ran that day differ in two bytes, the built-in palette's
+colour 15.)
 
 1. **The card.** The first menu does not show folders, and the casino card
    keeps SD CARD READER in its APPS folder. So upload the reader directly:
@@ -75,10 +78,10 @@ are the images that ran, and `build/release/` gives the same bytes.
    - **A picture of your own.** `chgame background --template m.png`, paint
      on it, `chgame background m.png --card <drive>`: the menu shows it, and
      it looks like `--preview`.
-   - **The White style.** `./build.sh release --style=white`, then
-     `UP selfupdate platform/bootloader/build/release-white/chgame_boot.bin --yes`:
-     the bar, the boxes and the logo are white and still; everything else as
-     before. Back to the rainbow the same way with `build/release/`.
+   - **The Static style.** `./build.sh release --style=static`, then
+     `UP selfupdate platform/bootloader/build/release-static/chgame_boot.bin --yes`:
+     the bar, the boxes and the logo are magenta, as painted, and still;
+     everything else as before. Back to the rainbow the same way with `build/release/`.
    - **B at power-on** still gives USB mode.
    - **The uploaders.** `UP flash <some .bin> -verify` ends with
      "readback: not available".

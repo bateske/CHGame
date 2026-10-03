@@ -61,8 +61,9 @@ practice you can switch games as often as you like.
 Everything behind the list is one picture on the card, the CHGAME logo
 included, so every card can look its own way. Anything the picture paints
 in pure magenta (`#FF00FF`) turns through the colours, as the default
-logo and the selection bar do; on the bootloader's White style (*Tools >
-Bootloader > SD Game Menu (White)*) those parts are white. A folder can
+logo and the selection bar do; on the bootloader's Static style (*Tools >
+Bootloader > SD Game Menu (Static)*) nothing turns and the picture shows
+as painted, magenta included. A folder can
 have a picture of its own.
 
 ![The menu on the default picture, on a picture of a card's own, and on a card with none](../platform/bootloader/docs/menu_cards.png)

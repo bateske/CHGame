@@ -59,7 +59,7 @@ installs it from this machine instead.
 | Piece | In this repository | Delivered by the board package (0.3.0) |
 |---|---|---|
 | Core, variant, toolchain, `chgame-upload` | `platform/board/` | yes |
-| Bootloader with the SD game menu | `platform/bootloader/` | yes: *Tools > Bootloader* (SD Game Menu in Rainbow or White, or USB Only), written by *Burn Bootloader* over USB with the programmer **CHGame USB**: no driver, no buttons |
+| Bootloader with the SD game menu | `platform/bootloader/` | yes: *Tools > Bootloader* (SD Game Menu in Rainbow or Static, or USB Only), written by *Burn Bootloader* over USB with the programmer **CHGame USB**: no driver, no buttons |
 | The CHGame library (`CHGame.h`: buttons, pacing, palette, drawing, sound, saving, debug protocol) | `platform/board/arduino/CHGame/libraries/CHGame/`; every game is built on it | yes, in the package's `libraries/`: nothing to install |
 | CHGfx, the graphics library | `platform/board/arduino/CHGame/libraries/CHGfx/` (1.3.0) | yes, with its examples |
 | CHSd, the SD/FAT reader | `platform/board/arduino/CHGame/libraries/CHSd/` (1.0.0) | yes |
@@ -107,7 +107,7 @@ A new sketch only needs `#include <CHGame.h>`; *Hello* is the smallest one.
 
 **The menu bootloader** is installed over USB, through the bootloader a
 board already has: no driver, no buttons. *Tools > Bootloader* **SD Game
-Menu (Rainbow)** (or **(White)**), *Tools > Programmer*
+Menu (Rainbow)** (or **(Static)**), *Tools > Programmer*
 **CHGame USB**, then *Tools > Burn Bootloader*. Without the 0.3.0 package:
 `chgame uploader selfupdate platform/bootloader/release/chgame_sdboot.bin`
 ([platform/bootloader](platform/bootloader/README.md#installing-it-on-a-board)).
@@ -129,7 +129,7 @@ chgame background my-menu.png --card E:\          # put it on a mounted card
 
 The menu leaves the top 20 rows (the logo) and the bottom 8 (key hints) to
 the picture, and anything painted in pure magenta (#FF00FF) turns through
-the rainbow (or is white, with the White bootloader). [docs/menu-image.md](docs/menu-image.md) walks through it step
+the rainbow (or stays as painted, with the Static bootloader). [docs/menu-image.md](docs/menu-image.md) walks through it step
 by step, including putting a picture into a `.chgame` cart.
 
 **This repository** is for working on the platform and the games: clone it

@@ -16,9 +16,9 @@ key hints at the foot. Messages (INSTALLING, errors) are boxes over rows
 36-87.
 
 The colours. Pure magenta, #FF00FF, is drawn in the menu's colour 15: one
-colour turning through the rainbow, or white on a bootloader built in the
-white style (Tools > Bootloader: SD Game Menu (White); --style white here
-previews that). Besides
+colour turning through the rainbow, or as painted on a bootloader built in
+the static style (Tools > Bootloader: SD Game Menu (Static); --style static
+here previews that). Besides
 it the picture may use 11 colours, plus the menu's own four (text #FFF4D6,
 greyed #808080, selected text #000000, chip #D62020, or the cart's
 `menu.colors`). convert() makes any image fit: it scales it to 128x128
@@ -144,7 +144,7 @@ def preview(png, ui=None, phase=0, titles=None, scale=3, installed=(2,), folders
     """A PIL image of the menu over the picture, as the panel shows it
     (RGB565): a list of titles, the first selected, a chip on the rows in
     `installed`, a folder's `>` on those in `folders`. Colour 15 is the
-    rainbow's colour at `phase`, or the palette's white (style "white")."""
+    rainbow's colour at `phase`, or the palette's own, #FF00FF (style "static")."""
     from PIL import Image
     ui = ui or dict(model.UI_COLORS)
     bg = runtime.menu_background(png, ui)

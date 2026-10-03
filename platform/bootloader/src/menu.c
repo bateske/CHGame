@@ -67,10 +67,10 @@ static uint8_t buf[512] __attribute__((aligned(4)));
 static uint32_t w32(const uint8_t *p) { return *(const uint32_t *)(const void *)p; }
 
 /* The menu's own colours when there is no MENU.BG (black behind; the rest
-   by shared/chgame_card.h's roles; colour 15 white, for the white style). */
+   by shared/chgame_card.h's roles; colour 15 the picture's magenta, for the static style). */
 static const uint16_t pal0[16] = {
     [CARD_C_TEXT] = RGB565(255, 244, 214), [CARD_C_DIM] = RGB565(128, 128, 128),
-    [CARD_C_MARK] = RGB565(214, 32, 32), [CARD_C_RAINBOW] = RGB565(255, 255, 255),
+    [CARD_C_MARK] = RGB565(214, 32, 32), [CARD_C_RAINBOW] = RGB565(255, 0, 255),
 };
 
 /* ---- the card --------------------------------------------------------------- */
