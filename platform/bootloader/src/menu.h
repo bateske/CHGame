@@ -4,8 +4,10 @@
 
 /* The SD game menu. Returns only to hand over to USB upload mode (a host
  * started an upload, or there is nothing to run); starting a program is a
- * RUN reset. app: appmeta_check() of the installed program. */
-void menu_main(int app);
+ * RUN reset. app: appmeta_check() of the installed program. launch: start
+ * the card's launch entry, if it names one, instead of showing the list (a
+ * power-on without START held). */
+void menu_main(int app, int launch);
 
 /* Entered by a USB request (1200-baud touch): USB first, then the panel
  * saying so. */

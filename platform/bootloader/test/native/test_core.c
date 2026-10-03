@@ -82,6 +82,9 @@ static void t_proto_claim(void)
     CHECK(frame_pop(&cmd, pl, &n) && cmd == (CMD_HELLO | 0x80) && pl[0] == ST_OK, "HELLO answered");
     CHECK(pl[2] == MODE_BOOTLOADER, "mode bootloader");
     CHECK((pl[4] | pl[5] << 8) == BOOT_VERSION, "boot version");
+    /* bootloader v2 (BOOT_VERSION 3) dropped the two bench diagnostics */
+    CHECK(frame_pop(&cmd, pl, &n) && cmd == (CMD_STATUS | 0x80) && pl[0] == ST_ERR_BADCMD, "STATUS: unknown command");
+    CHECK(frame_pop(&cmd, pl, &n) && cmd == (CMD_READ | 0x80) && pl[0] == ST_ERR_BADCMD, "READ: unknown command");
     /* garbage, then a valid frame: resynchronises */
     const char junk[] = "AT+GMM\r\nCGx\x01";
     memcpy(B->rx + B->rx_len, junk, sizeof junk - 1); B->rx_len += sizeof junk - 1;

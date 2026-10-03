@@ -15,7 +15,6 @@
 /* Bench instrumentation for the multi-packet receive defect. Reported by
  * STATUS so the host can see whether the driver delivered the bytes at all,
  * which distinguishes "driver dropped the packet" from "parser mis-framed it". */
-uint32_t proto_rx_bytes;
 
 /* Set by any command that changes or leaves the bootloader's state (BEGIN,
  * WRITE, END, ABORT, RUN, the developer commands). The menu polls the protocol
@@ -105,11 +104,6 @@ static uint32_t get_u32(const uint8_t *b)
     return (uint32_t)b[0] | ((uint32_t)b[1] << 8)
          | ((uint32_t)b[2] << 16) | ((uint32_t)b[3] << 24);
 }
-static uint16_t get_u16(const uint8_t *b)
-{
-    return (uint16_t)((uint16_t)b[0] | ((uint16_t)b[1] << 8));
-}
-
 /* ---- update transaction ------------------------------------------------------
  * Writes must arrive strictly sequentially. That is not a limitation worth
  * relaxing: it removes any need to track which parts of the region have been
@@ -242,28 +236,6 @@ static void do_abort(void)
     send_status(CMD_ABORT, ST_OK);
 }
 
-static void do_read(const uint8_t *p, uint16_t len)
-{
-    uint8_t  out[PROTO_MAX_PAYLOAD];
-    uint32_t offset;
-    uint16_t rlen;
-
-    if (len < 6u) { send_status(CMD_READ, ST_ERR_SIZE); return; }
-
-    offset = get_u32(p);
-    rlen   = get_u16(p + 4);
-
-    if (rlen == 0u || rlen > PROTO_MAX_PAYLOAD - 1u) { send_status(CMD_READ, ST_ERR_SIZE); return; }
-    if (offset > CHGAME_FLASH_SIZE ||
-        rlen > CHGAME_FLASH_SIZE - offset) { send_status(CMD_READ, ST_ERR_RANGE); return; }
-
-    out[0] = ST_OK;
-    for (uint16_t i = 0; i < rlen; i++)
-        out[1 + i] = FLASH_AT(offset)[i];
-
-    send_frame(CMD_READ, out, (uint16_t)(rlen + 1u));
-}
-
 static void do_hello(void)
 {
     uint8_t  p[40];
@@ -283,24 +255,6 @@ static void do_hello(void)
     o = put_u32(p, o, hal_uid(2));
 
     send_frame(CMD_HELLO, p, o);
-}
-
-static void do_status(void)
-{
-    uint8_t  p[32];
-    uint16_t o = 0;
-
-    o = put_u8 (p, o, ST_OK);
-    o = put_u8 (p, o, MODE_BOOTLOADER);
-    o = put_u8 (p, o, (uint8_t)appmeta_check());
-    o = put_u32(p, o, tx.written);
-    o = put_u32(p, o, tx.active ? tx.size : 0u);
-    o = put_u32(p, o, proto_rx_bytes);
-    o = put_u8 (p, o, (uint8_t)rx_state);
-    o = put_u32(p, o, sys_ticks());
-    o = put_u8 (p, o, (uint8_t)sys_counts_down());
-
-    send_frame(CMD_STATUS, p, o);
 }
 
 static void do_run(void)
@@ -388,17 +342,17 @@ static void do_dev_write_boot(const uint8_t *p, uint16_t len)
 
 static void dispatch(uint8_t cmd)
 {
+    /* (STATUS and READ, bench diagnostics, went for flash in bootloader v2:
+       they are unknown commands now, and like HELLO they leave the menu up) */
     if (cmd != CMD_HELLO && cmd != CMD_STATUS && cmd != CMD_READ)
         proto_claimed = 1;
     switch (cmd) {
         case CMD_HELLO:  do_hello();  break;
-        case CMD_STATUS: do_status(); break;
         case CMD_RUN:    do_run();    break;
         case CMD_BEGIN:  do_begin(rx_buf, rx_len); break;
         case CMD_WRITE:  do_write(rx_buf, rx_len); break;
         case CMD_END:    do_end();    break;
         case CMD_ABORT:  do_abort();  break;
-        case CMD_READ:   do_read(rx_buf, rx_len);  break;
 
 #if CHGAME_ALLOW_SELFUPDATE
         case CMD_DEV_UNLOCK:     do_dev_unlock(rx_buf, rx_len);     break;
@@ -511,7 +465,6 @@ void proto_task(void)
     for (int i = 0; i < 64; i++) {
         b = CDC_read_nb();
         if (b < 0) break;
-        proto_rx_bytes++;
         rx_byte((uint8_t)b);
     }
 

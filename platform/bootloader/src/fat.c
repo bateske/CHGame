@@ -78,20 +78,18 @@ int fat_mount(uint8_t *b)
     v.end = 0;
     for (pass = 0;; pass++) {
         if (sd_read(base, b)) return FAT_E_READ;
+        /* (exFAT and NTFS fail the BPB checks: the menu only needs to know
+           that there is no FAT volume, not which other kind there is) */
         if (u16at(b + 510) != 0xAA55) return FAT_E_NOFS;
-        if (le32(b + 3) == 0x41465845u) return FAT_E_EXFAT;       /* OEM name "EXFAT   " */
         if ((b[0] == 0xEB || b[0] == 0xE9) && bpb(b, base)) return FAT_OK;
         if (pass) return FAT_E_NOFS;
         /* LBA 0 is not a usable boot sector: read it as an MBR and take the
-           first FAT partition. With none, a type 07 one (exFAT, or NTFS) gets
-           its own error. */
-        uint32_t other = 0;
+           first FAT partition. */
         for (const uint8_t *p = b + 446; p < b + 510; p += 16) {
             uint32_t t = p[4];
             if (t < 16 && (0x5852u >> t & 1)) { base = le32(p + 8); break; }   /* 01 04 06 0B 0C 0E */
-            other |= t == 0x07;
         }
-        if (!base) return other ? FAT_E_EXFAT : FAT_E_NOFS;
+        if (!base) return FAT_E_NOFS;
     }
 }
 

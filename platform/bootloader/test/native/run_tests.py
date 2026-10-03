@@ -183,21 +183,22 @@ def corrupt_header(pkg, off, value, fix_crc=True):
 
 
 def packages():
-    """The package zoo: name -> (bytes, expected chg_check code)."""
+    """The package zoo: name -> (bytes, expected chg_check code: 0 or CHG_E_BAD,
+    1, for every failure; the order of the checks is chgpack's)."""
     a = chgpack.pack(payload(20000, 1), "ALPHA GAME", "tester", "1.0")
     b = chgpack.pack(payload(4096, 2), "BRAVO")
     z = {
         "ALPHA.CHG": (a, 0),
         "BRAVO.CHG": (b, 0),
-        "BADHCRC.CHG": (corrupt_header(a, 0x20, 0x41414141, fix_crc=False), 2),
+        "BADHCRC.CHG": (corrupt_header(a, 0x20, 0x41414141, fix_crc=False), 1),
         "NOTCHG.CHG": (bytes(random.Random(3).getrandbits(8) for _ in range(3000)), 1),
-        "WRONGTGT.CHG": (corrupt_header(a, 0x08, 0x12345678), 4),
-        "WRONGLAY.CHG": (corrupt_header(a, 0x0C, 0x002000F7), 4),
-        "WRONGVER.CHG": (corrupt_header(a, 0x04, 2 | 512 << 16), 3),
-        "ZEROLEN.CHG": (corrupt_header(a, 0x10, 0), 5),
-        "ODDLEN.CHG": (corrupt_header(a, 0x10, 19999), 5),
-        "TOOBIG.CHG": (corrupt_header(a, 0x10, 50948), 5),
-        "TRUNC.CHG": (a[:512 + 10000], 5),
+        "WRONGTGT.CHG": (corrupt_header(a, 0x08, 0x12345678), 1),
+        "WRONGLAY.CHG": (corrupt_header(a, 0x0C, 0x002000F7), 1),
+        "WRONGVER.CHG": (corrupt_header(a, 0x04, 2 | 512 << 16), 1),
+        "ZEROLEN.CHG": (corrupt_header(a, 0x10, 0), 1),
+        "ODDLEN.CHG": (corrupt_header(a, 0x10, 19999), 1),
+        "TOOBIG.CHG": (corrupt_header(a, 0x10, 50948), 1),
+        "TRUNC.CHG": (a[:512 + 10000], 1),
     }
     return z
 
@@ -263,7 +264,7 @@ def sd_spec(imgs, lay, pk, quick):
     for tag in ("free", "bad", "short", "range"):
         case(f"chain_{tag}", "sdhc", imgs["chain_" + tag], body=["mount 0", "filebad ALPHA.CHG",
              f"file BRAVO.CHG {len(pk['BRAVO.CHG'][0])} {zlib.crc32(pk['BRAVO.CHG'][0]) & 0xFFFFFFFF:x}"])
-    case("exfat", "sdhc", imgs["exfat"], body=["mount -3"])
+    case("exfat", "sdhc", imgs["exfat"], body=["mount -2"])       # no FAT volume, like any other
     case("blank", "sdhc", imgs["blank"], body=["mount -2"])
     case("no_card", "none", None, init="FAIL 60")
     case("slow_init_ok", "sdhc", imgs["fat16"], sets=[("acmd41", 400)], body=["mount 0"])

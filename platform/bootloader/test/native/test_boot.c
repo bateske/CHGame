@@ -397,18 +397,6 @@ int main(int argc, char **argv)
         TEST(t_anim);
         return test_summary();
     }
-    if (argc > 4 && !strcmp(argv[3], "themes")) {   /* the other colour themes: the screens only */
-        frame_prefix = argv[4];
-        TEST(t_no_card_no_app);
-        TEST(t_menu_waits);
-        TEST(t_installed_marked);
-        TEST(t_bad_packages);
-        TEST(t_usb_notice);
-        TEST(t_hello_at_menu);
-        TEST(t_upload_at_menu);
-        TEST(t_card_dies_mid_install);
-        return test_summary();
-    }
     TEST(t_no_card_runs_app);
     TEST(t_no_card_no_app);
     TEST(t_empty_card_runs_app);

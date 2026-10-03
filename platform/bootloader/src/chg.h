@@ -3,13 +3,12 @@
 #include <stdint.h>
 #include "chg_format.h"
 
-/* Results of checking a package header, in the order they are checked. */
+/* The result of checking a CHG file's header (spec/chg.md): magic, header
+ * CRC, format version and header size, target and layout, payload size
+ * against the file. One code for every failure: the menu shows only that
+ * the file is not one it can install. */
 #define CHG_OK          0
-#define CHG_E_MAGIC     1   /* not a CHG package */
-#define CHG_E_HCRC      2   /* header damaged */
-#define CHG_E_FORMAT    3   /* a format version or header size this bootloader does not know */
-#define CHG_E_TARGET    4   /* built for another board or memory layout */
-#define CHG_E_SIZE      5   /* payload empty, too big, not word-sized, or longer than the file */
+#define CHG_E_BAD       1
 
 /* h: the first 512 bytes of the file (4-byte aligned). On CHG_OK, *payload
  * and *crc are the payload length and CRC. */

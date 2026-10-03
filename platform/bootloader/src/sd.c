@@ -30,7 +30,7 @@
 
 static uint8_t hc;                  /* block addressing (SDHC/SDXC) */
 
-static uint8_t x(uint8_t b) { return hal_spi_xfer(b); }
+static __attribute__((noinline)) uint8_t x(uint8_t b) { return hal_spi_xfer(b); }
 
 /* Clocks 0xFF until a token arrives (tok: a byte other than 0xFF) or the busy
    period ends (!tok: 0xFF), or the time runs out. Returns the last byte. */
