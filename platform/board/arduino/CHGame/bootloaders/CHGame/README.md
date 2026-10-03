@@ -9,7 +9,7 @@ upload protocol, so a sketch built for one runs under the others.
 | Menu entry | File | What it is |
 |---|---|---|
 | SD Game Menu (Rainbow) | `chgame_sdboot.bin` | the menu that installs games from the SD card (folders, the card's own picture and order, a game started at power-on), USB upload, bootloader update over USB. The selection bar, the boxes and the picture's magenta parts turn through the rainbow |
-| SD Game Menu (White) | `chgame_sdboot_white.bin` | the same menu with those parts white |
+| SD Game Menu (Static) | `chgame_sdboot_static.bin` | the same menu with nothing turning: those parts in the picture's own magenta, as painted |
 | USB Only | `chgame_boot_nomenu.bin` | the same code without the menu and the card |
 
 They are copies of `platform/bootloader/release/` in the CHGame repository,

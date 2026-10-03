@@ -8,8 +8,8 @@
  * built in (build.sh --style=):
  *   rainbow (the default)  one colour turning through the colour wheel
  *                          (lcd_step), whatever the palette says
- *   white                  the palette's, like the others: white on every
- *                          card the tools make
+ *   static                 the palette's, like the others: the cards the
+ *                          tools make give it the picture's #FF00FF
  * Bring-up is split so the card can be read during the panel's two 120 ms
  * waits:
  *
@@ -27,7 +27,7 @@
 #define LCD_RAINBOW 15u
 
 #define MENU_STYLE_RAINBOW 0
-#define MENU_STYLE_WHITE   1
+#define MENU_STYLE_STATIC  1
 #ifndef MENU_STYLE
 #define MENU_STYLE MENU_STYLE_RAINBOW
 #endif

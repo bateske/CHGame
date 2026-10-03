@@ -126,19 +126,19 @@ the measurements behind them.
 ## Building
 
 ```
-./build.sh [release|locked|nomenu|app] [--style=rainbow|white] [--nolto]
+./build.sh [release|locked|nomenu|app] [--style=rainbow|static] [--nolto]
 ```
 
 The toolchain comes with the board package (`arduino-cli core install
 CHGame:ch32v@0.2.4`) and is found in the usual Arduino folders, or set
 `CHGAME_TOOLCHAIN`. On Windows, use Git Bash. Output goes to
-`build/<mode>[-white]/chgame_boot.{bin,elf,map,lst}`, and a size report is
+`build/<mode>[-static]/chgame_boot.{bin,elf,map,lst}`, and a size report is
 printed.
 
 | Mode | What | Size |
 |---|---|---|
 | `release` | menu + USB upload + developer self-update. **The one to install.** | 11,908 B |
-| `release --style=white` | the same, colour 15 white instead of the turning rainbow | 11,684 B |
+| `release --style=static` | the same, colour 15 as the card's palette gives it (the picture's magenta) instead of the turning rainbow | 11,684 B |
 | `locked` | `release` without self-update; later bootloader updates then need the factory ISP | 11,588 B |
 | `nomenu` | USB upload + self-update, the old boot decision on the new code (hardware step HW2a) | 5,400 B |
 | `app` | the menu as a program linked at 0x3000: a dry run of card, panel and keys under any bootloader, with no USB and no flash writes (HW1) | 6,408 B |
@@ -155,16 +155,18 @@ The menu draws into a framebuffer and takes its look from the card
 - **The framebuffer.** 128x128 pixels of 4 bits (8 KB of RAM; with the
   240-row game table the menu build uses 20,448 B of 20,480). It is sent to the panel through a
   16-colour palette, one row range at a time (`lcd_flush`).
-- **Colour 15, two styles** (`./build.sh release --style=rainbow|white`;
-  *Tools > Bootloader*: SD Game Menu (Rainbow), the default, or (White)).
+- **Colour 15, two styles** (`./build.sh release --style=rainbow|static`;
+  *Tools > Bootloader*: SD Game Menu (Rainbow), the default, or (Static)).
   It is the selection bar, the boxes and every `#FF00FF` pixel of a card's
   picture.
   - **Rainbow:** one colour turning through the colour wheel (`lcd_step`,
     every 40 ms, a turn in about 4 s); only the rows that show it are
     resent. (Until 2026-10-03 the hue also moved with x + y, a gradient:
     the solid colour is 48 B smaller and frees its 510 B table.)
-  - **White:** the palette's entry 15, white on every card the tools make.
-    No animation at all (11,684 B).
+  - **Static:** the palette's entry 15, like any other colour: the tools
+    write the picture's `#FF00FF` there, so the picture shows as painted.
+    No animation at all (11,684 B). (It was White until 2026-10-03, when
+    entry 15 was white on every card.)
 - **`MENU.BG`**, in GAMES/ or any folder below it (a folder without one keeps
   its parent's): a 128x128 picture with its palette. Colours 11-14 are the
   menu's text, greyed text, selected text and chip. It is read from the
@@ -248,10 +250,10 @@ real reset; flash, the card and the panel persist in shared memory.
 | core_nomenu / core_menu / core_locked | the update path, the protocol (probes vs claims, resync after noise), self-update, the boot decision, a power cut at every flash operation of a USB upload |
 | sd | the SD driver against the card model, the FAT reader against FAT16/FAT32 images (MBR, superfloppy, partition 4, fragmented files and folders, decoy labels, four kinds of broken chain, exFAT, blank), every CHG header error |
 | boot | no card, empty card, menu, install, switch, every bad CHG file, USB notice, B escape, a probing host, upload at the menu, the card dying mid-install, a power cut at every flash operation of an SD install; and on cards made by `tools/chcart`'s `runtime.prepare()`: index order, an entry not in the index, an index record with no file, nested folders and B, launch (installed and not), START held at power-on, a software reset, a broken `MENU.BG`, an empty folder, a folder of 250 games (240 listed) |
-| boot_white | the white style: the same menu's screens, install, folders and launch |
+| boot_static | the static style: the same menu's screens, install, folders and launch |
 | boot_real | the real card from `chgame card --image out/sdcard.img`: the games at its top level installed in turn, each over the last, checked |
-| frames | 26 menu screens (17 rainbow, 9 white) pinned by hash in `test/native/frames.json`. PNGs are in `test/native/build/frames/` |
-| preview | `chgame background --preview` (tools/chcart/background.py) against the bootloader's own frames of a cart card: every pixel but the rainbow's (rainbow), every pixel (white) |
+| frames | 26 menu screens (17 rainbow, 9 static) pinned by hash in `test/native/frames.json`. PNGs are in `test/native/build/frames/` |
+| preview | `chgame background --preview` (tools/chcart/background.py) against the bootloader's own frames of a cart card: every pixel but the rainbow's (rainbow), every pixel (static) |
 
 The hardware steps are in [HARDWARE.md](HARDWARE.md).
 
@@ -259,8 +261,8 @@ The hardware steps are in [HARDWARE.md](HARDWARE.md).
 
 - **From the Arduino IDE, over USB** (any board that has a bootloader with
   self-update, the 0.2.4 one included): *Tools > Bootloader* **SD Game
-  Menu (Rainbow)** (`release/chgame_sdboot.bin`) or **(White)**
-  (`release/chgame_sdboot_white.bin`), *Tools > Programmer* **CHGame USB**,
+  Menu (Rainbow)** (`release/chgame_sdboot.bin`) or **(Static)**
+  (`release/chgame_sdboot_static.bin`), *Tools > Programmer* **CHGame USB**,
   *Tools > Burn Bootloader*.
   No driver, no buttons. The installed sketch is erased. It needs a board
   package that carries this bootloader and `chgame-upload` 0.2.0 (the next

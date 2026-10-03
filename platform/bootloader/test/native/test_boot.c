@@ -557,7 +557,7 @@ int main(int argc, char **argv)
         TEST(t_real_card);
         return test_summary();
     }
-    if (argc > 4 && !strcmp(argv[3], "style")) {    /* the white style: the same menu, its screens */
+    if (argc > 4 && !strcmp(argv[3], "style")) {    /* the static style: the same menu, its screens */
         frame_prefix = argv[4];
         TEST(t_no_card_no_app);
         TEST(t_menu_waits);

@@ -48,9 +48,9 @@ package's maintainer is shown as **bateske**.
   (`CHGame-sdcard-<version>.zip`): built from this package's own examples.
   Each example has a `chgame.json` describing it.
 - **Tools > Bootloader** chooses what *Burn Bootloader* writes: the **SD
-  Game Menu (Rainbow)**, the default, or **(White)**, the same menu with its
-  selection bar, boxes and the picture's magenta parts white instead of a
-  colour turning through the rainbow; or **USB Only**, the same bootloader
+  Game Menu (Rainbow)**, the default, or **(Static)**, the same menu with
+  nothing turning: the picture as painted, its magenta parts, the selection
+  bar and the boxes magenta; or **USB Only**, the same bootloader
   without the menu. The 0.2.4 bootloader is no longer shipped.
 - **The SD Game Menu takes its look from the card:** the picture behind it
   (`GAMES/MENU.BG`; every card the tools prepare has the CHGAME logo, its

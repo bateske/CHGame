@@ -58,7 +58,7 @@ same when the card's layout changes.
 
 | Key | Value |
 |---|---|
-| `background` | path of a PNG, 128x128, opaque: the whole picture behind the menu, its title or logo included. The menu draws over rows 20-119 only (card.md). Pixels of exactly `#FF00FF` are drawn in the menu's colour 15: one colour turning through the rainbow, or white on a bootloader in the White style. Besides `#FF00FF` and the four menu colours below, at most 11 colours (card.md says why, and how it is converted). `chgame background` makes any image into one (docs/menu-image.md) |
+| `background` | path of a PNG, 128x128, opaque: the whole picture behind the menu, its title or logo included. The menu draws over rows 20-119 only (card.md). Pixels of exactly `#FF00FF` are drawn in the menu's colour 15: one colour turning through the rainbow, or as painted on a bootloader in the Static style. Besides `#FF00FF` and the four menu colours below, at most 11 colours (card.md says why, and how it is converted). `chgame background` makes any image into one (docs/menu-image.md) |
 | `colors` | the menu's own colours, `#RRGGBB`: `text` (titles, default `#FFF4D6`), `disabled` (a file the menu cannot install, `#808080`), `selectedText` (the title on the selection bar, `#000000`), `mark` (the installed game's chip, `#D62020`) |
 | `folders` | a list of `{"name": "CARD GAMES", "background": "path.png"}`: a folder's own background, the same kind of PNG. Folders without one show their parent's |
 

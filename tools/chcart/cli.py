@@ -398,8 +398,8 @@ def background_main(argv):
     ap.add_argument("--dither", action="store_true", help="dither when reducing colours (photos)")
     ap.add_argument("--color", action="append", metavar="KEY=#RRGGBB",
                     help="the menu's text, disabled, selectedText or mark colour, for --preview and --card")
-    ap.add_argument("--style", choices=["rainbow", "white"], default="rainbow",
-                    help="--preview as the rainbow bootloader (default) or the white one draws it")
+    ap.add_argument("--style", choices=["rainbow", "static"], default="rainbow",
+                    help="--preview as the rainbow bootloader (default) or the static one draws it")
     ap.add_argument("--redraw-default", metavar="TTF", help=argparse.SUPPRESS)
     a = ap.parse_args(argv)
     try:

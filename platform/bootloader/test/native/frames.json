@@ -16,13 +16,13 @@
  "no_games": "1c11fcd50b1db16bc84456a75528b4362125b25d692c04d87339576b7f775e3c",
  "real_menu": "a97d8755360c8e98a7d03370bc894c110c213abbd909d3b9c1e9ab7cc2e9442f",
  "real_menu_installed": "88a1bf0a30a52b8ce6ea28bc72dd13e1f1ce6c21a6ec56b4f50a82a24359cd4d",
- "usb_notice": "7a55b9f6cf933ea7cba3c01c5b77e55ec31eafb0e3fb0c557c96ef7554f8fe7b",
- "white_cart_back": "ba99292e9e4f61fc3d242cc9dbea5919a230f753f914397c86ef220bb9208f4a",
- "white_cart_folder": "4499475af25a282c6dbe3c42be9c2a8dcf6cc34f2f8d478ec6c3cb580b1d6aaf",
- "white_cart_inner": "369978dc2c496e09975d66d7b07019ab38712cbb758969f40e29e26551aafee1",
- "white_cart_menu": "01576080b663b8e12d0840b059f449c30dae69b7edbb9d71c8f4bb3e21c9da28",
- "white_error_box": "b85b74fec71d33036508adb24e0d0c7d875389c9b09eb018d500b9599ef2dce1",
- "white_menu_fresh": "5f394b071d1b1e0052a5a786a2805ee06b8960e6c0c0d3474188b9f516db8b69",
- "white_no_games": "c5baf1383f6ae621a4d7a672811b93140fd1123fb9e0551d99f08735df9accac",
- "white_usb_notice": "0b6ebc4ddce24f7156034e28c5887e133619a641b008547e0c7fbaff4e406b14"
+ "static_cart_back": "de9752ac3fd283c44ad29a846743400feb3afd936eedd3a1c791c2ef359e3776",
+ "static_cart_folder": "d0b6292425ec23794592fd6c7c66815f103e1219dd24c1b4b24acd0edfb37a64",
+ "static_cart_inner": "6888d5dd6f8d245af2aaf0e5b317692706dffa3ebd2ef2e227a85f7f86e02cf6",
+ "static_cart_menu": "ef758e83848a2fef72d2c71ecac40377adbdaed7f214c3ea5390aa21b694ccfb",
+ "static_error_box": "01538e4a6ebfd92d885bf0b8e99a460e52103a6e5d21085c8741979e251841ce",
+ "static_menu_fresh": "d369f3ddfb897ebd0357bccf6fe3c4da746b10e87cc94ab6bae62a709e36e5b1",
+ "static_no_games": "69e943f3d5686fedb2d3a399c0568782d4fb92294dfd99421353dc27524315f5",
+ "static_usb_notice": "bcb711980b7325ecedec0b3ad3095864a30ac8d90285ed332673cfdad553a6d1",
+ "usb_notice": "7a55b9f6cf933ea7cba3c01c5b77e55ec31eafb0e3fb0c557c96ef7554f8fe7b"
 }

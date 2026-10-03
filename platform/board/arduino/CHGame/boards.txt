@@ -137,13 +137,13 @@ rev0.menu.usb.uploadonly.build.usb_flags=-DUSE_CHGAME_USB_BOOTONLY
 # sketch built for one runs under the others. The menu's picture comes from
 # the card (GAMES/MENU.BG, spec/card.md); the two menus differ only in its
 # selection bar, boxes and magenta parts: one colour turning through the
-# rainbow, or white (platform/bootloader/build.sh --style=). The sources and
+# rainbow, or as painted (platform/bootloader/build.sh --style=). The sources and
 # what each one does are in platform/bootloader; bootloaders/CHGame/README.md
 # says where each binary comes from.
 rev0.menu.boot.sdmenu=SD Game Menu (Rainbow)
 rev0.menu.boot.sdmenu.bootloader.file=CHGame/chgame_sdboot.bin
-rev0.menu.boot.sdwhite=SD Game Menu (White)
-rev0.menu.boot.sdwhite.bootloader.file=CHGame/chgame_sdboot_white.bin
+rev0.menu.boot.sdstatic=SD Game Menu (Static)
+rev0.menu.boot.sdstatic.bootloader.file=CHGame/chgame_sdboot_static.bin
 rev0.menu.boot.nomenu=USB Only
 rev0.menu.boot.nomenu.bootloader.file=CHGame/chgame_boot_nomenu.bin
 

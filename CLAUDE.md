@@ -170,7 +170,7 @@ it, `python tools/chgame.py` is the same thing. The shared tools under
 
 | What | Command |
 |---|---|
-| Build the bootloader (+ size report) | `platform/bootloader/build.sh [release\|locked\|nomenu\|app] [--style=rainbow\|white]` |
+| Build the bootloader (+ size report) | `platform/bootloader/build.sh [release\|locked\|nomenu\|app] [--style=rainbow\|static]` |
 | Its PC test suite (flash/SD/panel models, power cuts, menu frames) | `python3 platform/bootloader/test/native/run_tests.py` |
 | Refresh the committed binaries | `platform/bootloader/tools/dist.sh` |
 | The casino cart, `out/CHGame-Casino.chgame` (`tools/sdcard/casino.json`), and its card in `out/sdcard/` (+ FAT32 image) | `chgame card [--no-build] [--image out/sdcard.img]` |

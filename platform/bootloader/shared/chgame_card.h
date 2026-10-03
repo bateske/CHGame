@@ -19,9 +19,9 @@
  *              128 rows of 64 bytes, two pixels a byte, the left one in the
  *              high nibble. Exactly CARD_BG_BYTES, or it is ignored.
  *              Colours 11-14 are the menu's own (CARD_C_*). Colour 15 is
- *              white in the palette: the rainbow bootloader draws it as one
- *              colour turning through the colour wheel instead, the white
- *              one as it is.
+ *              the picture's #FF00FF in the palette: the rainbow bootloader
+ *              draws it as one colour turning through the colour wheel
+ *              instead, the static one as it is.
  *
  * Integers are little-endian, as everywhere on the card.
  */
@@ -44,6 +44,6 @@
 #define CARD_C_DIM          12u           /* a file that is not a game */
 #define CARD_C_INK          13u           /* the selected title; the inside of boxes */
 #define CARD_C_MARK         14u           /* the installed game's chip */
-#define CARD_C_RAINBOW      15u           /* the selection bar, boxes; the rainbow (or white) */
+#define CARD_C_RAINBOW      15u           /* the selection bar, boxes; the rainbow (or as painted) */
 
 #endif

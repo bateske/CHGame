@@ -154,9 +154,9 @@ def run_all(build_dir, build, run, imgs, lay, pk, quick, pin=False):
     from run_tests import CORE, MENU   # noqa: E402
     exe = build("boot", "test_boot.c", ["-DCHBOOT_MENU=1", "-DCHGAME_ALLOW_SELFUPDATE=1"], CORE + MENU)
     ok = run("boot", exe, mpath, fdir)
-    wexe = build("boot_white", "test_boot.c", ["-DCHBOOT_MENU=1", "-DCHGAME_ALLOW_SELFUPDATE=1",
-                                              "-DMENU_STYLE=MENU_STYLE_WHITE"], CORE + MENU)
-    ok &= run("boot_white", wexe, mpath, fdir, "style", "white_")     # the white style still works and draws
+    wexe = build("boot_static", "test_boot.c", ["-DCHBOOT_MENU=1", "-DCHGAME_ALLOW_SELFUPDATE=1",
+                                               "-DMENU_STYLE=MENU_STYLE_STATIC"], CORE + MENU)
+    ok &= run("boot_static", wexe, mpath, fdir, "style", "static_")   # the static style still works and draws
     real = HERE.parents[3] / "out" / "sdcard.img"
     if real.exists():
         ok &= run_real(build_dir, exe, real, fdir)
@@ -171,14 +171,14 @@ def check_preview(fdir):
     """`chgame background --preview` (tools/chcart/background.py) draws the
     menu as the bootloader does: the cart card's frame against its preview.
     The rainbow style: every pixel but colour 15's (its hue depends on the
-    time). The white style: every pixel."""
+    time). The static style: every pixel."""
     from PIL import Image
     from chcart import background, runtime
     png = cart_background_png()
     ui = dict(background.model.UI_COLORS)
     idx = runtime.menu_background(png, ui)
     diff = {}
-    for style, frame in (("rainbow", "cart_menu.png"), ("white", "white_cart_menu.png")):
+    for style, frame in (("rainbow", "cart_menu.png"), ("static", "static_cart_menu.png")):
         pv = background.preview(png, ui, titles=["ZULU", "FOLDER ONE", "MIKE", "AAA EXTRA", "EMPTY"], scale=1,
                                 installed=(), folders=(1, 4), style=style)
         real = Image.open(fdir / frame).convert("RGB").load()
@@ -193,7 +193,7 @@ def check_preview(fdir):
         diff[style] = n
     bad = {k: v for k, v in diff.items() if v}
     print(f"{'preview':12s} {'ok' if not bad else 'FAILED':6s} chcart's menu preview vs the bootloader's frames"
-          " (rainbow, white)" + (f": pixels differ {bad}" if bad else ""))
+          " (rainbow, static)" + (f": pixels differ {bad}" if bad else ""))
     return not bad
 
 

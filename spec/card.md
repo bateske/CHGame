@@ -122,7 +122,7 @@ are the cart's `menu.colors`, defaults filled in. Each pixel's index is:
 
 1. **15** if the pixel is exactly `#FF00FF`. Colour 15 is the menu's
    own: a rainbow bootloader draws it as one colour turning through the
-   colour wheel, a white one as its palette entry, white.
+   colour wheel, a static one as its palette entry: the colour as painted.
 2. Otherwise, if it equals a menu colour, that colour's index: **11**
    `text`, **12** `disabled`, **13** `selectedText`, **14** `mark`. If
    several menu colours are equal, the lowest index wins.
@@ -131,7 +131,7 @@ are the cart's `menu.colors`, defaults filled in. Each pixel's index is:
    More than 11 such colours is an error (`bad-background`).
 
 **The palette:** entries 0-10 are those colours, the unused ones 0; 11-14
-are the menu colours; 15 is white (0xFFFF). Each colour is RGB565: red's top 5 bits
+are the menu colours; 15 is `#FF00FF` itself (0xF81F). Each colour is RGB565: red's top 5 bits
 (15-11), green's top 6 (10-5), blue's top 5 (4-0).
 
 No colours are reduced or merged: reducing is a choice of taste that two
@@ -196,7 +196,7 @@ What bootloader v2 does with these files (docs/sd-menu.md tells players):
   of the picture. The bootloader comes in two styles (*Tools > Bootloader*):
   - **Rainbow**, the default: one colour, turning through the colour wheel
     (a turn in about 4 s);
-  - **White**: the palette's entry, white.
+  - **Static**: the palette's entry, so the picture as it was painted.
 
   Nothing else differs between them.
 - **Errors** are shown as a number (docs/sd-menu.md lists them). Nothing
