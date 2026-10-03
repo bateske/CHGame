@@ -194,8 +194,9 @@ follows the same rules.
 - Its SD files and its CHG file go onto the card, then its binary is
   flashed.
 - The card's own `MENU.IDX` and `MENU.BG` are left alone.
-- Its CHG file's name follows step 2 against the names already in `GAMES/`.
-  A CHG file there with the same title is the same game and is replaced.
+- A CHG file in `GAMES/` with the same title is the same game, and is
+  replaced under its own name. Otherwise the new file's name follows step 2
+  against the names already in `GAMES/`.
 
 **Several games:** a mounted card is needed.
 - The prepared files are written to the card. The cart's `MENU.IDX` and

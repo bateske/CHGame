@@ -62,15 +62,15 @@ def add_game(game, card, device="rev0", log=print):
     card's menu alone. Returns the CHG file's card path."""
     root = pathlib.Path(card)
     games = root / "GAMES"
-    taken = set()
+    taken, same = set(), None
     if games.is_dir():
-        for f in games.iterdir():
+        for f in sorted(games.iterdir()):
             base, _, ext = f.name.upper().partition(".")
-            if f.is_file() and ext == "CHG" and _chg_title(f.read_bytes()) == game.title:
-                continue                    # the same game, older: replaced
+            if f.is_file() and ext == "CHG" and same is None and _chg_title(f.read_bytes()) == game.title:
+                same = f.name                # the same game, older: replaced, under its own name
+                continue
             taken.add((base, ext if f.is_file() else ""))
-    name = runtime.name83(game.title, taken, "CHG", "GAME")
-    path = f"GAMES/{name}.CHG"
+    path = f"GAMES/{same or runtime.name83(game.title, taken, 'CHG', 'GAME') + '.CHG'}"
     _write(root, path, runtime.chg_file(game, device), log)
     for p in sorted(game.sd):
         _write(root, p, game.sd[p], log)

@@ -73,7 +73,7 @@ the measurements behind them.
 
 | Spec | Here | Why |
 |---|---|---|
-| No LCD, font or menu in the bootloader; a `MENU.CHG` launcher installed into application flash | The menu is in the bootloader | Showing a flash-installed launcher would erase the game every time; the owner's goal is no flash wear. It fits: release build 12,012 B of 12,288 B (menu v2). |
+| No LCD, font or menu in the bootloader; a `MENU.CHG` launcher installed into application flash | The menu is in the bootloader | Showing a flash-installed launcher would erase the game every time; the owner's goal is no flash wear. It fits: release build 12,016 B of 12,288 B (menu v2). |
 | Game first at power-on; the menu on request | The menu at every power-on, the installed game preselected; a card may name a launch game instead (START held: the menu) | Arduboy FX behaviour, and free now: showing the menu writes nothing. The launch game came with menu v2. |
 | Launcher copies the game to `UPDATE.CHG`, the bootloader installs that fixed name | The bootloader reads `/GAMES/*.CHG` itself; no SD writes at all | No FAT write code, no card corruption on a power cut, no 50 KB copy. |
 | Fall back to raw sectors if FAT does not fit | FAT16 + FAT32, MBR or superfloppy, any fragmentation | Fits (FAT 864 B + SD 770 B without LTO). |
@@ -136,10 +136,10 @@ CHGame:ch32v@0.2.4`) and is found in the usual Arduino folders, or set
 
 | Mode | What | Size |
 |---|---|---|
-| `release` | menu + USB upload + developer self-update. **The one to install.** | 12,012 B |
-| `locked` | `release` without self-update; later bootloader updates then need the factory ISP | 11,688 B |
+| `release` | menu + USB upload + developer self-update. **The one to install.** | 12,016 B |
+| `locked` | `release` without self-update; later bootloader updates then need the factory ISP | 11,696 B |
 | `nomenu` | USB upload + self-update, the old boot decision on the new code (hardware step HW2a) | 5,400 B |
-| `app` | the menu as a program linked at 0x3000: a dry run of card, panel and keys under any bootloader, with no USB and no flash writes (HW1) | 6,480 B |
+| `app` | the menu as a program linked at 0x3000: a dry run of card, panel and keys under any bootloader, with no USB and no flash writes (HW1) | 6,512 B |
 
 `tools/dist.sh` builds all four into [release/](release) with
 `SHA256SUMS`. Two runs give identical files.
@@ -180,7 +180,7 @@ The menu draws into a framebuffer and takes its look from the card
 - **What paid for it** ([SIZES.md](SIZES.md)): the error texts, `fault.c`,
   STATUS and READ, the exFAT diagnosis, the `n/N` counter, the plain and
   casino themes (a card's background replaces them), and out-of-line SPI
-  bytes. The release image went from 12,032 B to 12,012 B.
+  bytes. The release image went from 12,032 B to 12,016 B.
 - **A redraw** reads the background (17 sectors) and sends the whole screen.
   The model's wire time is about 25 ms; on the board, with the CPU's part,
   expect around 70 ms. To be measured on the board (HARDWARE.md).

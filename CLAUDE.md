@@ -76,7 +76,7 @@ changing that game.
      compare sizes and frames, as for the rest of the library.
    - `platform/bootloader/src/sd.c` and `src/fat.c` are a C fork of CHSd: a
      fix to one belongs in the other too.
-   - The bootloader's flash is full: 12,012 of 12,288 B, and gate A keeps
+   - The bootloader's flash is full: 12,016 of 12,288 B, and gate A keeps
      256 B spare. Every byte added must be paid for
      (`platform/bootloader/SIZES.md` lists where). Measure with
      `platform/bootloader/build.sh release`.

@@ -205,10 +205,9 @@ static uint32_t scan(int app)
         copy(&games[j], &t);
     }
     if (ngames && !depth && app == APP_VALID && !installed && ngames < MENU_MAX_GAMES) {
-        static const char t[] = "INSTALLED PROGRAM   ";
         for (i = ngames; i; i--) copy(&games[i], &games[i - 1]);
         games[0].flags = G_INSTALLED;      /* (its clus is never used) */
-        for (i = 0; i <= TITLE_COLS; i++) games[0].title[i] = t[i];
+        set_title(&games[0], (const uint8_t *)"INSTALLED PROGRAM");
         ngames++;
     }
     for (sel = 0; sel < ngames && !(games[sel].flags & G_INSTALLED); sel++) { }

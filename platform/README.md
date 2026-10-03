@@ -176,7 +176,7 @@ differences from 0.2.4, building, testing and installing.
 background (`GAMES/MENU.IDX`, `MENU.BG`: [../spec/card.md](../spec/card.md)),
 a game started at power-on (START held: the menu), the moving rainbow as a
 colour of the picture. Errors are shown as numbers; `fault.c`, the STATUS
-and READ commands and the colour themes went for flash (12,012 B, 276 B
+and READ commands and the colour themes went for flash (12,016 B, 272 B
 free: [bootloader/SIZES.md](bootloader/SIZES.md)). It passes the PC suite,
 which boots it on cards made by `tools/chcart`; it has not run on a board
 yet. So `bootloader/release/` and `board/.../bootloaders/CHGame/` still hold

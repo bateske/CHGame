@@ -255,6 +255,39 @@ class Runtime(unittest.TestCase):
         self.assertEqual(row, bytes([0xF0, 0xB1, 0x0D]))
 
 
+class Deploy(unittest.TestCase):
+    def test_rules(self):
+        from chcart import deploy
+        quiet = lambda s: None
+        with tempfile.TemporaryDirectory() as d:
+            card = pathlib.Path(d)
+            # one game with SD files needs a card
+            with self.assertRaises(CartError):
+                deploy.deploy(Cart("C", [game("a", "WORDS", sd={"W.DIC": b"w"})]), None, do_flash=False, log=quiet)
+            # a hand-copied older WORDS under another name is replaced in place; another game keeps WORDS.CHG
+            (card / "GAMES").mkdir()
+            (card / "GAMES" / "OLDWORDS.CHG").write_bytes(chgpack.pack(image(10), "WORDS"))
+            (card / "GAMES" / "WORDS.CHG").write_bytes(chgpack.pack(image(20), "OTHER"))
+            (card / "GAMES" / "MENU.IDX").write_bytes(b"theirs")
+            deploy.deploy(Cart("C", [game("a", "WORDS", sd={"W.DIC": b"w"})]), card, do_flash=False, log=quiet)
+            self.assertEqual(chgpack.parse((card / "GAMES" / "OLDWORDS.CHG").read_bytes())["payload_bytes"], 1000)
+            self.assertEqual(chgpack.parse((card / "GAMES" / "WORDS.CHG").read_bytes())["title"], "OTHER")
+            self.assertEqual((card / "W.DIC").read_bytes(), b"w")
+            self.assertEqual((card / "GAMES" / "MENU.IDX").read_bytes(), b"theirs")   # its menu left alone
+            deploy.deploy(Cart("C", [game("b", "NEW")]), card, do_flash=False, log=quiet)
+            self.assertTrue((card / "GAMES" / "NEW.CHG").exists())
+            # several games: the cart's menu replaces the card's; --clean empties GAMES/ first
+            multi = Cart("C", [game("x", "XRAY"), game("y", "YANKEE", folder="F")])
+            with self.assertRaises(CartError):
+                deploy.deploy(multi, None, do_flash=False, log=quiet)
+            deploy.deploy(multi, card, do_flash=False, log=quiet)
+            self.assertEqual((card / "GAMES" / "MENU.IDX").read_bytes(), runtime.prepare(multi)["GAMES/MENU.IDX"])
+            self.assertTrue((card / "GAMES" / "NEW.CHG").exists())
+            deploy.deploy(multi, card, clean=True, do_flash=False, log=quiet)
+            self.assertEqual(sorted(p.relative_to(card).as_posix() for p in (card / "GAMES").rglob("*") if p.is_file()),
+                             sorted(p for p in runtime.prepare(multi) if p.startswith("GAMES/")))
+
+
 class Fixtures(unittest.TestCase):
     def test_expected(self):
         from chcart import fixtures

@@ -14,10 +14,10 @@ a boot image of at most 12,288 B with at least 256 B to spare.
 
 | Build | `.text` | `.ramfunc` | `.data` | Boot image | Free | `.bss` | RAM in use |
 |---|---|---|---|---|---|---|---|
-| **release** (menu + USB upload + self-update) | 11,332 | 596 | 84 | **12,012** | **276** | 14,628 | 17,372 |
-| locked (menu + USB upload) | 11,112 | 496 | 80 | 11,688 | 600 | 14,628 | 17,268 |
+| **release** (menu + USB upload + self-update) | 11,336 | 596 | 84 | **12,016** | **272** | 14,628 | 17,372 |
+| locked (menu + USB upload) | 11,120 | 496 | 80 | 11,696 | 592 | 14,628 | 17,268 |
 | nomenu (USB upload + self-update, for HW2a) | 4,728 | 596 | 76 | 5,400 | 6,888 | 984 | 3,720 |
-| app (the menu as a program at 0x3000, dry run) | 6,472 | 0 | 16 | 6,488 | - | 13,504 | 15,584 |
+| app (the menu as a program at 0x3000, dry run) | 6,496 | 0 | 16 | 6,512 | - | 13,504 | 15,584 |
 
 The colour themes (`--theme=plain`, `casino`) went with menu v2: the look
 is the card's `MENU.BG` now.
@@ -54,6 +54,7 @@ Notes:
 | STATUS removed | 12,176 | 112 | A bench diagnostic (BOOT_VERSION 3: ST_ERR_BADCMD) |
 | READ removed | 12,008 | 280 | `-verify`'s readback; END's CRC of the flash stays. Gate A passes |
 | Tested on cards from the tools | 12,012 | 276 | Keys held at power-on count only after a release again (`k_prev` starts with every key down); a bad file's name shown as stored (`BADFILE CHG`) |
+| Review | 12,016 | 272 | The font guard back for characters after `_` (a hand-made folder's 8.3 name, `CARDGA~1`); INSTALLED PROGRAM written by `set_title()` |
 
 ## Where the release bytes go
 
