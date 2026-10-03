@@ -7,12 +7,12 @@ The one include for a CHGame sketch:
 ```
 
 It sits on CHGfx (the framebuffer, the panel and its DMA) and gives a game
-everything the twenty casino games in `examples/games/` share: buttons and frame
+everything the twenty casino games in `examples/Games/` share: buttons and frame
 pacing in the Arduboy style, the house palette, drawing helpers and the 3x5
 font, outlined lettering, effects maths, one sound engine, saving to flash,
 and the serial debug protocol that the simulator and the tools drive a game
-through. The games are its examples: `examples/games/` holds the twenty of
-them, `examples/apps/` the sketches that are not games (CHSDtoUSB, which is
+through. The games are its examples: `examples/Games/` holds the twenty of
+them, `examples/Apps/` the sketches that are not games (CHSDtoUSB, which is
 GPL-3.0 and carries its own licence), and `examples/Hello` the smallest
 complete sketch.
 
@@ -65,7 +65,9 @@ The simulator compiles the sketch, CHGfx and this library for the PC and
 runs it in lockstep, so a script (`wait`, `tap`, `hold`, `snap`, `gif` ...;
 the list is at the top of `tools/chsim/chdrivelib.py`) gives the same
 screenshots every time. Builds use the copies of CHGfx and this library in
-`platform/board/arduino/CHGame/libraries`; with plain `arduino-cli`, pass `--library` for both.
+`platform/board/arduino/CHGame/libraries`. The board package (0.3.0 on)
+carries the same copies, so a sketch in the Arduino IDE or a plain
+`arduino-cli compile` needs nothing else; with 0.2.4, pass `--library` for both.
 
 ## The modules
 
@@ -110,7 +112,7 @@ The rules, the screens and everything they animate (`stage/`, `render/`,
 `fx/Presenter`), its sounds and music tables, its art, its save data and
 magic, its debug commands, its `config.h`, and the `src/fx/Fx.h` that
 configures `chgame/Sizzle` for it (plus any effect of its own on top, such
-as CHBingo's `gack()`). The twenty games in `examples/games/` show the
+as CHBingo's `gack()`). The twenty games in `examples/Games/` show the
 range, from CHTicTacToe to CHChess's search running inside the frame loop;
 each `NOTES.md` explains its design.
 

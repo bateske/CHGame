@@ -100,15 +100,18 @@ The next release is platform **0.3.0** with `chgame-upload` **0.2.0** (the
 0.1.0 tool that 0.2.4 installs has no `burn` command).
 
 1. Bump `version=` in `platform.txt`.
-2. Retitle the `## Unreleased` section of `platform/board/CHANGELOG.md` to
-   `## <version> (<date>)`. The script uses it as the GitHub release notes
-   and refuses to run without it.
+2. Retitle the `## Unreleased` (or `## <version> (not yet released)`)
+   section of `platform/board/CHANGELOG.md` to `## <version> (<date>)`. The
+   script uses it as the GitHub release notes, refuses to run without it,
+   and refuses to publish while it says "not yet released".
 3. If the bootloader changed: `build.sh` and `tools/dist.sh`, commit.
 4. Commit and push. The release tag is created on GitHub at the pushed
    `main`, so the script also refuses a dirty tree or an unpushed `HEAD`.
 5. `python tools/release/release.py --dry-run`: builds everything into
    `out/dist/` and publishes nothing. Look at the asset table and the ten
-   largest files of the archive.
+   largest files of the archive. It also runs the new-user test against
+   what it built (below, *Staging and the new-user test*) and packs the SD
+   card from it; `--no-accept` skips that, for a dry run only.
 6. `python tools/release/release.py` (`--repo bateske/CHGame` is the
    default).
 7. Commit `tools/release/chgame_upload_tool.json`, which now points at the
@@ -129,6 +132,9 @@ They produce, in `out/dist/`:
 - `CHGame-ch32v-<version>.tar.bz2`, the platform archive;
 - `chgame-upload-<toolversion>-<host>.tar.bz2`, one per host;
 - `package_chgame_index.json`, the Boards Manager index;
+- `CHGame-sdcard-<version>.zip`, the SD card's contents (every game and app
+  as a `.CHG`, and the games' data files), built by the new-user test from
+  the installed package's own examples;
 - `release-notes-<version>.md`.
 
 All of them go to a GitHub release tagged `v<version>` (the script uploads
@@ -174,12 +180,48 @@ whole (their `tools/`, art, `sdcard/` data and README GIFs included: the
 IDE's *File > Examples* copies a sketch's whole folder). The excludes are
 the visible constants in `tools/release/_common.py`
 (`PACKAGE_EXCLUDE_NAMES`, `_DIRS`, `_SUFFIXES`: `.gitignore`,
-`platform.local.txt`, `build/`, `out/`, `__pycache__`, `.pyc`); the
-packager refuses any path that still has a build folder in it, and prints
-the file count and the ten largest files, so a regression shows in the dry
-run. The GIFs are the bulk of it (about 17 MB of ~25); dropping them is one
+`platform.local.txt`, `build/`, `out/`, `probes/`, `__pycache__`, `.pyc`);
+the packager refuses any path that still has a build folder in it, and any
+sketch inside another example's folder (*File > Examples* would show it
+nested in that example: that is why CHBlackjack's `tools/probes/FlashProbe`
+is left out), and prints the file count and the ten largest files, so a
+regression shows in the dry run. The GIFs are the bulk of it (about 17 MB of ~25); dropping them is one
 name in `PACKAGE_EXCLUDE_NAMES`, at the price of the READMEs' pictures
 inside the IDE's copy.
+
+### Staging and the new-user test
+
+```bash
+python tools/release/stage.py [--quick] [--serve]     # build 0.3.0-local into out/stage/, test it as a new user
+python tools/release/serve.py [--dist out/stage]     # serve it to the Arduino IDE on localhost:8765
+python tools/release/acceptance.py [--dist out/dist] [--all] [--card x.zip]   # the test on its own
+```
+
+`stage.py` builds what `release.py` builds, versioned `<version>-local`
+(the uploader `<tool version>-local`), with every URL on
+`http://localhost:8765`, and runs `acceptance.py` on it. The pre-release
+version sorts before the release, so a staged install is offered the
+release as an update, and the uploader is downloaded again then.
+
+`acceptance.py` serves the folder (`serve.py` points the index's own URLs
+at itself, so an `out/dist/` built for GitHub serves the same, with the
+same checksums) and installs it with a fresh `arduino-cli` whose data
+folder, sketchbook and config are in `out/newuser/`. It checks the three
+tools, the platform libraries, the examples under *File > Examples*, the
+*Bootloader* and *Programmer* menus and the bootloader files, then copies
+examples into the sketchbook and compiles them with plain `arduino-cli
+compile`: Hello and CHChess with the IDE's default options, CHFour and
+CHWords with the release options, CHWords with the defaults (it must stop
+with its "needs Tools > USB > Upload only" message), and *Export Compiled
+Binary* must leave a `.bin` and a valid `.chg`. `--all` compiles every
+game and app from the installed package and `--card` packs the SD card
+from those builds. It touches no board.
+[trying-a-release.md](trying-a-release.md) is the same by hand, in the IDE,
+with a board.
+
+The toolchain archive is kept in `out/arduino-downloads/` between runs;
+the package's own archives there are deleted before each install, since
+they change between builds of the same version.
 
 ### Traps when publishing
 

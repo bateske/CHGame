@@ -105,11 +105,13 @@ It uses 10.8 KB of flash and 11.9 KB of RAM, most of the RAM being the
   chgame --sketch Hello upload
   ```
 - **Arduino IDE:**
-  1. Install the CHGame board package ([README](../README.md#installing)).
-  2. Copy `platform/board/arduino/CHGame/libraries/CHGfx` and `platform/board/arduino/CHGame/libraries/CHGame` into
-     your sketchbook's `libraries/` (until the board package bundles them).
-  3. Open *File > Examples > CHGame > Hello*, choose *Tools > Optimize >
-     Smallest + LTO*, then *Upload*.
+  1. Install the CHGame board package, 0.3.0 or later ([README](../README.md#installing)).
+     The CHGame and CHGfx libraries come with it. (With 0.2.4, copy
+     `platform/board/arduino/CHGame/libraries/CHGfx` and `.../CHGame` into
+     your sketchbook's `libraries/`, and choose *Tools > Optimize >
+     Smallest + LTO*.)
+  2. Open *File > Examples > CHGame > Hello*, then *Upload*. *Tools >
+     Optimize* is *Smallest + LTO* by default.
 
 **The Tools menus:**
 - *Peripherals: Game* (the default) leaves out `Serial1`, `tone()` and PWM, which saves about 4 KB.

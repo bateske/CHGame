@@ -74,7 +74,7 @@ library's `blip()` comment and code disagreed (the code now does what most
 old engines did).
 
 The rest of this page is the survey from before the move, kept for the
-record. Its numbers come from comparing the copies in `platform/board/arduino/CHGame/libraries/CHGame/examples/games/*/src` by md5,
+record. Its numbers come from comparing the copies in `platform/board/arduino/CHGame/libraries/CHGame/examples/Games/*/src` by md5,
 by line diff against CHFour, and by hashing function bodies; the commands
 are at the end.
 
@@ -282,7 +282,7 @@ The magics, which CLAUDE.md rule 8 requires to be unique:
   - CHCrossword adds `"`, `&` and `;`.
   - CHWordWheel folds lower case to capitals.
 - **`text35x2`** has five implementations. They differ in `\n` and `~` handling.
-- **CHGfx already has most of these** (`gfx_fillRoundRect`, `gfx_dither`, `gfx_remapRect`, `gfx_sprite4`, `gfx_sprite4Rot`, `gfx_scroll`, `gfx_textFx` with `CHGfx_Tiny3x5`). The games kept their copies on purpose, because they are smaller and in two cases draw different pixels ([CHChess/docs/CHGfx-notes.md](../platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHChess/docs/CHGfx-notes.md)). Only CHBlackjack, CHCraps, CHSlots and CHYacht call CHGfx's versions.
+- **CHGfx already has most of these** (`gfx_fillRoundRect`, `gfx_dither`, `gfx_remapRect`, `gfx_sprite4`, `gfx_sprite4Rot`, `gfx_scroll`, `gfx_textFx` with `CHGfx_Tiny3x5`). The games kept their copies on purpose, because they are smaller and in two cases draw different pixels ([CHChess/docs/CHGfx-notes.md](../platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHChess/docs/CHGfx-notes.md)). Only CHBlackjack, CHCraps, CHSlots and CHYacht call CHGfx's versions.
 - **For the library:** a `chgame` draw module with the identical functions and the `sprite4` superset. Then **decide the font**: ship both tables (a per-game choice), or accept a one-pixel change to `M` in five games and re-record their GIFs.
 
 ### Banner lettering: `gfx/Mask`
@@ -381,16 +381,16 @@ Every game then needs its tables converted and its preview hashes compared, and 
 
 | Tool | Today | For a library |
 |---|---|---|
-| `platform/board/arduino/CHGame/libraries/CHGame/examples/games/*/tools/device.py` (20 copies, 4-26 lines apart) | `--library platform/board/arduino/CHGame/libraries/CHGfx`, `-D<PFX>_DEBUG=1` | also `--library platform/board/arduino/CHGame/libraries/CHGame`, and `-DCHGAME_DEBUG=1` beside the game's flag |
+| `platform/board/arduino/CHGame/libraries/CHGame/examples/Games/*/tools/device.py` (20 copies, 4-26 lines apart) | `--library platform/board/arduino/CHGame/libraries/CHGfx`, `-D<PFX>_DEBUG=1` | also `--library platform/board/arduino/CHGame/libraries/CHGame`, and `-DCHGAME_DEBUG=1` beside the game's flag |
 | `tools/sdcard/mkcard.py` | `--library` CHGfx for CHSDtoUSB | the same addition |
 | `tools/chsim/chsim.py` | compiles `<sketch>/src/**` + CHGfx's `src/*.cpp` | a resolver like `chgfx_dir()` for the CHGame library, its `src/**`, and `-I` |
-| `platform/board/arduino/CHGame/libraries/CHGame/examples/games/*/tools/audio/preview.py` | compiles `src/audio/Audio.cpp` | the library's audio source |
+| `platform/board/arduino/CHGame/libraries/CHGame/examples/Games/*/tools/audio/preview.py` | compiles `src/audio/Audio.cpp` | the library's audio source |
 | CHSd's `tools/vendor.py` | copied CHSd into three games | retired 2026-10-02: CHSd is used as a library |
 | CI | none | one job: every game's release build size, every simulator script, the host tests |
 
 ## Repeating the survey
 
-From the games' folder (then `games/`, now the library's `examples/games/`):
+From the games' folder (then `games/`, now the library's `examples/Games/`):
 
 ```bash
 # identical copies of a file

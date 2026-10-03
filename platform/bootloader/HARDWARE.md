@@ -31,7 +31,7 @@ resort ([recovery.md](../board/docs/recovery.md)).
 - **Another session using the board.** Check that nothing else is using it
   (CLAUDE.md, "The device"). `UP probe` lists the board's port and what it
   is running.
-- **Rollback image.** Keep `platform/board/arduino/CHGame/bootloaders/CHGame/chgame_bootloader.bin`
+- **Rollback image.** Keep `platform/bootloader/release/0.2.4/chgame_bootloader.bin`
   (the 0.2.4 bootloader) at hand.
 - **What gets flashed.** The binaries are in [release/](release), with
   SHA-256 sums. `tools/dist.sh` rebuilds them byte-identical.
@@ -85,7 +85,7 @@ UP info                                  # BOOT_VERSION 2
      whenever the board is on).
    - Check that `UP probe` answers.
    - Note exactly what the screen did.
-   - To go back: `UP selfupdate platform/board/arduino/CHGame/bootloaders/CHGame/chgame_bootloader.bin --yes`.
+   - To go back: `UP selfupdate platform/bootloader/release/0.2.4/chgame_bootloader.bin --yes`.
 2. **"NO GAMES FOUND" or "CAN'T INSTALL / CARD READ ERROR"** with a card
    that reads fine on the PC: this is the SD clock or the card driver.
    - Run the dry run, which works under any bootloader:
@@ -94,7 +94,7 @@ UP info                                  # BOOT_VERSION 2
    - SELECT leaves it, to the "USB UPLOAD" screen.
 3. **No USB at all, even with B held.**
    - Hold BOOT across power-on.
-   - Run `UP provision --bootloader platform/board/arduino/CHGame/bootloaders/CHGame/chgame_bootloader.bin`,
+   - Run `UP provision --bootloader platform/bootloader/release/0.2.4/chgame_bootloader.bin`,
      or `wchisp flash` the same image.
 
 **D4. The HW3 checklist**, in this order (fewest power cycles):
@@ -127,7 +127,7 @@ UP info                                  # BOOT_VERSION 2
 
 1. **Load the card.**
    ```
-   cd platform/board/arduino/CHGame/libraries/CHGame/examples/apps/CHSDtoUSB
+   cd platform/board/arduino/CHGame/libraries/CHGame/examples/Apps/CHSDtoUSB
    arduino-cli compile -b CHGame:ch32v:CHGame --library ../../platform/board/arduino/CHGame/libraries/CHGfx .
    arduino-cli upload  -b CHGame:ch32v:CHGame -p <PORT> .
    ```
@@ -183,7 +183,7 @@ jumping. It changes nothing else.
    python platform/bootloader/test/hil/test_powercut.py arm --at 50    # switch off when told
    python platform/bootloader/test/hil/test_powercut.py verify         # after switching on
    ```
-3. **A normal upload.** `cd platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHFour && chgame upload`.
+3. **A normal upload.** `cd platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHFour && chgame upload`.
    The game runs. Switch off and on: it runs again.
 
 ## HW2b: the menu bootloader
@@ -220,7 +220,7 @@ expected result.
 
 **USB and uploads**
 - [ ] With the menu on screen, upload from the IDE (or
-      `cd platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHFour && chgame upload`). The upload works,
+      `cd platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHFour && chgame upload`). The upload works,
       CHFour starts, and on the next power-on the menu shows
       INSTALLED PROGRAM.
 - [ ] With the menu on screen, `UP probe` or `UP info` answers, and the menu
@@ -293,7 +293,7 @@ expected result.
 ## Rolling back
 
 - **Back to 0.2.4 over USB:**
-  `UP selfupdate platform/board/arduino/CHGame/bootloaders/CHGame/chgame_bootloader.bin --yes`.
+  `UP selfupdate platform/bootloader/release/0.2.4/chgame_bootloader.bin --yes`.
   The menu bootloader still has the self-update commands, which is the
   point of keeping them in the release.
 - **If USB is gone:**

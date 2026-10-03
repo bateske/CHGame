@@ -6,22 +6,30 @@ core, the menu bootloader, one `CHGame.h` library, the casino games as
 examples. An update delivers all of it together. The PC tools live in the
 same repository.
 
-Everything needed exists here already. Nothing below asks for a new
-feature; it is all moving, joining and packaging what there is. This page
-records what is in place and what each step involves, so the work can be
-done in order and checked.
+**Where it stands (2026-10-02):** release 0.3.0 is built from this
+repository and passes the new-user test (`tools/release/stage.py`: a fresh
+`arduino-cli` installs it from one URL and gets the core, the three
+bootloaders, the three libraries and every example; all twenty games and
+CHSDtoUSB compile from the installed package with no `--library`; the SD
+card is packed from those builds). What is left is trying it on a board
+from the IDE
+([platform/board/docs/trying-a-release.md](../platform/board/docs/trying-a-release.md))
+and publishing it. The list at the end, *Before and at the release*, has
+it in order.
+
+This page records what is in place and what each step involved.
 
 ## What is in place
 
 | | Where | State |
 |---|---|---|
-| Arduino core, variant, linker scripts, Tools menus | `platform/board/arduino/CHGame` | 0.2.4, as released |
+| Arduino core, variant, linker scripts, Tools menus | `platform/board/arduino/CHGame` | 0.3.0, built and tested, not yet published (0.2.4 is the published one) |
 | Bootloader with the SD game menu | `platform/bootloader` | built and tested on the PC; installed and checked on a board on 2026-10-01 (`test/hil/RESULTS-2026-10-01.md`) |
 | Uploader: `chgame-upload` in Go (the executable the board package installs; Windows, Linux, macOS) and the same tool in Python (`chgame_upload`, what the repository's tools use) | `platform/bootloader/host/go`, `host/py` | 0.2.0 here, with the bootloader update over USB and `burn`; the installed package has 0.1.0. Shared test vectors (`test/protocol/`) hold the two together |
 | Graphics | `platform/board/arduino/CHGame/libraries/CHGfx` | 1.3.0 |
 | SD card / FAT | `platform/board/arduino/CHGame/libraries/CHSd` | 1.0.0; never yet run against a real card on a board |
 | The `CHGame` library: buttons and pacing, palette, drawing, the 3x5 font, lettering, effects maths, sound, saving, the debug protocol, `RAMFUNC` | `platform/board/arduino/CHGame/libraries/CHGame` | every game is built on it ([its README](../platform/board/arduino/CHGame/libraries/CHGame/README.md)); in the board package's `libraries/` folder with CHGfx and CHSd |
-| Twenty games, one app | the CHGame library's examples: `platform/board/arduino/CHGame/libraries/CHGame/examples/games/`, `apps/CHSDtoUSB` | building; verification per game in [status.md](status.md) |
+| Twenty games, one app | the CHGame library's examples: `platform/board/arduino/CHGame/libraries/CHGame/examples/Games/`, `apps/CHSDtoUSB` | building; verification per game in [status.md](status.md) |
 | PC tools | `tools/` (one entry point, `chgame`; `pip install -e .`), per game a `tools/game.py`, a `chdrive.py` and scripts | in use; one simulator for the games, CHGfx's examples and its tests |
 
 ## What the first release needs
@@ -33,15 +41,20 @@ done in order and checked.
 builds the uploader for the five hosts, the platform archive and the Boards
 Manager index, and publishes them with `gh`
 (`platform/board/docs/building.md`). `python tools/release/release.py
---dry-run` makes the whole set in `out/dist/`. What is left is the release
-itself: bump `platform.txt` to 0.3.0, retitle the changelog's Unreleased
-section, run it.
+--dry-run` makes the whole set in `out/dist/`. `platform.txt` says 0.3.0
+and the changelog has its section, headed "(not yet released)".
+
+Also done the same day: `stage.py` builds the release as `0.3.0-local` with
+localhost URLs, `serve.py` serves it to the Arduino IDE, and
+`acceptance.py` is the new-user test, which `release.py` now runs before it
+publishes anything; it also packs the release's SD card zip. What is left
+is the release itself: date the changelog heading, run it.
 
 - The package index then lives at
   `https://github.com/bateske/CHGame/releases/latest/download/package_chgame_index.json`.
 - Every place that gives the old URL changes with it: the root README's
   *Installing* section, `CLAUDE.md`, `platform/README.md` and
-  `platform/board/arduino/CHGame/libraries/CHGame/examples/apps/CHSDtoUSB/README.md`. The games' READMEs link to the root
+  `platform/board/arduino/CHGame/libraries/CHGame/examples/Apps/CHSDtoUSB/README.md`. The games' READMEs link to the root
   README instead of repeating it.
 - Decide how people on the old URL find the new one. An index is not
   redirected by itself; a last release on the old URL that says so is one
@@ -53,7 +66,8 @@ section, run it.
 ### 2. The menu bootloader in the package
 
 **Done in this repository** (2026-10-02). `bootloaders/CHGame/` carries the
-menu bootloader, the no-menu build and the 0.2.4 one; *Tools > Bootloader*
+menu bootloader, the no-menu build and the 0.2.4 one (since replaced by the
+menu's other two colour themes); *Tools > Bootloader*
 chooses, and *Burn Bootloader* writes it over USB with the programmer
 **CHGame USB** (`chgame-upload burn -method usb`, through the bootloader
 already on the board) or through the factory ISP. Tried on a board with
@@ -63,7 +77,8 @@ already on the board) or through the factory ISP. Tried on a board with
 **What is left for the release:** the release itself. `tools/release/release.py`
 builds the `chgame-upload` 0.2.0 archives for the five hosts and names 0.2.0
 as the package's tool dependency in the index. `platform.txt` here needs
-0.2.0: the 0.1.0 tool has no `burn` command.
+0.2.0: the 0.1.0 tool has no `burn` command (nor `pack`, which every build
+now runs).
 
 ### 3. One `CHGame` library
 
@@ -105,11 +120,10 @@ are edited there. The three SD games include CHSd as a library; their
 generated copies and `vendor.py` are gone. The bootloader's C fork
 (`src/sd.c`, `fat.c`) remains.
 
-**What is left:** the release. Until a package cut from this repository is
-installed, `chgame build` passes the three folders with `--library`
-(and keeps doing so afterwards, so a clone builds against its own sources).
-The acceptance test of the first release is one game built with plain
-`arduino-cli compile` and no `--library`.
+**What is left:** the release. `chgame build` passes the three folders with
+`--library` and keeps doing so, so a clone builds against its own sources.
+The acceptance test, every game built with plain `arduino-cli compile` and
+no `--library` from an installed package, passes against the staged 0.3.0.
 
 ### 4. The games as examples
 
@@ -120,8 +134,8 @@ in it. The CHGame library's examples are:
 | Folder | What | Menu |
 |---|---|---|
 | `examples/Hello` | the smallest complete sketch | *CHGame > Hello* |
-| `examples/games/<Name>` | the twenty casino games | *CHGame > games > CHFour* ... |
-| `examples/apps/<Name>` | sketches that are not games: CHSDtoUSB | *CHGame > apps > CHSDtoUSB* |
+| `examples/Games/<Name>` | the twenty casino games | *CHGame > Games > CHFour* ... |
+| `examples/Apps/<Name>` | sketches that are not games: CHSDtoUSB | *CHGame > Apps > CHSDtoUSB* |
 
 Each game keeps its whole folder there: sketch, `src/`, `tools/`, `docs/`,
 `NOTES.md`. The shared tools stay in the repository's `tools/`; a game
@@ -129,21 +143,38 @@ reaches them through the `chgame` command, and they take a game by name
 (`tools/paths.py`). Every release image is byte for byte what it was in
 `games/`, and every simulator reel frame for frame.
 
-**What is left for the release:**
+**Decided and checked** (2026-10-02):
 
+- The package carries each game's whole folder, tools, art sources and
+  README GIF included (18 MB compressed, the GIFs most of it): the README
+  a user opens from the sketch folder has its picture. Dropping the GIFs is
+  one name in `_common.PACKAGE_EXCLUDE_NAMES`.
 - A sketch opened from *Examples* is read-only and is copied to the
-  sketchbook when saved. The sketch builds from that copy; its `tools/`
-  need the repository (they look for its `tools/` folder above them) and
-  say so when it is not there.
-- Decide what the package archive carries: the sketches alone, or with
-  their tools, art sources and README GIFs (much larger than the code).
+  sketchbook when saved. It builds from that copy (the new-user test
+  compiles copies). Its `tools/` need the repository.
+- The games' README line on installing points at the IDE route and at the
+  repository's README by absolute URL, since the README is also read
+  inside the package.
+- *Smallest + LTO* is the default *Optimize* option from 0.3.0: with `-Os`
+  the larger games do not fit (CHBackgammon, CHChess, CHCrossword and
+  CHWords among them). With it, 17
+  games fit with the IDE's defaults; the three SD games also need *USB:
+  Upload only* and stop with a message that says so.
+- CHBlackjack's `tools/probes/FlashProbe` is left out of the package: *File
+  > Examples* showed it nested inside the game. The packager now refuses
+  any sketch nested in another example.
 - CHSDtoUSB is GPL-3.0 and keeps its own `LICENSE` in its folder, apart
   from the Apache-2.0 library it is an example of.
 
 ### 5. The PC tools
 
-They are here already. What a release should add is a way to use them
-without reading the source:
+What an Arduino user needs is in the package, in `chgame-upload` (the one
+executable the IDE can run): upload, burn the bootloader, and, since
+2026-10-02, `pack`, which every build runs so that *Export Compiled Binary*
+leaves a `.chg` for the SD menu. The SD card with every game is a zip
+beside each release. The developer tools (simulator, scripts, screenshots,
+GIFs, sound preview) are Python and need a clone. Before that, what was
+done to use them without reading the source:
 
 - ~~one requirements file and one entry point per job~~ done 2026-10-02:
   `pip install -e .` and the `chgame` command (`tools/chgame.py`), one
@@ -166,13 +197,27 @@ It is ours now:
 
 - ~~Linux: `ch32yyxx.h` includes `core_riscv_cH32yyxx.h` (capital H).~~
   Fixed in `platform/board` on 2026-10-02; ships with 0.3.0.
-- Stale comments about an 8 KB bootloader and an app at 0x2000.
+- ~~Stale comments about an 8 KB bootloader and an app at 0x2000.~~ Fixed
+  on 2026-10-02 (`link_chgame_app.ld`, `chgame_map.h`, and `boards.txt`'s
+  mention of a `gen_ld.py` that does not exist).
 - ~~The root `LICENSE` file is missing.~~ Added on 2026-10-02 (Apache-2.0,
   with a `NOTICE`). (The working name "CHCasino" left the code and comments
   on 2026-10-02.)
 
-## Order
+## Before and at the release
 
-1 and 2 give a release from this repository that matches what people have
-now plus the menu. 3 is done; 4 puts the games beside the library as its examples.
-5 and 6 can be done at any time.
+1. **On a board, from the IDE**, with the staged package
+   ([trying-a-release.md](../platform/board/docs/trying-a-release.md)):
+   *Burn Bootloader* with **CHGame USB** from the installed package
+   (tried with `arduino-cli` already, not yet from the IDE); Hello and a
+   game uploaded with the new *Smallest + LTO* default; a `.chg` from
+   *Export Compiled Binary* started from the menu; the SD card zip on a
+   real card (CHSd has never read a real card on a board). CHSDtoUSB stays
+   on `-Os` on the card until it is tried with LTO.
+2. **Date the changelog heading**, then `python tools/release/release.py`
+   (it runs the new-user test again and publishes v0.3.0 with the SD card
+   zip).
+3. **The old URL.** People with the CH32SerialBoot URL are not told about
+   this one. A last release there that points here is one way.
+4. **Third-party archives.** The toolchain and wchisp are referenced at
+   their upstream URLs, not mirrored (`platform/board/THIRD-PARTY.md`).

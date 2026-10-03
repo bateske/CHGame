@@ -20,6 +20,7 @@ import sys
 from pathlib import Path
 
 from . import __version__
+from . import chg as C
 from . import image as I
 from . import layout as L
 from . import protocol as P
@@ -74,6 +75,29 @@ def generate() -> dict:
         "image": {"boot": boot.hex(), "app": app.hex(), "length": len(img),
                   "sha256": hashlib.sha256(img).hexdigest()},
         "layout": L.as_dict(),
+        "chg": _chg_cases(),
+    }
+
+
+def _chg_cases() -> dict:
+    """`pack`: the same package bytes from the same image and fields, the same
+    refusals, the same default name and title."""
+    app = bytes(((i * 29) + 3) & 0xFF for i in range(1001))     # not a multiple of 4: padded with 0xFF
+    packs = []
+    for title, author, ver, appver in (("MY GAME", "ME", "1.2", 7), ("FOUR IN A ROW", "", "", 0)):
+        pkg = C.pack(app, title, author, ver, appver)
+        packs.append({"title": title, "author": author, "version": ver, "app_version": appver,
+                      "header": pkg[:C.HEADER_BYTES].hex(), "length": len(pkg),
+                      "sha256": hashlib.sha256(pkg).hexdigest()})
+    boot_like = bytes(8) + struct.pack("<I", C.BOOT_SIG) + bytes(100)
+    return {
+        "app": app.hex(),
+        "packs": packs,
+        "refused": [{"name": "empty", "length": 0}, {"name": "too_big", "length": L.APP_MAX_SIZE + 1},
+                    {"name": "bootloader", "image": boot_like.hex()}],
+        "max_ok_length": L.APP_MAX_SIZE,
+        "names": [{"path": p, "title": C.default_title(p), "out": C.default_output(p)}
+                  for p in ("MyGame.ino.bin", "build/CHFour.ino.bin", "x.bin", "Hello")],
     }
 
 

@@ -3,7 +3,7 @@
 The one repository for the CHGame handheld: the Arduino board package, the
 bootloader with the SD game menu (`platform/bootloader`), the graphics and
 SD libraries, twenty casino games that are the CHGame library's examples
-(`platform/board/arduino/CHGame/libraries/CHGame/examples/games/`), and the
+(`platform/board/arduino/CHGame/libraries/CHGame/examples/Games/`), and the
 PC tools. It is the source of truth: the repositories the pieces came from
 (CH32SerialBoot, CHGfx, one per game) are frozen and are not synced with.
 The aim is one board package that delivers all of it, with one `CHGame.h`
@@ -58,9 +58,10 @@ changing that game.
    [platform/README.md](platform/README.md) (the bootloader's README lists
    its own). Two things to know:
    - `platform/board` is what the *next* board package release will contain.
-     Builds use the installed package (0.2.4) for the core, so an edit to
-     the core, variant or `boards.txt` has no effect on a build until it is
-     released or the installed copy is patched.
+     Builds use the installed package for the core (0.2.4, or 0.3.0-local
+     when a staged build is installed), so an edit to the core, variant,
+     `platform.txt` or `boards.txt` has no effect on a build until it is
+     released, staged and installed, or the installed copy is patched.
    - The three libraries in `platform/board/arduino/CHGame/libraries/` are
      the exception: `chgame build`, `chgame card` and the simulator pass
      them explicitly, so an edit there takes effect at once.
@@ -99,6 +100,11 @@ Manager), then `pip install -e .[sim]` in the repository root.
   `https://github.com/bateske/CH32SerialBoot/releases/latest/download/package_chgame_index.json`
   (use that URL and `CHGame:ch32v@0.2.4` meanwhile). The URL is given here,
   in the README and in `platform/README.md`: change the three together.
+  To install 0.3.0 before it is published: `python tools/release/stage.py`
+  builds it as `0.3.0-local` and tests it as a new user, and
+  `python tools/release/serve.py` serves it to Boards Manager at
+  `http://localhost:8765/package_chgame_index.json`
+  ([platform/board/docs/trying-a-release.md](platform/board/docs/trying-a-release.md)).
 - The board package brings its own RISC-V GCC 8.2 and the `chgame-upload`
   tool, so nothing else is needed for device builds.
 - **Linux:** the installed core 0.2.4's `ch32yyxx.h` includes
@@ -109,8 +115,8 @@ Manager), then `pip install -e .[sim]` in the repository root.
 - **The libraries need no install.** `chgame build` compiles with
   `--library` for CHGfx, CHGame and CHSd from
   `platform/board/arduino/CHGame/libraries/`, and the simulator uses the same
-  copies. With plain `arduino-cli compile`, add those `--library` flags
-  yourself, until a board package that bundles them is installed.
+  copies. Plain `arduino-cli compile` needs those `--library` flags only
+  with a package older than 0.3.0, which bundles the three.
 - **The simulator's compiler:** `$CHSIM_CXX` (for example `"zig c++"` or a
   full path plus ` c++`), otherwise zig on the PATH, otherwise
   `python -m ziglang`, otherwise clang++ or g++.
@@ -118,8 +124,8 @@ Manager), then `pip install -e .[sim]` in the repository root.
 ## Commands
 
 The games are the CHGame library's examples:
-`platform/board/arduino/CHGame/libraries/CHGame/examples/games/<Name>/`
-(apps, such as CHSDtoUSB, are beside them in `examples/apps/`). Run these
+`platform/board/arduino/CHGame/libraries/CHGame/examples/Games/<Name>/`
+(apps, such as CHSDtoUSB, are beside them in `examples/Apps/`). Run these
 from a game's folder (or any folder below it): `chgame` finds the sketch by
 itself. From anywhere else it takes a game or app by name or folder
 (`chgame --sketch CHFour build`). `pip install -e .[sim]` in the repository
@@ -159,6 +165,8 @@ it, `python tools/chgame.py` is the same thing. The shared tools under
 | Install the menu bootloader on a board | `platform/bootloader/HARDWARE.md` (self-update over USB) |
 | Build the uploader, `chgame-upload` (Go, five hosts, into `out/chgame-upload/`) | `python tools/release/build_uploader.py` |
 | The uploaders' parity tests (Python and Go against one vector file) | `python -m unittest discover -s platform/bootloader/test/protocol`; `go test ./...` in `host/go` |
+| Stage a release locally and test it as a new user (fresh arduino-cli in `out/newuser/`, every example compiled from the installed package, the SD card zip) | `python tools/release/stage.py [--quick] [--serve]` |
+| Serve the staged release to the Arduino IDE | `python tools/release/serve.py` (URL `http://localhost:8765/package_chgame_index.json`) |
 | A release, dry or real (`platform/board/docs/building.md`) | `python tools/release/release.py [--dry-run]` |
 
 The release FQBN is
@@ -296,10 +304,10 @@ and other sessions may share it.
 
 ## Putting files on the SD card without removing it
 
-[`platform/board/arduino/CHGame/libraries/CHGame/examples/apps/CHSDtoUSB`](platform/board/arduino/CHGame/libraries/CHGame/examples/apps/CHSDtoUSB) turns the board into a USB card
+[`platform/board/arduino/CHGame/libraries/CHGame/examples/Apps/CHSDtoUSB`](platform/board/arduino/CHGame/libraries/CHGame/examples/Apps/CHSDtoUSB) turns the board into a USB card
 reader, with its serial port still working beside the drive:
 
-1. Upload it from `platform/board/arduino/CHGame/libraries/CHGame/examples/apps/CHSDtoUSB`:
+1. Upload it from `platform/board/arduino/CHGame/libraries/CHGame/examples/Apps/CHSDtoUSB`:
    `arduino-cli compile -b CHGame:ch32v:CHGame --library ../../platform/board/arduino/CHGame/libraries/CHGfx .`
    then `arduino-cli upload -b CHGame:ch32v:CHGame -p <PORT> .`.
    After it starts, the board enumerates on a new serial port.
@@ -367,5 +375,5 @@ Then:
   CHTicTacToe, CHWordWheel) still check their generated arrays against
   `../CHBlackjack`'s and `../CHChess`'s `src/assets/Assets.cpp`, and
   CHRoulette's `logo_preview.py` reads the former. The games must stay side
-  by side in `examples/games/`.
+  by side in `examples/Games/`.
 - `tools/chsim/build/`, `build/` and `out/` are build output and ignored.

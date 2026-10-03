@@ -5,7 +5,7 @@
 # https://arduino.github.io/arduino-cli/latest/platform-specification/
 
 name=CHGame
-version=0.2.4
+version=0.3.0
 
 # Compile variables
 # ----------------------
@@ -144,6 +144,11 @@ recipe.objcopy.bin.pattern="{compiler.path}{compiler.objcopy.cmd}" {compiler.elf
 
 ## Create output (.hex file)
 recipe.objcopy.hex.pattern="{compiler.path}{compiler.objcopy.cmd}" {compiler.elf2hex.flags} {compiler.elf2hex.extra_flags} "{build.path}/{build.project_name}.elf" "{build.path}/{build.project_name}.hex"
+
+## Create output (.chg file): the package the bootloader's SD game menu
+## installs from the card's GAMES folder (the sketch's name, in capitals, is
+## its title). Sketch > Export Compiled Binary copies it beside the sketch.
+recipe.hooks.objcopy.postobjcopy.1.pattern="{tools.chgame_upload.path}/{tools.chgame_upload.cmd}" pack "{build.path}/{build.project_name}.bin"
 
 ##Create output (.lst file)
 #recipe.objcopy.lst.pattern="{compiler.path}{compiler.objdump.cmd}" {compiler.objdump.flags} {compiler.elf2lst.extra_flags} "{build.path}/{build.project_name}.elf" "{build.path}/{build.project_name}.lst"

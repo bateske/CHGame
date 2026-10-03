@@ -49,28 +49,45 @@ The aim is the Arduboy model, with one repository instead of several:
 
 ### Where that stands today
 
-Every piece is in this repository and works from a clone. What is not done
-yet is the packaging that makes the Boards Manager deliver all of it:
+Every piece is in this repository, and the board package built from it
+delivers all of it. Release **0.3.0** is built and passes the new-user test
+(below), but is **not published yet**: until it is, the URL under
+*Installing* has nothing behind it, and
+[platform/board/docs/trying-a-release.md](platform/board/docs/trying-a-release.md)
+installs it from this machine instead.
 
-| Piece | In this repository | Delivered by the board package today |
+| Piece | In this repository | Delivered by the board package (0.3.0) |
 |---|---|---|
-| Core, variant, toolchain, `chgame-upload` | `platform/board/` (0.2.4) | yes (0.2.4, from the old release URL) |
-| Bootloader with the SD game menu | `platform/bootloader/` | no: 0.2.4 ships the earlier bootloader without the menu |
-| The CHGame library (`CHGame.h`: buttons, pacing, palette, drawing, sound, saving, debug protocol) | `platform/board/arduino/CHGame/libraries/CHGame/`; every game is built on it | not yet: it is in the package folder here (`libraries/`), for the next release; games build against it with `--library` |
-| CHGfx, the graphics library | `platform/board/arduino/CHGame/libraries/CHGfx/` (1.3.0) | not yet: it is in the package folder here (`libraries/`), for the next release; games build against it with `--library` |
-| CHSd, the SD/FAT reader | `platform/board/arduino/CHGame/libraries/CHSd/` (1.0.0) | not yet: it is in the package folder here (`libraries/`), for the next release; games build against it with `--library` |
-| The casino games and CHSDtoUSB as examples | `platform/board/arduino/CHGame/libraries/CHGame/examples/games/`, `apps/` | not yet: they are the library's examples here, for the next release |
-| PC tools | `tools/`, `platform/bootloader/host/` | `chgame-upload` only |
+| Core, variant, toolchain, `chgame-upload` | `platform/board/` | yes |
+| Bootloader with the SD game menu | `platform/bootloader/` | yes: *Tools > Bootloader* (SD Game Menu in Rainbow, Plain or Casino colours, or USB Only), written by *Burn Bootloader* over USB with the programmer **CHGame USB**: no driver, no buttons |
+| The CHGame library (`CHGame.h`: buttons, pacing, palette, drawing, sound, saving, debug protocol) | `platform/board/arduino/CHGame/libraries/CHGame/`; every game is built on it | yes, in the package's `libraries/`: nothing to install |
+| CHGfx, the graphics library | `platform/board/arduino/CHGame/libraries/CHGfx/` (1.3.0) | yes, with its examples |
+| CHSd, the SD/FAT reader | `platform/board/arduino/CHGame/libraries/CHSd/` (1.0.0) | yes |
+| The casino games and CHSDtoUSB as examples | `platform/board/arduino/CHGame/libraries/CHGame/examples/Games/`, `apps/` | yes: *File > Examples > CHGame > Games*, *Apps* |
+| Games for the SD menu (`.CHG`) | `tools/sdcard/`, `tools/chgpack.py` | yes: every build writes one, and *Export Compiled Binary* puts it by the sketch. The card with all twenty games is a zip beside the package on the release page |
+| PC tools | `tools/`, `platform/bootloader/host/` | the ones an Arduino user needs, in `chgame-upload`: upload, burn the bootloader, pack for the SD menu. The developer tools (simulator, scripted runs, screenshots, GIFs, sound preview, card builder) are Python and work from a clone (`pip install -e .`) |
 
-[docs/roadmap.md](docs/roadmap.md) lists what the first release from this
-repository has to do to close that table.
+`python tools/release/stage.py` builds the release as `0.3.0-local` and
+checks it the way a new user would get it: a fresh `arduino-cli` installs
+it from the one URL; the libraries, examples, bootloaders and programmers
+are there; every game and app compiles from the installed package with no
+`--library`; and the SD card is packed from those builds.
+[docs/roadmap.md](docs/roadmap.md) has what is left: publishing it.
 [docs/chgame-library.md](docs/chgame-library.md) records why the library
 is as it is, and [docs/unification.md](docs/unification.md) how the
 games' twenty copies of their shared code became it.
 
 ## Installing
 
-**The board package** (the toolchain and the uploader come with it):
+**The board package** (the toolchain, the uploader, the bootloaders, the
+libraries and the games come with it). In the Arduino IDE 2.x: add
+
+```
+https://github.com/bateske/CHGame/releases/latest/download/package_chgame_index.json
+```
+
+under *File > Preferences > Additional boards manager URLs*, then install
+**CHGame** from the Boards Manager. With `arduino-cli`:
 
 ```bash
 arduino-cli config add board_manager.additional_urls https://github.com/bateske/CHGame/releases/latest/download/package_chgame_index.json
@@ -78,32 +95,31 @@ arduino-cli core update-index
 arduino-cli core install CHGame:ch32v
 ```
 
-(Until 0.3.0, the first release cut from this repository, is published,
-0.2.4 is still served from
-`https://github.com/bateske/CH32SerialBoot/releases/latest/download/package_chgame_index.json`.)
+(Until 0.3.0 is published, 0.2.4 is still served from
+`https://github.com/bateske/CH32SerialBoot/releases/latest/download/package_chgame_index.json`,
+without the libraries, games and menu bootloader. To try 0.3.0 now:
+[trying-a-release.md](platform/board/docs/trying-a-release.md).)
 
-In the Arduino IDE 2.x: add the same URL under *File > Preferences >
-Additional boards manager URLs*, then install **CHGame** from the Boards
-Manager.
-
-**This repository.** Clone or download it. The games, libraries and tools
-are used from here:
-
-- With the repository's own scripts, nothing more is needed: each game's
-  `tools/device.py` builds against `platform/board/arduino/CHGame/libraries/CHGfx`.
-- With the Arduino IDE, copy `platform/board/arduino/CHGame/libraries/CHGfx` into your
-  sketchbook's `libraries/` folder, open `platform/board/arduino/CHGame/libraries/CHGame/examples/games/<Name>/<Name>.ino`, and set
-  *Tools > Optimize* to **Smallest + LTO** and *Tools > USB* to **Upload
-  only**.
+**Then, in the IDE:** *Tools > Board > CHGame*. The games are under *File >
+Examples > CHGame > Games*; set *Tools > USB* to **Upload only** for them
+(*Tools > Optimize* is **Smallest + LTO** by default, which they need too).
+A new sketch only needs `#include <CHGame.h>`; *Hello* is the smallest one.
 
 **The menu bootloader** is installed over USB, through the bootloader a
-board already has: no driver, no buttons. From the next board package
-release that is *Tools > Programmer* **CHGame USB**, then *Tools > Burn
-Bootloader* (*Tools > Bootloader* chooses between the SD game menu, no menu
-and the 0.2.4 one). Until then:
+board already has: no driver, no buttons. *Tools > Bootloader* **SD Game
+Menu** (Rainbow, Plain or Casino: the colours), *Tools > Programmer*
+**CHGame USB**, then *Tools > Burn Bootloader*. Without the 0.3.0 package:
 `chgame uploader selfupdate platform/bootloader/release/chgame_sdboot.bin`
 ([platform/bootloader](platform/bootloader/README.md#installing-it-on-a-board)).
 The WCH driver and the BOOT button are only for recovery.
+
+**The SD card.** Unzip `CHGame-sdcard-<version>.zip` from the release page
+onto a FAT32 card ([docs/sd-menu.md](docs/sd-menu.md)).
+
+**This repository** is for working on the platform and the games: clone it
+and `pip install -e .[sim]` (see *Quick start* below). `chgame build`
+compiles against the repository's own copies of the libraries, so an edit
+there takes effect at once.
 
 ## The games
 
@@ -113,33 +129,35 @@ load: most are within 1 KB of filling the flash. They all fit on one SD card
 behind the **game menu built into the bootloader**: switch on, pick a game,
 play, with no PC, like an Arduboy FX ([docs/sd-menu.md](docs/sd-menu.md)).
 
-Each game is a standalone sketch in `platform/board/arduino/CHGame/libraries/CHGame/examples/games/<Name>/<Name>.ino` with its own
+Each game is a standalone sketch in `platform/board/arduino/CHGame/libraries/CHGame/examples/Games/<Name>/<Name>.ino` with its own
 README (rules, controls, design) and NOTES.md (status, design decisions,
-open items). The image column is the release build size, against the
-**50,944 B** the bootloader leaves for a sketch.
+open items). The image column is the release build size with the 0.3.0
+package (the same as [docs/status.md](docs/status.md)), against the
+**50,944 B** the bootloader leaves for a sketch; up to 50,432 B a game keeps
+both of its save pages.
 
 | Game | What it is | Image |
 |---|---|---|
-| [CHBackgammon](platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHBackgammon) | Backgammon on felt with chip checkers, a trained CPU, optional match play and doubling cube | 49,524 B |
-| [CHBingo](platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHBingo) | 75-ball bingo: up to nine cards against a hall of rivals, power-ups and a jackpot | 36,724 B |
-| [CHBlackjack](platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHBlackjack) | Press Play On Tape's Arduboy Blackjack rebuilt in colour: the series' first table | 45,812 B |
-| [CHBoardwalk](platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHBoardwalk) | BOARDWALK, a property-trading board game on an isometric board, with tap auctions | 49,856 B |
-| [CHCheckers](platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHCheckers) | Checkers on CHChess's isometric board, with its own engine and chip pieces | 42,024 B |
-| [CHChess](platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHChess) | Isometric chess with a pointing glove, whip-zoom camera and a CPU of three strengths | 48,884 B |
-| [CHCraps](platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHCraps) | Casino craps with 3D dice and Blackjack's dealer as the stickman | 50,032 B |
-| [CHCrossword](platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHCrossword) | 13x13 crosswords, built in and as packs on the SD card | 50,300 B |
-| [CHDominoes](platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHDominoes) | Dominoes (ALL FIVES and DRAW) with bevelled tiles and a close-up camera | 42,356 B |
-| [CHFour](platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHFour) | FOUR IN A ROW, against the dealer as a friendly coach | 36,332 B |
-| [CHMahjong](platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHMahjong) | Mahjong solitaire with the 144 traditional tiles and a close-up view | 48,364 B |
-| [CHPoker](platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHPoker) | Poker against three CPU players: Hold'em, Five Card Draw, Omaha and Seven Card Stud | 48,908 B |
-| [CHRoulette](platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHRoulette) | Roulette with a physically simulated ball and the dealer as croupier | 49,796 B |
-| [CHSlots](platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHSlots) | Three slot machines on one purse: LUCKY 7, SWEET and DRAGON FORTUNE | 47,112 B |
-| [CHSnakes](platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHSnakes) | SNAKES & LADDERS with procedural snakes, CLASSIC and ARCADE rules | 37,336 B |
-| [CHSolitaire](platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHSolitaire) | Klondike, after the Windows original | 31,144 B |
-| [CHTicTacToe](platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHTicTacToe) | TIC TAC TOE: ROYALE, sixteen tables on 3x3 and 5x5 boards, for money | 50,308 B |
-| [CHWords](platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHWords) | A crossword tile game (Scrabble rules) with a flash dictionary and a full one on SD | 50,396 B |
-| [CHWordWheel](platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHWordWheel) | WORD WHEEL, a word-puzzle game show: spin, call letters, solve | 50,312 B |
-| [CHYacht](platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHYacht) | YACHT DICE (five dice, thirteen boxes) with Craps's 3D dice | 43,732 B |
+| [CHBackgammon](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHBackgammon) | Backgammon on felt with chip checkers, a trained CPU, optional match play and doubling cube | 50,296 B |
+| [CHBingo](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHBingo) | 75-ball bingo: up to nine cards against a hall of rivals, power-ups and a jackpot | 36,388 B |
+| [CHBlackjack](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHBlackjack) | Press Play On Tape's Arduboy Blackjack rebuilt in colour: the series' first table | 45,640 B |
+| [CHBoardwalk](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHBoardwalk) | BOARDWALK, a property-trading board game on an isometric board, with tap auctions | 49,732 B |
+| [CHCheckers](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHCheckers) | Checkers on CHChess's isometric board, with its own engine and chip pieces | 42,232 B |
+| [CHChess](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHChess) | Isometric chess with a pointing glove, whip-zoom camera and a CPU of three strengths | 48,832 B |
+| [CHCraps](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHCraps) | Casino craps with 3D dice and Blackjack's dealer as the stickman | 49,940 B |
+| [CHCrossword](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHCrossword) | 13x13 crosswords, built in and as packs on the SD card | 50,416 B |
+| [CHDominoes](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHDominoes) | Dominoes (ALL FIVES and DRAW) with bevelled tiles and a close-up camera | 42,796 B |
+| [CHFour](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHFour) | FOUR IN A ROW, against the dealer as a friendly coach | 36,792 B |
+| [CHMahjong](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHMahjong) | Mahjong solitaire with the 144 traditional tiles and a close-up view | 48,580 B |
+| [CHPoker](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHPoker) | Poker against three CPU players: Hold'em, Five Card Draw, Omaha and Seven Card Stud | 48,544 B |
+| [CHRoulette](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHRoulette) | Roulette with a physically simulated ball and the dealer as croupier | 49,916 B |
+| [CHSlots](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHSlots) | Three slot machines on one purse: LUCKY 7, SWEET and DRAGON FORTUNE | 47,664 B |
+| [CHSnakes](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHSnakes) | SNAKES & LADDERS with procedural snakes, CLASSIC and ARCADE rules | 37,272 B |
+| [CHSolitaire](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHSolitaire) | Klondike, after the Windows original | 30,876 B |
+| [CHTicTacToe](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHTicTacToe) | TIC TAC TOE: ROYALE, sixteen tables on 3x3 and 5x5 boards, for money | 49,712 B |
+| [CHWords](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHWords) | A crossword tile game (Scrabble rules) with a flash dictionary and a full one on SD | 50,388 B |
+| [CHWordWheel](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHWordWheel) | WORD WHEEL, a word-puzzle game show: spin, call letters, solve | 50,380 B |
+| [CHYacht](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHYacht) | YACHT DICE (five dice, thirteen boxes) with Craps's 3D dice | 44,100 B |
 
 [docs/status.md](docs/status.md) lists what each game has been verified on
 (the simulator or the device), its open items and the known issues.
@@ -173,11 +191,11 @@ pip.
 ```bash
 # 1. The board package: see "Installing" above
 
-# 2. Python tools and a compiler for the simulator
-pip install -r tools/requirements.txt ziglang
+# 2. Python tools, the `chgame` command and a compiler for the simulator
+pip install -e .[sim]
 
 # 3. Build a game (from its folder) against this repository's libraries
-cd platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHFour
+cd platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHFour
 chgame build              # release build + size report
 chgame check --no-device         # host tests + every sim script, twice (games that have check.py)
 chgame sim # just the PC simulator
@@ -187,8 +205,7 @@ chgame run tools/scripts/endings.txt out/endings   # screenshots in out/endings
 chgame upload
 
 # 5. A card for the game menu: builds and packs every game into out/sdcard/
-cd ../..
-python tools/sdcard/mkcard.py             # copy out/sdcard/* to a FAT32 card
+chgame card                               # copy out/sdcard/* to a FAT32 card
 ```
 
 ## The parts
@@ -196,7 +213,8 @@ python tools/sdcard/mkcard.py             # copy out/sdcard/* to a FAT32 card
 ### The board package: `platform/board/`
 
 The Arduino core for the board: package `CHGame`, architecture `ch32v`,
-version **0.2.4**. It is a fork of the WCH CH32 Arduino core. It adds the
+version **0.3.0** (built and tested, not yet published; 0.2.4 is the one
+installed today). It is a fork of the WCH CH32 Arduino core. It adds the
 CHGame variant (pin names such as `PIN_BTN_A` and `PIN_SD_CS`), the USB CDC
 serial port, the app linker script (the sketch starts at 0x3000, above the
 12 KB bootloader), and the `chgame-upload` tool, which uploads over USB in
@@ -207,7 +225,7 @@ Its Tools menus matter for every game:
 
 | Menu (FQBN key) | Games use | What it does |
 |---|---|---|
-| Optimize (`opt`) | `oslto` | `-Os -flto`. Usually 1-5 KB smaller than plain `-Os`; several games only fit with it. |
+| Optimize (`opt`) | `oslto` (the default from 0.3.0) | `-Os -flto`. Usually 1-5 KB smaller than plain `-Os`; several games only fit with it. |
 | Peripherals (`periph`) | `game` (default) | Compiles out Serial1, `tone()`, PWM and HardwareTimer: about 4 KB. |
 | USB (`usb`) | `uploadonly` for release | Drops `Serial` (about 0.7 KB). Upload still works with no button presses. Debug builds keep `serial`. |
 | C library (`rtlib`) | `nano` (default) | newlib-nano |
@@ -298,7 +316,10 @@ The tools for working with the system outside the Arduino IDE:
   two share their test vectors;
 - the **release scripts** (`tools/release/`): the uploader for five hosts,
   the platform archive and the Boards Manager index, published with `gh`
-  ([platform/board/docs/building.md](platform/board/docs/building.md)).
+  ([platform/board/docs/building.md](platform/board/docs/building.md));
+  `stage.py` builds the same as a local pre-release and `acceptance.py`
+  tests it as a new user would get it, `serve.py` serves it to the Arduino
+  IDE ([trying-a-release.md](platform/board/docs/trying-a-release.md)).
 
 What is a game's own stays with it: its script commands (`chdrive.py`),
 its description for the shared checks (`game.py`), the tests and the asset
@@ -311,14 +332,14 @@ Each folder carries its own licence:
 
 | Path | Licence |
 |---|---|
-| `platform/board/arduino/CHGame/libraries/CHGame/examples/games/*` | Apache-2.0 (see each game's `LICENSE` and `NOTICE`). CHChess's engine `src/engine/ch2k.hpp` is MPL-2.0. |
+| `platform/board/arduino/CHGame/libraries/CHGame/examples/Games/*` | Apache-2.0 (see each game's `LICENSE` and `NOTICE`). CHChess's engine `src/engine/ch2k.hpp` is MPL-2.0. |
 | `tools/` | Apache-2.0 (`tools/LICENSE`, `tools/NOTICE`) |
 | `platform/board/` | MIT (`platform/board/LICENSE`, `THIRD-PARTY.md`) |
 | `platform/bootloader/` | MIT (`LICENSE`, `THIRD-PARTY.md`, `NOTICE`: its 5x7 font is Adafruit glcdfont, BSD); `host/` (the uploader, Go and Python) with it, `go.bug.st/serial` BSD-3-Clause in `THIRD-PARTY.md` |
 | `platform/board/arduino/CHGame/libraries/CHGame/` | Apache-2.0 (`LICENSE`, `NOTICE`: the 3x5 font is Press Play On Tape's, by way of CHBlackjack) |
 | `platform/board/arduino/CHGame/libraries/CHGfx/` | MIT; some fonts carry their own notices (in its `LICENSE`, e.g. the 3x5 font is Apache-2.0) |
 | `platform/board/arduino/CHGame/libraries/CHSd/` | MIT |
-| `platform/board/arduino/CHGame/libraries/CHGame/examples/apps/CHSDtoUSB/` | GPL-3.0 (its SD layer comes from sdfatlib) |
+| `platform/board/arduino/CHGame/libraries/CHGame/examples/Apps/CHSDtoUSB/` | GPL-3.0 (its SD layer comes from sdfatlib) |
 | `platform/hardware/` | No licence stated yet (schematic and netlist) |
 | `docs/`, root files | Apache-2.0 (`LICENSE`, `NOTICE`) |
 

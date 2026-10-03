@@ -6,13 +6,14 @@ vectors file against what the package computes now.
 import hashlib
 import json
 import pathlib
+import re
 import struct
 import sys
 import unittest
 
 HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parents[1] / "host" / "py"))
-from chgame_upload import image as I, layout as L, protocol as P, upload as U, vectors as V  # noqa: E402
+from chgame_upload import chg as C, image as I, layout as L, protocol as P, upload as U, vectors as V  # noqa: E402
 
 VECTORS = json.loads((HERE / "vectors.json").read_text(encoding="utf-8"))
 
@@ -69,6 +70,37 @@ class Vectors(unittest.TestCase):
 
     def test_layout(self):
         self.assertEqual(L.as_dict(), VECTORS["layout"])
+
+    def test_chg(self):
+        v = VECTORS["chg"]
+        app = bytes.fromhex(v["app"])
+        for p in v["packs"]:
+            pkg = C.pack(app, p["title"], p["author"], p["version"], p["app_version"])
+            self.assertEqual(pkg[:C.HEADER_BYTES].hex(), p["header"], p["title"])
+            self.assertEqual((len(pkg), hashlib.sha256(pkg).hexdigest()), (p["length"], p["sha256"]), p["title"])
+        for r in v["refused"]:
+            with self.assertRaises(ValueError, msg=r["name"]):
+                C.pack(bytes.fromhex(r["image"]) if "image" in r else bytes(r["length"]), "X")
+        C.pack(bytes(v["max_ok_length"]), "X")
+        for n in v["names"]:
+            self.assertEqual((C.default_title(n["path"]), C.default_output(n["path"])), (n["title"], n["out"]))
+
+    def test_chg_matches_chgpack_and_the_header(self):
+        """The repository's tools/chgpack.py and shared/chg_format.h say the same."""
+        repo = HERE.parents[3]
+        chgpack = repo / "tools" / "chgpack.py"
+        if not chgpack.exists():
+            self.skipTest("not in the CHGame repository")
+        sys.path.insert(0, str(chgpack.parent))
+        import chgpack as T  # noqa: E402
+        app = bytes.fromhex(VECTORS["chg"]["app"])
+        self.assertEqual(C.pack(app, "MY GAME", "ME", "1.2", 7), T.pack(app, "MY GAME", "ME", "1.2", 7))
+        hdr = (HERE.parents[1] / "shared" / "chg_format.h").read_text(encoding="utf-8")
+        for name, val in (("CHG_MAGIC", C.MAGIC), ("CHG_TARGET_ID", C.TARGET_ID), ("CHG_LAYOUT_ID", C.LAYOUT_ID),
+                          ("CHG_HEADER_BYTES", C.HEADER_BYTES), ("CHG_FORMAT_VERSION", C.FORMAT_VERSION)):
+            m = re.search(r"#define\s+" + name + r"\s+(0x[0-9A-Fa-f]+|\d+)u", hdr)
+            self.assertIsNotNone(m, name)
+            self.assertEqual(int(m.group(1), 0), val, name)
 
 
 if __name__ == "__main__":

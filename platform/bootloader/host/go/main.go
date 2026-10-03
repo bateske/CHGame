@@ -99,12 +99,15 @@ func main() {
   chgame-upload [flags] selfupdate <boot.bin>
   chgame-upload [flags] provision -bootloader <boot.bin> [-app <app.bin>] [-wchisp <path>]
   chgame-upload [flags] burn -method usb|isp -bootloader <boot.bin> [-app <app.bin>] [-wchisp <path>]
+  chgame-upload [flags] pack <file.bin> [-out <file.chg>] [-title T] [-author A] [-gameversion V]
 
   flash       upload a sketch through the bootloader (what Upload does)
   selfupdate  replace the bootloader over USB, through the one installed
   provision   write the bootloader through the chip's factory ISP (hold BOOT, power cycle)
   burn        what Arduino's Burn Bootloader and Upload Using Programmer run:
               selfupdate (usb) or provision (isp), then the sketch if one is given
+  pack        wrap a sketch image in a .chg package for the SD game menu (every
+              build runs it, so Export Compiled Binary leaves one by the sketch)
   chgame-upload [flags] noop
 
 Flags may appear before or after the subcommand.
@@ -132,6 +135,10 @@ Flags may appear before or after the subcommand.
 		appFile    = sub.String("app", "", "application image (provision)")
 		wchispPath = sub.String("wchisp", "", "path to wchisp (provision)")
 		method     = sub.String("method", "usb", "burn: usb (through the installed bootloader) or isp (factory ISP)")
+		packOut    = sub.String("out", "", "pack: the package (default: the image's name with .chg for .bin)")
+		packTitle  = sub.String("title", "", "pack: what the menu shows (default: the sketch's name in capitals)")
+		packAuthor = sub.String("author", "", "pack: the author")
+		packVer    = sub.String("gameversion", "", "pack: a short version string, e.g. 1.2")
 	)
 
 	// Go's flag package stops parsing at the first non-flag argument, so a plain
@@ -192,6 +199,11 @@ Flags may appear before or after the subcommand.
 		default:
 			die("unknown method %q (usb or isp)", *method)
 		}
+	case "pack":
+		if len(positional) < 1 {
+			die("pack needs an image path")
+		}
+		doPack(o, positional[0], *packOut, *packTitle, *packAuthor, *packVer)
 	case "noop":
 		// Arduino runs a separate chip-erase step before Burn Bootloader. The
 		// erase itself is done inside provision(), so that EVERY provisioning
@@ -200,6 +212,29 @@ Flags may appear before or after the subcommand.
 		fmt.Println("erase: performed by the provisioning step itself")
 	default:
 		die("unknown command %q", cmd)
+	}
+}
+
+func doPack(o *opts, image, out, title, author, ver string) {
+	data, err := os.ReadFile(image)
+	if err != nil {
+		die("cannot read %s: %v", image, err)
+	}
+	if out == "" {
+		out = chgDefaultOutput(image)
+	}
+	if title == "" {
+		title = chgDefaultTitle(image)
+	}
+	pkg, err := chgPack(data, title, author, ver, 0)
+	if err != nil {
+		die("%s: %v", image, err)
+	}
+	if err := os.WriteFile(out, pkg, 0o644); err != nil {
+		die("cannot write %s: %v", out, err)
+	}
+	if !o.quiet {
+		fmt.Printf("SD menu package: %s (%s, %d B)\n", out, title, len(pkg)-chgHeaderBytes)
 	}
 }
 

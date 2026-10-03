@@ -70,9 +70,11 @@ practice you can switch games as often as you like.
   most).
 - **Order and fragmentation.** Files can be copied in any order and can be
   fragmented. Up to 128 games are listed, sorted by title.
-- **Getting all the casino games onto a card.** Run
-  `python tools/sdcard/mkcard.py`. It builds every game and writes the card's
-  contents to `out/sdcard/`; copy everything in that folder to the card.
+- **Getting all the casino games onto a card.** Each release has the card's
+  contents as a zip beside the board package (`CHGame-sdcard-<version>.zip`):
+  unzip it onto the card. From a clone, `chgame card` builds every game and
+  writes the same to `out/sdcard/`; copy everything in that folder to the
+  card.
 
 **Copying files without a card reader.** Pick **SD CARD READER** in the
 menu. The CHGame becomes a USB drive on the PC. Copy games into `GAMES/`,
@@ -101,15 +103,19 @@ name is shown instead of a title.
 - **Uploading from the Arduino IDE.** This works as before, including while
   the menu is on screen. The uploaded sketch then starts directly. On the
   next power-on the menu shows it as **INSTALLED PROGRAM** at the top.
-- **Adding your own game to the card.** Package your sketch's `.bin`. In the
-  Arduino IDE, *Sketch > Export compiled Binary* writes it next to the
-  sketch. Then run:
+- **Adding your own game to the card.** With the board package 0.3.0 or
+  later, *Sketch > Export Compiled Binary* in the Arduino IDE writes
+  `MyGame.ino.chg` into the sketch's `build/` folder, beside the `.bin`. Its
+  title is the sketch's name in capitals. Copy it to `GAMES/` under a short
+  name (`MYGAME.CHG`). For another title, or with an older package:
 
   ```
+  chgame-upload pack MyGame.ino.bin -out MYGAME.CHG -title "MY GAME"
   python tools/chgpack.py pack MyGame.ino.bin MYGAME.CHG --title "MY GAME"
   ```
 
-  Copy `MYGAME.CHG` to `GAMES/`. [chg-format.md](chg-format.md) describes the
+  (the first is the uploader the board package installs, the second the
+  repository's tool; they make the same bytes). [chg-format.md](chg-format.md) describes the
   file and what a game needs to know. In short: nothing changes for your
   sketch.
 - **Returning to the menu from a game.** Every sketch on the CHGame library

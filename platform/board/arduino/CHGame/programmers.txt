@@ -15,14 +15,14 @@
 #
 # burn.method and burn.port are read by the recipes in platform.txt.
 
-chgameusb.name=CHGame USB (through the installed bootloader, no driver)
-chgameusb.program.tool=chgame_upload
-chgameusb.program.extra_params=
-chgameusb.burn.method=usb
-chgameusb.burn.port=-port "{serial.port}"
-
-wchisp.name=WCH factory ISP (hold BOOT, power cycle)
+wchisp.name=WCH factory ISP (Hold BOOT on power-up, requires driver)
 wchisp.program.tool=chgame_upload
 wchisp.program.extra_params=
 wchisp.burn.method=isp
 wchisp.burn.port=
+
+chgameusb.name=CHGame USB (requires CHGame bootloader, no drivers)
+chgameusb.program.tool=chgame_upload
+chgameusb.program.extra_params=
+chgameusb.burn.method=usb
+chgameusb.burn.port=-port "{serial.port}"

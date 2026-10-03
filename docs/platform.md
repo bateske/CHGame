@@ -74,7 +74,7 @@ power-on for the factory ISP; see `recovery.md`.
 
 | Menu | Choices | Notes |
 |---|---|---|
-| Optimize `opt` | `osstd` (default), `oslto`, `o1std`, `o2std`, `o3std`, `ogstd` | The games use `oslto` (`-Os -flto`). It is 1-5 KB smaller; CHChess and others only fit with it. |
+| Optimize `opt` | `oslto` (default from 0.3.0), `osstd` (the default before), `o1std`, `o2std`, `o3std`, `ogstd` | The games use `oslto` (`-Os -flto`). It is 1-5 KB smaller; CHChess and others only fit with it. |
 | C library `rtlib` | `nano` (default), `nanofp`, `full` | |
 | Peripherals `periph` | `game` (default), `full` | `game` adds `-DUART_MODULE_ONLY -DTIM_MODULE_ONLY`: no Serial1, `tone()`, PWM or HardwareTimer, which saves about 4 KB. |
 | USB `usb` | `serial` (default), `uploadonly` | `uploadonly` saves 0.6-0.7 KB. Upload still works. A sketch that uses `Serial` then fails to build, on purpose. |
@@ -91,7 +91,7 @@ the option bytes and is untested here. Instead:
 - **Why it works.** The bootloader erases only the pages a new image covers.
   Pages between the end of the image and the metadata page at 0xF700
   survive re-uploads. This was proven on hardware by
-  `platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHBlackjack/tools/probes/FlashProbe`.
+  `platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHBlackjack/tools/probes/FlashProbe`.
 - **Writing a page.** A sketch can erase and program a 256 B page from user
   mode in about 1.4 ms:
   - the code must run from SRAM (a RAMFUNC);
