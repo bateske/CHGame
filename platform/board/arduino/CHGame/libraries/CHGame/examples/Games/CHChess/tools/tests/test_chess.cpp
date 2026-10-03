@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include "../../src/engine/Engine.cpp"
+#include "../../Engine.cpp"
 static ch2k::game &g = eng::g;
 
 static int failures = 0;
@@ -264,7 +264,7 @@ static void testGames() {
 // ---------------------------------------------------------------------------
 // Match: the game flow with a stage that is never busy
 // ---------------------------------------------------------------------------
-#include "../../src/game/Match.h"
+#include "../../Match.h"
 
 static bool sameBoard(const uint8_t *a) {
     for (int s = 0; s < 64; s++) if (a[s] != eng::pieceAt((uint8_t)s)) return false;

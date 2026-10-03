@@ -4,15 +4,27 @@
 //
 // Frame loop: logic runs while the previous frame is still going out over
 // DMA; drawing waits for it (one framebuffer), then the new frame is sent.
+//
+// The files, by role:
+//   rules        MahjongBoard (the pile, the deal, pairs, chips), Nav (where the
+//                D-pad goes): no drawing or sound, host-tested
+//   frame        Frame (input, logic, drawing, flush; the felt colours)
+//   screens      Screens: title, setup, play with its panels, options
+//   presenting   Stage (the pile on screen, glove, flights, sparrow, HUD), Fx (sparkle)
+//   drawing      Tile (the tile blitters, run from SRAM)
+//   sound        Sounds (effects only: there is no music)
+//   saving       Save
+//   generated    src/assets (art), src/game/Layouts.* (the layouts): do not edit
+//   switches     config.h
 #include <CHGame.h>
 #include "config.h"
-#include "src/Frame.h"
+#include "Frame.h"
 
 void setup() {
-    arduboy.boot();
+    chgame.boot();
     gfx_begin(GFX_DIV2, GFX_12BPP);
     frame::begin();
-    arduboy.setFrameRate(CHMJ_FPS);
+    chgame.setFrameRate(CHMJ_FPS);
 }
 
 void loop() {

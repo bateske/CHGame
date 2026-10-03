@@ -45,11 +45,11 @@ To put it on the handheld: in the Arduino IDE, with the CHGame board package ins
 
 ## Developer notes
 
-- **A neural network in 3.2 KB of integers.** `src/ai/Net.cpp` evaluates 196 inputs through 16 hidden units with 8-bit weights, integer adds and a sigmoid table, no floating point. `tools/train` taught it by self-play, the way TD-Gammon learned, compiling the game's own rules and evaluator so the network measured on the PC is the one on the handheld.
-- **Incremental evaluation from SRAM.** Consecutive plays differ by a checker or two, so the network keeps its hidden sums and adds or removes only the rows that changed; it and the move generator in `src/rules/Board.cpp` are `RAMFUNC`.
-- **Thinking in slices.** `src/game/Match.cpp` gives the CPU 64 positions a tick (`QUANTUM`), so the frames never stop, no second stack is needed, and the tests check its choice is the same however the work is sliced.
-- **A camera that scales by fifths.** `src/table/Table.cpp` draws the board in world units a row at a time, 1x to 2x, and `render()` in `src/stage/Stage.cpp` returns false for a still board: the frame is sent again and the palette effects keep moving for free.
-- **Fitting the flash.** A 32-bit division instead of a 64-bit one in `src/ai/Cube.cpp` saved 1.2 KB of library code; the display font in `src/gfx/Font.cpp` is found by walking its glyphs instead of an index.
+- **A neural network in 3.2 KB of integers.** `Net.cpp` evaluates 196 inputs through 16 hidden units with 8-bit weights, integer adds and a sigmoid table, no floating point. `tools/train` taught it by self-play, the way TD-Gammon learned, compiling the game's own rules and evaluator so the network measured on the PC is the one on the handheld.
+- **Incremental evaluation from SRAM.** Consecutive plays differ by a checker or two, so the network keeps its hidden sums and adds or removes only the rows that changed; it and the move generator in `Rules.cpp` are `RAMFUNC`.
+- **Thinking in slices.** `Match.cpp` gives the CPU 64 positions a tick (`QUANTUM`), so the frames never stop, no second stack is needed, and the tests check its choice is the same however the work is sliced.
+- **A camera that scales by fifths.** `Table.cpp` draws the board in world units a row at a time, 1x to 2x, and `render()` in `Stage.cpp` returns false for a still board: the frame is sent again and the palette effects keep moving for free.
+- **Fitting the flash.** A 32-bit division instead of a 64-bit one in `Cube.cpp` saved 1.2 KB of library code; the display font in `Font.cpp` is found by walking its glyphs instead of an index.
 - More in [NOTES.md](NOTES.md): how it fits, design decisions, tests, the script commands and open items.
 
 ## Credits

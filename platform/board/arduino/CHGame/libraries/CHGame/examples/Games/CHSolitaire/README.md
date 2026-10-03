@@ -45,11 +45,11 @@ To put it on the handheld: in the Arduino IDE, with the CHGame board package ins
 
 ## Developer notes
 
-- **A trail that costs nothing.** CHGfx keeps one 16-colour framebuffer and nothing clears it but the game. During the cascade (`src/stage/Stage.cpp`) the table is not redrawn: each logic tick stamps the bouncing card where it is, up to three stamps a frame when the game is catching up, so the trail has no gaps.
+- **A trail that costs nothing.** CHGfx keeps one 16-colour framebuffer and nothing clears it but the game. During the cascade (`Stage.cpp`) the table is not redrawn: each logic tick stamps the bouncing card where it is, up to three stamps a frame when the game is catching up, so the trail has no gaps.
 - **Logic ticks apart from drawing.** `CHSolitaire.ino` runs up to three 60 Hz logic ticks while the previous frame is still going out over DMA, then waits, draws once and flushes.
-- **A game small enough to copy.** The whole game in `src/game/Klondike.h` is 196 bytes (the stock and the waste share one 24-card array), so undo is a copy of the struct and a save is one flash page; a `static_assert` in `src/save/Save.cpp` holds it to that.
-- **Seven columns in 128 pixels.** That leaves 18 a column, so the card is 17x23 and a covered card is drawn as its top strip only (`src/render/CardArt.cpp`). A column squeezes its overlap as it grows (`src/render/Layout.h`).
-- **Caching a costly layer.** The title's outlined lettering is drawn once and kept as a copy of its framebuffer rows (`rail` in `src/states/Screens.cpp`), and the drifting cards pass under the copy.
+- **A game small enough to copy.** The whole game in `Klondike.h` is 196 bytes (the stock and the waste share one 24-card array), so undo is a copy of the struct and a save is one flash page; a `static_assert` in `Save.cpp` holds it to that.
+- **Seven columns in 128 pixels.** That leaves 18 a column, so the card is 17x23 and a covered card is drawn as its top strip only (`CardArt.cpp`). A column squeezes its overlap as it grows (`Layout.h`).
+- **Caching a costly layer.** The title's outlined lettering is drawn once and kept as a copy of its framebuffer rows (`rail` in `Screens.cpp`), and the drifting cards pass under the copy.
 - More in [NOTES.md](NOTES.md): design decisions, tests, the script commands and open items.
 
 ## Credits

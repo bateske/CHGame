@@ -5,8 +5,8 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 ## Snapshot
 
 - Imported from https://github.com/bateske/CHMahjong at commit 481dfdf (2026-10-01); develop here now, not in the old repo.
-- Release build (CHGame core 0.2.4, CHGfx 1.3.0, `opt=oslto,rtlib=nano,periph=game,usb=uploadonly`): flash 48,108 of 50,944 B (2,836 spare), static RAM 18,084 of 18,416 B (332 spare). RAM is the tight budget, not flash.
-- Save pages: `../../../../../../../../../tools/check_size.py` reports the image as 48,364 B, 256 B more than the compile's flash figure. Both A/B pages (0xF500, 0xF600) fit while the image is at most 50,432 B, so the margin is 2,068 B. Past that, the CHGame library's saving (`chgame/Save.cpp`) uses page B only.
+- Release build (board package 0.3.0, 2026-10-02, `opt=oslto,rtlib=nano,periph=game,usb=uploadonly`): flash 48,139 of 50,944 B (2,805 spare), static RAM 17,812 of 18,416 B (604 spare). RAM is the tight budget, not flash.
+- Save pages: the repository's `tools/check_size.py` reports the image as 48,592 B, 453 B more than the compile's flash figure. Both A/B pages (0xF500, 0xF600) fit while the image is at most 50,432 B, so the margin is 1,840 B. Past that, the CHGame library's saving (`chgame/Save.cpp`) uses page B only.
 - Simulator-verified (as of 2026-10-01):
   - `chgame test` passes: 10,000 deals per layout cleared, golden deal hashes, every free tile reachable by the cursor.
   - Scripts `ui`, `match`, `clear`, `stuck`, `save` and `showcase` run clean in `tools/chsim/chdrive.py --sim`. They also ran clean once with the simulator built under UBSan.
@@ -15,18 +15,18 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 ## Design decisions
 
 - Chosen: mahjong solitaire, not 4-player mahjong.
-- Chosen: the D-pad hops between free tiles only (`src/game/Nav.cpp`):
+- Chosen: the D-pad hops between free tiles only (`Nav.cpp`):
   - UP/DOWN use CHChess's nearest-in-direction rule.
   - LEFT/RIGHT step through the free tiles in reading order.
   - Reason: the pure directional rule left some tiles unreachable. A host test proves every free tile can be reached.
 - Chosen: the cursor is both the lifted tile with an FX_B outline and CHChess's glove (the shared `tools/art/common/hand.png`).
-- Chosen: chips with streak scoring. The constants are in `src/game/Board.h` (`PAIR_PAYS`, `STREAK_FRAMES`, `HINT_COST`, `SHUFFLE_COST`, `CLEAR_BONUS`, `PAR_SECS`, `MAX_SHUFFLES`).
+- Chosen: chips with streak scoring. The constants are in `MahjongBoard.h` (`PAIR_PAYS`, `STREAK_FRAMES`, `HINT_COST`, `SHUFFLE_COST`, `CLEAR_BONUS`, `PAR_SECS`, `MAX_SHUFFLES`).
 - Rejected: a true isometric view (the genre uses the oblique view, and iso hides tiles at 128 px). Built instead: the hold-B 2x close-up, plus Options VIEW FULL/CLOSE.
 - Rejected: grey (SILVER) blocked tiles. Every tile is white with no blocked cue, and the glove shows which tiles are free. The reference look is GNOME Mahjongg.
 - Chosen: CLASSIC traditional faces by default. The old numbered faces stay as Options TILES EASY.
 - Chosen: tile bodies have an ivory (SKIN) side and a WOOD backing.
-- Rejected: gold sides (they looked gilded and drowned the gold cursor outline). `-DCHMJ_BODY_SIDE=GOLD` (`src/stage/Stage.cpp`) brings them back for comparison.
-- Title feel: "calm, like koi swimming". Keep it calm when changing the title (`src/states/Screens.cpp`):
+- Rejected: gold sides (they looked gilded and drowned the gold cursor outline). `-DCHMJ_BODY_SIDE=GOLD` (`Stage.cpp`) brings them back for comparison.
+- Title feel: "calm, like koi swimming". Keep it calm when changing the title (`Screens.cpp`):
   - Tiles mostly do coin-flip spins. A tumbler is only 1 in 12 (tumbling looked funny but off-vibe).
   - A turn every 5-10 s, a gentle sway and a slow sink.
   - The meteor glides across in about 1 s.
@@ -41,30 +41,30 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 - Simulator render estimates (unreliable, taken on a loaded host):
   - about 7-9 ms at 1x and about 11 ms at 2x;
   - in-between frames of the close-up whip up to about 30 ms (the whip steps one zoom level per tick, so it still takes 4 ticks).
-- The owner has not yet given a verdict on the glove drawing back to the table's bottom-right corner after 50 idle frames (`IDLE_FRAMES` in `src/stage/Stage.cpp`).
-- The sparrow art (`tools/art/bird.txt`) is another artist's work, and NOTICE still lacks its credit and licence. Fill them in when the owner supplies them.
+- The owner has not yet given a verdict on the glove drawing back to the table's bottom-right corner after 50 idle frames (`IDLE_FRAMES` in `Stage.cpp`).
+- The sparrow art (`tools/art/bird.txt`) is credited in NOTICE to an uncredited artist (the owner's wording, 2026-10-02).
 - The weakest close-up drawings in `tools/art/classic2x.txt` are the 15x23 green dragon (發) and the 1-bamboo bird.
 
 ## Gotchas
 
-- RAM has 604 B spare (release, since the move to the CHGame library and its sound engine: 17,812 of 18,416 B). The hot blitters run from SRAM (`RAMFUNC` in `src/gfx/Tile.cpp`; the CHGame library's sprite, 3x5 text, mask and shake loops), so their code counts against static RAM; the tile blitters alone take about 1.26 KB. Device debug builds have less spare RAM still (17,996 B, 420 B spare, since the debug protocol, saving and RAMFUNC moved to the CHGame library on 2026-10-02).
+- RAM has 604 B spare (release, since the move to the CHGame library and its sound engine: 17,812 of 18,416 B). The hot blitters run from SRAM (`RAMFUNC` in `Tile.cpp`; the CHGame library's sprite, 3x5 text, mask and shake loops), so their code counts against static RAM; the tile blitters alone take about 1.26 KB. Device debug builds have less spare RAM still (17,996 B, 420 B spare, since the debug protocol, saving and RAMFUNC moved to the CHGame library on 2026-10-02).
 - Device debug builds don't fit with everything:
-  - `config.h` turns on `CHMJ_LEAN`, which drops the EASY faces; `-DCHMJ_FULL` overrides it.
+  - `config.h` turns on `CHMJ_LEAN`, which drops the EASY faces and the particles (`SIZZLE_NO_PARTICLES` in `Fx.h`; with board package 0.3.0 the build was 8 B over until those went, 2026-10-02: now 49,528 B); `-DCHMJ_FULL` overrides it.
   - The simulator and release builds keep everything.
 - No debug write guard: a device debug run saves to the board's flash pages, the same pages every game uses.
 - `save::store()` builds the page in `gfx_chunkScratch()`, so call it only between `gfx_wait()` and the next flush.
 - A saved game is the seed, the layout and the pairs taken (plus shuffle markers), replayed.
   - The `GOLDEN` hashes in `tools/tests/test_board.cpp` guard the deal.
-  - If a layout or the deal generator changes them, bump `VERSION` in `src/save/Save.cpp` (magic "CHMJ").
+  - If a layout or the deal generator changes them, bump `VERSION` in `Save.cpp` (magic "CHMJ").
   - Deal generation runs a few pairs per frame and must give the same result however the work is split.
-- Palette: felt themes swap only `FELT_DK` and `FELT`. `FELT_LT` is the bamboo ink and stays green in every theme (the felt table in `src/Frame.cpp`, given to the CHGame library's `pal::setThemes`).
+- Palette: felt themes swap only `FELT_DK` and `FELT`. `FELT_LT` is the bamboo ink and stays green in every theme (the felt table in `Frame.cpp`, given to the CHGame library's `pal::setThemes`).
 - Some names clash with Arduino macros, and only on the device build: `bit` and `FLASH` here, `sq`, `map` and `word` in other games. Compile for the device early, not just the simulator.
 - Simulator `perf`/`cal` numbers are host time scaled by a calibration, so they are noisy on a busy host.
-- UBSan: the UBSan run above used a per-object build with `-fsanitize=undefined`. The one-shot build in the shared `../../../../../../../../../tools/chsim/chsim.py` has no sanitizer option and would not link with it.
+- UBSan: the UBSan run above used a per-object build with `-fsanitize=undefined`. The one-shot build in the shared `tools/chsim/chsim.py` (repository root) has no sanitizer option and would not link with it.
 - Faces: `python tools/faces.py` rewrites `tools/art/classic.txt` and `classic2x.txt`, overwriting any hand finishing in them. Diff before re-running. `tools/assets.py` computes the emboss shade.
 - Sparrow pipeline: `tools/bird.py` → `tools/art/bird.txt` → `tools/assets.py`.
   - The source sheet is not in the repo (default path `build/assets/Bird.gif`, gitignored), so edit `bird.txt` directly.
-  - Its acts (fly in, land, hop, peck, ... fly out) are scripted in `src/stage/Stage.cpp`.
+  - Its acts (fly in, land, hop, peck, ... fly out) are scripted in `Stage.cpp`.
   - It is about 4.8 KB of flash.
 - Compiler: the simulator and tests need `CHSIM_CXX` set, or zig/clang++/g++ on PATH (see the root CLAUDE.md).
 
@@ -76,7 +76,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
   - The classic set has two sizes: 8x12 (24 bytes a face) for the whole table, left flat because at 7 px an emboss muddies the strokes, and 16x24 (96 bytes) for the close-up, drawn pixel for pixel rather than doubled, with the dots and bamboo in their traditional patterns.
   - Each tile stands on a body drawn as two bands, ivory then wood, and the bottom layer casts a shadow on the felt. A tile lying squarely on another hides all of it but its body, so only that is drawn.
 - **The close-up** draws the pile through a camera: tiles at 1x and 2x are byte-wide copies from SRAM (at 2x a source pixel is a byte, a row two rows), and the whip's in-between sizes are drawn a pixel at a time. When nothing moves the pile is not redrawn at all: the outlines are palette colours that animate for free.
-- **Sound** is a piezo sequencer of short step lists (`src/audio/Sounds.cpp`): a clack for each tile dealt, two clacks and a chime that climbs with the streak for a pair, a rattle for the shuffle, CHBlackjack's fanfare for a cleared table, and the sparrow's chirp.
+- **Sound** is short step lists (`Sounds.cpp`) played by the CHGame library's piezo engine: a clack for each tile dealt, two clacks and a chime that climbs with the streak for a pair, a rattle for the shuffle, CHBlackjack's fanfare for a cleared table, and the sparrow's chirp.
 - **The sparrow** is nine of its animations (39 frames). Its visit is a list of acts - an animation, the order of its frames, how fast, which way it moves - and the game mirrors it to face either way.
 
 ## Development

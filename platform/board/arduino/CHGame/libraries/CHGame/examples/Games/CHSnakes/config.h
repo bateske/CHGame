@@ -1,7 +1,7 @@
 // CHSnakes build switches.
 //
 // Keep feature switches here rather than in --build-property flags. The game
-// needs the CHGame core 0.2.4+ with Optimize set to "Smallest + LTO" and the
+// needs the board package 0.3.0+ with Optimize set to "Smallest + LTO" and the
 // default Peripherals setting ("Game", which compiles out
 // Serial1/tone/HardwareTimer: ~4 KB of flash). Release builds also set USB
 // to "Upload only" (no Serial: ~0.6 KB).

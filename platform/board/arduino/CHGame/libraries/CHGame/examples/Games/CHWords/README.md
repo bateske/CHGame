@@ -46,10 +46,10 @@ To put it on the handheld: in the Arduino IDE, with the CHGame board package ins
 
 ## Developer notes
 
-- **A dictionary at three quarters of a byte a word.** `src/dict/FlashDict.cpp` decodes a list that `tools/dict/build_dict.py` front-codes, Huffman-codes by the letter before, and folds with 24 suffix rules, so 14,160 words are 4,535 entries.
-- **A CPU that scans instead of walking a graph.** `src/ai/Ai.cpp` reads the whole list twice a turn, first for the letters that fit each square's cross-word, then for every word everywhere it could go, a slice per tick so the screen keeps moving.
-- **The SD card between frames.** `src/dict/Dict.cpp` looks a word up with one 512-byte block read from a hash table on the card, with no index in RAM, through the CHSd library (`<Fat.h>`), which borrows the display's SPI after `gfx_wait()` and hands it back.
-- **Tiles drawn, not stored.** `src/stage/Stage.cpp` draws the board and its tiles at any square size from 8 to 16 pixels, which is what lets the camera whip between them; the serif letters in `src/gfx/Tiles.cpp` are anti-aliased with one in-between tone.
+- **A dictionary at three quarters of a byte a word.** `FlashDict.cpp` decodes a list that `tools/dict/build_dict.py` front-codes, Huffman-codes by the letter before, and folds with 24 suffix rules, so 14,160 words are 4,535 entries.
+- **A CPU that scans instead of walking a graph.** `Ai.cpp` reads the whole list twice a turn, first for the letters that fit each square's cross-word, then for every word everywhere it could go, a slice per tick so the screen keeps moving.
+- **The SD card between frames.** `Dict.cpp` looks a word up with one 512-byte block read from a hash table on the card, with no index in RAM, through the CHSd library (`<Fat.h>`), which borrows the display's SPI after `gfx_wait()` and hands it back.
+- **Tiles drawn, not stored.** `Stage.cpp` draws the board and its tiles at any square size from 8 to 16 pixels, which is what lets the camera whip between them; the serif letters in `Tiles.cpp` are anti-aliased with one in-between tone.
 - More in [NOTES.md](NOTES.md): design decisions, the dictionary tools, tests, the script commands and open items.
 
 ## Credits

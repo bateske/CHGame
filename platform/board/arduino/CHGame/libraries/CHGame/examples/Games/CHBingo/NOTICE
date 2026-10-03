@@ -2,7 +2,7 @@ CHBingo
 Copyright 2026 bateske
 
 From CHBlackjack (https://github.com/bateske/CHBlackjack, Apache-2.0): the
-input and frame pacing (src/CHGame.*), palette, drawing, outlined
+input and frame pacing (now the CHGame library's chgame/Input.*), palette, drawing, outlined
 lettering, effects, sound sequencer, flash saving, debug protocol, the PC
 simulator and tools, the table's wall and rail, the caller (the dealer from
 CHBlackjack's tables, with his expressions) and the broke screen's

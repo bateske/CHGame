@@ -23,7 +23,7 @@ no index in RAM:
 
 Every block is written, so the card never stalls on a block it has not seen
 before. After writing, every word is looked up again the way the game does
-it (src/dict/Dict.cpp), and so are as many non-words.
+it (Dict.cpp), and so are as many non-words.
 """
 import random
 import struct

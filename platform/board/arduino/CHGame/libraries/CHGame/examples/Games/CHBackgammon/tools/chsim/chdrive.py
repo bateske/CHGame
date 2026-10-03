@@ -6,7 +6,7 @@
 The repository's tools/chsim/chdrivelib.py does the driving and has the
 common script commands (wait, step, tap, hold, snap, gif, rec, free, say,
 perf, prof ...). `say` sends a game command (the list above debugHook() in
-src/states/Screens.cpp) and prints its reply lines (THINK, RPROF, NET).
+Screens.cpp) and prints its reply lines (THINK, RPROF, NET).
 CHBackgammon adds:
     goto SPOT [W]       walk the glove to a spot with D-pad taps, W frames apart (6): one of
                         the side's points 1..24, 25 = its bar, 0 = its tray (the R command)

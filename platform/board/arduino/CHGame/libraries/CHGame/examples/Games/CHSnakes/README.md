@@ -50,10 +50,10 @@ To put it on the handheld: in the Arduino IDE, with the CHGame board package ins
 
 ## Developer notes
 
-- **Snakes without sprites.** In `src/board/Board.cpp` each snake is a chain of round beads along the line from head to tail, pushed sideways by a sine wave that travels down the body, so it wriggles, thrashes after a meal and shows a bulge in your colour going down. Only the head is art, turned the way the neck runs.
+- **Snakes without sprites.** In `BoardView.cpp` each snake is a chain of round beads along the line from head to tail, pushed sideways by a sine wave that travels down the body, so it wriggles, thrashes after a meal and shows a bulge in your colour going down. Only the head is art, turned the way the neck runs.
 - **A zooming top-down board from row patterns.** The board is drawn in world space and the view is a zoom about the camera, whipping between the whole board and the close-up a step a frame. Each row of the screen is a copy of one of five patterns, and the span fillers are `RAMFUNC`s while the rest of the file is `#pragma GCC optimize("Os")`.
-- **Rules apart from the show.** `src/game/Game.cpp` is plain logic with no graphics: a phase machine that reports events (dice, moves, ladders, snakes, bumps) and waits while `src/stage/Stage.cpp` shows them. The host tests play 100,000 games through it.
-- **A strong CPU in 101 bytes.** The SHARK's knowledge is `TURNS[]` in `src/game/Cpu.cpp`, the turns still to go from each square with the best play, worked out on the PC by `tools/turns.py` and checked against the board by the tests.
+- **Rules apart from the show.** `Game.cpp` is plain logic with no graphics: a phase machine that reports events (dice, moves, ladders, snakes, bumps) and waits while `Stage.cpp` shows them. The host tests play 100,000 games through it.
+- **A strong CPU in 101 bytes.** The SHARK's knowledge is `TURNS[]` in `Cpu.cpp`, the turns still to go from each square with the best play, worked out on the PC by `tools/turns.py` and checked against the board by the tests.
 - **The title is the game playing itself**: four CPUs at ARCADE behind the lettering.
 - More in [NOTES.md](NOTES.md): design decisions, tests, the script commands and open items.
 

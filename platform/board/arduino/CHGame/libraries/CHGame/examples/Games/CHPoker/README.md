@@ -49,10 +49,10 @@ To put it on the handheld: in the Arduino IDE, with the CHGame board package ins
 
 ## Developer notes
 
-- **A hand evaluator with no tables.** `src/game/Hand.cpp` builds a rank mask per suit, finds straights with four shifts and ANDs, and counts ranks for pairs, trips and quads, for 1 to 7 cards at once. The host tests check it over every five-card and seven-card hand.
-- **CPU thinking spread over frames.** `src/game/Ai.cpp` runs a fixed number of random play-outs on each frame's first logic tick (see `CHPoker.ino`), so the table keeps animating and scripted runs stay deterministic.
-- **Rules without graphics.** `src/game/Table.cpp` plays the hand and emits events (`Ev::Deal`, `Ev::Action`, ...); `src/stage/Stage.cpp` turns them into motion. The same rules compile into the host tests with no display.
-- **Four games as data.** `src/game/Variant.cpp` describes each game's limit, cards and streets in one table row, and the three tables' stakes in another.
+- **A hand evaluator with no tables.** `Hand.cpp` builds a rank mask per suit, finds straights with four shifts and ANDs, and counts ranks for pairs, trips and quads, for 1 to 7 cards at once. The host tests check it over every five-card and seven-card hand.
+- **CPU thinking spread over frames.** `Ai.cpp` runs a fixed number of random play-outs on each frame's first logic tick (see `CHPoker.ino`), so the table keeps animating and scripted runs stay deterministic.
+- **Rules without graphics.** `Table.cpp` plays the hand and emits events (`Ev::Deal`, `Ev::Action`, ...); `Stage.cpp` turns them into motion. The same rules compile into the host tests with no display.
+- **Four games as data.** `Variants.cpp` describes each game's limit, cards and streets in one table row, and the three tables' stakes in another.
 - **A still table is not redrawn.** `stage::render()` returns false when nothing changed and the frame is sent again, so the palette's rainbow and gold pulses keep moving for free.
 - More in [NOTES.md](NOTES.md): design decisions, how it fits, tests, the script commands and open items.
 

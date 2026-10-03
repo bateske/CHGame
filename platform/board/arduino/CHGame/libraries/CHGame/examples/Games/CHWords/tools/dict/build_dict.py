@@ -25,7 +25,7 @@ The format (measure.py chose it: a third of the size of a DAWG):
     codes of each length, then the symbols in code order.
   * Blocks start on a byte; DICT_INDEX holds each block's offset.
 
-The decoder is src/dict/FlashDict.cpp; decode() below is its reference and
+The decoder is FlashDict.cpp; decode() below is its reference and
 round-trips every word before anything is written.
 """
 import argparse

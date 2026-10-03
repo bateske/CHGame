@@ -35,8 +35,9 @@ transparent. Paint only with the colour table's colours.
           White and on Black. Editing a square changes the swap too (the
           chip rows win if both changed).
 
-The import writes tools/art/chip.png, chiptop.png and hand.png (only those
-that changed; a .png takes over from the .txt beside it) and
+The import writes tools/art/chip.png and chiptop.png (only those that
+changed; a .png takes over from the .txt beside it), the glove to the
+shared tools/art/common/hand.png (every game that draws it gets the change), and
 tools/art/sides.txt, then runs tools/assets.py.
 
 Palette: the swatch lists the 16 colours. FX_A and FX_B are animated in
@@ -72,7 +73,7 @@ KEY_Y = 12 + 3 * CH + 10                   # SWAP key: three rows of squares
 KEY_STEP, KEY_SQ = 7, 6
 # The chips: name, label, column (its king preview is the next one), the
 # point of the art that sits on AX, AY (the game draws from fixed offsets:
-# assets.CHIP_ANCHOR; chiptop at x - 4, y - 6 in src/stage/Stage.cpp), and
+# assets.CHIP_ANCHOR; chiptop at x - 4, y - 6 in Stage.cpp), and
 # how much higher the upper chip of a king is drawn.
 CHIPS = [("chip", "CHIP", 0, CHIP_ANCHOR, 3), ("chiptop", "TOP", 2, (4, 6), 2)]
 HAND_COL = 4
@@ -296,8 +297,14 @@ def import_(path):
     if not got:
         notes.append("MASTER hand: empty cell - left as it was")
     elif got[0] != load_hand():
-        save_png(ART / "hand.png", got[0])
-        print("art: hand -> tools/art/hand.png")
+        # The glove is shared art: save it back where it came from (through
+        # artlib, the repository's tools/art/common/), not a copy here that
+        # would leave CHCheckers' apart from the other games'.
+        dst = assets.artlib.art(HERE, "hand.png")
+        save_png(dst, got[0])
+        print(f"art: hand -> {dst}")
+        print("note: the glove is shared: run tools/assets.py in every game that uses it "
+              "(grep -l hand.png in the games' tools/assets.py), then check their frames")
 
     for n in notes:
         print("note:", n)

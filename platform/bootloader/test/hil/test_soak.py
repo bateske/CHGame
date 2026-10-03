@@ -31,7 +31,7 @@ from chgame_upload.client import Client, ensure_bootloader, find_ports   # noqa:
 from chgame_upload import upload as up                                   # noqa: E402
 from chgame_upload import protocol as P                                  # noqa: E402
 
-FQBN = "CHGame:ch32v:CHGame"
+FQBN = "CHGame:ch32v:rev0"
 
 
 def build(sketch: pathlib.Path, out: pathlib.Path) -> bytes:

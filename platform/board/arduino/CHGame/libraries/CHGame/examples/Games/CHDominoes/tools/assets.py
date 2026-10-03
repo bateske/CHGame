@@ -7,7 +7,7 @@ Sources, all in tools/art/:
   * aafont.txt: the serif lettering, anti-aliased (from tools/aafont.py).
   * logo.txt: the title's name at its full size, letter by letter.
 
-The tiles themselves are drawn by the game (src/table/Table.cpp): there is
+The tiles themselves are drawn by the game (Table.cpp): there is
 no art for them here.
 
 Outputs:
@@ -29,7 +29,7 @@ OUT_H = ROOT / "src" / "assets" / "Assets.h"
 OUT_C = ROOT / "src" / "assets" / "Assets.cpp"
 PREVIEW = ROOT / "build" / "assets"
 
-# Must match COLOURS in src/gfx/Colours.cpp.
+# Must match COLOURS in Colours.cpp.
 PALETTE = [0x000, 0xFFF, 0x042, 0x173, 0x4B5, 0xBBC, 0xE12, 0x702,
            0xFC2, 0x741, 0x26E, 0x125, 0xEEE, 0x445, 0xF0F, 0xFC2]
 # Letters used in tools/art/*.txt. ' ' / '.' = transparent.

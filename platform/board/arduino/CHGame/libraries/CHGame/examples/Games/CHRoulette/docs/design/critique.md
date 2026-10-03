@@ -1,6 +1,8 @@
 # CHRoulette spec review: verdict, issues with fixes, decisions for the user
 
-Path shorthand: `BJ` = `CHBlackjack`, `CC` = `CHChess`, `GFX` = `<sketchbook>\libraries\CHGfx`.
+*Written while designing CHRoulette; paths and names brought up to date on 2026-10-02.*
+
+Path shorthand: `BJ` = `CHBlackjack`, `CC` = `CHChess`, `GFX` = the board package's CHGfx 1.3.0 (`platform\board\arduino\CHGame\libraries\CHGfx`).
 
 ## 0. Verdict
 
@@ -34,7 +36,7 @@ The three specs are strong but don't agree with each other.
    - A: $100 inside, $250 outside, $1,000 table; this is what keeps `uint8_t` valid.
    - C: $200 on every spot.
    - Pick one set (§8.3) and `static_assert` the cap ≤ 255.
-5. **Wrap.** A wraps on taps; C never wraps and plays Deny. CC wraps (`CC\src\states\Screens.cpp:340-358`). **Use A** (§8.2).
+5. **Wrap.** A wraps on taps; C never wraps and plays Deny. CC wraps (`CC\Screens.cpp`, `nearest()`). **Use A** (§8.2).
 6. **Bar order.**
    - A: `CLR | $1 $5 $10 $25 $100 | SPIN`.
    - C: chips, then CLR, then SPIN.
@@ -53,7 +55,7 @@ The three specs are strong but don't agree with each other.
 10. **Ball solver.**
     - C's u16 turn angles can't shift by whole pockets exactly (65,536/37 isn't an integer). That is why it needs a "±1 last hop" live correction, which contradicts its own "exact by construction".
     - **Use B:** pocket units and a rotor shift of `k<<16`.
-    - Put the sim in `src\game\Ball.*` so `run_tests.py`'s `src/game/*.cpp` glob picks it up. B and C named different places.
+    - Put the sim beside the rules (then `src\game\`) so the test runner's glob of that folder picks it up. B and C named different places. (It is now `Ball.cpp` beside the `.ino`, tested by `tools/tests/run_ball_tests.py`.)
 11. **Wheel size and cost.**
     - B: CX 64, CY 86, rim R60, ring R26..44, 561 B map, about 3.5–3.9 ms a frame.
     - C: (64, 88), rim 62/31, about 1,000 B map, about 2 ms.
@@ -62,13 +64,13 @@ The three specs are strong but don't agree with each other.
 13. **Menu font.**
     - B's title uses `text35x2` (298 B of SRAM code in CC's map); C keeps BJ's 5×7 `gfx_text` (264 B SRAM + 475 B font).
     - Linking both wastes about 0.6 KB of flash and 300 B of SRAM. **Use BJ's 5×7 everywhere**, since the plaque already needs it.
-14. **Plate width.** C says plate names "fit 124 px". The real limit is 120: CC `plate()` makes the plate `tw + 8` wide (`CC\src\stage\Stage.cpp:766-779`). **Use A's rule:** if the text is over 120 px, drop the number list.
+14. **Plate width.** C says plate names "fit 124 px". The real limit is 120: CC `plate()` makes the plate `tw + 8` wide (`CC\Stage.cpp`). **Use A's rule:** if the text is over 120 px, drop the number list.
 15. **Palette modes.** C's merge drops TARGETS, which A names as its fallback; B needs CASINO for the FX_A win pocket.
     - **Simplify to CASINO only:**
       - hover rings in **FX_B**: the gold-to-white pulse never goes dark on INK or RED cells, where HOVER's grey ramp turns black for half its 64-frame cycle;
       - the hovered stack's outline in `fx::RAIN[(frame>>3)%5]`, the CC picked-up idiom.
     - Delete `setMode` and the HOVER mode.
-16. **Payout events.** A emits a rules event per spot (Clear/Lose/Win/Collect); C emits one Settle. **Use C.** BJ's queue drops events silently once it holds 16 (`BJ\src\game\Round.cpp:93-98`).
+16. **Payout events.** A emits a rules event per spot (Clear/Lose/Win/Collect); C emits one Settle. **Use C.** BJ's queue drops events silently once it holds 16 (`BJ\Round.cpp`, `Round::emit()`).
 17. **Sound names.** B uses Clack, Thunk and Hop; C uses Spin, Rattle, Thunk, Tick and Tock. Merge into one enum with soft effects last (`soft = s >= Tick`), and add `blip(hz, ms, soft)`.
 18. **Wording.**
     - "1st DOZEN" (A) against "2ND DOZEN" (C): keep the lowercase ordinals on the felt and use uppercase "1ST DOZEN 1-12" in the plate.
@@ -91,7 +93,7 @@ The three specs are strong but don't agree with each other.
     - Mock it in P0 before committing.
 - **Plaque overflow.** The 5×7 bold purse fits up to "$100000" (41+1 px in a 48 px plaque). ENDLESS can pass that. Show "$1.2M"-style or switch to text35 at 7 digits or more.
 - **Stacks to the rack.**
-  - BJ `flyY` clamps stacks to y ≥ `RAIL_Y+RAIL_H+9` = 55 (`BJ\src\fx\Presenter.cpp:540`).
+  - BJ `flyY` clamps stacks to y ≥ `RAIL_Y+RAIL_H+9` = 55 (`BJ\Presenter.cpp`).
   - A's STACK_TO_TRAY target (76, 47) therefore stops on the top number row and vanishes.
   - **Fix:** for TRAY and WIN_IN, clamp at `RAIL_Y`, and mark rows 42..47 as moving so the wall band redraws.
 
@@ -143,7 +145,7 @@ The three specs are strong but don't agree with each other.
 ## 3. Logic holes (correctness)
 
 1. **SAVE & QUIT mid-spin.**
-   - BJ's quit saves the purse with stakes already deducted, so it forfeits them (`BJ\src\states\Screens.cpp:360-365`; the `mid` flag there is unused).
+   - BJ's quit saves the purse with stakes already deducted, so it forfeits them (the pause menu in `BJ\Screens.cpp`'s `playUpdate()`; the `mid` flag there is unused).
    - In roulette the result is decided at NoMoreBets and is visible before Settle. A refund policy would let a player quit to cancel a loss; a forfeit policy robs a winner.
    - **Fix:**
      - During Betting, refund the bets and save them as the rebet layout.
@@ -156,7 +158,7 @@ The three specs are strong but don't agree with each other.
    - B's ×4 makes the rotor turn about 1.8 rev/s, which is about 1.1 pockets per frame: exactly the red/black strobe B warns about.
    - **Fix:** require a fresh A press after the whip; fast-forward ×2 at most (or ×4 only before the rotor phase).
 4. **Plaque hidden by the bubble.**
-   - BJ draws the bubble *instead of* the plaque (`Presenter.cpp:603-604`) and holds it 100 frames (`:302`).
+   - BJ draws the bubble *instead of* the plaque (`Presenter.cpp`, `render()`) and holds it 100 frames (the `Say` event in `onEvents()`).
    - So "PLACE YOUR BETS" hides PURSE/BET while you bet, and "WINNER!" hides the rolling purse at the climax.
    - **Fix:**
      - Any A or B betting input dismisses the bubble.
@@ -167,8 +169,8 @@ The three specs are strong but don't agree with each other.
    - The banner sits at cy ≈ 84 with rows ±12 and x 18..110. Pockets at the sides of the wheel (y ≈ 80–92) are under it.
    - **Fix:** put the banner at cy ≈ 58 (over the far rim), or flip to cy ≈ 112 when the ball's y < 80. Flash the pocket (WHITE for 4 frames, then FX_A) for 12 frames before the banner pops.
 6. **Debug hook letters.**
-   - C's `Y` (allow flash writes) collides with CC's `Y` (RPROF device render profile), which P4/P7 need for measurements (`CC\src\states\Screens.cpp:637-646`).
-   - C also drops `Q`, which chdrive's `cal` and C's own P3 "perf/cal ≤ 4 ms" check depend on (`:675`).
+   - C's `Y` (allow flash writes) collides with CC's `Y` (RPROF device render profile), which P4/P7 need for measurements (`CC\Screens.cpp`, `debugHook()`).
+   - C also drops `Q`, which chdrive's `cal` and C's own P3 "perf/cal ≤ 4 ms" check depend on (then a CC hook; now the protocol's own, in the CHGame library's `chgame/Debug.cpp`).
    - **Fix:** keep `Y` = RPROF and `Q` = cal, and use `E 1/0` for "enable flash writes".
    - Add a route command (a BFS over `Nav`, as CC's `R`) under a free letter such as `U`, so showcase scripts walk the glove instead of teleporting it.
 7. **Event amounts.** Widen to int32 in all three specs (agreed). Also widen `Fly.value` and `pending`.
@@ -177,7 +179,7 @@ The three specs are strong but don't agree with each other.
 ## 4. UX (glove, controls, readability)
 
 - **Diagonal taps rarely fire.**
-  - CC moves diagonally only when two `repeat()`s fire on the same frame (`CC\src\states\Screens.cpp:368-373`).
+  - CC moves diagonally only when two `repeat()`s fire on the same frame (`CC\Screens.cpp`, `playInput()`).
   - Treat corners as "right, then up" (two taps) and don't advertise diagonals.
   - Optional: if a second direction arrives within 3 frames while the first is held, merge them.
 - **Half-step cost.** A tap is half a cell, so reaching the next number takes two taps, and runs start at frame 23.
@@ -211,7 +213,7 @@ The three specs are strong but don't agree with each other.
   - a stats note on the house edge (optional).
 - **Pause.** Freezes the ball sim because it steps in `present::update`. Pause and the toast force `redrawAll`, which costs about 8 ms on the wheel view; acceptable.
 - **Demo.**
-  - Keep the purse topped up the way BJ does (`Screens.cpp:336`).
+  - Keep the purse topped up the way BJ does (`Screens.cpp`, `demoInput()`).
   - Seed the rules with `fx::rnd()`, and `save::load` on any press.
 - **Sound option.** SOUND LEAD/ARPEGGIO/OFF in Options, since SELECT is now the chip cycle.
 - **Tests (beyond C):**
@@ -220,7 +222,7 @@ The three specs are strong but don't agree with each other.
   - Mid-spin quit conserves money.
   - Ball solver: shift invariance makes testing all targets redundant. Run 200 seeds × all targets plus 10k seeds × one random target, not 10k × all (about 1.5 M simulations under UBSan).
   - A sim script that crosses a whip, to catch `BUG:` scratch use.
-- **Tools.** `tools/pixkit.py` should **parse** `FONT35`/`IDX35` out of `src/gfx/Draw.cpp` (regex), not port it by hand, so they can't drift. Keep CC's `gifsheet.py`.
+- **Tools.** `tools/pixkit.py` should **parse** `FONT35`/`IDX35` out of the game's `Draw.cpp` (regex), not port it by hand, so they can't drift. Keep CC's `gifsheet.py`. (Both are now the repository's: `tools/pixkit.py` parses `FONT35` from the CHGame library's `chgame/Draw.cpp`, and `tools/chsim/gifsheet.py` serves every game.)
 - **README and NOTICE.**
   - C's text is correct: the croupier and lettering credited to PPOT (vampirics, filmote), Apache-2.0, plus the BJ and CC lines.
   - I checked the PPOT clone: "Pharap" appears only in `Game.*` and `GameContext.*`, which aren't used, and BJ and CC mention him nowhere. Keep it that way.
@@ -231,7 +233,7 @@ The three specs are strong but don't agree with each other.
 |---|---|
 | Full table-band redraw 1.5–2.7 ms (A, C) | sim `cal`/`perf` (needs the `Q` hook), then device `Y` RPROF in P3 |
 | Ring 0.5 ms, LUT 0.6 ms | `Y` on device in P4. Promote `buildLut` to SRAM if the landing frame is > 8.3 ms |
-| Near-side tucking of the stacked ellipses | B's `wheel.py` preview, which uses the `EllipseRows` arithmetic from `GFX\src\CHGfx_extras.cpp:100-113` |
+| Near-side tucking of the stacked ellipses | B's `wheel.py` preview, which uses the `EllipseRows` arithmetic from `GFX\src\CHGfx_extras.cpp` |
 | HOVER grey visible on INK/RED | moot if FX_B rings are used |
 | `1ull<<n` pulls in `__ashldi3` | moot: use `covers()` |
 | Flash removal figures | P1 skeleton build with `check_size.py` |
@@ -272,8 +274,8 @@ The three specs are strong but don't agree with each other.
 9. **Scope if flash gets tight.** Confirm the cut order: credits back room, then hot/cold, then the attract demo, then the title tune, then the 5×7 font. The American wheel and the chip art are never cut.
 
 ### Critical Files for Implementation
-- CHBlackjack\src\fx\Presenter.cpp
-- CHBlackjack\src\states\Screens.cpp
-- CHChess\src\stage\Stage.cpp
-- CHChess\src\gfx\Draw.cpp
-- <sketchbook>\libraries\CHGfx\src\CHGfx_extras.cpp
+- CHBlackjack\Presenter.cpp
+- CHBlackjack\Screens.cpp
+- CHChess\Stage.cpp
+- the CHGame library's chgame\Draw.cpp (then CHChess's own)
+- GFX\src\CHGfx_extras.cpp

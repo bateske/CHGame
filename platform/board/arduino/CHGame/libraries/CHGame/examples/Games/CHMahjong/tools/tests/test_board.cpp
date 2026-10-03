@@ -6,9 +6,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include "../../src/game/Board.h"
+#include "../../MahjongBoard.h"
 #include "../../src/game/Layouts.h"
-#include "../../src/game/Nav.h"
+#include "../../Nav.h"
 
 using namespace board;
 
@@ -47,7 +47,7 @@ static void testLayouts() {
         CHECK(count % 2 == 0 && count <= MAX_TILES);
         for (uint8_t i = 0; i < count; i++) {
             CHECK(pos[i].x2 <= 28 && pos[i].y2 <= 14 && pos[i].z <= 4);
-            // On the screen (src/stage/Stage.cpp: the pile starts at 4, 14).
+            // On the screen (Stage.cpp: the pile starts at 4, 14).
             CHECK(4 + px(i) >= 0 && 4 + px(i) + 10 <= 128 && 14 + py(i) >= 12 && 14 + py(i) + 14 <= 116);
             for (uint8_t j = (uint8_t)(i + 1); j < count; j++) {
                 int dx = pos[j].x2 - pos[i].x2, dy = pos[j].y2 - pos[i].y2;

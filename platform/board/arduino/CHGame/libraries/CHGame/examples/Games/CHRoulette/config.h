@@ -1,7 +1,7 @@
 // CHRoulette build switches.
 //
 // Keep feature switches here rather than in --build-property flags. The game
-// is built with the CHGame core 0.2.4+, Optimize "Smallest + LTO" and the
+// is built with the board package 0.3.0+, Optimize "Smallest + LTO" and the
 // default Peripherals setting ("Game", which compiles out
 // Serial1/tone/HardwareTimer: ~3.4 KB of flash); release builds also set USB
 // "Upload only" (no Serial). tools/device.py has the exact settings.
@@ -18,8 +18,8 @@
 // need: every CHGAME_DEBUG build, the simulator included, has no music scores
 // (src/audio/Music.cpp, from tools/make_music.py), and device debug builds
 // (CHRL_LEAN) also draw the win and broke screens' titles in title35
-// lettering instead of the PPOT bitmaps and drop the credits page (when
-// CHRL_CREDITS is on), unless built with -DCHRL_FULL. Saving stays.
+// lettering instead of the PPOT bitmaps, drop the credits page (when
+// CHRL_CREDITS is on) and the particles (Fx.h), unless built with -DCHRL_FULL. Saving stays.
 // Release builds keep everything.
 #if CHGAME_DEBUG && !defined(CHSIM) && !defined(CHRL_FULL)
 #define CHRL_LEAN        1

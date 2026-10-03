@@ -1,7 +1,7 @@
-// Host tests for src/game/Klondike.cpp: chgame test
+// Host tests for Klondike.cpp: chgame test
 #include <stdio.h>
 #include <string.h>
-#include "../../src/game/Klondike.h"
+#include "../../Klondike.h"
 
 static int checks, failures;
 #define CHECK(c) do { checks++; if (!(c)) { failures++; printf("FAIL %s:%d: %s\n", __FILE__, __LINE__, #c); } } while (0)

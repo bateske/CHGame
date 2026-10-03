@@ -35,7 +35,7 @@ LETTER = {"k": 0, "w": 1, "d": 2, "f": 3, "g": 4, "s": 5, "r": 6, "m": 7,
           "y": 8, "b": 9, "u": 10, "n": 11, "p": 12, "c": 13, "x": 14, "z": 15}
 TRANSPARENT = 16
 
-# The table the game indexes: tokens by seat (see src/stage/Stage.cpp).
+# The table the game indexes: tokens by seat (see Stage.cpp).
 TOKENS = ["TOKEN_CHERRIES", "TOKEN_BANANA", "TOKEN_APPLE", "TOKEN_STRAWBERRY"]
 # Stored a bit a pixel (rows, MSB first), not as a colour sprite.
 MONO = ["LOGO_SNAKES", "LOGO_LADDERS"]

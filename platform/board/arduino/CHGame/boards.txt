@@ -20,56 +20,56 @@ menu.periph=Peripherals
 menu.usb=USB
 menu.boot=Bootloader (for Burn Bootloader)
 
-CHGame.name=CHGame
+rev0.name=CHGame Rev0
 
-CHGame.build.core=arduino
-CHGame.build.board=CHGame
-CHGame.build.mcu=QingKe-V4C
-CHGame.build.series=CH32X035
-CHGame.build.chip=CH32X035G8U
-CHGame.build.variant=CH32X035/CHGame
-CHGame.build.variant_h=variant_CHGame.h
-CHGame.build.march=rv32imacxw
-CHGame.build.mabi=ilp32
-CHGame.build.math_lib_gcc=-lm
-CHGame.build.ch_extra_lib=-lprintf
+rev0.build.core=arduino
+rev0.build.board=CHGAME_REV0
+rev0.build.mcu=QingKe-V4C
+rev0.build.series=CH32X035
+rev0.build.chip=CH32X035G8U
+rev0.build.variant=CH32X035/CHGame_Rev0
+rev0.build.variant_h=variant_CHGame_Rev0.h
+rev0.build.march=rv32imacxw
+rev0.build.mabi=ilp32
+rev0.build.math_lib_gcc=-lm
+rev0.build.ch_extra_lib=-lprintf
 
 # Relocated application: the first 12 KB of flash belong to the bootloader.
 # This script and the numbers below mirror platform/bootloader/src/chgame_map.h
 # in the CHGame repository. They are kept in step by hand: change them together.
-CHGame.build.ldscript=link_chgame_app.ld
-CHGame.upload.maximum_size=50944
+rev0.build.ldscript=link_chgame_app.ld
+rev0.upload.maximum_size=50944
 # RAM for .data + .bss (and the heap above them): the 20,464 B after the boot
 # magic, less the fixed 2 KB stack the linker script reserves at the top. The
 # link already fails past this point (.stack overlaps .bss), so reporting it as
 # the maximum makes the IDE's percentage the real one. The stack is separate.
-CHGame.upload.maximum_data_size=18416
+rev0.upload.maximum_data_size=18416
 # The IDE's "Low memory available" warning, as a percentage of the above. Its
 # default of 75% fires for any sketch with a framebuffer; at 95% it means under
 # ~900 B left for the heap.
-CHGame.build.warn_data_percentage=95
+rev0.build.warn_data_percentage=95
 
 # USB flags come from the USB menu below.
-CHGame.build.flags.clock=-DSYSCLK_FREQ_48MHz_HSI=48000000 -DF_CPU=48000000
+rev0.build.flags.clock=-DSYSCLK_FREQ_48MHz_HSI=48000000 -DF_CPU=48000000
 
 # The uploader performs the whole app -> bootloader -> app transition itself,
 # so the IDE must NOT also touch the port: a second 1200-baud touch, or the IDE
 # racing us to grab the rediscovered port, is a reliable way to break an upload
 # that would otherwise work.
-CHGame.upload.tool=chgame_upload
-CHGame.upload.protocol=chgame
-CHGame.upload.use_1200bps_touch=false
-CHGame.upload.wait_for_upload_port=false
-CHGame.upload.native_usb=true
+rev0.upload.tool=chgame_upload
+rev0.upload.protocol=chgame
+rev0.upload.use_1200bps_touch=false
+rev0.upload.wait_for_upload_port=false
+rev0.upload.native_usb=true
 
 # Burn Bootloader writes the image chosen in the Bootloader menu below, over
 # USB or through the factory ISP (Tools > Programmer, programmers.txt). The
 # images are shipped with the platform so a user never has to locate or build
 # a bootloader binary.
-CHGame.bootloader.tool=chgame_upload
+rev0.bootloader.tool=chgame_upload
 
-CHGame.vid.0=0x16C0
-CHGame.pid.0=0x27DD
+rev0.vid.0=0x16C0
+rev0.pid.0=0x27DD
 
 # Link-time optimisation: the core, the libraries and the sketch are optimised
 # as one program. The link needs no extra flag - gcc sees the LTO objects and
@@ -77,25 +77,25 @@ CHGame.pid.0=0x27DD
 # 0.3.0: the casino games among the examples are written for it, and with -Os
 # alone the larger ones do not fit. -Os links faster and its map file is
 # easier to read (with LTO, functions merge and gain .constprop/.part names).
-CHGame.menu.opt.oslto=Smallest + LTO (-Os -flto, default)
-CHGame.menu.opt.oslto.build.flags.optimize=-Os -flto
-CHGame.menu.opt.osstd=Smallest (-Os)
-CHGame.menu.opt.osstd.build.flags.optimize=-Os
-CHGame.menu.opt.o1std=Fast (-O1)
-CHGame.menu.opt.o1std.build.flags.optimize=-O1
-CHGame.menu.opt.o2std=Faster (-O2)
-CHGame.menu.opt.o2std.build.flags.optimize=-O2
-CHGame.menu.opt.o3std=Fastest (-O3)
-CHGame.menu.opt.o3std.build.flags.optimize=-O3
-CHGame.menu.opt.ogstd=Debug (-Og)
-CHGame.menu.opt.ogstd.build.flags.optimize=-Og
+rev0.menu.opt.oslto=Smallest + LTO (-Os -flto, default)
+rev0.menu.opt.oslto.build.flags.optimize=-Os -flto
+rev0.menu.opt.osstd=Smallest (-Os)
+rev0.menu.opt.osstd.build.flags.optimize=-Os
+rev0.menu.opt.o1std=Fast (-O1)
+rev0.menu.opt.o1std.build.flags.optimize=-O1
+rev0.menu.opt.o2std=Faster (-O2)
+rev0.menu.opt.o2std.build.flags.optimize=-O2
+rev0.menu.opt.o3std=Fastest (-O3)
+rev0.menu.opt.o3std.build.flags.optimize=-O3
+rev0.menu.opt.ogstd=Debug (-Og)
+rev0.menu.opt.ogstd.build.flags.optimize=-Og
 
-CHGame.menu.rtlib.nano=Newlib Nano (default)
-CHGame.menu.rtlib.nano.build.flags.ldflags=--specs=nano.specs --specs=nosys.specs
-CHGame.menu.rtlib.nanofp=Newlib Nano + Float Printf
-CHGame.menu.rtlib.nanofp.build.flags.ldflags=--specs=nano.specs --specs=nosys.specs -u _printf_float
-CHGame.menu.rtlib.full=Newlib Standard
-CHGame.menu.rtlib.full.build.flags.ldflags=--specs=nosys.specs
+rev0.menu.rtlib.nano=Newlib Nano (default)
+rev0.menu.rtlib.nano.build.flags.ldflags=--specs=nano.specs --specs=nosys.specs
+rev0.menu.rtlib.nanofp=Newlib Nano + Float Printf
+rev0.menu.rtlib.nanofp.build.flags.ldflags=--specs=nano.specs --specs=nosys.specs -u _printf_float
+rev0.menu.rtlib.full=Newlib Standard
+rev0.menu.rtlib.full.build.flags.ldflags=--specs=nosys.specs
 
 # Which core peripherals are compiled in. core.a is linked --whole-archive, so
 # Serial1's constructor and the USART and timer IRQ handlers are always
@@ -110,10 +110,10 @@ CHGame.menu.rtlib.full.build.flags.ldflags=--specs=nosys.specs
 # platform.txt, rather than in compiler.*.extra_flags or build.extra_flags:
 # sketches and CLI users override those, and doing so silently dropped these
 # flags once already.
-CHGame.menu.periph.game=Game: USB Serial only, no Serial1/tone/PWM (default, ~4 KB smaller)
-CHGame.menu.periph.game.build.flags.periph=-DUART_MODULE_ONLY -DTIM_MODULE_ONLY
-CHGame.menu.periph.full=Full: Serial1 on H1, tone(), PWM, HardwareTimer
-CHGame.menu.periph.full.build.flags.periph=
+rev0.menu.periph.game=Game: USB Serial only, no Serial1/tone/PWM (default, ~4 KB smaller)
+rev0.menu.periph.game.build.flags.periph=-DUART_MODULE_ONLY -DTIM_MODULE_ONLY
+rev0.menu.periph.full=Full: Serial1 on H1, tone(), PWM, HardwareTimer
+rev0.menu.periph.full.build.flags.periph=
 
 # Serial is native USB CDC, and the 1200-baud upload handshake is handled inside
 # the USB interrupt (cores/arduino/ch32/usb). Sketches need no special code.
@@ -127,10 +127,10 @@ CHGame.menu.periph.full.build.flags.periph=
 # There is deliberately no "None": a sketch built without USB cannot be
 # re-uploaded while it runs, which breaks the promise that every sketch stays
 # uploadable.
-CHGame.menu.usb.serial=Serial (default)
-CHGame.menu.usb.serial.build.usb_flags=-DUSE_CHGAME_USB_CDC
-CHGame.menu.usb.uploadonly=Upload only: no Serial (~0.7 KB smaller)
-CHGame.menu.usb.uploadonly.build.usb_flags=-DUSE_CHGAME_USB_BOOTONLY
+rev0.menu.usb.serial=Serial (default)
+rev0.menu.usb.serial.build.usb_flags=-DUSE_CHGAME_USB_CDC
+rev0.menu.usb.uploadonly=Upload only: no Serial (~0.7 KB smaller)
+rev0.menu.usb.uploadonly.build.usb_flags=-DUSE_CHGAME_USB_BOOTONLY
 
 # Which bootloader Burn Bootloader writes. It changes nothing in a sketch: all
 # four keep the same memory map, USB identity and upload protocol, so a sketch
@@ -138,18 +138,18 @@ CHGame.menu.usb.uploadonly.build.usb_flags=-DUSE_CHGAME_USB_BOOTONLY
 # colours (platform/bootloader/build.sh --theme=). The sources and what each
 # one does are in platform/bootloader; bootloaders/CHGame/README.md says where
 # each binary comes from.
-CHGame.menu.boot.sdmenu=SD Game Menu (Rainbow)
-CHGame.menu.boot.sdmenu.bootloader.file=CHGame/chgame_sdboot.bin
-CHGame.menu.boot.sdplain=SD Game Menu (Plain)
-CHGame.menu.boot.sdplain.bootloader.file=CHGame/chgame_sdboot_plain.bin
-CHGame.menu.boot.sdcasino=SD Game Menu (Casino)
-CHGame.menu.boot.sdcasino.bootloader.file=CHGame/chgame_sdboot_casino.bin
-CHGame.menu.boot.nomenu=USB Only
-CHGame.menu.boot.nomenu.bootloader.file=CHGame/chgame_boot_nomenu.bin
+rev0.menu.boot.sdmenu=SD Game Menu (Rainbow)
+rev0.menu.boot.sdmenu.bootloader.file=CHGame/chgame_sdboot.bin
+rev0.menu.boot.sdplain=SD Game Menu (Plain)
+rev0.menu.boot.sdplain.bootloader.file=CHGame/chgame_sdboot_plain.bin
+rev0.menu.boot.sdcasino=SD Game Menu (Casino)
+rev0.menu.boot.sdcasino.bootloader.file=CHGame/chgame_sdboot_casino.bin
+rev0.menu.boot.nomenu=USB Only
+rev0.menu.boot.nomenu.bootloader.file=CHGame/chgame_boot_nomenu.bin
 
-CHGame.build.flags.debug=-DNDEBUG
-CHGame.build.flags.fp=
-CHGame.build.enable_usb=
-CHGame.build.usb_speed=
-CHGame.build.peripheral_pins=
-CHGame.build.startup_file=
+rev0.build.flags.debug=-DNDEBUG
+rev0.build.flags.fp=
+rev0.build.enable_usb=
+rev0.build.usb_speed=
+rev0.build.peripheral_pins=
+rev0.build.startup_file=

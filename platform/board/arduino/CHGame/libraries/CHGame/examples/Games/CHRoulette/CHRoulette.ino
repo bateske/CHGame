@@ -5,10 +5,24 @@
 //
 // Frame loop: logic runs while the previous frame is still going out over
 // DMA; drawing waits for it (one framebuffer), then the new frame is sent.
+//
+// The files, by role:
+//   rules     Roulette.* (the table, the money, a spin's flow), Spots.* (every
+//             place a chip can go), Nav.* (the glove's moves), Wheel.* (the
+//             pocket orders): no graphics, host-tested
+//   the wheel Ball.* (the ball and its solver), WheelArt.* (drawing the wheel)
+//   screens   Screens.*: title, play, pause, options, stats, credits, endings
+//   show      Presenter.*: the rules' events turned into motion and sound
+//   drawing   Table.* (the wall, the croupier), Felt.* (the betting layout),
+//             ChipArt.*, Bar.* (the action bar), Remap.* (sprite colours),
+//             Layout.h (every coordinate), Fx.* (particles, banners)
+//   sound     Sounds.*        saving  Save.*        switches  config.h
+//   generated src/assets/ (art, tools/assets.py; WheelMap, tools/wheel.py) and
+//             src/audio/Music.* (tools/make_music.py): not edited by hand
 #include <CHGame.h>
 #include "config.h"
-#include "src/states/Screens.h"
-#include "src/save/Save.h"
+#include "Screens.h"
+#include "Save.h"
 
 #if CHGAME_DEBUG
 // Game commands for the debug protocol (tools/chsim/chdrive.py 'say').
@@ -46,12 +60,12 @@ static bool debugHook(char cmd, const char *args) {
 #endif
 
 void setup() {
-    arduboy.boot();
+    chgame.boot();
     dbg::begin("CHRL " CHRL_VERSION);     // the debug protocol's hello (CHGAME_DEBUG builds)
     gfx_begin(GFX_DIV2, GFX_12BPP);
     pal::init();
     screens::begin();
-    arduboy.setFrameRate(CHRL_FPS);
+    chgame.setFrameRate(CHRL_FPS);
 #if CHGAME_DEBUG
     dbg::hook = debugHook;
 #endif
@@ -59,21 +73,21 @@ void setup() {
 
 void loop() {
     dbg::poll();
-    if (!arduboy.nextFrame()) return;
+    if (!chgame.nextFrame()) return;
     dbg::markUpdateStart();
     // Logic runs at a fixed 60 Hz. If a heavy frame made drawing fall
     // behind, catch up (up to three ticks) before drawing again, so the ball
     // and the chips never slow down.
     uint8_t ticks = 0;
     do {
-        arduboy.pollButtons();
+        chgame.pollButtons();
         pal::tick();
         screens::update();
-    } while (++ticks < 3 && arduboy.nextFrame());
+    } while (++ticks < 3 && chgame.nextFrame());
     pal::commit();                  // staged by CHGfx: lands with the next flush
     gfx_wait();
     dbg::markRenderStart();
-    screens::render(arduboy.frameCount);
+    screens::render(chgame.frameCount);
     dbg::markRenderEnd();
     gfx_flushAsync();
 }

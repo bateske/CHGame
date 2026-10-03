@@ -1,14 +1,22 @@
 // CHTicTacToe - TIC TAC TOE: ROYALE for the CHGame handheld (CH32X035,
 // 128x128 ST7735, piezo), in the casino style of CHBlackjack and CHChess:
-// noughts and crosses for money, at twelve tables with twelve sets of rules,
+// noughts and crosses for money, at sixteen tables with sixteen sets of rules,
 // against CHBlackjack's croupier.
 //
 // Frame loop: logic runs while the previous frame is still going out over
 // DMA; drawing waits for it (one framebuffer), then the new frame is sent.
+//
+// The files, by role:
+//   rules, no graphics (host-tested)  Rules (every table), Match, Cpu (the dealer), Text
+//   the play screen                   Stage, Iso (the 3D tables), ChipArt, Remap, Fx
+//   the screens                       Screens, Table (the dealer's wall); debug commands below
+//   sound, saving                     Sounds, Save
+//   generated art (tools/assets.py)   src/assets/Assets.*
+//   build switches                    config.h
 #include <CHGame.h>
 #include "config.h"
-#include "src/states/Screens.h"
-#include "src/save/Save.h"
+#include "Screens.h"
+#include "Save.h"
 
 #if CHGAME_DEBUG
 // Game commands for the debug protocol (tools/chsim/chdrive.py 'say').
@@ -45,12 +53,12 @@ static bool debugHook(char cmd, const char *args) {
 #endif
 
 void setup() {
-    arduboy.boot();
+    chgame.boot();
     dbg::begin("CHTT " CHTT_VERSION);     // the debug protocol's hello (CHGAME_DEBUG builds)
     gfx_begin(GFX_DIV2, GFX_12BPP);
     pal::init();
     screens::begin();
-    arduboy.setFrameRate(CHTT_FPS);
+    chgame.setFrameRate(CHTT_FPS);
 #if CHGAME_DEBUG
     dbg::hook = debugHook;
 #endif
@@ -58,21 +66,21 @@ void setup() {
 
 void loop() {
     dbg::poll();
-    if (!arduboy.nextFrame()) return;
+    if (!chgame.nextFrame()) return;
     dbg::markUpdateStart();
     // Logic runs at a fixed 60 Hz. If a heavy frame made drawing fall
     // behind, catch up (up to three ticks) before drawing again, so the clock
     // and the gloves never slow down.
     uint8_t ticks = 0;
     do {
-        arduboy.pollButtons();
+        chgame.pollButtons();
         pal::tick();
         screens::update();
-    } while (++ticks < 3 && arduboy.nextFrame());
+    } while (++ticks < 3 && chgame.nextFrame());
     pal::commit();                  // staged by CHGfx: lands with the next flush
     gfx_wait();
     dbg::markRenderStart();
-    screens::render(arduboy.frameCount);
+    screens::render(chgame.frameCount);
     dbg::markRenderEnd();
     gfx_flushAsync();
 }

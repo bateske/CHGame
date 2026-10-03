@@ -5,8 +5,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <vector>
-#include "../../src/game/Game.h"
-#include "../../src/game/Cpu.h"
+#include "../../Game.h"
+#include "../../Cpu.h"
 
 using namespace game;
 using namespace layout;

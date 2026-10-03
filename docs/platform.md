@@ -24,7 +24,7 @@ deeper references are in [../platform/board/docs](../platform/board/docs):
 
 ### Pins
 
-These are the names in the variant (`variant_CHGame.h`). Sketches use the
+These are the names in the variant (`variant_CHGame_Rev0.h`). Sketches use the
 names, not the port numbers.
 
 | Name | Pin | | Name | Pin |

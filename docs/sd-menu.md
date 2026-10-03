@@ -119,9 +119,9 @@ name is shown instead of a title.
   file and what a game needs to know. In short: nothing changes for your
   sketch.
 - **Returning to the menu from a game.** Every sketch on the CHGame library
-  has it built in: `arduboy.pollButtons()` checks for START held 3 s.
-  - `arduboy.exitToMenu()` leaves on purpose, for example from a QUIT item.
-  - `arduboy.startExits = false` in `setup()` turns the hold off, for a game
+  has it built in: `chgame.pollButtons()` checks for START held 3 s.
+  - `chgame.exitToMenu()` leaves on purpose, for example from a QUIT item.
+  - `chgame.startExits = false` in `setup()` turns the hold off, for a game
     that needs long START holds for itself.
   - Without that core, call `NVIC_SystemReset()`. Any reset that is not
     an upload request shows the menu.

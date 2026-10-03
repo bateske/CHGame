@@ -1,4 +1,4 @@
-// Host tests for the 3D dice physics (src/cam/Dice3D.cpp, built with -DCHTEST:
+// Host tests for the 3D dice physics (Dice3D.cpp, built with -DCHTEST:
 // no drawing).
 //
 // 1. labelDie() makes real dice: every result is one of the 24 rotations of
@@ -10,7 +10,7 @@
 //    kept ones have not moved.
 #include <stdio.h>
 #include <string.h>
-#include "../../src/cam/Dice3D.h"
+#include "../../Dice3D.h"
 
 static int fails = 0, checks = 0;
 #define CHECK(cond, ...) do { checks++; if (!(cond)) { fails++; printf("FAIL %s:%d: ", __FILE__, __LINE__); \

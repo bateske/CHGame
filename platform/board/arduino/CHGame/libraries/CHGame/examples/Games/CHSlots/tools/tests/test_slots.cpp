@@ -1,4 +1,4 @@
-// Host tests for src/game/Slots.cpp (chgame test).
+// Host tests for Slots.cpp (chgame test).
 //
 //   * LUCKY 7's return, exactly: every one of the 35^3 stops.
 //   * DRAGON FORTUNE's line evaluation against a slow reference written a
@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../../src/game/Slots.h"
+#include "../../Slots.h"
 
 static long checks = 0, fails = 0;
 #define CHECK(c) do { checks++; if (!(c)) { fails++; if (fails < 20) printf("FAIL %s:%d %s\n", __FILE__, __LINE__, #c); } } while (0)

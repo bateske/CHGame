@@ -64,7 +64,7 @@ IDE keeps showing an old version.
 
 ## 3. What to try
 
-**Pick the board.** *Tools > Board > CHGame Boards > CHGame*, and the port
+**Pick the board.** *Tools > Board > CHGame Boards > CHGame Rev0*, and the port
 (the board is USB `16C0:27DD`).
 
 **The examples.** *File > Examples*, under *Examples for CHGame*:

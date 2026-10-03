@@ -49,9 +49,9 @@ To put it on the handheld: in the Arduino IDE, with the CHGame board package ins
 
 ## Developer notes
 
-- **Reading the SD card beside the screen.** `src/pack/Pack.cpp` finds `CHCW/*.CWD` with the CHSd library (`<Fat.h>`), only between frames (after `gfx_wait()`) and only on the puzzle list, because the card shares SPI1 with the LCD. A card puzzle is copied into 2 KB of RAM when it starts, so pulling the card mid-puzzle does nothing.
-- **A puzzle in about 700 bytes.** `src/game/Puzzle.cpp` unpacks one bit a black square (half the grid: the rest is the symmetry), five bits an answer letter, and clues Huffman-coded with one fixed table, decoded one at a time. `tools/puzzles/cwformat.py` is the reference decoder the host tests hold the game to.
-- **A close-up that is drawn, not doubled.** `bigTile()` in `src/stage/Stage.cpp` draws 16-pixel bevelled tiles with clue numbers, lettered in a serif face anti-aliased as far as sixteen colours go: each letter has a layer of half-ink pixels in a tone between its own colour and its tile's (`tools/tilefont.py` makes the table).
+- **Reading the SD card beside the screen.** `Pack.cpp` finds `CHCW/*.CWD` with the CHSd library (`<Fat.h>`), only between frames (after `gfx_wait()`) and only on the puzzle list, because the card shares SPI1 with the LCD. A card puzzle is copied into 2 KB of RAM when it starts, so pulling the card mid-puzzle does nothing.
+- **A puzzle in about 700 bytes.** `Puzzle.cpp` unpacks one bit a black square (half the grid: the rest is the symmetry), five bits an answer letter, and clues Huffman-coded with one fixed table, decoded one at a time. `tools/puzzles/cwformat.py` is the reference decoder the host tests hold the game to.
+- **A close-up that is drawn, not doubled.** `bigTile()` in `Stage.cpp` draws 16-pixel bevelled tiles with clue numbers, lettered in a serif face anti-aliased as far as sixteen colours go: each letter has a layer of half-ink pixels in a tone between its own colour and its tile's (`tools/tilefont.py` makes the table).
 - **Drawing only what changed.** The stage redraws when something on it moves, about once a second otherwise for the clock. The pulsing cursor and the shimmer on gold are the palette animating, which costs nothing.
 - **Scripts that play like a player.** `tools/chsim/chdrive.py` adds `solve`, which types each word on the letter board through the debug protocol, so one script solves a whole puzzle in the simulator or on the board.
 - More in [NOTES.md](NOTES.md): design decisions, making puzzles, tests, the script commands and open items.

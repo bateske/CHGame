@@ -1,7 +1,7 @@
 // CHTicTacToe build switches.
 //
 // Keep feature switches here rather than in --build-property flags. The game
-// is built with the CHGame core 0.2.4+, Optimize "Smallest + LTO" and the
+// is built with the board package 0.3.0+, Optimize "Smallest + LTO" and the
 // default Peripherals setting ("Game", which compiles out
 // Serial1/tone/HardwareTimer: ~3.4 KB of flash); release builds also set USB
 // "Upload only" (no Serial). tools/device.py has the exact settings.
@@ -16,7 +16,7 @@
 
 // Device debug builds carry the protocol (~1.7 KB) and so leave out what
 // the tests never need: the end screens' PPOT lettering (plain lettering
-// instead) and saving. -DCHTT_FULL keeps them (it does not fit). The
+// instead), saving and the particles (SIZZLE_NO_PARTICLES in Fx.h). -DCHTT_FULL keeps them (it does not fit). The
 // simulator and release builds keep everything.
 #if CHGAME_DEBUG && !defined(CHSIM) && !defined(CHTT_FULL)
 #define CHTT_LEAN        1

@@ -54,10 +54,10 @@ To put it on the handheld: in the Arduino IDE, with the CHGame board package ins
 
 ## Developer notes
 
-- **Sixteen games from one board type.** `src/game/Rules.h` describes a table as a grid, a line length and a set of rule flags (`F_VANISH`, `F_WRAP`, `F_MINES` ...), and one line scanner serves them all, so a new table is mostly a flag and a paragraph of text.
-- **An isometric table with band redraws.** `src/render/Iso.cpp` draws the 3x3 and 5x5 tables; `stage::render()` in `src/render/Stage.cpp` redraws only on frames where something moved, and when only the glove or the cursor moved it sets CHGfx's clip rectangle (`gfx_setClip`) to the rows they swept. `chgame redraw` checks band redraws against full ones pixel for pixel.
+- **Sixteen games from one board type.** `Rules.h` describes a table as a grid, a line length and a set of rule flags (`F_VANISH`, `F_WRAP`, `F_MINES` ...), and one line scanner serves them all, so a new table is mostly a flag and a paragraph of text.
+- **An isometric table with band redraws.** `Iso.cpp` draws the 3x3 and 5x5 tables; `stage::render()` in `Stage.cpp` redraws only on frames where something moved, and when only the glove or the cursor moved it sets CHGfx's clip rectangle (`gfx_setClip`) to the rows they swept. `chgame redraw` checks band redraws against full ones pixel for pixel.
 - **Animation without drawing.** The library's palette cycling (`pal::`) animates the cursor, the fading VANISH mark and the rainbow strike through the winning line with no redraw.
-- **A dealer that shares the frame.** `src/game/Cpu.cpp` searches the real rules to a limited depth on the 3x3 tables; on the big felts it scores every empty cell by the lines it could still make or break, 12 cells a frame.
+- **A dealer that shares the frame.** `Cpu.cpp` searches the real rules to a limited depth on the 3x3 tables; on the big felts it scores every empty cell by the lines it could still make or break, 12 cells a frame.
 - **Ray-marched pieces.** `tools/pieces.py` renders the Xs and Os from signed-distance models at the board's 30 degree camera, in two sizes plus the spin frames, quantised to the palette.
 - More in [NOTES.md](NOTES.md): design decisions, tests, the script commands and open items.
 

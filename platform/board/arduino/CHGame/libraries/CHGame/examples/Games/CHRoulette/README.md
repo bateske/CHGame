@@ -43,10 +43,10 @@ To put it on the handheld: in the Arduino IDE, with the CHGame board package ins
 
 ## Developer notes
 
-- **A spinning wheel from one table lookup.** `src/wheel/WheelArt.cpp` paints the rotor from a polar angle map of one quadrant (`src/assets/WheelMap.cpp`, made by `tools/wheel.py`), mirrored four ways through a colour table built each frame in CHGfx's spare chunk buffer (`gfx_chunkScratch()`). The per-pixel loop is a `RAMFUNC`.
-- **A ball that lands where the rules said.** The number is picked when you press SPIN. `src/wheel/Ball.cpp` is an integer simulation with a solver that dry-runs the spin a slice per tick while the croupier calls NO MORE BETS, then turns the rotor by whole pockets so the ball settles in the right one.
-- **Redraw only what changed.** The wall, the layout and the action bar repaint only when what they show changes or something moving touches them; every frame is still sent, so the palette effects cost nothing. `src/render/Felt.cpp` builds each layout row once and stamps it down with `gfx_copyRow`.
-- **Rules apart from graphics.** `src/game/` (the bets, the spots, the glove's navigation) draws nothing and is tested on the PC against an independent Python model; `src/fx/Presenter.cpp` turns the rules' events into motion.
+- **A spinning wheel from one table lookup.** `WheelArt.cpp` paints the rotor from a polar angle map of one quadrant (`src/assets/WheelMap.cpp`, made by `tools/wheel.py`), mirrored four ways through a colour table built each frame in CHGfx's spare chunk buffer (`gfx_chunkScratch()`). The per-pixel loop is a `RAMFUNC`.
+- **A ball that lands where the rules said.** The number is picked when you press SPIN. `Ball.cpp` is an integer simulation with a solver that dry-runs the spin a slice per tick while the croupier calls NO MORE BETS, then turns the rotor by whole pockets so the ball settles in the right one.
+- **Redraw only what changed.** The wall, the layout and the action bar repaint only when what they show changes or something moving touches them; every frame is still sent, so the palette effects cost nothing. `Felt.cpp` builds each layout row once and stamps it down with `gfx_copyRow`.
+- **Rules apart from graphics.** `Roulette.*`, `Spots.*`, `Nav.*` and `Wheel.*` (the bets, the spots, the glove's navigation, the wheels) draw nothing and are tested on the PC against an independent Python model; `Presenter.cpp` turns the rules' events into motion.
 - **Features behind switches.** Flash is the limit here: the credits room and an attract demo are in the code but switched off in `config.h` (`CHRL_CREDITS`, `CHRL_DEMO`).
 - More in [NOTES.md](NOTES.md): design decisions, tests, the script commands and open items.
 

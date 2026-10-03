@@ -1,10 +1,10 @@
-// Host tests for the rules engine (src/game/Round.cpp).
+// Host tests for the rules engine (Round.cpp).
 //   chgame test
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <initializer_list>
-#include "../../src/game/Round.h"
+#include "../../Round.h"
 #include <chgame/Input.h>
 
 static int fails = 0, checks = 0;

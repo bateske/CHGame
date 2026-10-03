@@ -44,13 +44,13 @@ To put it on the handheld: in the Arduino IDE, with the CHGame board package ins
 
 ## Developer notes
 
-- **A blocking search that still draws.** The engine in `src/engine/ch2k.hpp` runs synchronously and calls back every 8 nodes (`src/engine/Engine.cpp`). `src/Frame.cpp` uses those calls to draw: the search runs flat out, with a bobbing glove every 133 ms and a short burst of full-rate frames every two seconds, drawn on a stack of their own.
-- **An isometric board at every zoom.** `src/iso/Iso.cpp` draws the squares as 2:1 diamonds sampled at pixel centres, so every edge is a clean staircase from 20x10 tiles to 40x20, and its span loops are `RAMFUNC`s.
-- **One set of pieces, two sides.** The pieces are span-encoded sprites packed by `tools/assets.py`, recoloured for each side by a palette swap (`tools/art/sides.txt`) and scaled as the camera zooms (`src/stage/Stage.cpp`).
-- **Undo and saved games by replay.** `src/game/Match.cpp` replays the move list from the start, or from a snapshot in long games, which also keeps the opening book and the repetition rule right.
-- **A background sound.** The CPU's clock in `src/audio/Sounds.cpp` is played on a narrow pulse, so it stays behind the knocks and fanfares of the piezo sequencer.
+- **A blocking search that still draws.** The engine in `ch2k.hpp` runs synchronously and calls back every 8 nodes (`Engine.cpp`). `Frame.cpp` uses those calls to draw: the search runs flat out, with a bobbing glove every 133 ms and a short burst of full-rate frames every two seconds, drawn on a stack of their own.
+- **An isometric board at every zoom.** `Iso.cpp` draws the squares as 2:1 diamonds sampled at pixel centres, so every edge is a clean staircase from 20x10 tiles to 40x20, and its span loops are `RAMFUNC`s.
+- **One set of pieces, two sides.** The pieces are span-encoded sprites packed by `tools/assets.py`, recoloured for each side by a palette swap (`tools/art/sides.txt`) and scaled as the camera zooms (`Stage.cpp`).
+- **Undo and saved games by replay.** `Match.cpp` replays the move list from the start, or from a snapshot in long games, which also keeps the opening book and the repetition rule right.
+- **A background sound.** The CPU's clock in `Sounds.cpp` is played on a narrow pulse, so it stays behind the knocks and fanfares of the piezo sequencer.
 - More in [NOTES.md](NOTES.md): design decisions, tests, the script commands and open items. What the game taught about the platform is in [docs/CH32SerialBoot-notes.md](docs/CH32SerialBoot-notes.md) and [docs/CHGfx-notes.md](docs/CHGfx-notes.md).
 
 ## Credits
 
-Apache License 2.0 (`LICENSE`), except `src/engine/ch2k.hpp`, which is MPL-2.0 (`LICENSE.MPL-2.0`); see `NOTICE`. The rules and the CPU are the ch2k engine from [ArduChess](https://github.com/tiberiusbrown/arduchess) by Peter Brown (tiberiusbrown), MPL-2.0, with the changes listed at the top of the file. The look and the shared code come from CHBlackjack (Apache-2.0), a derivative of "Blackjack" for the Arduboy by Press Play On Tape (Apache-2.0); the 3x5 font is Press Play On Tape's.
+Apache License 2.0 (`LICENSE`), except `ch2k.hpp`, which is MPL-2.0 (`LICENSE.MPL-2.0`); see `NOTICE`. The rules and the CPU are the ch2k engine from [ArduChess](https://github.com/tiberiusbrown/arduchess) by Peter Brown (tiberiusbrown), MPL-2.0, with the changes listed at the top of the file. The look and the shared code come from CHBlackjack (Apache-2.0), a derivative of "Blackjack" for the Arduboy by Press Play On Tape (Apache-2.0); the 3x5 font is Press Play On Tape's.

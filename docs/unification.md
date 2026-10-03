@@ -188,7 +188,7 @@ The engine is the same in every game:
 - The record is then byte-for-byte what 17 games write today. CHPoker and CHSolitaire pass no flag.
 - CHBlackjack either keeps its own `Save.cpp` or the engine reads its old header once.
 
-The magics, which CLAUDE.md rule 8 requires to be unique:
+The magics, which CLAUDE.md rule 7 requires to be unique:
 
 | Game | Magic | Game | Magic |
 |---|---|---|---|

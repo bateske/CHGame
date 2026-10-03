@@ -2,7 +2,7 @@
 the repository's tools/gamecfg.py; `chgame test`, `chgame check`,
 `chgame redraw` read this)."""
 
-TESTS = {"test_four": dict(sources=["tools/tests/test_four.cpp", "src/rules/Board.cpp", "src/ai/Ai.cpp",
-                                    "src/game/Game.cpp", "src/game/Taunt.cpp"],
+TESTS = {"test_four": dict(sources=["tools/tests/test_four.cpp", "Rules.cpp", "Ai.cpp",
+                                    "Game.cpp", "Taunt.cpp"],
                            defines=["CHTEST", "CHSIM"], includes=["lib"])}
 ECHO = ("THINK", "BOARD")

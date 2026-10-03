@@ -39,11 +39,11 @@ LETTER = {"k": 0, "w": 1, "d": 2, "f": 3, "g": 4, "s": 5, "r": 6, "m": 7,
           "y": 8, "b": 9, "u": 10, "n": 11, "p": 12, "c": 13, "x": 14, "z": 15}
 TRANSPARENT = 16
 
-# The art sheets' order -> the game's (src/game/Klondike.h): c d s h.
+# The art sheets' order -> the game's (Klondike.h): c d s h.
 GLYPH_ORDER = [0, 1, 3, 2]                                 # suits.txt is c d h s
 SUIT_ORDER = [3, 1, 2, 0]                                  # the pip sheets are h d s c
 # The card backs with art, in the order of the deck screen (after the two
-# weaves, which are drawn in code). Must match BACK_NAME in src/render/CardArt.cpp.
+# weaves, which are drawn in code). Must match BACK_NAME in CardArt.cpp.
 BACKS = ["robot", "roses", "castle", "island", "fish", "shell", "cherry", "dice", "lucky", "chip"]
 COURT_ROWS = 11                                            # the small card shows the bust
 

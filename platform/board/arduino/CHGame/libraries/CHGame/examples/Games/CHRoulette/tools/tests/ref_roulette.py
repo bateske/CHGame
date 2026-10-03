@@ -1,4 +1,4 @@
-"""Independent reference for the betting layout's spots (src/game/Spots.cpp).
+"""Independent reference for the betting layout's spots (Spots.cpp).
 
     python tools/tests/ref_roulette.py      -> the same lines as `test_rules --dump`
 

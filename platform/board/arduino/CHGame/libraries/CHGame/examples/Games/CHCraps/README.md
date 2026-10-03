@@ -60,11 +60,11 @@ To put it on the handheld: in the Arduino IDE, with the CHGame board package ins
 
 ## Developer notes
 
-- **3D dice in integer maths.** `src/cam/Dice3D.cpp` rotates each die with the game's sine table (`fx::isin`), projects it through a tilting pinhole camera, culls back faces and fills the rest with a scanline polygon fill. Physics steps once per 60 Hz tick.
+- **3D dice in integer maths.** `Dice3D.cpp` rotates each die with the CHGame library's sine table (`fx::isin`), projects it through a tilting pinhole camera, culls back faces and fills the rest with a scanline polygon fill. Physics steps once per 60 Hz tick.
 - **The dice do not decide the roll.** The rules roll first; the throw is deterministic, so it is simulated ahead and each die is relabelled (`labelDie`) so that the face that lands on top shows the rolled number. All 24 orientations come from one walk of quarter turns held in a 24-bit constant.
-- **Settle first, show after.** `Craps::throwDice()` in `src/game/Craps.cpp` settles every bet into a result table at once; `src/fx/Presenter.cpp` replays it at its own pace, so a save in the middle of the show is always consistent.
+- **Settle first, show after.** `Craps::throwDice()` in `Craps.cpp` settles every bet into a result table at once; `Presenter.cpp` replays it at its own pace, so a save in the middle of the show is always consistent.
 - **A fixed-rate loop that catches up.** `CHCraps.ino` runs up to three logic ticks before drawing when a heavy dice-cam frame falls behind, so the dice never slow down. The table redraws only the bands (wall, felt, bar) that changed.
-- **One chip sprite, many chips.** `src/render/Chips.cpp` draws the library's `sprite4` span sprites through remap tables, which is much of how the game fits the flash.
+- **One chip sprite, many chips.** `Chips.cpp` draws the library's `sprite4` span sprites through remap tables, which is much of how the game fits the flash.
 - More in [NOTES.md](NOTES.md): design decisions, tests, the script commands and open items.
 
 ## Credits

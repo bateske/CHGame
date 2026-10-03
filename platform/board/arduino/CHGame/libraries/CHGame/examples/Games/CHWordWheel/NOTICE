@@ -8,8 +8,8 @@ chgame/Input.*), palette, drawing, outlined lettering,
 effects, sound sequencer, flash saving, debug protocol, the PC simulator and
 tools, the stage's wall, and the host (the dealer from CHBlackjack's tables,
 with his expressions), adapted here. The differential redraw check
-(tools/chsim/diffdrive.py) and the mock-up kit (tools/pixkit.py) are
-CHRoulette's.
+(the repository's tools/chsim/diffdrive.py) and the mock-up kit
+(tools/pixkit.py there) are CHRoulette's.
 
 CHBlackjack is a derivative of "Blackjack" for the Arduboy by Press Play On
 Tape - Simon Holmes (filmote), code, and Stephane C (vampirics), art
@@ -20,7 +20,7 @@ Press Play On Tape's (the ampersand was added here).
 
 From CHChess (https://github.com/bateske/CHChess, Apache-2.0): the soft
 clock ticks. From CHBackgammon (https://github.com/bateske/CHBackgammon,
-Apache-2.0): the shape of tools/check.py.
+Apache-2.0): the shape of the repository's tools/check.py.
 
 The SD card reader (the CHSd library in the CHGame board package, with the
 simulator's card in its host/ folder) is CHSd, the library this game shares with CHWords

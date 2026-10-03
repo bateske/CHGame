@@ -1,7 +1,7 @@
 // CHWordWheel build switches.
 //
 // Keep feature switches here rather than in --build-property flags. The game
-// is built with the CHGame core 0.2.4+, Optimize "Smallest + LTO" and the
+// is built with the board package 0.3.0+, Optimize "Smallest + LTO" and the
 // default Peripherals setting ("Game", which compiles out
 // Serial1/tone/HardwareTimer: ~3.4 KB of flash); release builds also set USB
 // "Upload only" (no Serial). tools/device.py has the exact settings.
@@ -18,8 +18,8 @@
 // need: every CHGAME_DEBUG build, the simulator included, has no music score
 // (src/audio/Music.cpp, from tools/make_music.py), and device debug builds
 // (CHWW_LEAN) also drop the Setup, Options and Stats screens - the podiums
-// are set with the protocol's W command - unless built with -DCHWW_FULL,
-// which does not fit. Saving and the SD bank stay. Release builds keep
+// are set with the protocol's W command - and the particles (Fx.h), unless
+// built with -DCHWW_FULL, which does not fit. Saving and the SD bank stay. Release builds keep
 // everything.
 #if CHGAME_DEBUG && !defined(CHSIM) && !defined(CHWW_FULL)
 #define CHWW_LEAN        1

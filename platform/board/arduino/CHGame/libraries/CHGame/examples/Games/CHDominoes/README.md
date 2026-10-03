@@ -44,11 +44,11 @@ To put it on the handheld: in the Arduino IDE, with the CHGame board package ins
 
 ## Developer notes
 
-- **Tiles that are drawn, not stored.** `src/table/Table.cpp` has no tile art: close up, `tileFast` runs from SRAM (`RAMFUNC`), works out each kind of row once and copies it down, rather than drawing twenty-odd rectangles a tile.
-- **A set of tiles is a palette swap.** Two of the sixteen colours are given to the tiles (BONE and SLATE in `src/gfx/Colours.h`), so `table::useSet` changes the whole set by changing two palette entries.
-- **Sprite rotation from a scratch image.** A tile in the air is written as a small image and turned and scaled with the CHGame library's `rotRaw` (`table::spinTile`, `table::spinImage`): the flight to the line, the title's falling tiles (built once each, `fallerImg` in `src/states/Screens.cpp`) and the firecrackers in `src/stage/Stage.cpp`.
-- **A round in 56 bytes.** `src/rules/Dominoes.h` keeps each hand and the boneyard as a bit per tile; the host tests check it step by step against a second, naive implementation.
-- **A layout that is never stored.** `src/table/Layout.cpp` walks each arm outward over a grid and turns corners at the table's edge; a tile once down never moves, so a saved game's table is simply played again.
+- **Tiles that are drawn, not stored.** `Table.cpp` has no tile art: close up, `tileFast` runs from SRAM (`RAMFUNC`), works out each kind of row once and copies it down, rather than drawing twenty-odd rectangles a tile.
+- **A set of tiles is a palette swap.** Two of the sixteen colours are given to the tiles (BONE and SLATE in `Colours.h`), so `table::useSet` changes the whole set by changing two palette entries.
+- **Sprite rotation from a scratch image.** A tile in the air is written as a small image and turned and scaled with the CHGame library's `rotRaw` (`table::spinTile`, `table::spinImage`): the flight to the line, the title's falling tiles (built once each, `fallerImg` in `Screens.cpp`) and the firecrackers in `Stage.cpp`.
+- **A round in 56 bytes.** `Dominoes.h` keeps each hand and the boneyard as a bit per tile; the host tests check it step by step against a second, naive implementation.
+- **A layout that is never stored.** `Layout.cpp` walks each arm outward over a grid and turns corners at the table's edge; a tile once down never moves, so a saved game's table is simply played again.
 - More in [NOTES.md](NOTES.md): design decisions, how it fits together, tests, the script commands and open items.
 
 ## Credits

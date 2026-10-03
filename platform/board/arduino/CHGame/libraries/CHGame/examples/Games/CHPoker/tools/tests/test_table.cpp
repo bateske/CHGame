@@ -5,9 +5,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <vector>
-#include "../../src/game/Table.h"
-#include "../../src/game/Hand.h"
-#include "../../src/game/Ai.h"
+#include "../../Table.h"
+#include "../../Hand.h"
+#include "../../Ai.h"
 #include <chgame/Input.h>          // button masks (the CHGame library)
 
 void testCheck(bool ok, const char *what);

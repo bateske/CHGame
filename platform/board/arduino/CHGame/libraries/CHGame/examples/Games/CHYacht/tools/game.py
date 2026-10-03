@@ -3,8 +3,8 @@ the repository's tools/gamecfg.py; `chgame test`, `chgame check`,
 `chgame redraw` read this)."""
 
 TESTS = {
-    "test_yacht": dict(sources=["tools/tests/test_yacht.cpp", "src/game/Yacht.cpp"], opt="-O1", args="filter"),
-    "test_dice": dict(sources=["tools/tests/test_dice.cpp", "src/cam/Dice3D.cpp"], opt="-O1", args="filter"),
+    "test_yacht": dict(sources=["tools/tests/test_yacht.cpp", "Yacht.cpp"], opt="-O1", args="filter"),
+    "test_dice": dict(sources=["tools/tests/test_dice.cpp", "Dice3D.cpp"], opt="-O1", args="filter"),
 }
 QUICK_ARGS = []
 SIM_TESTS = ["tools/tests/sim_save.py"]

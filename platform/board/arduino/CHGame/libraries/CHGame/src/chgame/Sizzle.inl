@@ -1,9 +1,9 @@
-// Sizzle's bodies. Included once per sketch, from its src/fx/Fx.cpp, after the
+// Sizzle's bodies. Included once per sketch, from its Fx.cpp, after the
 // game's `#pragma GCC optimize` (which governs every function defined below)
-// and after its src/fx/Fx.h (the SIZZLE_* switches and <chgame/Sizzle.h>).
+// and after its Fx.h (the SIZZLE_* switches and <chgame/Sizzle.h>).
 // See Sizzle.h for the switches. Nothing here is compiled by the library.
 #ifndef SIZZLE_CONFIGURED
-#error "include the game's src/fx/Fx.h (its SIZZLE_* switches, then <chgame/Sizzle.h>) before <chgame/Sizzle.inl>"
+#error "include the game's Fx.h (its SIZZLE_* switches, then <chgame/Sizzle.h>) before <chgame/Sizzle.inl>"
 #endif
 #include <string.h>
 
@@ -13,7 +13,7 @@ namespace fx {
 // Particles
 // ---------------------------------------------------------------------------
 struct Particle { int16_t x, y; int8_t vx, vy; uint8_t life, colour, kind, age; };
-static Particle parts[SIZZLE_POOL];
+static Particle parts[SIZZLE_NO_PARTICLES ? 1 : SIZZLE_POOL];
 #if SIZZLE_HUES_EXPORT
 const uint8_t SIZZLE_HUES_NAME[5] = SIZZLE_HUES;          // the casino rainbow, for the game too
 #endif
@@ -26,6 +26,24 @@ void setFloor(int y) { floorY = (int16_t)(y << 4); }
 #define SIZZLE_FLOOR_Q4 (SIZZLE_COIN_FLOOR << 4)
 #endif
 
+#if SIZZLE_NO_PARTICLES                                   // the API stays; nothing flies
+void spawn(Kind, int, int, int, int, uint8_t, uint8_t) {}
+#if SIZZLE_BURST
+void burst(Kind, int, int, uint8_t, int, uint8_t) {}
+#endif
+#if SIZZLE_KIND_COIN
+void fountain(Kind, int, int, uint8_t) {}
+#else
+void fountain(int, int, uint8_t) {}
+#endif
+bool particles() { return false; }
+static void updateParticles() {}
+#if SIZZLE_DUST == 3
+void drawParticles(uint8_t) {}
+#else
+void drawParticles() {}
+#endif
+#else
 void spawn(Kind k, int x, int y, int vx, int vy, uint8_t life, uint8_t colour) {
     Particle *slot = nullptr;
     for (auto &p : parts) if (!p.life) { slot = &p; break; }
@@ -190,6 +208,7 @@ void drawParticles() {
 #undef c
 #endif
 }
+#endif  // SIZZLE_NO_PARTICLES
 
 // ---------------------------------------------------------------------------
 // Banner

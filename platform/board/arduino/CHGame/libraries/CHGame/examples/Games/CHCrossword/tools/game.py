@@ -5,11 +5,11 @@ the repository's tools/gamecfg.py; `chgame test`, `chgame check`,
 import cwtests          # tools/tests/cwtests.py: the reference decoder's expectations, the card tests
 
 TESTS = {
-    "test_crossword": dict(sources=["tools/tests/test_crossword.cpp", "tools/tests/nocard.cpp", "src/game/Puzzle.cpp",
-                                    "src/game/Game.cpp", "src/game/PuzzleData.cpp", "src/pack/Pack.cpp", "chsd/Fat.cpp"],
+    "test_crossword": dict(sources=["tools/tests/test_crossword.cpp", "tools/tests/nocard.cpp", "Puzzle.cpp",
+                                    "Game.cpp", "src/game/PuzzleData.cpp", "Pack.cpp", "chsd/Fat.cpp"],
                            includes=["lib", "chsd"], args="none"),
-    "test_card": dict(sources=["tools/tests/test_card.cpp", "src/game/Puzzle.cpp", "src/game/PuzzleData.cpp",
-                               "src/pack/Pack.cpp", "chsd/Fat.cpp"], includes=["lib", "chsd"], run=False),
+    "test_card": dict(sources=["tools/tests/test_card.cpp", "Puzzle.cpp", "src/game/PuzzleData.cpp",
+                               "Pack.cpp", "chsd/Fat.cpp"], includes=["lib", "chsd"], run=False),
 }
 QUICK_ARGS = ["--quick"]        # the card tests: FAT16 images only (a FAT32 image is 34 MB)
 

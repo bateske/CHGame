@@ -128,8 +128,8 @@ UP info                                  # BOOT_VERSION 2
 1. **Load the card.**
    ```
    cd platform/board/arduino/CHGame/libraries/CHGame/examples/Apps/CHSDtoUSB
-   arduino-cli compile -b CHGame:ch32v:CHGame --library ../../platform/board/arduino/CHGame/libraries/CHGfx .
-   arduino-cli upload  -b CHGame:ch32v:CHGame -p <PORT> .
+   arduino-cli compile -b CHGame:ch32v:rev0 --library ../../platform/board/arduino/CHGame/libraries/CHGfx .
+   arduino-cli upload  -b CHGame:ch32v:rev0 -p <PORT> .
    ```
    - A drive appears (vendor "CHGame"). Copy everything in `out/sdcard/`
      to its root, then eject it.

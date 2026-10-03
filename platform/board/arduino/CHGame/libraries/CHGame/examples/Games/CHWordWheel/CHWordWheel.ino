@@ -7,6 +7,18 @@
 //
 // Frame loop: logic runs while the previous frame is still going out over
 // DMA; drawing waits for it (one framebuffer), then the new frame is sent.
+//
+// The files, by role:
+//   rules        Show (the episode, turns, money), Puzzle, Wedges, Spin, Cpu: pure logic
+//   puzzles      Bank.h, FlashBank (the built-in bank), SdBank (PHRASES.BNK on a card)
+//   screens      Screens: title, setup, play, options, stats, the end of an episode
+//   presenting   Presenter (the rules' events become motion and sound), Fx (sparkle)
+//   drawing      Layout.h (every coordinate), Stage (wall, host, letter rack), BoardView
+//                (board, podiums, picker), WheelStrip (the wheel), Shapes
+//   sound        Sounds (the effects; the title tune is src/audio/Music.*)
+//   saving       Save
+//   generated    src/assets (art), src/audio/Music.*, src/bank/BankData.*: do not edit
+//   switches     config.h
 #include <CHGame.h>
 #include "config.h"
 
@@ -16,8 +28,8 @@
 #if defined(USE_CHGAME_USB_CDC) && !CHGAME_DEBUG
 #error "CHWordWheel needs Tools > USB > Upload only to fit in the flash (and Tools > Optimize > Smallest + LTO, the default)"
 #endif
-#include "src/states/Screens.h"
-#include "src/save/Save.h"
+#include "Screens.h"
+#include "Save.h"
 
 #if CHGAME_DEBUG
 #ifdef CHSIM
@@ -87,12 +99,12 @@ static bool debugHook(char cmd, const char *args) {
 #endif
 
 void setup() {
-    arduboy.boot();
+    chgame.boot();
     dbg::begin("CHWW " CHWW_VERSION);     // the debug protocol's hello (CHGAME_DEBUG builds)
     gfx_begin(GFX_DIV2, GFX_12BPP);
     pal::init();
     screens::begin();
-    arduboy.setFrameRate(CHWW_FPS);
+    chgame.setFrameRate(CHWW_FPS);
 #if CHGAME_DEBUG
     dbg::hook = debugHook;
 #endif
@@ -100,21 +112,21 @@ void setup() {
 
 void loop() {
     dbg::poll();
-    if (!arduboy.nextFrame()) return;
+    if (!chgame.nextFrame()) return;
     dbg::markUpdateStart();
     // Logic runs at a fixed 60 Hz. If a heavy frame made drawing fall
     // behind, catch up (up to three ticks) before drawing again, so the
     // wheel and the clocks never slow down.
     uint8_t ticks = 0;
     do {
-        arduboy.pollButtons();
+        chgame.pollButtons();
         pal::tick();
         screens::update();
-    } while (++ticks < 3 && arduboy.nextFrame());
+    } while (++ticks < 3 && chgame.nextFrame());
     pal::commit();                  // staged by CHGfx: lands with the next flush
     gfx_wait();
     dbg::markRenderStart();
-    screens::render(arduboy.frameCount);
+    screens::render(chgame.frameCount);
     dbg::markRenderEnd();
     gfx_flushAsync();
 }

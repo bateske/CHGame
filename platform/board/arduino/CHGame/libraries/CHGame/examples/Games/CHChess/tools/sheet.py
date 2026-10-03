@@ -7,7 +7,8 @@ keeps an indexed PNG's colour table), and back.
 The sheet is an indexed PNG on the game's 16-colour palette, index 16
 transparent. Paint only with the colour table's colours.
 
-  MASTER  the art itself: the six pieces and the pointing glove, in the
+  MASTER  the art itself: the six pieces and the pointing glove (shared
+          with the other games: saved to tools/art/common/hand.png), in the
           neutral tones both sides are dressed from (body BLUE, NAVY,
           SILVER, WHITE dark to light, CYAN glint, INK outline, GOLD and
           WOOD trim). Change shapes and shading here. Each piece stands
@@ -259,8 +260,14 @@ def import_(path):
     if not got:
         notes.append("MASTER hand: empty cell - left as it was")
     elif got[0] != load_hand():
-        save_png(ART / "hand.png", got[0])
-        print("art: hand -> tools/art/hand.png")
+        # The glove is shared art (tools/art/common/hand.png, through artlib):
+        # save it back there, so every game that draws it gets the change,
+        # rather than a copy here that would leave CHChess's apart.
+        dst = assets.artlib.art(HERE, "hand.png")
+        save_png(dst, got[0])
+        print(f"art: hand -> {dst}")
+        print("note: the glove is shared: run tools/assets.py in every game that uses it "
+              "(grep -l hand.png in the games' tools/assets.py), then check their frames")
 
     for n in notes:
         print("note:", n)

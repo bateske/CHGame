@@ -69,4 +69,4 @@ private:
     uint32_t period = 16667, next = 0;
 };
 
-extern CHGame arduboy;              // one instance, Arduboy-style name
+extern CHGame chgame;              // the one instance: chgame.boot(), chgame.pressed() ...

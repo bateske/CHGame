@@ -1,4 +1,4 @@
-// Host tests for the rules (src/game): each rule on its own, then thousands
+// Host tests for the rules (Tiles, Game, Cpu): each rule on its own, then thousands
 // of seeded games with every seat a CPU or a "human" pressing buttons at
 // random, checking the books balance and every game ends.
 //
@@ -9,8 +9,8 @@
 #include <string.h>
 #include <stdint.h>
 #include <vector>
-#include "../../src/game/Game.h"
-#include "../../src/game/Cpu.h"
+#include "../../Game.h"
+#include "../../Cpu.h"
 
 using namespace game;
 using namespace board;

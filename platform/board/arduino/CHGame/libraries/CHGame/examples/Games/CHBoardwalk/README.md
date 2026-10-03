@@ -43,11 +43,11 @@ To put it on the handheld: in the Arduino IDE, with the CHGame board package ins
 
 ## Developer notes
 
-- **Rules with no graphics.** `src/game/Game.cpp` is a phase machine that reports events (dice, moves, payments, bids) and waits while `src/stage/Stage.cpp` is busy showing them; only the auction runs on the clock. That is why the host tests can play 5,000 games through it.
-- **An isometric board at every zoom.** `src/iso/Iso.cpp` draws a 13 x 13 lattice of 2:1 diamonds sampled at pixel centres, so every edge is a clean staircase at each zoom step. The ring is two cells deep, and pink and orange are dithered from the sixteen colours.
+- **Rules with no graphics.** `Game.cpp` is a phase machine that reports events (dice, moves, payments, bids) and waits while `Stage.cpp` is busy showing them; only the auction runs on the clock. That is why the host tests can play 5,000 games through it.
+- **An isometric board at every zoom.** `Iso.cpp` draws a 13 x 13 lattice of 2:1 diamonds sampled at pixel centres, so every edge is a clean staircase at each zoom step. The ring is two cells deep, and pink and orange are dithered from the sixteen colours.
 - **One sprite, two sizes.** The art is span-encoded (`src/assets/Assets.h`) and drawn by the library's `sprite4` through a palette remap and a scale: as drawn at rest, doubled when the camera whips in (`iso::zscale()`), never stretched in between. The glove is gold-cuffed for you and red for a CPU by remap alone.
-- **Text that is built, not stored.** In `src/game/Text.cpp` the tile names share their endings (AVENUE, PLACE, RAILROAD, TAX) and each card's wording comes from its effect.
-- **A whole game in one save record.** `src/save/Save.cpp` says only what the record holds; the pages, CRC and A/B copies are the CHGame library's.
+- **Text that is built, not stored.** In `Text.cpp` the tile names share their endings (AVENUE, PLACE, RAILROAD, TAX) and each card's wording comes from its effect.
+- **A whole game in one save record.** `Save.cpp` says only what the record holds; the pages, CRC and A/B copies are the CHGame library's.
 - More in [NOTES.md](NOTES.md): design decisions, tests, the script commands, the art sheet and open items.
 
 ## Credits

@@ -37,7 +37,7 @@
 #include "wiring_shift.h"
 #include "wiring_time.h"
 
-#include <board.h>
+#include "board.h"       /* the core's own: a sketch's Board.h must not shadow it */
 
 #ifdef __cplusplus
   #include "HardwareTimer.h"

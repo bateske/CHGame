@@ -31,7 +31,7 @@ REPO = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "tools"))
 import chgpack  # noqa: E402
 
-RELEASE_FQBN = "CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly"
+RELEASE_FQBN = "CHGame:ch32v:rev0:opt=oslto,rtlib=nano,periph=game,usb=uploadonly"
 PLATFORM_REL = "platform/board/arduino/CHGame"
 PLATFORM = REPO / PLATFORM_REL
 

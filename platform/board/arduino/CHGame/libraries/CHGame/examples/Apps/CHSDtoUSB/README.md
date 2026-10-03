@@ -104,8 +104,8 @@ which adds serial commands that stand in for the buttons (A, START, pulling
 the card) and inject faults (garbled blocks on the way in and out, blocks
 that fail every try, at the start of a command and in the middle):
 
-    arduino-cli compile -b CHGame:ch32v:CHGame --build-path build/test --build-property build.extra_flags=-DCHSD_TEST=1 .
-    arduino-cli compile -b CHGame:ch32v:CHGame --build-path build/release .
+    arduino-cli compile -b CHGame:ch32v:rev0:opt=osstd --build-path build/test --build-property build.extra_flags=-DCHSD_TEST=1 .
+    arduino-cli compile -b CHGame:ch32v:rev0:opt=osstd --build-path build/release .
 
 The test build says TEST on its title bar and at the end of its status
 line. What the tests cover:
@@ -135,7 +135,7 @@ card without such a gap). Block 0 is rewritten with its own contents.
 
 ## How it works
 
-`src/usb/UsbMsc.cpp` is a small USB device stack for the CH32X035's USBFS
+`UsbMsc.cpp` is a small USB device stack for the CH32X035's USBFS
 peripheral:
 
 * **Taking USB over from the core.** The core always links its own USB
@@ -165,7 +165,7 @@ peripheral:
   its reset-recovery path; BOT reset, Get Max LUN and CLEAR_FEATURE(HALT)
   are handled anyway.
 
-`src/sd` is the fast Sd2Card driver from CHStlView (register-level SPI with
+`Sd2Card.*` is the fast Sd2Card driver from CHStlView (register-level SPI with
 DMA, CMD18 streaming), plus CRC7 on every command, CRC16 on data (checked
 alongside the read DMA, computed alongside the write DMA), DMA block writes,
 card-presence checks and a quick probe of an empty slot. `CHSDtoUSB.ino`
@@ -184,12 +184,12 @@ You need the Arduino IDE (2.x) or `arduino-cli`, and:
    here with 1.3.0, from [`platform/board/arduino/CHGame/libraries/CHGfx`](../../../../CHGfx)),
    and **this folder** (keep the name `CHSDtoUSB`).
 
-Board **CHGame**, *Tools > Optimize* **Smallest (-Os)** (23.8 KB of 50.9 KB;
+Board **CHGame Rev0**, *Tools > Optimize* **Smallest (-Os)** (23.8 KB of 50.9 KB;
 it has been tested on the board with that, not yet with *Smallest + LTO*,
 the default from 0.3.0). From the command line:
 
-    arduino-cli compile -b CHGame:ch32v:CHGame:opt=osstd CHSDtoUSB
-    arduino-cli upload  -b CHGame:ch32v:CHGame:opt=osstd -p COMx CHSDtoUSB
+    arduino-cli compile -b CHGame:ch32v:rev0:opt=osstd CHSDtoUSB
+    arduino-cli upload  -b CHGame:ch32v:rev0:opt=osstd -p COMx CHSDtoUSB
 
 Once it runs, the board appears on a new COM port (its serial number
 changed); upload to that one next time.
@@ -220,6 +220,7 @@ from the PC, eject, then hold B (or switch off and on) to go back to the menu.
 
 ## Licence
 
-`src/sd` derives from William Greiman's sdfatlib via the Arduino SD library,
-licensed under the GNU General Public License v3; this sketch as a whole is
-therefore GPL-3.0 (see `LICENSE`).
+The SD driver (`Sd2Card.*`, `SdInfo.h`, `Sd2PinMap.h`) derives from
+William Greiman's sdfatlib via the Arduino SD library, licensed under the
+GNU General Public License v3; this sketch as a whole is therefore GPL-3.0
+(see `LICENSE`).

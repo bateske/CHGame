@@ -7,8 +7,8 @@
 #include <set>
 #include <string>
 #include <vector>
-#include "../../src/bank/Bank.h"
-#include "../../src/game/Show.h"
+#include "../../Bank.h"
+#include "../../Show.h"
 #include <SdSpi.h>
 #include <VCard.h>
 

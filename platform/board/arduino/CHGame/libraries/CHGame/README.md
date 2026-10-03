@@ -28,8 +28,8 @@ re-dyed with B. It shows the frame loop every CHGame game uses:
 ```cpp
 void loop() {
     dbg::poll();                       // the debug protocol (nothing in a release build)
-    if (!arduboy.nextFrame()) return;
-    arduboy.pollButtons();
+    if (!chgame.nextFrame()) return;
+    chgame.pollButtons();
     // ... logic ...
     pal::tick();
     audio::update();
@@ -76,7 +76,7 @@ include just the one it needs, e.g. `<chgame/Fmt.h>`.
 
 | Header | What |
 |---|---|
-| `chgame/Input.h` | `arduboy`: `boot()`, `setFrameRate()`, `nextFrame()`, `pollButtons()`, `pressed()`, `justPressed()`, `justReleased()`, `repeat()` (auto-repeat), `everyXFrames()`, `frameCount`. Holding START for 3 s goes back to the SD game menu (`startExits = false` opts out). |
+| `chgame/Input.h` | `chgame`: `boot()`, `setFrameRate()`, `nextFrame()`, `pollButtons()`, `pressed()`, `justPressed()`, `justReleased()`, `repeat()` (auto-repeat), `everyXFrames()`, `frameCount`. Holding START for 3 s goes back to the SD game menu (`startExits = false` opts out). |
 | `chgame/Palette.h` | The sixteen house colours by name (`INK`, `WHITE`, `FELT_DK`, `FELT`, `FELT_LT`, `SILVER`, `RED`, `WINE`, `GOLD`, `WOOD`, `BLUE`, `NAVY`, `SKIN`, `CYAN`, `FX_A`, `FX_B`) and `pal::`: felt themes, fades, flashes, desaturation, and FX_A/FX_B colour cycling. A colour change recolours every pixel of that index for free. |
 | `chgame/Draw.h` | `fillRound`, `roundRect`, `panel`, `panelLit`, `bevel`, `dither`, `dropShadow`, `remapRect`, `fillConvex`, span sprites (`sprite4`, scaled, flipped, recoloured; `spriteRot`), and the 3x5 font: `text35`, `text35s` (shadowed), `text35x2`, `text35Width`. |
 | `chgame/Mask.h` | Lettering and logos with an outline, a drop shadow and a gradient fill: `maskBegin`, `maskText35`, `maskBlit1`, `maskDraw`. |

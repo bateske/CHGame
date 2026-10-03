@@ -12,6 +12,19 @@ The first release from the CHGame repository: one Boards Manager URL now
 installs the core, the menu bootloader, the libraries and the games. The
 package's maintainer is shown as **bateske**.
 
+### Changed
+
+- **The board is "CHGame Rev0"** (*Tools > Board > CHGame Boards > CHGame
+  Rev0*), FQBN `CHGame:ch32v:rev0` (it was `CHGame:ch32v:CHGame`), variant
+  `CH32X035/CHGame_Rev0`, `ARDUINO_CHGAME_REV0`. A later hardware revision
+  gets its own board entry and variant.
+- **The CHGame library's instance is `chgame`** (`chgame.boot()`,
+  `chgame.pressed()`, `chgame.exitToMenu()` ...); it was `arduboy`. CHGame
+  is the platform and the product, Arduboy the maker. A sketch written for
+  0.2.4 with the copied library renames `arduboy.` to `chgame.`.
+- **The games' code is in their sketch folders**, so the Arduino IDE shows
+  it as tabs; `src/` keeps generated art, scores and tables.
+
 ### Added
 
 - **The libraries come with the package.** `#include <CHGame.h>` (buttons,
@@ -58,6 +71,12 @@ package's maintainer is shown as **bateske**.
   the bottom of the stack. A sketch that provides `chgame_fault_park()` (the
   CHGame library's debug protocol) goes on answering its PC; otherwise a
   press of A restarts it, for the library's debug command `!` to report.
+- **A sketch header named like a core header broke the build** on Windows
+  and macOS: the core was compiled with the sketch's folder ahead of its own
+  on the include path, so a sketch's `Board.h`, `Variant.h`, `Timer.h` ...
+  replaced the core's `board.h`, `variant.h`, `timer.h` (the file systems
+  ignore case). The sketch's folder now comes last, and `wiring.h` includes
+  `"board.h"` rather than `<board.h>`.
 - Comments that still described the 8 KB bootloader and a sketch at 0x2000
   (`link_chgame_app.ld`, `chgame_map.h`), and one in `boards.txt` naming a
   generator that does not exist.

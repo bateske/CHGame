@@ -29,7 +29,7 @@ Library ▸ Add .ZIP Library** (or copy the `CHGfx` folder into your Arduino
 `libraries/` directory). Then:
 
 ```bash
-arduino-cli compile -b CHGame:ch32v:CHGame:opt=o2std CHGfx/examples/HelloGraphics
+arduino-cli compile -b CHGame:ch32v:rev0:opt=o2std CHGfx/examples/HelloGraphics
 ```
 
 Set **Tools ▸ Optimize ▸ Faster (-O2)** in the IDE. The board defaults to

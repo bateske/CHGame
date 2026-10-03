@@ -2,18 +2,23 @@
 // 128x128 ST7735, piezo), in the look of CHBlackjack and CHChess: ALL FIVES
 // and DRAW with the double-six set, against the CPU or between two players.
 //
-// The rules are in src/rules, the CPU in src/ai, the match's flow in
-// src/game, where the tiles lie in src/table, and everything you see and
-// hear in src/table, src/stage and src/states.
+// The files, by role:
+//   rules and CPU     Dominoes (the two games), Ai, Match (a match's flow)
+//   the table         Layout (where tiles lie), Table (felt and tiles drawn)
+//   screens           Frame (one frame), Screens (title, setup, play, options),
+//                     Stage (the play screen in motion, the firecrackers)
+//   drawing and sound Colours, Font, Fx (sparkle), Sounds
+//   saving            Save
+//   generated         src/assets (tools/assets.py: the glove, lettering, logo)
 #include <CHGame.h>
 #include "config.h"
-#include "src/Frame.h"
+#include "Frame.h"
 
 void setup() {
-    arduboy.boot();
+    chgame.boot();
     gfx_begin(GFX_DIV2, GFX_12BPP);
     frame::begin();
-    arduboy.setFrameRate(CHDM_FPS);
+    chgame.setFrameRate(CHDM_FPS);
 }
 
 void loop() {

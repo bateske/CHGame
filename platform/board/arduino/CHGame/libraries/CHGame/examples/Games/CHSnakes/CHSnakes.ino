@@ -3,15 +3,23 @@
 //
 // Frame loop: logic runs while the previous frame is still going out over
 // DMA; drawing waits for it (one framebuffer), then the new frame is sent.
+//
+// The files, by role:
+//   rules, no graphics (host-tested)  Layout (the ladders and snakes), Game, Cpu
+//   the play screen                   Stage, BoardView (the board drawn), Fx
+//   the screens and the frame loop    Screens, Frame
+//   sound, saving                     Sounds, Save
+//   generated art (tools/assets.py)   src/assets/Assets.*
+//   build switches                    config.h
 #include <CHGame.h>
 #include "config.h"
-#include "src/Frame.h"
+#include "Frame.h"
 
 void setup() {
-    arduboy.boot();
+    chgame.boot();
     gfx_begin(GFX_DIV2, GFX_12BPP);
     frame::begin();
-    arduboy.setFrameRate(CHSN_FPS);
+    chgame.setFrameRate(CHSN_FPS);
 }
 
 void loop() {

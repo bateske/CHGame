@@ -15,9 +15,8 @@ their Blackjack logo, with its a taken as it is and the other letters made
 to match it.
 
 The sparrow's animations (tools/art/bird.txt, cut from its animation sheet
-by tools/bird.py) are a sparrow pixel-art animation pack by another artist,
-not under this project's licence. Its credit and licence are to be added
-here.
+by tools/bird.py) are from a sparrow pixel-art animation pack by an
+uncredited artist.
 
 Everything else - the board logic and its deals, the layouts, the tile art,
 the game flow and the presentation - is new, under the Apache License 2.0

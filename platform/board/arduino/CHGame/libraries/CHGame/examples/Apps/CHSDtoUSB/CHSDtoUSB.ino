@@ -4,13 +4,14 @@
 // next to the usual CHGame serial port - so arduino-cli / the IDE can still
 // upload a new sketch at any time, no button presses needed.
 //
-// Everything happens in this sketch: src/usb/UsbMsc takes the USB
-// peripheral over from the core and re-enumerates as a composite device.
-// Nothing in the core or the bootloader changes.
+// Everything happens in this sketch: UsbMsc takes the USB peripheral over
+// from the core and re-enumerates as a composite device. Nothing in the
+// core or the bootloader changes.
 //
 //   A (tap)        rescan the card (brings the drive back after an eject)
 //   START          toggle read-only (the host is told the medium changed)
-//   B (hold 1 s)   eject and reboot into the bootloader
+//   B (hold 1 s)   eject and reset (with the menu bootloader: the menu);
+//                  so does START held 3 s
 //   B held at power-up: safe mode - stay a plain USB serial device
 //
 // Cards can be swapped while it runs. The board has no card-detect switch,
@@ -22,11 +23,17 @@
 // flipped on the wire is retried - never stored, never handed to the PC.
 // Any byte sent to the serial port returns a status line.
 //
-// The SD block driver (src/sd) is the fast DMA Sd2Card from CHStlView,
-// derived from William Greiman's sdfatlib: GPL-3.0, so this sketch is too.
+// The SD block driver is the fast DMA Sd2Card from CHStlView, derived from
+// William Greiman's sdfatlib: GPL-3.0, so this sketch is too.
+//
+// The files:
+//   CHSDtoUSB.ino     the card behind the drive, the screen, buttons, status
+//   UsbMsc.*          the USB device: CDC serial + mass storage (SCSI)
+//   Sd2Card.*, SdInfo.h, Sd2PinMap.h
+//                     the SD card over SPI1 with DMA (from sdfatlib)
 #include <CHGfx.h>
-#include "src/sd/Sd2Card.h"
-#include "src/usb/UsbMsc.h"
+#include "Sd2Card.h"
+#include "UsbMsc.h"
 
 extern "C" void chgame_enter_bootloader(void);
 

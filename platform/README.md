@@ -56,7 +56,7 @@ install it from this machine: [board/docs/trying-a-release.md](board/docs/trying
   hand), because arduino-cli compiles against the installed package, not
   this folder;
 - the place to read the core, variant and linker script (the pin names are
-  in `variants/CH32X035/CHGame/variant_CHGame.h`; the menus and their flags
+  in `variants/CH32X035/CHGame_Rev0/variant_CHGame_Rev0.h`; the menus and their flags
   in `boards.txt`);
 - 0.3.0: what the next release installs. What changed from 0.2.4 is in
   [board/CHANGELOG.md](board/CHANGELOG.md).

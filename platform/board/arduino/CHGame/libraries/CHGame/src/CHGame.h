@@ -4,7 +4,7 @@
 //
 // brings, on top of CHGfx (the framebuffer, the panel and its DMA):
 //
-//   chgame/Input.h    CHGame `arduboy`: buttons, frame pacing, START held
+//   chgame/Input.h    CHGame `chgame`: buttons, frame pacing, START held
 //                     3 s goes back to the SD game menu
 //   chgame/Palette.h  the house colours (INK, WHITE, FELT ... FX_A, FX_B) and
 //                     pal:: (themes, fades, flashes, colour cycling)

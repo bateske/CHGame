@@ -7,10 +7,11 @@ well. These are the places where the game had to build its own tools,
 with suggestions for what could move into the library. They are roughly
 in order of value.
 
-Since these notes were written, the game's drawing, 3x5 font, masks and
-palette (`src/gfx/`) have moved into the CHGame library
-(`platform/board/arduino/CHGame/libraries/CHGame/src/chgame/`); the paths below are where they
-were then.
+*Written while designing CHChess; paths and names brought up to date on 2026-10-02.*
+Since then the game's drawing, 3x5 font, masks and palette (then
+`src/gfx/`) have moved into the CHGame library
+(`platform/board/arduino/CHGame/libraries/CHGame/src/chgame/`): where the
+notes below say "the game's own" for those, it is now the library's.
 
 ## What worked and should stay
 
@@ -51,7 +52,8 @@ Two things would help:
 ### 2. Palette-swapped span sprites (`sprite4`)
 
 Both CHBlackjack and CHChess carry the same kind of sprite routine
-(CHChess: `src/gfx/Draw.cpp`, packer in `tools/assets.py`):
+(CHChess: then `src/gfx/Draw.cpp`, now the library's `chgame/Draw.cpp`;
+packer in `tools/assets.py`):
 
 * the art is stored as runs per row (`(len-1) << 4 | colour`, colour 15
   transparent). That is compact, and fast because a run is a fill, not a
@@ -114,7 +116,8 @@ larger defaults.
 
 ### 7. Palette helpers
 
-CHChess's palette module (`src/gfx/Palette.cpp`) stages the 16 colours and
+CHChess's palette module (then `src/gfx/Palette.cpp`, now the library's
+`chgame/Palette.cpp`) stages the 16 colours and
 commits them after `gfx_wait()`. On top of that it does fades to black,
 theme swaps (felt colours) and two "animated slots" whose colour is
 recomputed each frame (a rainbow cycle, a grey pulse, a shimmer). Useful
@@ -125,7 +128,7 @@ next flush (so it can be called any time without tearing), and a
 ### 8. Ship the simulator
 
 `tools/chsim` (the host CHGfx with flush timing, the drawing-during-flush
-check, a cost model calibrated against `benchmark-results.txt`, and the
+check, a cost model calibrated against CHGfx's benchmark results, and the
 `chdrive.py` script runner with screenshots and GIFs) has been copied
 from CHBlackjack to CHChess. (Since then it is maintained once, as the
 repository's `tools/chsim`, which CHGfx's own tests run on too.) It is the
@@ -212,7 +215,8 @@ speed-ups above):
 | All of it (the game's font and `Mask.cpp` deleted) | +2,260 B | -8 B |
 
 Each of these overflows the 50,944-byte application region, so the game
-keeps its font, `text35`, `text35x2` and `Mask.cpp`. CHGfx's text costs
+keeps its font, `text35`, `text35x2` and `Mask.cpp` (all the CHGame
+library's now: `chgame/Draw.cpp`, `chgame/Mask.cpp`). CHGfx's text costs
 4.3 KB where the game's costs 1.9 KB. Three things make the difference:
 
 * The built-in 5x7 font (475 B) and its renderer (264 B, in SRAM) are

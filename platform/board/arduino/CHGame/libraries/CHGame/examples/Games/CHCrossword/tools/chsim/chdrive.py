@@ -22,7 +22,7 @@ CHCrossword adds:
 --card FILE (simulator): a FAT image to stand in for the SD card (CHSD_CARD).
 --id names the game's handshake reply (default CHCW). The game's own
 protocol commands (say G, H, W, C, Z, U, J, X, Q) are listed above its hook
-in src/states/Screens.cpp.
+in Screens.cpp.
 """
 import argparse
 import os

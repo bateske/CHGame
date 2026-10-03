@@ -1,7 +1,7 @@
 """Trim ch2k's opening book to fewer plies.
 
     python tools/book.py            # sizes at each depth
-    python tools/book.py 3          # rewrite the OPENING_BOOK array in src/engine/ch2k.hpp at depth 3
+    python tools/book.py 3          # rewrite the OPENING_BOOK array in ch2k.hpp at depth 3
 
 The book is a tree of moves serialised depth first, one byte a move: bits
 0-5 index the move in gen_moves() order, bit 7 = children follow, bit 6 =
@@ -11,7 +11,7 @@ import re
 import sys
 from pathlib import Path
 
-HPP = Path(__file__).resolve().parent.parent / "src" / "engine" / "ch2k.hpp"
+HPP = Path(__file__).resolve().parent.parent / "ch2k.hpp"
 
 
 def load():

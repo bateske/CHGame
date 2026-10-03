@@ -8,8 +8,8 @@
 #include <stdint.h>
 #include <vector>
 #include <algorithm>
-#include "../../src/game/Cards.h"
-#include "../../src/game/Hand.h"
+#include "../../Cards.h"
+#include "../../Hand.h"
 
 static int failures = 0, checks = 0;
 #define CHECK(cond, ...) do { checks++; if (!(cond)) { failures++; printf("FAIL %s:%d: ", __FILE__, __LINE__); \

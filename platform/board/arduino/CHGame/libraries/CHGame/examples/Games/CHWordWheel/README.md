@@ -51,10 +51,10 @@ To put it on the handheld: in the Arduino IDE, with the CHGame board package ins
 
 ## Developer notes
 
-- **An SD card that is optional.** `src/bank/SdBank.cpp` reads plain 64-byte records, one block a puzzle, through the CHSd library (`<Fat.h>`); `src/states/Screens.cpp` calls it only after `gfx_wait()`, because the card shares SPI1 with the display, and falls back to the built-in bank if the card goes.
-- **Text packed into what flash is left.** `src/bank/FlashBank.cpp` decodes canonical Huffman a bit at a time, about 12 bytes a puzzle, and deals each section without repeats through a small Feistel permutation, so the save holds a seed and three counters, not a list.
-- **A wheel that never decides anything.** The rules draw the stop and `src/game/Spin.cpp` solves the spin to end there; `src/render/WheelStrip.cpp` draws the wedges as spans between edges stepped in fixed point toward a hub below the screen, with its pixel loops in SRAM (`RAMFUNC`).
-- **Redrawing only what changed.** `src/fx/Presenter.cpp` repaints the wall, the board panel by panel, the podiums and the prompt bar as they change, and `chgame redraw` checks it against a build that redraws everything every frame.
+- **An SD card that is optional.** `SdBank.cpp` reads plain 64-byte records, one block a puzzle, through the CHSd library (`<Fat.h>`); `Screens.cpp` calls it only after `gfx_wait()`, because the card shares SPI1 with the display, and falls back to the built-in bank if the card goes.
+- **Text packed into what flash is left.** `FlashBank.cpp` decodes canonical Huffman a bit at a time, about 12 bytes a puzzle, and deals each section without repeats through a small Feistel permutation, so the save holds a seed and three counters, not a list.
+- **A wheel that never decides anything.** The rules draw the stop and `Spin.cpp` solves the spin to end there; `WheelStrip.cpp` draws the wedges as spans between edges stepped in fixed point toward a hub below the screen, with its pixel loops in SRAM (`RAMFUNC`).
+- **Redrawing only what changed.** `Presenter.cpp` repaints the wall, the board panel by panel, the podiums and the prompt bar as they change, and `chgame redraw` checks it against a build that redraws everything every frame.
 - **Size from compiler settings.** Every size-optimised file starts with one `#pragma GCC optimize(...)` line of `Os` and four switches, each measured, worth about 1 KB against plain `-Os` with LTO.
 - More in [NOTES.md](NOTES.md): design decisions, the puzzle banks, tests, the script commands and open items.
 

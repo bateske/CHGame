@@ -49,13 +49,13 @@ To put it on the handheld: in the Arduino IDE, with the CHGame board package ins
 
 ## Developer notes
 
-- **Work spread over frames, with the same answer.** A deal is made in `src/game/Board.cpp` by playing a full table backwards, a few pairs a frame under the shuffle rattle, and comes out the same however the work is split. So a saved game (`src/save/Save.cpp`) is only the seed, the layout and the pairs taken, replayed.
-- **`RAMFUNC` blitters with colours chosen at draw time.** `src/gfx/Tile.cpp` draws 2-bit faces through a lookup table from SRAM, so one set of art is a tile, a white flash or a gold shimmer. The 1x and 2x sizes are byte-wide copies; only the camera's in-between sizes go a pixel at a time.
-- **A still table is not redrawn.** `stage::render()` in `src/stage/Stage.cpp` returns false when nothing moved, and the outlines keep shimmering because they are palette colours that animate for free.
+- **Work spread over frames, with the same answer.** A deal is made in `MahjongBoard.cpp` by playing a full table backwards, a few pairs a frame under the shuffle rattle, and comes out the same however the work is split. So a saved game (`Save.cpp`) is only the seed, the layout and the pairs taken, replayed.
+- **`RAMFUNC` blitters with colours chosen at draw time.** `Tile.cpp` draws 2-bit faces through a lookup table from SRAM, so one set of art is a tile, a white flash or a gold shimmer. The 1x and 2x sizes are byte-wide copies; only the camera's in-between sizes go a pixel at a time.
+- **A still table is not redrawn.** `stage::render()` in `Stage.cpp` returns false when nothing moved, and the outlines keep shimmering because they are palette colours that animate for free.
 - **Generated tables.** `tools/layouts.py` turns the text maps in `tools/layouts/` into `src/game/Layouts.cpp` (about 100 bytes a layout) and checks that each fits the screen and can be dealt; `tools/assets.py` packs the faces and works out their emboss.
-- **Navigation you can prove.** `src/game/Nav.cpp` moves the glove between free tiles only, and the host tests in `tools/tests/test_board.cpp` check that every free tile can be reached.
+- **Navigation you can prove.** `Nav.cpp` moves the glove between free tiles only, and the host tests in `tools/tests/test_board.cpp` check that every free tile can be reached.
 - More in [NOTES.md](NOTES.md): design decisions, how it fits together, tests, the script commands and open items.
 
 ## Credits
 
-Apache License 2.0; see `LICENSE` and `NOTICE`. The shared code, the palette, effects and the pointing glove's art are from CHChess and CHBlackjack (both Apache-2.0). CHBlackjack is a derivative of "Blackjack" for the Arduboy by Press Play On Tape (Apache-2.0): the 3x5 font is theirs, and the title's lettering is drawn in the face of their Blackjack logo. The sparrow's animations are from a sparrow pixel-art animation pack by another artist, not under this project's licence; its credit and licence are still to be added to `NOTICE`.
+Apache License 2.0; see `LICENSE` and `NOTICE`. The shared code, the palette, effects and the pointing glove's art are from CHChess and CHBlackjack (both Apache-2.0). CHBlackjack is a derivative of "Blackjack" for the Arduboy by Press Play On Tape (Apache-2.0): the 3x5 font is theirs, and the title's lettering is drawn in the face of their Blackjack logo. The sparrow's animations are from a sparrow pixel-art animation pack by an uncredited artist.

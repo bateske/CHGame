@@ -5,9 +5,9 @@ Agent-facing notes for continuing work on this game. Rules and controls are in [
 ## Snapshot
 
 - Imported from https://github.com/bateske/CHBackgammon at commit 80cf126 (2026-10-01). Develop here now, not in the old repo.
-- Release build (`CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly`, core 0.2.4, CHGfx 1.3.0): flash 49,268 of 50,944 B (1,676 spare), static RAM 16,924 of 18,416 B (1,492 spare).
-- Save pages: `chgame size` reports the image as 49,524 B. Both A/B save pages (0xF500/0xF600) need the image to stay at or below 50,432 B, so the real margin was about 900 B at import. On the CHGame library's sound engine (2026-10-02) the image is 50,152 B; on its debug protocol, saving and RAMFUNC (below) 50,232 B: 200 B left. The pages are the CHGame library's (`chgame/Save.cpp`). Treat flash as full.
-- The debug protocol (`chgame/Debug.h`, `CHGAME_DEBUG`), the flash save record (`chgame/Save.h`; `src/save/Save.cpp` says only what the record holds, byte for byte the old layout) and RAMFUNC are the CHGame library's since 2026-10-02, and `tools/chsim/chdrive.py` is the shared `tools/chsim/chdrivelib.py` plus this game's `goto`, `move`, `auto`, `board`, `waitturn` and `cal`. Image 50,152 -> 50,232 B (the library's `audio::setOn()` out of line, about +18 B; the rest its save code and LTO's inlining), static RAM 16,892 B unchanged; debug image 49,728 -> 49,844 B; frames unchanged.
+- Release build (`CHGame:ch32v:rev0:opt=oslto,rtlib=nano,periph=game,usb=uploadonly`, board package 0.3.0, 2026-10-02): flash 49,960 B, image 50,328 of 50,944 B, static RAM 16,892 of 18,416 B (1,524 spare).
+- Save pages: both A/B save pages (0xF500/0xF600) need the image to stay at or below 50,432 B: 104 B left. The image was 49,524 B at import (about 900 B of margin); on the CHGame library's sound engine (2026-10-02) 50,152 B, on its debug protocol, saving and RAMFUNC (below) 50,232 B. The pages are the CHGame library's (`chgame/Save.cpp`). Treat flash as full.
+- The debug protocol (`chgame/Debug.h`, `CHGAME_DEBUG`), the flash save record (`chgame/Save.h`; `Save.cpp` says only what the record holds, byte for byte the old layout) and RAMFUNC are the CHGame library's since 2026-10-02, and `tools/chsim/chdrive.py` is the shared `tools/chsim/chdrivelib.py` plus this game's `goto`, `move`, `auto`, `board`, `waitturn` and `cal`. Image 50,152 -> 50,232 B (the library's `audio::setOn()` out of line, about +18 B; the rest its save code and LTO's inlining), static RAM 16,892 B unchanged; debug image 49,728 -> 49,844 B; frames unchanged.
 - Verification as of 2026-10-01: simulator only. `chgame check` passes. It runs the host tests (UBSan, rules against a naive reference, whole matches, the CPU), runs every script twice with identical frames, checks that the network's evaluation is bit-identical in the simulator and on the host, and compiles the release build.
 - It has never run on the board. Frame times, CPU thinking time, sound and saving on the hardware are all unmeasured.
 
@@ -29,12 +29,12 @@ Agent-facing notes for continuing work on this game. Rules and controls are in [
 
 - Device run (kit ready, never run; follow "The device" in the root CLAUDE.md).
   - `chgame run --device tools/scripts/device_render.txt out/dev_render`: render cost per section (`say Y`) and whole-frame perf.
-  - `chgame run --device tools/scripts/device_think.txt out/dev_think`: `say W` prints positions weighed, ms and `slice_us`. The longest slice should stay under about 8 ms; tune `QUANTUM` (64 positions a tick) in `src/game/Match.cpp`.
+  - `chgame run --device tools/scripts/device_think.txt out/dev_think`: `say W` prints positions weighed, ms and `slice_us`. The longest slice should stay under about 8 ms; tune `QUANTUM` (64 positions a tick) in `Match.cpp`.
   - Then run `chgame check --compare out/<sim run> out/<device run>`.
   - Simulator estimates (host-time, unreliable): play averages about 5-7 ms and peaks at about 11-13 ms; the title takes about 12 ms.
 - Device checks still to do: sound by ear, saving and CONTINUE on hardware, and `say E` on the board, which should match the host network value.
 - Choices the owner has not reviewed yet:
-  - The glove is drawn turned over (a vertical flip) when it works from below: the top-half points, and the bar/tray on Red's turn (`fromBelow()` in `src/stage/Stage.cpp`). The owner has objected to mirrored art elsewhere because flipped shading reads wrong, so this may need a separate drawing, which costs flash.
+  - The glove is drawn turned over (a vertical flip) when it works from below: the top-half points, and the bar/tray on Red's turn (`fromBelow()` in `Stage.cpp`). The owner has objected to mirrored art elsewhere because flipped shading reads wrong, so this may need a separate drawing, which costs flash.
   - Red vs ivory chips, points printed on the felt, and a wood frame with a gold inlay.
   - The centred cube shows 64.
   - The 3x5 font is now the CHGame library's (`platform/board/arduino/CHGame/libraries/CHGame/src/chgame/Draw.cpp`), so its 'M' is PPOT's, as at the other tables. This game's own copy had an 'M' with a lighter middle (one row, not two), because two of PPOT's side by side, as in BACKGAMMON, read as HH at title size.
@@ -44,7 +44,7 @@ Agent-facing notes for continuing work on this game. Rules and controls are in [
 
 - Flash tactics already in use:
   - Every hand-written `.cpp` starts with `#pragma GCC optimize("Os", "no-ipa-sra")`; no-ipa-sra saved about 256 B under LTO. Keep it in new files.
-  - Avoid 64-bit division: it pulls in `__divdi3` (about 1.2 KB). See the 32-bit maths in `src/ai/Cube.cpp`.
+  - Avoid 64-bit division: it pulls in `__divdi3` (about 1.2 KB). See the 32-bit maths in `Cube.cpp`.
   - The glove is one `HAND` sprite, turned over with `SPR_FLIP_V` in `sprite4`.
 - Size levers measured earlier:
   - `-flto-partition=one` would save about 260 B, but it needs link flags in the board package.
@@ -60,18 +60,19 @@ Agent-facing notes for continuing work on this game. Rules and controls are in [
   - `src/ai/RaceData.cpp` comes from `train.py race`.
   - `src/ai/MetData.cpp` comes from `tools/train/met.py`.
   - `src/assets/` comes from `tools/assets.py`.
+- The hand-written sources sit in the sketch's top folder, so the Arduino IDE shows them as tabs; only the generated files above stay in `src/`. The rules are `Rules.*`, not `Board.*`: the sketch folder is on the include path, and on a case-insensitive file system (Windows, macOS) a `Board.h` there is what the core's `#include <board.h>` (in `wiring.h`) finds.
 - Saves:
-  - `VERSION` 2 in `src/save/Save.cpp`. Bump it on any change to the `Data` layout (the header, whose flag byte says a game is saved, and the CRC are the library's, `chgame/Save.h`).
+  - `VERSION` 2 in `Save.cpp`. Bump it on any change to the `Data` layout (the header, whose flag byte says a game is saved, and the CRC are the library's, `chgame/Save.h`).
   - A save holds the position as the turn began, its roll and the dice generator's state, so a reload can never change a roll.
   - The save pages are shared with every other CHGame game; records are told apart by magic "CHBG".
   - CHFour used the same magic value (`0x47424843`, "CHBG") by mistake until 2026-10-01; it is "CHF4" now (../../../../../../../../../docs/status.md).
 - Device debug builds (`CHGAME_DEBUG` on the board) are `CHBG_LEAN`: no saving, no setup/options screens, no hint or coach, and games start with `say G` (or at once from the title's menu). `-DCHBG_FULL` forces those parts in, but don't expect it to fit.
 - Debug protocol (the CHGame library's `chgame/Debug.h`):
   - The letters `? S K L N P B` belong to the protocol, and `T` too in a `CHGAME_PROFILE=1` build.
-  - The game's commands are documented above `debugHook()` in `src/states/Screens.cpp`.
+  - The game's commands are documented above `debugHook()` in `Screens.cpp`.
   - `A` (play for the human, used by chdrive's `auto`) and `Q` (calibration) are simulator-only. `G C D V X R W Y E H J` also work on the board.
 - The simulator's `cal`/`perf` render estimates are host time. Don't trust them for small differences.
-- Art: `python tools/assets.py` writes each drawing to `tools/art/gen/` as a PNG. To redraw one, copy it up to `tools/art/` (see Development).
+- Art: `python tools/assets.py` writes each drawing to `tools/art/gen/` as a PNG. To redraw one, copy it up to `tools/art/` (see Development). The glove and the display font are the shared ones in `tools/art/common/` at the repository root; a file of the same name in this game's `tools/art/` would override them.
   - `tools/art/sides.txt` is the per-side palette swap.
   - `python tools/font_preview.py` draws the display font.
   - `tools/lookdev.py` is a Python mock-up of the board for choosing colours, written to `docs/mockups/` (gitignored). It is not the renderer.
@@ -79,7 +80,7 @@ Agent-facing notes for continuing work on this game. Rules and controls are in [
 
 ## How it fits
 
-- **The CPU** (`src/ai`) evaluates a position just after a side has moved:
+- **The CPU** (`Net.*`, `Ai.*`, `Race.*`) evaluates a position just after a side has moved:
   how likely is that side to win? The answer is a neural network with 196
   inputs (for each side and point: a first checker, a second, a third, and
   each one more; the bar; the tray), 16 hidden units and one output - 3,188
@@ -105,7 +106,7 @@ Agent-facing notes for continuing work on this game. Rules and controls are in [
     25-number table fitted to the exact answer for all 54,264 home-board
     positions, which the handheld has no room for: it bears off 0.013 rolls
     slower than perfect play.
-  * **The cube** (`src/ai/Cube.*`): the network's chance, and a match
+  * **The cube** (`Cube.*`): the network's chance, and a match
     equity table worked out from first principles in `tools/train/met.py`
     (a 7x7 table and the post-Crawford column, 112 bytes): take when taking
     is worth more than passing, double near the point where the other side
@@ -119,12 +120,12 @@ Agent-facing notes for continuing work on this game. Rules and controls are in [
     a slice per frame, so the frames never stop and nothing needs a second
     stack; the red glove wanders over the checkers being weighed, and a soft
     clock ticks if it takes long.
-* **The rules** (`src/rules`) are written once, for "the side to move",
+* **The rules** (`Rules.*`) are written once, for "the side to move",
   each side counting the points its own way. Every play of a roll is
   enumerated without storing any (the list for a double can run to
   hundreds), each final position exactly once. A second, naive
   implementation in the tests agrees with it on 2.1 million rolls.
-* **The board** (`src/table`) is drawn top-down in world units that the
+* **The board** (`Table.*`) is drawn top-down in world units that the
   camera scales by fifths, 1x to 2x, a row at a time: each row's wood,
   felt and tray in one pass of word stores, then the points' tapering spans,
   from SRAM. The checkers, dice and glove are span-encoded sprites
@@ -134,12 +135,12 @@ Agent-facing notes for continuing work on this game. Rules and controls are in [
   the lettering's shimmer) keep moving for free.
 * **The lettering** is a slab serif drawn for the game (the shared `tools/art/common/font.txt`,
   capitals and figures 11 pixels high, a few lower-case letters for the
-  logo): 600 bytes of packed bits, drawn through CHBlackjack's mask code
+  logo): 600 bytes of packed bits, drawn through the CHGame library's `Mask` (once CHBlackjack's)
   for the outlined, gradient-filled logo, banners and headings, and plain
   for the setup and options choices. Menus use the 3x5 font at twice the
   size, as in the other tables.
-* **Sound** is CHBlackjack's piezo sequencer of short step lists, three
-  bytes a step: the dice rattling to rest, a knock for each checker set
+* **Sound** is the CHGame library's piezo engine (once CHBlackjack's
+  sequencer) playing short step lists, three bytes a step: the dice rattling to rest, a knock for each checker set
   down, a smash and falling swoops for a hit, a chip dropped in the tray,
   fanfares.
 * **Saved games** hold the position as the turn began, its roll, the match
@@ -168,5 +169,5 @@ Everything can be checked on a PC (Python 3 with `pip install -r ../../../../../
 - Scripts: `say X <side> <position>` sets up a position (`w 6:5 8:3 r 24:2 ..`: each side's points and counts; `say V <side> <opponent> <position>` against the CPU), `say G <mode> <level> <seed> [length]` starts a game (mode 0 against the CPU, 1 two players), `say C <length> <white> <red> <cube> <owner> <crawford>` sets the match, `say D 6431` stacks the next rolls, `move 13 7` walks the glove with D-pad presses and picks up and sets down, `waitturn` waits for your turn, `auto` plays on for you, `snap` and `rec` take pictures, `cal` and `perf` estimate the device's render time. `showcase.txt` and the others are tests now: only `gameplay.txt` makes a README picture.
 - Training: `python tools/train/train.py train out/net.bin --games 600000` trains a network from nothing; `bench int:tools/train/net.bin heur` plays two players against each other (`random`, `pips`, `heur`, `float:<file>`, `int:<file>`, and the game's own opponents `ai0:` `ai1:` `ai2:`); `export tools/train/net.bin src/ai/NetData.cpp` writes the tables; `race src/ai/RaceData.cpp` fits the race table. `python tools/train/met.py src/ai/MetData.cpp` works out the match equity table.
 - `chgame upload --debug` adds the serial protocol (screenshots, injected input, lockstep); the debug build is lean (Gotchas). `tools/scripts/device_render.txt` and `device_think.txt` measure the render time and the CPU on the board.
-- Art: to redraw a drawing, copy it from `tools/art/gen/` up to `tools/art/` (`checker.png`, `checker_big.png`, `dice.png`, `hand.png`), edit it with the palette's 16 colours, and run `tools/assets.py` again. The display font is `tools/art/font.txt`, `#` and `.` per glyph.
+- Art: to redraw a drawing, copy it from `tools/art/gen/` up to `tools/art/` (`checker.png`, `checker_big.png`, `dice.png`), edit it with the palette's 16 colours, and run `tools/assets.py` again. The glove (`hand.png`) and the display font (`font.txt`, `#` and `.` per glyph) are the shared copies in the repository's `tools/art/common/`, used by other games too.
 - Arduino IDE: *Tools > Optimize > Smallest + LTO* (the game needs link-time optimisation to fit) and *Tools > USB > Upload only*.

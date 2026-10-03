@@ -58,13 +58,13 @@ To put it on the handheld: in the Arduino IDE, with the CHGame board package ins
 
 ## Developer notes
 
-- **Frames from inside the search.** While the CPU thinks, `src/engine/Engine.cpp` calls a poll hook every 32 nodes (`frame::thinkPoll()`) and `src/Frame.cpp` draws a frame on a 1 KB stack of its own, so the camera, the pointing glove and the particles keep moving.
-- **An engine made of steps.** The board is the 32 dark squares in a padded row and a multiple jump is several single steps with the turn staying on the piece; the alpha-beta search deepens within a node budget. `src/game/Match.cpp` stores undo and saved games as a snapshot plus one byte per step.
-- **An isometric board from integer scaling.** `src/iso/Iso.cpp` draws the table, the camera's dive and the flat map; art scales in whole multiples (`ascale()`, `sized()`, `zoomed()` in `src/iso/Iso.h`).
-- **The show is a few counters.** Slow motion on a combo's last hop and the winning capture is one multiplier (`slowF` in `src/stage/Stage.cpp`); the banners, flying chips and trays are there too.
-- **A title that plays itself.** The attract game is a move list in `src/states/DemoLine.h`, found by `tools/tests/demo_line.cpp`, and the tune in `src/audio/Sounds.cpp` is played by the library's piezo sequencer.
+- **Frames from inside the search.** While the CPU thinks, `Engine.cpp` calls a poll hook every 32 nodes (`frame::thinkPoll()`) and `Frame.cpp` draws a frame on a 1 KB stack of its own, so the camera, the pointing glove and the particles keep moving.
+- **An engine made of steps.** The board is the 32 dark squares in a padded row and a multiple jump is several single steps with the turn staying on the piece; the alpha-beta search deepens within a node budget. `Match.cpp` stores undo and saved games as a snapshot plus one byte per step.
+- **An isometric board from integer scaling.** `Iso.cpp` draws the table, the camera's dive and the flat map; art scales in whole multiples (`ascale()`, `sized()`, `zoomed()` in `Iso.h`).
+- **The show is a few counters.** Slow motion on a combo's last hop and the winning capture is one multiplier (`slowF` in `Stage.cpp`); the banners, flying chips and trays are there too.
+- **A title that plays itself.** The attract game is a move list in `src/states/DemoLine.h`, found by `tools/tests/demo_line.cpp`, and the tune in `Sounds.cpp` is played by the library's piezo sequencer.
 - More in [NOTES.md](NOTES.md): design decisions, tests, the script commands and open items.
 
 ## Credits
 
-Apache License 2.0; see `LICENSE` and `NOTICE`. The rules and the CPU are this game's own (`src/engine`). The isometric board, camera, glove and play screen are adapted from CHChess, and the shared core from CHChess and CHBlackjack (both Apache-2.0). CHBlackjack is a derivative of "Blackjack" for the Arduboy by Press Play On Tape (Apache-2.0); the 3x5 font is Press Play On Tape's.
+Apache License 2.0; see `LICENSE` and `NOTICE`. The rules and the CPU are this game's own (`Engine.*`). The isometric board, camera, glove and play screen are adapted from CHChess, and the shared core from CHChess and CHBlackjack (both Apache-2.0). CHBlackjack is a derivative of "Blackjack" for the Arduboy by Press Play On Tape (Apache-2.0); the 3x5 font is Press Play On Tape's.

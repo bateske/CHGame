@@ -36,7 +36,7 @@ LETTER = {"k": 0, "w": 1, "d": 2, "f": 3, "g": 4, "s": 5, "r": 6, "m": 7,
 TRANSPARENT = 16
 
 # The tables the game indexes: tokens by seat, decals by board::Type order
-# (see src/stage/Stage.cpp).
+# (see Stage.cpp).
 TOKENS = ["TOKEN_CHERRIES", "TOKEN_BANANA", "TOKEN_APPLE", "TOKEN_STRAWBERRY"]
 # Stored a bit a pixel (rows, MSB first), not as a colour sprite.
 MONO = ["LOGO"]

@@ -29,7 +29,7 @@
 #define INPUT_PULLDOWN 3
 #define F_CPU 48000000u
 
-// The CHGame pins a sketch is likely to name (variant_CHGame.h). The numbers
+// The CHGame pins a sketch is likely to name (variant_CHGame_Rev0.h). The numbers
 // only have to be distinct; buttons read LOW while held (--input).
 #define PIN_BTN_UP      101
 #define PIN_BTN_DOWN    102

@@ -7,10 +7,10 @@
 #include <string.h>
 #include <string>
 #include <vector>
-#include "../../src/game/Puzzle.h"
-#include "../../src/game/Game.h"
+#include "../../Puzzle.h"
+#include "../../Game.h"
 #include "../../src/game/PuzzleData.h"
-#include "../../src/pack/Pack.h"
+#include "../../Pack.h"
 
 struct XWord { int num, start, len, down; const char *clue; };
 struct XPuzzle { const char *title; int n, diff; const char *grid; std::vector<XWord> words; };

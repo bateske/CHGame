@@ -1,4 +1,4 @@
-// Host tests for the rules: src/game Wheel, Spots, Nav and Roulette.
+// Host tests for the rules: Wheel, Spots, Nav and Roulette.
 //   chgame test
 //   test_rules --dump     the spot model, diffed against ref_roulette.py
 #include <stdio.h>
@@ -6,11 +6,11 @@
 #include <string.h>
 #include <stdint.h>
 #define private public                 // the RNG, the queue and go() for white-box checks
-#include "../../src/game/Roulette.h"
+#include "../../Roulette.h"
 #undef private
-#include "../../src/game/Nav.h"
-#include "../../src/game/Spots.h"
-#include "../../src/game/Wheel.h"
+#include "../../Nav.h"
+#include "../../Spots.h"
+#include "../../Wheel.h"
 #include <chgame/Input.h>          // button masks (the CHGame library)
 
 using namespace spots;

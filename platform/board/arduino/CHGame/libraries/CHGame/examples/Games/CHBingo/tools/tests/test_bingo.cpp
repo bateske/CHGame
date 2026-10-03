@@ -1,10 +1,10 @@
-// Host tests for the rules (src/game/Bingo.*): chgame test
+// Host tests for the rules (Bingo.*): chgame test
 //   test_bingo            run the checks
 //   test_bingo --dump     round set-ups for tools/tests/ref_bingo.py
 #include <stdio.h>
 #include <string.h>
 #include <vector>
-#include "../../src/game/Bingo.h"
+#include "../../Bingo.h"
 
 static long checks = 0, failures = 0;
 #define CHECK(c) do { checks++; if (!(c)) { failures++; if (failures < 30) printf("FAIL %s:%d: %s\n", __FILE__, __LINE__, #c); } } while (0)

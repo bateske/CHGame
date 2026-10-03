@@ -38,16 +38,16 @@ One `#include <CHGame.h>` brings buttons, graphics, the house palette and drawin
    - All games share the pages, and each recognises its own records by a magic number.
 4. **There is a game menu.**
    - The bootloader shows the games on the SD card at power-on ([sd-menu.md](sd-menu.md)).
-   - Holding START for 3 s in any game goes back to it. The library does this for you (`arduboy.startExits`).
+   - Holding START for 3 s in any game goes back to it. The library does this for you (`chgame.startExits`).
    - Uploading from the IDE works from the menu or from a running game, with no buttons.
 
 ## Arduboy2 calls and their CHGame equivalents
 
-`arduboy` is a ready-made global, as in Arduboy2 sketches. Graphics come from CHGfx (which `CHGame.h` includes): either the `gfx_*` functions the games use, or the `Gfx.` object, whose method names follow Adafruit_GFX and Arduboy2. The library adds the house style on top: named colours, panels, sprites, the 3x5 font, lettering.
+`chgame` is a ready-made global, where an Arduboy2 sketch has `arduboy`. Graphics come from CHGfx (which `CHGame.h` includes): either the `gfx_*` functions the games use, or the `Gfx.` object, whose method names follow Adafruit_GFX and Arduboy2. The library adds the house style on top: named colours, panels, sprites, the 3x5 font, lettering.
 
 | Arduboy2 | CHGame |
 |---|---|
-| `arduboy.begin()` | `arduboy.boot(); gfx_begin(GFX_DIV2, GFX_12BPP); pal::init();` (or `gfx_setPalette(yours, 16)`) |
+| `arduboy.begin()` | `chgame.boot(); gfx_begin(GFX_DIV2, GFX_12BPP); pal::init();` (or `gfx_setPalette(yours, 16)`) |
 | `setFrameRate`, `nextFrame`, `everyXFrames`, `frameCount` | the same |
 | `pollButtons`, `pressed`, `anyPressed`, `justPressed`, `justReleased` | the same, plus `repeat(b)` for auto-repeat; `notPressed(b)` is `!anyPressed(b)` |
 | `A_BUTTON` … `RIGHT_BUTTON` | the same, plus `START_BUTTON`, `SELECT_BUTTON` |
@@ -62,7 +62,7 @@ One `#include <CHGame.h>` brings buttons, graphics, the house palette and drawin
 | `EEPROM.put`/`get` | `save::store(MAGIC, version, data)` / `save::load(...)`: up to 244 bytes, kept across power cycles and re-uploads. The core's `EEPROM` library emulates only 26 bytes. |
 | `initRandomSeed()` | `randomSeed(micros())` once the player has pressed something; for presentation, `fx::rnd()` (repeatable in the simulator) |
 | `PROGMEM`, `pgm_read_byte`, `F()` | not needed: `const` data stays in flash and is read normally |
-| `exitToBootloader()` | `arduboy.exitToMenu()` (the SD menu) |
+| `exitToBootloader()` | `chgame.exitToMenu()` (the SD menu) |
 | `idle()`, `boot` logo, `systemButtons()` | none |
 
 ## A first sketch
@@ -75,13 +75,13 @@ uses:
 ```cpp
 void loop() {
     dbg::poll();                          // the simulator and tools/device.py talk through this
-    if (!arduboy.nextFrame()) return;
+    if (!chgame.nextFrame()) return;
 
     // Logic.
-    arduboy.pollButtons();
-    if (arduboy.pressed(LEFT_BUTTON) && x > 8) x--;
+    chgame.pollButtons();
+    if (chgame.pressed(LEFT_BUTTON) && x > 8) x--;
     // ...
-    if (arduboy.justPressed(A_BUTTON)) audio::sfx(0);
+    if (chgame.justPressed(A_BUTTON)) audio::sfx(0);
     pal::tick();
     audio::update();
 

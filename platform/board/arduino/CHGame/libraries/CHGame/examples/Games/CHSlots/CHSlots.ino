@@ -12,19 +12,31 @@
 //
 // Frame loop: logic runs while the previous frame is still going out over
 // DMA; drawing waits for it (one framebuffer), then the new frame is sent.
+//
+// The files, by role:
+//   rules     Slots.*: the three machines, settled spin by spin (no graphics)
+//   screens   Screens.*: title, machine menu, play, options, stats, endings
+//             (and the debug commands)
+//   show      Presenter.*: replays a settled spin as reels, wins and banners
+//   drawing   Machine.* (cabinets, reels, wheel, paytable, felts), Layout.h
+//             (every coordinate), Fx.* (particles, banners)
+//   sound     Sounds.* (effects and three tunes)   saving  Save.*
+//   switches  config.h
+//   generated src/assets/ (art, tools/assets.py), src/game/Strips.h (the reel
+//             strips, tools/strips.py): not edited by hand
 #include <CHGame.h>
 #include "config.h"
-#include "src/render/Machine.h"
-#include "src/states/Screens.h"
+#include "Machine.h"
+#include "Screens.h"
 
 void setup() {
-    arduboy.boot();
+    chgame.boot();
     dbg::begin("CHSL " CHSL_VERSION);     // the debug protocol's hello (CHGAME_DEBUG builds)
     gfx_begin(GFX_DIV2, GFX_12BPP);
     pal::init();
     pal::setThemes(mach::THEMES, mach::THEME_COUNT);    // each machine's felt
     screens::begin();
-    arduboy.setFrameRate(CHSL_FPS);
+    chgame.setFrameRate(CHSL_FPS);
 #if CHGAME_DEBUG
     dbg::hook = screens::debugCommand;
 #endif
@@ -32,21 +44,21 @@ void setup() {
 
 void loop() {
     dbg::poll();
-    if (!arduboy.nextFrame()) return;
+    if (!chgame.nextFrame()) return;
     dbg::markUpdateStart();
     // Logic runs at a fixed 60 Hz. If a heavy frame made drawing fall
     // behind, catch up (up to three ticks) before drawing again, so the reels
     // never slow down.
     uint8_t ticks = 0;
     do {
-        arduboy.pollButtons();
+        chgame.pollButtons();
         pal::tick();
         screens::update();
-    } while (++ticks < 3 && arduboy.nextFrame());
+    } while (++ticks < 3 && chgame.nextFrame());
     pal::commit();                  // staged by CHGfx: lands with the next flush
     gfx_wait();
     dbg::markRenderStart();
-    screens::render(arduboy.frameCount);
+    screens::render(chgame.frameCount);
     dbg::markRenderEnd();
     gfx_flushAsync();
 }

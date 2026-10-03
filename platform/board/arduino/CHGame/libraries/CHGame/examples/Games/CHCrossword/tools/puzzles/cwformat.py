@@ -362,7 +362,7 @@ def encode(p, lens=None):
 
 
 def decode(blob, lens=None):
-    """The reference decoder (the game's is src/game/Puzzle.cpp)."""
+    """The reference decoder (the game's is Puzzle.cpp)."""
     _, counts, order = canonical(lens or load_lengths())
     if len(blob) < 4 or crc16(blob[:-2]) != int.from_bytes(blob[-2:], "little"):
         raise Bad("bad CRC")

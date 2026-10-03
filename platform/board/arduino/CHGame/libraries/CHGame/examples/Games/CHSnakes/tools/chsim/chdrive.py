@@ -5,7 +5,7 @@
 
 The repository's tools/chsim/chdrivelib.py does the driving and has the
 common script commands (wait, tap, hold, snap, gif, rec, say, perf, cal ...).
-`say` sends a game command (src/states/Screens.cpp's debugHook); one the
+`say` sends a game command (Screens.cpp's debugHook); one the
 stage is not ready for is answered HELD and run a few frames later, and
 this game's `say` also takes the frame ack that comes after it.
 CHSnakes adds:

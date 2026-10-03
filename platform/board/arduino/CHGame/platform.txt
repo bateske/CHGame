@@ -4,12 +4,17 @@
 # For more info at:
 # https://arduino.github.io/arduino-cli/latest/platform-specification/
 
-name=CHGame
+name=CHGame Boards
 version=0.3.0
 
 # Compile variables
 # ----------------------
-compiler.ch.extra_include="-I{build.core.path}/ch32/usb/" "-I{build.source.path}" "-I{build.core.path}" "-I{build.core.path}/avr/" "-I{build.core.path}/ch32/" "-I{build.core.path}/ch32/lib/" "-I{build.system.path}/{build.series}/USER/" "-I{build.system.path}/{build.series}/SRC/Core/" "-I{build.system.path}/{build.series}/SRC/Debug/" "-I{build.system.path}/{build.series}/SRC/Startup/" "-I{build.system.path}/{build.series}/SRC/Peripheral/inc/" "-I{build.system.path}/{build.series}/SRC/Peripheral/src/"
+# The sketch's folder comes last: a sketch header whose name matches a core
+# header (Board.h, Variant.h, Timer.h ... on a case-insensitive file system)
+# must not replace the core's own when the core is compiled. The sketch's
+# own quoted includes still find its files first (their folder is searched
+# before this list).
+compiler.ch.extra_include="-I{build.core.path}/ch32/usb/" "-I{build.core.path}" "-I{build.core.path}/avr/" "-I{build.core.path}/ch32/" "-I{build.core.path}/ch32/lib/" "-I{build.system.path}/{build.series}/USER/" "-I{build.system.path}/{build.series}/SRC/Core/" "-I{build.system.path}/{build.series}/SRC/Debug/" "-I{build.system.path}/{build.series}/SRC/Startup/" "-I{build.system.path}/{build.series}/SRC/Peripheral/inc/" "-I{build.system.path}/{build.series}/SRC/Peripheral/src/" "-I{build.source.path}"
 
 #---warning flags
 compiler.warning_flags=-Wunused -Wuninitialized
