@@ -88,11 +88,13 @@ staged package, sizes unchanged):
 - **Smallest + LTO is the default** *Optimize* option. FQBNs without `opt=`
   now build with `-flto`; with plain `-Os` the larger games do not fit.
   The release FQBN names `oslto` already, so the games are unchanged.
-  `tools/sdcard/games.json` pins CHSDtoUSB to `opt=osstd`, what it was
+  CHSDtoUSB's `tools/game.py` pins it to `opt=osstd` (`FQBN`), what it was
   tested with.
-- **Tools > Bootloader** offers the menu in its three colour themes
-  (Rainbow, Plain, Casino) and USB Only; the 0.2.4 bootloader is no longer
-  in the package (it is kept in `bootloader/release/0.2.4/` for rollback).
+- **Tools > Bootloader** offers the SD Game Menu (Rainbow or White) and
+  USB Only (2026-10-03: the Plain and Casino colour themes went with menu
+  v2, whose look comes from the card; the two styles differ only in colour
+  15, turning or white); the 0.2.4 bootloader is no longer in the package (it is
+  kept in `bootloader/release/0.2.4/` for rollback).
   The programmers are named for what they need.
 - **Examples** are under *CHGame > Games* and *CHGame > Apps* (the folders
   were `games/` and `apps/`).
@@ -171,6 +173,18 @@ differences from 0.2.4, building, testing and installing.
 - To ship it through the Boards Manager, the release must also publish the
   `chgame-upload` 0.2.0 archives and name them in the package index.
 
+**Menu v2** (2026-10-03, BOOT_VERSION 3): folders, the card's order and
+background (`GAMES/MENU.IDX`, `MENU.BG`: [../spec/card.md](../spec/card.md)),
+a game started at power-on (START held: the menu), the turning rainbow as a
+colour of the picture. Errors are shown as numbers; `fault.c`, the STATUS
+and READ commands, the colour themes and the code-drawn title went for
+flash (11,908 B, 380 B free; a folder lists 240 entries, which fills the RAM: [bootloader/SIZES.md](bootloader/SIZES.md)).
+Two styles: Rainbow (the default) and White. It passes the PC suite, which
+boots it on cards made by `tools/chcart`, and it ran on the board on
+2026-10-03 ([bootloader/test/hil/RESULTS-2026-10-03.md](bootloader/test/hil/RESULTS-2026-10-03.md)):
+`bootloader/release/` and `board/.../bootloaders/CHGame/` carry the images
+that ran.
+
 ## Changing a platform piece
 
 1. Make the change here and say what it is for in the commit. For the
@@ -184,6 +198,15 @@ differences from 0.2.4, building, testing and installing.
    root README.
 
 ## Changes since the copies were taken
+
+- 2026-10-03: the bootloader's menu v2 (above). Both uploaders skip
+  `-verify`'s readback on BOOT_VERSION 3, which has no READ
+  (`host/py/chgame_upload/upload.py`, `host/go/upload.go`); their parity
+  tests pass. Burn Bootloader offers SD Game Menu (Rainbow, White) and USB Only
+  (`boards.txt`; the plain and casino binaries are gone). The examples each
+  have a `chgame.json` (the `.chgame` format, [../spec/chgame.md](../spec/chgame.md)).
+  Checked: the 22 release images unchanged (no library change); the
+  bootloader's PC suite, chcart's tests and the conformance fixtures pass.
 
 - 2026-10-02: CHSd gained `fat::root()`, `fat::list()` (any folder's files
   and folders, through a callback) and `sd::stream()` (a CMD18 run of blocks

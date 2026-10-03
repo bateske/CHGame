@@ -1,18 +1,27 @@
 /*
- * The SD game menu (docs/sd-menu.md).
+ * The SD game menu (docs/sd-menu.md; the card's files: shared/chgame_card.h,
+ * spec/card.md).
  *
- *   power-on -> card read during the panel's wake-up waits -> list of
- *   GAMES/ *.CHG titles, sorted, the installed one preselected
- *     A/START on the installed game -> RUN reset (no flash write)
- *     A/START on another game       -> install (install.c) -> RUN reset
- *     UP/DOWN, LEFT/RIGHT           -> move, page
+ *   power-on -> card read during the panel's wake-up waits
+ *     launch entry in GAMES/MENU.IDX (and START not held) -> that game runs,
+ *       installed first if it is not the installed one
+ *     otherwise the list of GAMES/: folders and *.CHG titles, in MENU.IDX's
+ *     order, then by title, the installed game preselected
+ *       A/START on a folder           -> its list (B goes back)
+ *       A/START on the installed game -> RUN reset (no flash write)
+ *       A/START on another game       -> install (install.c) -> RUN reset
+ *       UP/DOWN, LEFT/RIGHT           -> move, page
  *
- * No card, no FAT volume or no packages: the installed program just runs,
- * as before there was a menu. USB stays alive while the menu is up, so an
- * upload can start at any time: HELLO/STATUS/READ leave the menu alone, any
- * other command hands over to the upload screen.
+ * No card, no FAT volume or no entries: the installed program just runs, as
+ * before there was a menu. USB stays alive while the menu is up, so an upload
+ * can start at any time: HELLO/STATUS/READ leave the menu alone, any other
+ * command hands over to the upload screen.
  *
- * Drawn straight to the panel (lcd.c); the game table lives in RAM.
+ * Drawn into lcd.c's framebuffer over the folder's MENU.BG (or a plain
+ * screen with the title when there is none), which is read again from the
+ * card for every new picture: there is RAM for one copy, not two. The game
+ * table lives in RAM. Errors are reported as a number only (docs/sd-menu.md
+ * has the list): everything is still checked, but text costs flash.
  */
 #include "menu.h"
 #include "lcd.h"
@@ -26,108 +35,117 @@
 #include "hal.h"
 #include "sys.h"
 #include "chgame_bootreq.h"
+#include "chgame_card.h"
 
-/* ---- colours ------------------------------------------------------------------- */
-
-/* The theme: ./build.sh --theme=rainbow|plain|casino, or -DMENU_THEME=. The
-   default is neutral, so the menu suits any game on the card, and still shows
-   that the panel has colour. PLAIN is the same without the animation (168 B
-   less, if the bytes are ever needed); CASINO is the casino games' felt. */
-#define MENU_THEME_RAINBOW  0       /* black and dark grey; the accent cycles through the hues */
-#define MENU_THEME_PLAIN    1       /* black and dark grey; a gold accent */
-#define MENU_THEME_CASINO   2       /* green felt and gold */
-#ifndef MENU_THEME
-#define MENU_THEME MENU_THEME_RAINBOW
-#endif
-#define RAINBOW (MENU_THEME == MENU_THEME_RAINBOW)
-
-#if MENU_THEME == MENU_THEME_CASINO
-#define BG        RGB565(0, 104, 52)        /* the list */
-#define PANEL     RGB565(0, 52, 26)         /* header, footer, the inside of boxes */
-#define GREY      RGB565(120, 140, 128)     /* a package that can't be installed */
-#define BAR_FG    PANEL                     /* the selected title */
-#else
-#define BG        RGB565(0, 0, 0)
-#define PANEL     RGB565(64, 64, 64)
-#define GREY      RGB565(128, 128, 128)
-#define BAR_FG    (RAINBOW ? BG : PANEL)    /* black reads on every hue */
-#endif
-#define CREAM     RGB565(255, 244, 214)
-#define CHIP      RGB565(214, 32, 32)       /* the installed game */
-
-#if RAINBOW
-/* The colour wheel, 192 steps: each channel ramps up, stays full, ramps down
-   and stays off, a third of a turn apart, lifted onto a floor (10 of 31) so
-   the darkest hue is still light enough for black text. Five bits per
-   channel, green's sixth bit left at 0. */
-static uint32_t hue(uint32_t p)
-{
-    uint32_t c = 0;
-    p += 64;                                /* red, then green, then blue */
-    for (uint32_t k = 0; k < 3; k++, p += 128) {
-        uint32_t q = p % 192, v = q < 32 ? q : q < 96 ? 31 : q < 128 ? 127 - q : 0;
-        c = c << 5 | (10 + ((v * 11) >> 4));
-    }
-    return (c & 0x7FE0) << 1 | (c & 0x1F);
-}
-
-#define HUE_GOLD  24                        /* (255, 214, 82) */
-static uint32_t phase = HUE_GOLD;           /* boxes drawn before the first step are gold */
-static uint32_t accent = 31u << 11 | 26u << 6 | 10u;
-#define ACCENT    accent
-#else
-#define ACCENT    RGB565(255, 200, 40)      /* gold */
-#endif
-
-#define TITLE_COLS  19          /* x 8..121, then a space to the edge */
+#define TITLE_COLS  19          /* x 8..121; a folder's '>' at 122 */
 #define ROWS        10
 #define ROW_H       10
 #define LIST_Y      20
+#define DEPTH       4           /* folders below GAMES/ */
 
-#define G_INSTALLED 0x01        /* (draw_row indexes with it) */
+#define G_INSTALLED 0x01        /* (draw_row tests it) */
 #define G_BAD       0x02        /* err holds the reason */
+#define G_DIR       0x04
+#define G_LAUNCH    0x08
 
 typedef struct {
     uint32_t clus, size;
-    uint8_t  flags, err;
-    char     title[TITLE_COLS + 3];     /* space-padded to TITLE_COLS + 1, then NUL */
+    uint8_t  flags, err, key, pad;      /* key: the MENU.IDX record, 255 = none */
+    char     title[TITLE_COLS + 1];     /* space-padded; holds the 11-byte 8.3 name until the scan is done */
 } __attribute__((aligned(4))) game_t;
 _Static_assert(sizeof(game_t) == 32, "keep game_t at 32 bytes");
 
+typedef struct { uint32_t clus, size; } file_t;
+
 static game_t games[MENU_MAX_GAMES];
-static uint32_t ngames, sel, top;
+static uint32_t ngames, sel, top, depth, lit;
+static file_t idx, bg;                  /* the folder's MENU.IDX; the MENU.BG in force */
+static struct { uint32_t clus, sel, top; file_t bg; } up[DEPTH];
+static uint32_t here;                   /* the folder shown: its first cluster */
 static uint8_t buf[512] __attribute__((aligned(4)));
+
+static uint32_t w32(const uint8_t *p) { return *(const uint32_t *)(const void *)p; }
+
+/* The menu's own colours when there is no MENU.BG (black behind; the rest
+   by shared/chgame_card.h's roles; colour 15 white, for the white style). */
+static const uint16_t pal0[16] = {
+    [CARD_C_TEXT] = RGB565(255, 244, 214), [CARD_C_DIM] = RGB565(128, 128, 128),
+    [CARD_C_MARK] = RGB565(214, 32, 32), [CARD_C_RAINBOW] = RGB565(255, 255, 255),
+};
 
 /* ---- the card --------------------------------------------------------------- */
 
-static uint32_t games_dir;
+static __attribute__((noinline)) int same(const uint8_t *a, const char *b)
+{
+    for (uint32_t i = 0; i < 11; i++) if (a[i] != (uint8_t)b[i]) return 0;
+    return 1;
+}
 
 static int find_games(const uint8_t *d, void *ctx)
 {
     (void)ctx;
-    static const char name[11] = "GAMES      ";
-    for (uint32_t i = 0; i < 11; i++) if (d[i] != (uint8_t)name[i]) return 0;
-    if ((d[11] & (FAT_ATTR_DIR | FAT_ATTR_LABEL)) != FAT_ATTR_DIR) return 0;   /* a folder, not a label */
-    games_dir = fat_entry_cluster(d);
+    if (!same(d, "GAMES      ") || (d[11] & (FAT_ATTR_DIR | FAT_ATTR_LABEL)) != FAT_ATTR_DIR) return 0;
+    here = fat_entry_cluster(d);
     return 1;
 }
 
-static int add_game(const uint8_t *d, void *ctx)
+static int add_entry(const uint8_t *d, void *ctx)
 {
     game_t *g = &games[ngames];
+    file_t *f;
     (void)ctx;
-    if (ngames == MENU_MAX_GAMES) return 1;
-    if (d[11] & (FAT_ATTR_DIR | FAT_ATTR_LABEL | FAT_ATTR_HIDDEN | FAT_ATTR_SYSTEM)) return 0;
-    if (d[8] != 'C' || d[9] != 'H' || d[10] != 'G') return 0;
-    if (d[0] == '_') return 0;              /* macOS "._NAME" resource forks */
+    /* labels, hidden and system files, "." and "..", macOS "._NAME" forks */
+    if (d[11] & (FAT_ATTR_LABEL | FAT_ATTR_HIDDEN | FAT_ATTR_SYSTEM) || d[0] == '.' || d[0] == '_') return 0;
+    if (!(d[11] & FAT_ATTR_DIR)) {
+        f = same(d, "MENU    IDX") ? &idx : same(d, "MENU    BG ") ? &bg : 0;
+        if (f) {
+            f->clus = fat_entry_cluster(d);
+            f->size = fat_entry_size(d);
+            return 0;
+        }
+        if (d[8] != 'C' || d[9] != 'H' || d[10] != 'G') return 0;
+    }
+    if (ngames == MENU_MAX_GAMES) return 0;     /* (still looking for MENU.*) */
     g->clus = fat_entry_cluster(d);
     g->size = fat_entry_size(d);
-    /* the 8.3 name stands in as the title until the header is read */
-    for (uint32_t i = 0; i <= TITLE_COLS; i++) g->title[i] = i < 8 ? (char)d[i] : ' ';
-    g->title[TITLE_COLS + 1] = 0;
-    g->flags = 0;
+    g->flags = d[11] & FAT_ATTR_DIR ? G_DIR : 0;
+    g->key = 0xFF;
+    for (uint32_t i = 0; i <= TITLE_COLS; i++) g->title[i] = i < 11 ? (char)d[i] : ' ';
     ngames++;
     return 0;
+}
+
+/* Up to TITLE_COLS characters of s into a title: a NUL ends it, lower case is
+   folded (the font has capitals only), anything else unprintable is '?'. */
+static void set_title(game_t *g, const uint8_t *s)
+{
+    for (uint32_t k = 0, end = 0; k < TITLE_COLS; k++) {
+        char ch = (char)s[k];
+        if (!ch) end = 1;
+        if (ch >= 'a' && ch <= 'z') ch -= 32;
+        g->title[k] = end ? ' ' : (ch < 32 || ch > '_' ? '?' : ch);
+    }
+}
+
+static void read_index(void)
+{
+    fat_stream_t s;
+    uint32_t lba, k = 0;
+    fat_open(&s, idx.clus, idx.size);
+    while ((lba = fat_next_lba(&s, buf)) && !sd_read(lba, buf))
+        for (const uint8_t *e = buf; e < buf + sizeof buf; e += CARD_IDX_RECORD, k++) {
+            if (!k) {
+                if (w32(e) != CARD_IDX_MAGIC) return;
+                continue;
+            }
+            for (uint32_t i = 0; i < ngames; i++) {
+                game_t *g = &games[i];
+                if (g->key != 0xFF || !same(e, g->title)) continue;
+                g->key = (uint8_t)(k < 0xFF ? k : 0xFE);
+                if (e[CARD_IDX_OFF_FLAGS] & CARD_IDX_LAUNCH) g->flags |= G_LAUNCH;
+                if (g->flags & G_DIR && e[CARD_IDX_OFF_TITLE]) set_title(g, e + CARD_IDX_OFF_TITLE);
+            }
+        }
 }
 
 /* Struct assignment would call newlib's memcpy (a byte loop in flash, and
@@ -138,129 +156,121 @@ static void copy(game_t *d, const game_t *s)
         ((uint32_t *)(void *)d)[i] = ((const uint32_t *)(const void *)s)[i];
 }
 
-static int title_less(const game_t *a, const game_t *b)
+static int less(const game_t *a, const game_t *b)
 {
+    if (a->key != b->key) return a->key < b->key;
     for (uint32_t i = 0; i < TITLE_COLS; i++)
         if (a->title[i] != b->title[i]) return a->title[i] < b->title[i];
     return 0;
 }
 
-/* Lists the packages and reads their headers. Returns the number of entries
-   (with "INSTALLED PROGRAM" when the program in flash is not on the card). */
+/* Lists the folder `here` and reads the games' headers. Returns the number of
+   entries (at the top, with "INSTALLED PROGRAM" when the program in flash is
+   not among them). Picks the installed game, else the first. */
 static uint32_t scan(int app)
 {
     const chgame_meta_t *m = appmeta();
     uint32_t i, installed = 0;
 
-    ngames = 0;
-    if (sd_init() || fat_mount(buf) || fat_dir(0, buf, find_games, 0) != 1)
-        return 0;
-    fat_dir(games_dir, buf, add_game, 0);
+    ngames = idx.clus = 0;
+    fat_dir(here, buf, add_entry, 0);
+    if (idx.clus) read_index();
     for (i = 0; i < ngames; i++) {
         game_t *g = &games[i];
         fat_stream_t s;
         uint32_t lba, n, crc;
         int rc;
+        if (g->flags & G_DIR) continue;
         fat_open(&s, g->clus, g->size);
         lba = fat_next_lba(&s, buf);
         rc = lba && !sd_read(lba, buf) ? chg_check(buf, g->size, &n, &crc) : -1;
         if (rc) {
-            g->flags = G_BAD;
-            g->err = (uint8_t)(rc < 0 ? INST_E_READ : INST_E_PKG + rc);
-            continue;
+            g->flags |= G_BAD;
+            g->err = (uint8_t)(rc < 0 ? INST_E_READ : INST_E_PKG);
+            continue;                       /* (its 8.3 name stands in: "BADFILE CHG") */
         }
-        for (uint32_t k = 0, end = 0; k < TITLE_COLS; k++) {
-            char ch = (char)buf[CHG_OFF_TITLE + k];
-            if (!ch) end = 1;
-            if (ch >= 'a' && ch <= 'z') ch -= 32;   /* the font has capitals only */
-            g->title[k] = end ? ' ' : (ch < 32 || ch > '_' ? '?' : ch);
-        }
+        set_title(g, buf + CHG_OFF_TITLE);
         if (app == APP_VALID && m->length == n && m->crc32 == crc) {
-            g->flags = G_INSTALLED;
+            g->flags |= G_INSTALLED;
             installed = 1;
         }
     }
-    /* insertion sort by title */
+    /* insertion sort: MENU.IDX's order, then by title */
     for (i = 1; i < ngames; i++) {
         game_t t;
         uint32_t j = i;
         copy(&t, &games[i]);
-        for (; j && title_less(&t, &games[j - 1]); j--) copy(&games[j], &games[j - 1]);
+        for (; j && less(&t, &games[j - 1]); j--) copy(&games[j], &games[j - 1]);
         copy(&games[j], &t);
     }
-    if (!ngames) return 0;
-    if (app == APP_VALID && !installed && ngames < MENU_MAX_GAMES) {
-        static const char t[] = "INSTALLED PROGRAM   ";
+    if (ngames && !depth && app == APP_VALID && !installed && ngames < MENU_MAX_GAMES) {
         for (i = ngames; i; i--) copy(&games[i], &games[i - 1]);
-        games[0].clus = 0;
-        games[0].flags = G_INSTALLED;
-        for (i = 0; i <= TITLE_COLS + 1; i++) games[0].title[i] = t[i];
+        games[0].flags = G_INSTALLED;      /* (its clus is never used) */
+        set_title(&games[0], (const uint8_t *)"INSTALLED PROGRAM");
         ngames++;
     }
+    for (sel = 0; sel < ngames && !(games[sel].flags & G_INSTALLED); sel++) { }
+    if (sel == ngames) sel = 0;
+    top = 0;                                /* (draw_list scrolls to sel) */
     return ngames;
 }
 
 /* ---- drawing ------------------------------------------------------------------- */
 
-/* Centred; at most TITLE_COLS characters. */
-static void text_c(uint32_t y, const char *s, uint16_t fg, uint16_t bg, uint32_t scale)
+static void flush(uint32_t y0, uint32_t y1)
 {
-    uint32_t n = 0;
-    while (s[n] && n < TITLE_COLS) n++;
-    lcd_text((LCD_W - n * 6 * scale) / 2, y, s, n, fg, bg, scale);
+    if (lit) lcd_flush(y0, y1);             /* before lcd_on(), the picture waits for it */
 }
 
-static void draw_row(uint32_t i)
+/* The background: MENU.BG, with the logo and anything else in it (the
+   menu draws nothing over its top 20 rows and bottom 8), or plain black when
+   there is none (or it is not one). */
+static void background(void)
 {
-    uint32_t y = LIST_Y + (i - top) * ROW_H;
-    uint16_t bg = BG, fg = CREAM;
-    game_t *g = &games[i];
-    if (i == sel) { bg = ACCENT; fg = BAR_FG; }
-    else if (g->flags & G_BAD) fg = GREY;
-    /* Every pixel once, in three strips (edge, mark, title), so the bar can
-       change colour 25 times a second without flickering. */
-    lcd_fill(0, y, 2, ROW_H, bg);
-    lcd_text(2, y, " " LCD_MARK + (g->flags & G_INSTALLED), 1, CHIP, bg, 0);  /* (G_INSTALLED is 1) */
-    lcd_text(8, y, g->title, TITLE_COLS + 1, fg, bg, 0);
-}
-
-/* Everything in the accent colour on the list screen. */
-static void draw_accents(void)
-{
-#if RAINBOW
-    /* the title one hue per letter, so the colours run across it */
-    for (uint32_t i = 0, x = (LCD_W - 6 * 12) / 2; i < 6; i++)
-        x = lcd_text(x, 2, "CHGAME" + i, 1, hue(phase + i * 16), PANEL, 2);
-#else
-    text_c(2, "CHGAME", ACCENT, PANEL, 2);
-#endif
-    draw_row(sel);
-    lcd_text(2, 120, "A:PLAY", 6, ACCENT, PANEL, 1);
-}
-
-/* "nnn/NNN" in a fixed 7-character field, so nothing needs measuring. */
-static void draw_counter(void)
-{
-    char s[] = "   /   ";
-    uint32_t a = sel + 1, b = ngames, i = 3;
-    do s[--i] = (char)('0' + a % 10); while (a /= 10);
-    i = b >= 100 ? 7 : b >= 10 ? 6 : 5;
-    do s[--i] = (char)('0' + b % 10); while (b /= 10);
-    lcd_text(LCD_W - 2 - 7 * 6, 120, s, 7, CREAM, PANEL, 1);
+    if (bg.clus && bg.size == CARD_BG_BYTES) {
+        fat_stream_t s;
+        uint32_t k, lba;
+        fat_open(&s, bg.clus, bg.size);
+        for (k = 0; k < CARD_BG_BYTES / 512; k++) {
+            if (!(lba = fat_next_lba(&s, buf)) || sd_read(lba, k ? lcd_fb + (k - 1) * 512 : buf)) break;
+            if (!k) {
+                if (w32(buf) != CARD_BG_MAGIC) break;
+                for (uint32_t i = 0; i < 8; i++)
+                    ((uint32_t *)(void *)lcd_pal)[i] = w32(buf + CARD_BG_OFF_PALETTE + 4 * i);
+            }
+        }
+        if (k == CARD_BG_BYTES / 512) return;
+        bg.clus = 0;                        /* broken: not again */
+    }
+    for (uint32_t i = 0; i < 16; i++) lcd_pal[i] = pal0[i];
+    lcd_fill(0, 0, LCD_W, LCD_H, 0);
 }
 
 static void draw_list(void)
 {
-    uint32_t i;
-    lcd_fill(0, 0, LCD_W, LIST_Y, PANEL);
-    for (i = top; i < top + ROWS; i++) {
-        if (i == sel) continue;             /* (draw_accents) */
-        if (i < ngames) draw_row(i);
-        else lcd_fill(0, LIST_Y + (i - top) * ROW_H, LCD_W, ROW_H, BG);
+    if (sel < top) top = sel;
+    if (sel >= top + ROWS) top = sel - ROWS + 1;
+    background();
+    for (uint32_t i = top; i < top + ROWS && i < ngames; i++) {
+        uint32_t y = LIST_Y + (i - top) * ROW_H, c = CARD_C_TEXT;
+        game_t *g = &games[i];
+        if (i == sel) {
+            lcd_fill(0, y, LCD_W, ROW_H, LCD_RAINBOW);
+            c = CARD_C_INK;
+        } else if (g->flags & G_BAD) c = CARD_C_DIM;
+        if (g->flags & G_INSTALLED) lcd_fill(2, y + 2, 3, 6, CARD_C_MARK);     /* the chip */
+        lcd_text(8, y + 1, g->title, TITLE_COLS, c);
+        if (g->flags & G_DIR) lcd_text(LCD_W - 6, y + 1, ">", 1, c);
     }
-    lcd_fill(0, 120, LCD_W, 8, PANEL);
-    draw_accents();
-    draw_counter();
+    flush(0, LCD_H);
+}
+
+/* Centred; at most TITLE_COLS characters. */
+static void text_c(uint32_t y, const char *s, uint32_t c)
+{
+    uint32_t n = 0;
+    while (s[n] && n < TITLE_COLS) n++;
+    lcd_text((LCD_W - n * 6) / 2, y, s, n, c);
 }
 
 /* A game's title is padded to TITLE_COLS, so text_c() always draws it 114
@@ -269,24 +279,35 @@ static void draw_list(void)
    edge. */
 static void box(const char *l1, const char *l2)
 {
-    lcd_fill(2, 36, LCD_W - 4, 52, ACCENT);
-    lcd_fill(4, 38, LCD_W - 8, 48, PANEL);
-    text_c(46, l1, ACCENT, PANEL, 1);
-    if (l2) text_c(60, l2, CREAM, PANEL, 1);
+    lcd_fill(2, 36, LCD_W - 4, 52, LCD_RAINBOW);
+    lcd_fill(4, 38, LCD_W - 8, 48, CARD_C_INK);
+    text_c(46, l1, LCD_RAINBOW);
+    if (l2) text_c(60, l2, CARD_C_TEXT);
+    flush(36, 88);
 }
 
 void menu_progress(uint32_t done, uint32_t total)
 {
-    lcd_fill(7, 72, ((LCD_W - 14) * (done + 1)) / total, 6, ACCENT);
+    lcd_fill(7, 72, ((LCD_W - 14) * (done + 1)) / total, 6, LCD_RAINBOW);
+    flush(72, 78);
+}
+
+/* The panel on, showing the framebuffer, if it is not on yet. */
+static void light(void)
+{
+    if (lit) return;
+    lcd_wake();
+    lcd_on();
+    lit = 1;
 }
 
 /* ---- keys ------------------------------------------------------------------------- */
 
-static uint32_t k_prev, k_last, k_rep;
+static uint32_t k_prev = BTN_ALL, k_last, k_rep;
 
 /* Newly pressed keys, sampled every 15 ms (debounce), with UP/DOWN repeating
-   after 400 ms every 80 ms. Keys held when the menu starts count only after a
-   release. */
+   after 400 ms every 80 ms. Keys held when the menu starts (START at
+   power-on) count only after a release: k_prev starts with every key down. */
 static uint32_t keys(void)
 {
     uint32_t t = sys_ticks(), now, out;
@@ -316,123 +337,121 @@ static void wait_key(void)
     while (!(keys() & (BTN_A | BTN_B | BTN_START))) { }
 }
 
-static const char *const why[] = {
-    "", "CARD READ ERROR", "FILE DAMAGED", "NOT A GAME", "NO GAME INSTALLED",
-    "NOT A GAME FILE", "FILE DAMAGED", "NEWER FORMAT", "WRONG DEVICE", "BAD FILE SIZE",
-};
-
 /* ---- the menu ------------------------------------------------------------------------ */
 
-#if CHBOOT_APP
-/* Dry run (build.sh app): START cycles the SD clock, A checks a package
-   without installing it and shows the time per block, SELECT leaves through
-   the old bootloader's USB mode. */
-static uint32_t dry_br = SD_SPI_BR;
-#endif
-
-void menu_main(int app)
+/* A or START on entry i: a folder opens, a game runs (installed first if need
+   be). Returns only for a folder (0) or an error (INST_E_*). */
+static int start(uint32_t i, int app)
 {
-    uint32_t k, n;
+    game_t *g = &games[i];
+    int rc = INST_OK;
+    if (g->flags & G_DIR) {
+        if (depth < DEPTH) {
+            up[depth].clus = here; up[depth].sel = sel; up[depth].top = top; up[depth].bg = bg;
+            depth++;
+            here = g->clus;
+            scan(app);
+        }
+        return INST_OK;
+    }
+    if (g->flags & G_BAD) return g->err;
+    if (!(g->flags & G_INSTALLED) || CHBOOT_APP) {
+        if (!lit) draw_list();
+        box("INSTALLING", g->title);
+        light();
+        rc = install(g->clus, g->size, buf);
+        if (rc) return rc;
+    }
+#if CHBOOT_APP
+    /* Dry run (build.sh app): the package checked, nothing written. */
+    box("DRY RUN OK", 0);
+    wait_key();
+    return INST_OK;
+#endif
+    release();
+    boot_reset(CHGAME_BOOTREQ_RUN);
+}
 
+void menu_main(int app, int launch)
+{
+    uint32_t k, n = 0;
+    int rc = INST_OK;
+
+    (void)launch;
     lcd_reset();
-    n = scan(app);                          /* the card is read during the panel's waits */
+    if (!sd_init() && !fat_mount(buf) && fat_dir(0, buf, find_games, 0) == 1)
+        n = scan(app);                      /* the card is read during the panel's waits */
 #if !CHBOOT_APP
     if (!n && app == APP_VALID)
         boot_reset(CHGAME_BOOTREQ_RUN);     /* nothing on the card: run what is installed */
+    /* The launch entry, followed down through folders; on any error the menu
+       comes up there, saying so. */
+    for (k = 0; launch && !rc && k <= DEPTH; k++) {
+        for (n = 0; n < ngames && !(games[n].flags & G_LAUNCH); n++) { }
+        if (n == ngames) break;
+        rc = start(n, app);
+    }
 #endif
-    lcd_wake();
-    lcd_on(BG);
-    if (!n) {
-        box("NO GAMES FOUND", "SD CARD: /GAMES");
+    if (!ngames && !depth) {                /* nothing to list: USB mode, saying so (B there looks again) */
+        background();
+        box("NO GAMES", 0);
+        light();
         return;
     }
 #if !CHBOOT_APP
     proto_init();
 #endif
-    for (sel = 0; sel < ngames && !(games[sel].flags & G_INSTALLED); sel++) { }
-    if (sel == ngames) sel = 0;
-    top = sel >= ROWS ? sel - ROWS + 1 : 0;
-    k_prev = hal_buttons();
-    k_rep = sys_ticks() + 400u * SYS_TICKS_PER_MS;
     draw_list();
+    light();
 
     for (;;) {
-        uint32_t old = sel, old_top = top;
-#if RAINBOW
+        uint32_t old = sel, old_depth = depth;
+#if !CHBOOT_APP
+#if LCD_TURNS
         static uint32_t t_hue;
         if (sys_ticks() - t_hue >= 40u * SYS_TICKS_PER_MS) {   /* a turn of the wheel in ~3.8 s */
             t_hue = sys_ticks();
-            accent = hue(phase += 2);      /* (hue() takes it modulo a turn) */
-            draw_accents();
+            lcd_step();
         }
 #endif
-#if !CHBOOT_APP
         proto_task();
         if (proto_claimed) {
             box("USB UPLOAD", "B: MENU");
             return;
         }
 #endif
+        if (rc) {
+            static char err[] = "ERROR 0";
+            err[6] = (char)('0' + rc);
+            if (rc == INST_E_LOST)
+                for (n = 0; n < ngames; n++) games[n].flags &= (uint8_t)~G_INSTALLED;
+            box(err, 0);
+            wait_key();
+            rc = INST_OK;
+            draw_list();
+            continue;
+        }
         k = keys();
+        if (!ngames) k &= BTN_B;            /* an empty folder: B leaves it, nothing else */
         if (k & BTN_UP)    sel = sel ? sel - 1 : ngames - 1;
         if (k & BTN_DOWN)  sel = sel + 1 < ngames ? sel + 1 : 0;
         if (k & BTN_LEFT)  sel = sel >= ROWS ? sel - ROWS : 0;
         if (k & BTN_RIGHT) sel = sel + ROWS < ngames ? sel + ROWS : ngames - 1;
-        if (sel < top) top = sel;
-        if (sel >= top + ROWS) top = sel - ROWS + 1;
 #if CHBOOT_APP
         if (k & BTN_SELECT) boot_reset(CHGAME_BOOTREQ_USB);
-        if (k & BTN_START) {
-            static const char *const mhz[] = { "SD 24 MHZ", "SD 12 MHZ", "SD 6 MHZ" };
-            dry_br = dry_br >= SPI_BR_6M ? SPI_BR_24M : dry_br + 1;
-            hal_spi_speed(dry_br);
-            box(mhz[dry_br], "A: CHECK A GAME");
-            wait_key();
-            draw_list();
+#endif
+        if (k & BTN_B && depth) {
+            depth--;
+            here = up[depth].clus;
+            bg = up[depth].bg;
+            scan(app);
+            sel = up[depth].sel;
+            top = up[depth].top;
         }
-#endif
-        if (k & (BTN_A
-#if !CHBOOT_APP
-                 | BTN_START
-#endif
-                 )) {
-            game_t *g = &games[sel];
-            int rc = INST_OK;
-            if (g->flags & G_BAD) {
-                rc = g->err;
-            } else if (!(g->flags & G_INSTALLED) || CHBOOT_APP) {
-#if CHBOOT_APP
-                uint32_t t0 = sys_ticks(), ms;
-#endif
-                box("INSTALLING", g->title);
-                rc = install(g->clus, g->size, buf);
-#if CHBOOT_APP
-                if (rc == INST_OK) {
-                    char s[] = "     MS PER BLOCK";
-                    ms = (sys_ticks() - t0) / SYS_TICKS_PER_MS * 100u / ((g->size >> 9) + 1u);
-                    s[3] = (char)('0' + ms % 10); s[2] = '.'; ms /= 10;
-                    s[1] = (char)('0' + ms % 10); ms /= 10;
-                    s[0] = ms ? (char)('0' + ms % 10) : ' ';
-                    box("DRY RUN OK", s);
-                    wait_key();
-                    draw_list();
-                    continue;
-                }
-#endif
-            }
-            if (rc == INST_OK) {
-                release();
-                boot_reset(CHGAME_BOOTREQ_RUN);
-            }
-            if (rc == INST_E_LOST)
-                for (n = 0; n < ngames; n++) games[n].flags &= (uint8_t)~G_INSTALLED;
-            box(rc == INST_E_LOST ? "INSTALL FAILED" : "CAN'T INSTALL", why[rc < (int)(sizeof why / sizeof why[0]) ? rc : 1]);
-            wait_key();
+        if (k & (BTN_A | BTN_START))
+            rc = start(sel, app);
+        if (sel != old || depth != old_depth || (k & (BTN_A | BTN_START) && !rc))
             draw_list();
-            continue;
-        }
-        if (top != old_top) draw_list();
-        else if (sel != old) { draw_row(old); draw_row(sel); draw_counter(); }
     }
 }
 
@@ -442,7 +461,8 @@ void menu_usb_notice(void)
     proto_init();                           /* enumerate first; the panel can wait */
 #endif
     lcd_reset();
-    lcd_wake();
-    lcd_on(BG);
+    background();
     box("USB UPLOAD", "B: MENU");
+    lcd_wake();
+    lcd_on();
 }

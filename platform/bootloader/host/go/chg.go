@@ -3,7 +3,7 @@ package main
 // CHG packages for the SD game menu: `chgame-upload pack`.
 //
 // A package is a 512-byte header plus the program image as flash would write
-// it (docs/chg-format.md in the CHGame repository). platform.txt runs pack
+// it (spec/chg.md in the CHGame repository). platform.txt runs pack
 // after every build, so Sketch > Export Compiled Binary leaves a .chg beside
 // the .bin: copy it into the card's GAMES folder and the menu lists it.
 //

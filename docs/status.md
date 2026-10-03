@@ -72,12 +72,13 @@ of 2026-10-02 covered frame times and stack):
 
 ## The bootloader with the SD game menu
 
-[platform/bootloader](../platform/bootloader) (BOOT_VERSION 2):
+[platform/bootloader](../platform/bootloader):
 
 | | Verified | Device |
 |---|---|---|
-| Menu bootloader (release, 12,032 B) | PC suite (`test/native/run_tests.py`): flash/SD/panel models, every package error, power cuts at every flash operation of an install and of an upload, all 21 real packages installed in turn, 26 pinned menu frames (three colour themes) | **installed and checked on 2026-10-01** ([RESULTS](../platform/bootloader/test/hil/RESULTS-2026-10-01.md)); on 2026-10-02 written from the Arduino side over USB (*Burn Bootloader*, programmer CHGame USB), to and from the 0.2.4 and no-menu bootloaders |
-| Card builder (`tools/sdcard/mkcard.py`) | all 20 games and CHSDtoUSB built and packed; payloads equal the release images above | |
+| Menu v2 (BOOT_VERSION 3, release 11,908 B, 2026-10-03; Rainbow and White styles): folders of up to 240 entries, MENU.IDX order, MENU.BG (the logo is in the picture), launch at power-on | PC suite: flash/SD/panel models, every CHG error, power cuts at every flash operation of an install and of an upload, the real casino card's games installed in turn, cards made by `tools/chcart` (order, folders, an empty folder, a folder of 250, launch, START held, a broken background), both styles, 26 pinned menu frames | **installed and checked on 2026-10-03**, Rainbow and White ([RESULTS](../platform/bootloader/test/hil/RESULTS-2026-10-03.md)); the binaries in `release/` |
+| The first menu (BOOT_VERSION 2, 12,032 B; kept in git history) | the same suite as it was then | **installed and checked on 2026-10-01** ([RESULTS](../platform/bootloader/test/hil/RESULTS-2026-10-01.md)); on 2026-10-02 written from the Arduino side over USB (*Burn Bootloader*, programmer CHGame USB), to and from the 0.2.4 and no-menu bootloaders |
+| The casino cart (`chgame card`: `tools/sdcard/casino.json`, `tools/chcart`) | all 20 games and both apps built into `out/CHGame-Casino.chgame` and its card; the payloads are the release images | |
 
 What that run left open (a fragmented card, a second card, install times)
 is at the end of its results. [HARDWARE.md](../platform/bootloader/HARDWARE.md)

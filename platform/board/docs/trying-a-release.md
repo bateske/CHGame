@@ -27,11 +27,11 @@ download URL on `http://localhost:8765`. Then it runs the new-user test,
 - it copies Hello, CHFour and CHWords into the sketchbook, as the IDE does
   when an example is saved, and compiles them with no `--library`, checking
   that *Export Compiled Binary* leaves a `.bin` and a `.chg`;
-- it compiles every game and app from the installed package and packs the
-  SD card's contents from those builds:
-  `out/stage/CHGame-sdcard-<version>.zip`.
+- it compiles every game and app from the installed package, makes the
+  casino cart from those builds, `out/stage/CHGame-Casino-<version>.chgame`,
+  and packs its SD card's contents: `out/stage/CHGame-sdcard-<version>.zip`.
 
-`--quick` skips the twenty games and the card (a few minutes instead of
+`--quick` skips the twenty games, the cart and the card (a few minutes instead of
 about fifteen). The toolchain (250 MB) is downloaded once and kept in
 `out/arduino-downloads/`.
 
@@ -84,9 +84,9 @@ Nothing needs to be copied into the sketchbook's `libraries/`:
 
 **The bootloader.** The SD game menu comes with the package:
 
-1. *Tools > Bootloader*: **SD Game Menu (Rainbow)** (the default),
-   **SD Game Menu (Plain)**, **SD Game Menu (Casino)**, or **USB Only**.
-   The three menus differ only in their colours.
+1. *Tools > Bootloader*: **SD Game Menu** (the default) or **USB Only**.
+   The menu's look comes from the card (a card the tools prepare carries
+   the CHGAME logo).
 2. *Tools > Programmer*: **CHGame USB (requires CHGame bootloader, no
    drivers)**. It goes through the bootloader already on the board, like
    Upload: no driver, no buttons, and the port must be selected.
@@ -102,9 +102,15 @@ or broken: hold BOOT on power-up first, with the WinUSB driver on Windows
 **The SD card.** Unzip `CHGame-sdcard-<version>.zip` onto a FAT32 card
 (everything at the root: the `GAMES` folder and the data files beside it),
 put it in the board and switch on: the menu lists the games. To copy files
-without taking the card out, pick **SD CARD READER** in the menu.
+without taking the card out, pick **SD CARD READER** in the menu's
+**APPS** folder. From a clone, `chgame cart deploy
+CHGame-Casino-<version>.chgame --card <drive>` writes the same card from
+the cart.
 
-**Your own game on the card.** *Sketch > Export Compiled Binary* writes
+**Your own game on the card.** From a clone, `chgame export` in the
+sketch's folder writes `build/<Name>.chgame`, and `chgame cart deploy` puts
+it on the card or the board (docs/sd-menu.md). With the IDE alone:
+*Sketch > Export Compiled Binary* writes
 `<sketch>.ino.chg` into the sketch's `build/` folder beside the `.bin`. Copy
 it into the card's `GAMES` folder under a short name (`MYGAME.CHG`); the
 menu shows the sketch's name in capitals. `chgame-upload pack` sets another

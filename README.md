@@ -59,19 +59,19 @@ installs it from this machine instead.
 | Piece | In this repository | Delivered by the board package (0.3.0) |
 |---|---|---|
 | Core, variant, toolchain, `chgame-upload` | `platform/board/` | yes |
-| Bootloader with the SD game menu | `platform/bootloader/` | yes: *Tools > Bootloader* (SD Game Menu in Rainbow, Plain or Casino colours, or USB Only), written by *Burn Bootloader* over USB with the programmer **CHGame USB**: no driver, no buttons |
+| Bootloader with the SD game menu | `platform/bootloader/` | yes: *Tools > Bootloader* (SD Game Menu in Rainbow or White, or USB Only), written by *Burn Bootloader* over USB with the programmer **CHGame USB**: no driver, no buttons |
 | The CHGame library (`CHGame.h`: buttons, pacing, palette, drawing, sound, saving, debug protocol) | `platform/board/arduino/CHGame/libraries/CHGame/`; every game is built on it | yes, in the package's `libraries/`: nothing to install |
 | CHGfx, the graphics library | `platform/board/arduino/CHGame/libraries/CHGfx/` (1.3.0) | yes, with its examples |
 | CHSd, the SD/FAT reader | `platform/board/arduino/CHGame/libraries/CHSd/` (1.0.0) | yes |
 | The casino games and two apps (CHStlView, CHSDtoUSB) as examples | `platform/board/arduino/CHGame/libraries/CHGame/examples/Games/`, `apps/` | yes: *File > Examples > CHGame > Games*, *Apps* |
-| Games for the SD menu (`.CHG`) | `tools/sdcard/`, `tools/chgpack.py` | yes: every build writes one, and *Export Compiled Binary* puts it by the sketch. The card with all twenty games is a zip beside the package on the release page |
-| PC tools | `tools/`, `platform/bootloader/host/` | the ones an Arduino user needs, in `chgame-upload`: upload, burn the bootloader, pack for the SD menu. The developer tools (simulator, scripted runs, screenshots, GIFs, sound preview, card builder) are Python and work from a clone (`pip install -e .`) |
+| `.chgame`, the format games are shared in ([spec/chgame.md](spec/chgame.md)), and the SD menu's card ([spec/card.md](spec/card.md)) | `spec/`, `tools/chcart/` (`chgame export`, `chgame cart ...`) | the release carries every game as one cart, `CHGame-Casino-<version>.chgame`, and its card as a zip. Every build also writes the menu's install file (`.chg`), and *Export Compiled Binary* puts it by the sketch |
+| PC tools | `tools/`, `platform/bootloader/host/` | the ones an Arduino user needs, in `chgame-upload`: upload, burn the bootloader, pack for the SD menu. The developer tools (simulator, scripted runs, screenshots, GIFs, sound preview, `.chgame` carts and cards) are Python and work from a clone (`pip install -e .`) |
 
 `python tools/release/stage.py` builds the release as `0.3.0-local` and
 checks it the way a new user would get it: a fresh `arduino-cli` installs
 it from the one URL; the libraries, examples, bootloaders and programmers
 are there; every game and app compiles from the installed package with no
-`--library`; and the SD card is packed from those builds.
+`--library`; and the casino cart and its SD card are made from those builds.
 [docs/roadmap.md](docs/roadmap.md) has what is left: publishing it.
 [docs/chgame-library.md](docs/chgame-library.md) records why the library
 is as it is, and [docs/unification.md](docs/unification.md) how the
@@ -107,14 +107,30 @@ A new sketch only needs `#include <CHGame.h>`; *Hello* is the smallest one.
 
 **The menu bootloader** is installed over USB, through the bootloader a
 board already has: no driver, no buttons. *Tools > Bootloader* **SD Game
-Menu** (Rainbow, Plain or Casino: the colours), *Tools > Programmer*
+Menu (Rainbow)** (or **(White)**), *Tools > Programmer*
 **CHGame USB**, then *Tools > Burn Bootloader*. Without the 0.3.0 package:
 `chgame uploader selfupdate platform/bootloader/release/chgame_sdboot.bin`
 ([platform/bootloader](platform/bootloader/README.md#installing-it-on-a-board)).
 The WCH driver and the BOOT button are only for recovery.
 
 **The SD card.** Unzip `CHGame-sdcard-<version>.zip` from the release page
-onto a FAT32 card ([docs/sd-menu.md](docs/sd-menu.md)).
+onto a FAT32 card, or deploy `CHGame-Casino-<version>.chgame` to it
+(`chgame cart deploy ... --card E:\`; [docs/sd-menu.md](docs/sd-menu.md)).
+
+**Your own menu picture.** Everything behind the menu's list, the CHGAME
+logo included, is one 128x128 picture on the SD card, so you can redraw it
+or replace it with anything you like:
+
+```bash
+chgame background --template my-menu.png          # the default picture, to edit in any paint program
+chgame background my-menu.png --preview p.gif     # see the menu on it (any image is converted to fit)
+chgame background my-menu.png --card E:\          # put it on a mounted card
+```
+
+The menu leaves the top 20 rows (the logo) and the bottom 8 (key hints) to
+the picture, and anything painted in pure magenta (#FF00FF) turns through
+the rainbow (or is white, with the White bootloader). [docs/menu-image.md](docs/menu-image.md) walks through it step
+by step, including putting a picture into a `.chgame` cart.
 
 **This repository** is for working on the platform and the games: clone it
 and `pip install -e .[sim]` (see *Quick start* below). `chgame build`
@@ -174,9 +190,11 @@ CHGame/
 │   │   └── arduino/CHGame/libraries/  CHGame (CHGame.h), CHGfx (graphics), CHSd (SD/FAT), beside SPI, Wire, EEPROM
 │   │       └── CHGame/examples/   Hello, games/ (the 20 casino games), apps/ (CHStlView, CHSDtoUSB)
 │   └── hardware/        Rev 0 schematic and netlist
+├── spec/              the .chgame format, the SD card's layout and the CHG file: the contract
+│                      with the emulator and web tools, with conformance fixtures
 ├── tools/             the PC tools shared by every game (device.py, the simulator and script
-│                      driver, sound preview, size report, serial, chgpack.py for game
-│                      packages, sdcard/mkcard.py for the whole card)
+│                      driver, sound preview, size report, serial, chcart/ for .chgame carts
+│                      and cards, chgpack.py for CHG files, sdcard/ for the casino cart)
 └── docs/              platform knowledge: hardware, performance, SD card, how a game is built,
                        status, the roadmap to the first release, the CHGame library's decisions
                        and history, and a getting-started guide for Arduboy developers
@@ -204,8 +222,10 @@ chgame run tools/scripts/endings.txt out/endings   # screenshots in out/endings
 # 4. On a board (plugged in by USB)
 chgame upload
 
-# 5. A card for the game menu: builds and packs every game into out/sdcard/
-chgame card                               # copy out/sdcard/* to a FAT32 card
+# 5. Share a game, and make a card for the game menu
+chgame export                             # build/CHFour.chgame
+chgame card                               # every game: out/CHGame-Casino.chgame and out/sdcard/
+chgame cart deploy out/CHGame-Casino.chgame --card E:\   # onto a mounted card
 ```
 
 ## The parts
@@ -291,7 +311,8 @@ It has its own PC test suite, which runs the real C code against models of
 the flash, SD card and panel, including a power cut at every flash
 operation of an install. Its README covers building, testing and installing
 it; [docs/sd-menu.md](docs/sd-menu.md) is the players' guide and
-[docs/chg-format.md](docs/chg-format.md) the developers' one-pager.
+[spec/chg.md](spec/chg.md) the developers' one-pager; what it reads from the
+card is [spec/card.md](spec/card.md).
 
 ### The PC tools: `tools/`
 
@@ -307,10 +328,14 @@ The tools for working with the system outside the Arduino IDE:
   songs to WAV from the real engine;
 - the flash/RAM **size report** (`check_size.py`);
 - the USB **serial** helper (`serialcap.py`);
-- the **game package** tool (`chgpack.py`): wraps any sketch's `.bin` as a
-  `.CHG` for the SD menu, checks packages, lists a card;
-- the **card builder** (`sdcard/mkcard.py`): builds every game and lays out
-  a whole card;
+- the **cart tools** (`chcart/`, [spec/](spec/README.md)): `.chgame` files,
+  the format games are shared in. `chgame export` makes one from a sketch;
+  `chgame cart` inspects, checks, combines, reorders and edits carts,
+  prepares the SD card from one, flashes and deploys;
+- the **CHG file** tool (`chgpack.py`): wraps any sketch's `.bin` as the
+  menu's install file, checks them, lists a card;
+- the **casino cart** (`sdcard/mkcard.py`, `chgame card`): builds every game
+  into one cart and its card;
 - the **uploader**: `chgame upload` and `chgame uploader ...` go through the
   Python one (`platform/bootloader/host/py`, the package `chgame_upload`);
   `platform/bootloader/host/go` is the same tool in Go, `chgame-upload`, the

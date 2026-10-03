@@ -110,8 +110,9 @@ The next release is platform **0.3.0** with `chgame-upload` **0.2.0** (the
 5. `python tools/release/release.py --dry-run`: builds everything into
    `out/dist/` and publishes nothing. Look at the asset table and the ten
    largest files of the archive. It also runs the new-user test against
-   what it built (below, *Staging and the new-user test*) and packs the SD
-   card from it; `--no-accept` skips that, for a dry run only.
+   what it built (below, *Staging and the new-user test*) and makes the
+   casino cart and the SD card from it; `--no-accept` skips that, for a dry
+   run only.
 6. `python tools/release/release.py` (`--repo bateske/CHGame` is the
    default).
 7. Commit `tools/release/chgame_upload_tool.json`, which now points at the
@@ -132,9 +133,12 @@ They produce, in `out/dist/`:
 - `CHGame-ch32v-<version>.tar.bz2`, the platform archive;
 - `chgame-upload-<toolversion>-<host>.tar.bz2`, one per host;
 - `package_chgame_index.json`, the Boards Manager index;
-- `CHGame-sdcard-<version>.zip`, the SD card's contents (every game and app
-  as a `.CHG`, and the games' data files), built by the new-user test from
-  the installed package's own examples;
+- `CHGame-Casino-<version>.chgame`, every game and app as one cart (the
+  format games are shared in: spec/chgame.md), built by the new-user test
+  from the installed package's own examples (tools/sdcard/casino.json);
+- `CHGame-sdcard-<version>.zip`, that cart's SD card (spec/card.md: the
+  `GAMES` folder with the CHG files, the menu's order and background, and
+  the games' data files);
 - `release-notes-<version>.md`.
 
 All of them go to a GitHub release tagged `v<version>` (the script uploads
@@ -214,8 +218,8 @@ compile`: Hello and CHChess with the IDE's default options, CHFour and
 CHWords with the release options, CHWords with the defaults (it must stop
 with its "needs Tools > USB > Upload only" message), and *Export Compiled
 Binary* must leave a `.bin` and a valid `.chg`. `--all` compiles every
-game and app from the installed package and `--card` packs the SD card
-from those builds. It touches no board.
+game and app from the installed package, and `--card` makes the casino
+cart from those builds and packs its SD card. It touches no board.
 [trying-a-release.md](trying-a-release.md) is the same by hand, in the IDE,
 with a board.
 

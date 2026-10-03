@@ -32,7 +32,7 @@ int install(uint32_t clus, uint32_t size, uint8_t *buf)
     fat_open(&s, clus, size);
     if (next_sector(&s, buf, 0)) return INST_E_READ;
     rc = chg_check(buf, size, &n, &crc);
-    if (rc) return INST_E_PKG + rc;
+    if (rc) return INST_E_PKG;
     secs = (n + 511) >> 9;
     c = crc32_init();
     for (i = 0; i < secs; i++) {

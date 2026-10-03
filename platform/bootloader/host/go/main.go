@@ -355,8 +355,10 @@ func doFlash(o *opts, image string, verify, run bool) {
 	fmt.Printf("crc32   : 0x%08X\n", res.CRC32)
 	fmt.Printf("erase   : %.2f s\n", res.EraseS)
 	fmt.Printf("write   : %.2f s  (%.1f KiB/s, %d B chunks)\n", res.WriteS, res.KiBps, res.Chunk)
-	if verify {
+	if verify && res.Verified {
 		fmt.Println("readback: MATCHES")
+	} else if verify {
+		fmt.Println("readback: not available (bootloader v3 has no READ; END checked the CRC in flash)")
 	}
 	fmt.Printf("total   : %.2f s  -- image accepted and marked valid\n", res.TotalS)
 

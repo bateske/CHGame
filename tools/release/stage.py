@@ -12,9 +12,10 @@ is published, and the uploader is fetched again rather than kept from here.
 
 Then it runs acceptance.py against it: a fresh arduino-cli in out/newuser/
 installs from the URL, and the checks there run, including every game and
-app compiled from the installed package and the SD card's contents packed
-from those builds (out/stage/CHGame-sdcard-<version>.zip). --quick skips the
-twenty games and the card.
+app compiled from the installed package, the casino cart made from those
+builds (out/stage/CHGame-Casino-<version>.chgame) and its SD card's contents
+(out/stage/CHGame-sdcard-<version>.zip). --quick skips the twenty games, the
+cart and the card.
 
 --serve then keeps serving out/stage/ for the Arduino IDE: add
 http://localhost:<port>/package_chgame_index.json under File > Preferences >

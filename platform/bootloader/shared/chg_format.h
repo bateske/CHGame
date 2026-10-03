@@ -1,6 +1,6 @@
 /*
  * CHGame package (.CHG), format version 1 - the file the SD game menu
- * installs. docs/chg-format.md is the normative description; tools/chgpack.py
+ * installs. spec/chg.md is the normative description; tools/chgpack.py
  * (repository root) writes and checks these files and mirrors every constant
  * here.
  *

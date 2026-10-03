@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build the CHGame bootloader (Linux, macOS, or Git Bash on Windows).
 #
-#   ./build.sh [MODE] [--theme=rainbow|plain|casino] [--nolto]
+#   ./build.sh [MODE] [--style=rainbow|white] [--nolto]
 #
 # MODE
 #   release   the SD game menu bootloader, with the developer self-update
@@ -13,29 +13,29 @@
 #   app       the menu as an ordinary program at 0x3000 (dry run, no USB and no
 #             flash writes) for testing the card and the panel under ANY
 #             bootloader
-# --theme     the menu's colours (src/menu.c): rainbow (default), plain
-#             (the same, gold instead of the cycling colours) or casino
-#             (the casino games' green felt and gold)
+# --style     the menu's colour 15 (the selection bar, the boxes, #FF00FF in
+#             the card's picture): rainbow (the default), one colour turning
+#             through the colour wheel; or white
 # --nolto     build without LTO, for a per-object size breakdown
 #
-# Output: build/<MODE>[-<theme>]/chgame_boot.{elf,bin,map,lst} and a size
+# Output: build/<MODE>[-white]/chgame_boot.{elf,bin,map,lst} and a size
 # report.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MODE=release
 LTO=-flto
-THEME=rainbow
+STYLE=rainbow
 for a in "$@"; do
   case "$a" in
     release|locked|nomenu|app) MODE="$a" ;;
     --nolto) LTO= ;;
-    --theme=rainbow|--theme=plain|--theme=casino) THEME="${a#--theme=}" ;;
+    --style=rainbow|--style=white) STYLE="${a#--style=}" ;;
     *) echo "unknown argument: $a" >&2; exit 1 ;;
   esac
 done
 OUT="$HERE/build/$MODE"
-[ "$THEME" != rainbow ] && OUT="$OUT-$THEME"
+[ "$STYLE" != rainbow ] && OUT="$OUT-$STYLE"
 [ -z "$LTO" ] && OUT="$OUT-nolto"
 
 # The toolchain ships with the CHGame board package (arduino-cli core install
@@ -70,8 +70,7 @@ esac
 ARCH="-march=rv32imacxw -mabi=ilp32"
 IMAGE_ID=1; [ "$MODE" = app ] && IMAGE_ID=2   # the fault blink tells whose handler caught it
 DEFS="-DCH32X035 -DSYSCLK_FREQ_48MHz_HSI=48000000 -DF_CPU=48000000 -DCHGAME_IMAGE_ID=$IMAGE_ID"
-THEMEDEF=-DMENU_THEME=MENU_THEME_$(echo "$THEME" | tr a-z A-Z)
-DEFS="$DEFS -DCHGAME_ALLOW_SELFUPDATE=$SELFUPDATE -DCHBOOT_MENU=$MENU $APPDEF $THEMEDEF"
+DEFS="$DEFS -DCHGAME_ALLOW_SELFUPDATE=$SELFUPDATE -DCHBOOT_MENU=$MENU $APPDEF -DMENU_STYLE=MENU_STYLE_$(echo "$STYLE" | tr a-z A-Z)"
 INC="-I$SHARED -I$SRC -I$USB -I$SPL -I$SPL/Core -I$SPL/Peripheral/inc"
 WARN="-Wall -Wextra -Wundef -Werror=implicit-function-declaration"
 OPT="-Os $LTO -ffunction-sections -fdata-sections -fno-common -msmall-data-limit=8 -msave-restore -fno-jump-tables ${CHBOOT_EXTRA_CFLAGS:-}"
@@ -79,7 +78,7 @@ CFLAGS="$ARCH $DEFS $INC $WARN $OPT -std=gnu11 -g"
 
 CSRC=(
   "$SRC/main.c" "$SRC/boot.c" "$SRC/bootreq.c" "$SRC/appmeta.c" "$SRC/crc32.c"
-  "$SRC/sys.c" "$SRC/jump.c" "$SRC/fault.c" "$SRC/startup_glue.c" "$SRC/flash.c"
+  "$SRC/sys.c" "$SRC/jump.c" "$SRC/startup_glue.c" "$SRC/flash.c"
   "$SPL/system_ch32x035.c" "$SPL/Peripheral/src/ch32x035_misc.c"
 )
 if [ "$MODE" != app ]; then

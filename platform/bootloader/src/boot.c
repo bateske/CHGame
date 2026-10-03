@@ -6,6 +6,8 @@
  *    |- USB request, or B held at power-on      -> USB upload mode
  *       (power-on only: a program that resets with B still down, like
  *       CHSDtoUSB's hold-B, goes to the menu)
+ *    |- power-on without START held             -> the card's launch game, if
+ *                                                  it names one (menu.c)
  *    '- otherwise                               -> the SD game menu (menu.c)
  *
  * Neither USB mode nor the menu has a timeout. The program is only ever
@@ -36,7 +38,7 @@ void boot_main(void)
 {
     sys_init();
     hal_pins_init();
-    menu_main(APP_INVALID_NO_META);
+    menu_main(APP_INVALID_NO_META, 0);
     for (;;) { }
 }
 #else
@@ -115,7 +117,7 @@ void boot_main(void)
     if (req == CHGAME_BOOTREQ_USB)
         menu_usb_notice();
     else if (soft || !b_held())
-        menu_main(app);   /* returns only to hand over to USB mode */
+        menu_main(app, !soft && !(hal_buttons() & BTN_START));   /* returns only to hand over to USB mode */
 #endif
     usb_mode();
 }

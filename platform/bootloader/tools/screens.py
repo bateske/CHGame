@@ -4,10 +4,11 @@
     python3 test/native/run_tests.py -k boot     # writes test/native/build/frames/
     python3 tools/screens.py
 
-docs/menu.png          the menu with the casino card (out/sdcard.img)
+docs/menu.png          the menu with the casino card (out/sdcard.img: `chgame card --image`)
 docs/menu_screens.png  the menu with a game installed, and three messages
-docs/menu_themes.png   the same list in the three themes (src/menu.c)
-docs/menu_rainbow.gif  the default theme's colours turning (4 s)
+docs/menu_cards.png    the menu on the default picture (the casino card), on a
+                       picture of a card's own, and on a card with none
+docs/menu_rainbow.gif  the rainbow colour turning on the casino card (4 s)
 """
 import subprocess
 from pathlib import Path
@@ -34,7 +35,7 @@ def strip(names):
 def main():
     frame("real_menu").save(DOCS / "menu.png")
     strip(["real_menu_installed", "error_box", "usb_notice", "install_failed"]).save(DOCS / "menu_screens.png")
-    strip(["menu_installed", "plain_menu_installed", "casino_menu_installed"]).save(DOCS / "menu_themes.png")
+    strip(["real_menu", "cart_menu", "menu_installed"]).save(DOCS / "menu_cards.png")
     # the boot test binary in its picture mode, on the casino card
     native = HERE / "test" / "native" / "build"
     # (through run_tests' launcher: on Windows the binary is a Linux one, run under WSL)
@@ -50,7 +51,7 @@ def main():
         anim.append(Image.open(ppm).convert("RGB").resize((256, 256), Image.NEAREST))
         ppm.unlink()
     anim[0].save(DOCS / "menu_rainbow.gif", save_all=True, append_images=anim[1:], duration=120, loop=0)
-    print("docs/menu.png, docs/menu_screens.png, docs/menu_themes.png, docs/menu_rainbow.gif")
+    print("docs/menu.png, docs/menu_screens.png, docs/menu_cards.png, docs/menu_rainbow.gif")
 
 
 if __name__ == "__main__":

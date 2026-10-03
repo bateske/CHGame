@@ -8,8 +8,7 @@
 
 #define FAT_OK          0
 #define FAT_E_READ    (-1)
-#define FAT_E_NOFS    (-2)     /* no usable FAT16/FAT32 volume */
-#define FAT_E_EXFAT   (-3)     /* exFAT (or NTFS): needs reformatting as FAT32 */
+#define FAT_E_NOFS    (-2)     /* no usable FAT16/FAT32 volume (exFAT and NTFS included) */
 
 #define FAT_ATTR_HIDDEN  0x02
 #define FAT_ATTR_SYSTEM  0x04

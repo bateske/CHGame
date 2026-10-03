@@ -48,6 +48,12 @@ Check (`chgame check`), on top of the above:
     SIM_TESTS = []                  Python scripts run against the simulator
     BUILD_REQUIRE = []              substrings the device build must print
 
+Builds (`chgame build`, `upload`, `export`, `card`):
+
+    FQBN = None                     the board and options to build with instead
+                                    of the release/debug defaults (device.py):
+                                    CHSDtoUSB needs USB Serial and -Os
+
 `ctx` (check.Ctx / hosttests.Ctx): game, tools (the repository's tools/),
 out (<game>/out), quick, run(argv, env=None), drive(script, outdir,
 env=None) -> (ok, text), log(text).
@@ -68,6 +74,7 @@ DEFAULTS = {
     "REDRAW": {"scripts": "tools/scripts/diff/*.txt", "ticks": (1, 3), "define": "CHSIM_FORCE_FULL"},
     "SIM_TESTS": [],
     "BUILD_REQUIRE": [],
+    "FQBN": None,
 }
 HOOKS = ("before_tests", "after_tests", "before_check", "after_host_tests")
 SPEC_DEFAULTS = {"opt": "-O2", "defines": ["CHTEST"], "includes": [], "cwd": None, "args": "pass",

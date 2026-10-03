@@ -31,4 +31,4 @@ chgame = "chgame:main"
 package-dir = {"" = "tools"}
 py-modules = ["chgame", "device", "paths", "check", "hosttests", "gamecfg", "artlib", "pixkit",
               "readme_gif", "check_size", "chgpack", "libzip", "serialcap"]
-packages = ["chsim", "audio", "sdcard", "music", "fonts", "release"]
+packages = ["chsim", "audio", "sdcard", "music", "fonts", "release", "chcart"]

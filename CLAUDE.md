@@ -11,6 +11,10 @@ library. The library exists (`platform/board/arduino/CHGame/libraries/CHGame`, i
 [README](platform/board/arduino/CHGame/libraries/CHGame/README.md)) and every game is built on
 it. It sits with CHGfx and CHSd in the board package's `libraries/`
 folder, so the first release from this repository delivers them with the core.
+Games are shared as `.chgame` files: [spec/](spec/README.md) holds the
+format, the SD card's layout and conformance fixtures, the contract with the
+separate web emulator project, and `tools/chcart` is the reference
+implementation.
 [docs/roadmap.md](docs/roadmap.md) says what is done and what is not,
 [docs/chgame-library.md](docs/chgame-library.md) why the library is as it
 is, and [docs/unification.md](docs/unification.md) what changed when the
@@ -72,10 +76,21 @@ changing that game.
      compare sizes and frames, as for the rest of the library.
    - `platform/bootloader/src/sd.c` and `src/fat.c` are a C fork of CHSd: a
      fix to one belongs in the other too.
+   - The bootloader is full: flash 11,908 of 12,288 B (gate A keeps 256 B
+     spare), and RAM 20,448 of 20,480 B, since a menu folder lists as many
+     entries (240, `MENU_MAX_GAMES`) as RAM allows. Every byte added must be
+     paid for (`platform/bootloader/SIZES.md` lists where). Measure with
+     `platform/bootloader/build.sh release`.
 7. **Every game needs its own save magic, debug handshake id and
    `config.h` prefix.** All games share the same two flash save pages. The
    last collisions were fixed on 2026-10-01 (docs/status.md); check a new
    game's values against every other game's.
+8. **`spec/` is a contract with another project.** A change to the
+   `.chgame` format or the card's layout is made in `spec/`,
+   `tools/chcart` (and, for the card, the bootloader's `menu.c` and
+   `shared/chgame_card.h`) together. Then `python tools/chcart/fixtures.py`
+   regenerates the fixtures and their expected results; review the diff.
+   chcart's tests and the bootloader's PC suite must pass.
 
 ## Setup
 
@@ -155,15 +170,19 @@ it, `python tools/chgame.py` is the same thing. The shared tools under
 
 | What | Command |
 |---|---|
-| Build the bootloader (+ size report) | `platform/bootloader/build.sh [release\|locked\|nomenu\|app] [--theme=rainbow\|plain\|casino]` |
+| Build the bootloader (+ size report) | `platform/bootloader/build.sh [release\|locked\|nomenu\|app] [--style=rainbow\|white]` |
 | Its PC test suite (flash/SD/panel models, power cuts, menu frames) | `python3 platform/bootloader/test/native/run_tests.py` |
 | Refresh the committed binaries | `platform/bootloader/tools/dist.sh` |
-| Build and pack every game into `out/sdcard/` (+ FAT32 image) | `chgame card [--image out/sdcard.img]` |
-| Package one sketch / check packages / list a card | `chgame pack pack\|verify\|info` |
+| The casino cart, `out/CHGame-Casino.chgame` (`tools/sdcard/casino.json`), and its card in `out/sdcard/` (+ FAT32 image) | `chgame card [--no-build] [--image out/sdcard.img]` |
+| A sketch as a `.chgame` (`build/<Name>.chgame`, from its `chgame.json`) | `chgame export` (in its folder) |
+| Carts: inspect, check, combine, edit, prepare a card, flash, deploy | `chgame cart info\|verify\|new\|add\|remove\|order\|set\|launch\|background\|prepare\|flash\|deploy` |
+| The menu's picture (logo included): the default to edit, any image converted, a preview of the menu on it, onto a card (docs/menu-image.md) | `chgame background --template F`, `chgame background IMAGE [--preview F.gif] [--out F] [--card DRIVE]` |
+| chcart's tests (the conformance fixtures included) / remake the fixtures | `python -m unittest discover -s tools/chcart/tests` / `python tools/chcart/fixtures.py` |
+| CHG files (the menu's install files): make one, check them, list a card | `chgame pack pack\|verify\|info` |
 | Install the menu bootloader on a board | `platform/bootloader/HARDWARE.md` (self-update over USB) |
 | Build the uploader, `chgame-upload` (Go, five hosts, into `out/chgame-upload/`) | `python tools/release/build_uploader.py` |
 | The uploaders' parity tests (Python and Go against one vector file) | `python -m unittest discover -s platform/bootloader/test/protocol`; `go test ./...` in `host/go` |
-| Stage a release locally and test it as a new user (fresh arduino-cli in `out/newuser/`, every example compiled from the installed package, the SD card zip) | `python tools/release/stage.py [--quick] [--serve]` |
+| Stage a release locally and test it as a new user (fresh arduino-cli in `out/newuser/`, every example compiled from the installed package, the casino cart and the SD card zip) | `python tools/release/stage.py [--quick] [--serve]` |
 | Serve the staged release to the Arduino IDE | `python tools/release/serve.py` (URL `http://localhost:8765/package_chgame_index.json`) |
 | A release, dry or real (`platform/board/docs/building.md`) | `python tools/release/release.py [--dry-run]` |
 
@@ -306,12 +325,11 @@ and other sessions may share it.
 [`platform/board/arduino/CHGame/libraries/CHGame/examples/Apps/CHSDtoUSB`](platform/board/arduino/CHGame/libraries/CHGame/examples/Apps/CHSDtoUSB) turns the board into a USB card
 reader, with its serial port still working beside the drive:
 
-1. Upload it from its folder (not with `chgame upload`, whose release
-   options it has not been tried with):
+1. Upload it: `chgame --sketch CHSDtoUSB upload` (its `tools/game.py`
+   names its options, `opt=osstd` with USB Serial: it is tested on the
+   board with `-Os`, not yet with LTO). Or by hand,
    `arduino-cli compile -b CHGame:ch32v:rev0:opt=osstd .` then
-   `arduino-cli upload -b CHGame:ch32v:rev0:opt=osstd -p <PORT> .` (with a
-   package older than 0.3.0, add `--library` for the repository's CHGfx).
-   It is tested on the board with `-Os` (`opt=osstd`), not yet with LTO.
+   `arduino-cli upload -b CHGame:ch32v:rev0:opt=osstd -p <PORT> .`.
    After it starts, the board enumerates on a new serial port.
 2. A removable drive appears whose SCSI vendor is "CHGame" and product "SD
    Card Reader" (`tools/chsd_test.py`'s `find_drive()` finds it on Windows).
@@ -322,9 +340,15 @@ reader, with its serial port still working beside the drive:
    mounted, with no buttons. Holding B for 1 s, or START for 3 s, resets the
    board (with the menu bootloader: back to the menu).
 
-**From the menu:** a card built by `tools/sdcard/mkcard.py` has CHSDtoUSB as
-the **SD CARD READER** entry. Pick it, copy, eject, then hold B to go back to
-the menu (B now resets instead of entering the bootloader).
+**From the menu:** the casino card (`chgame card`) has CHSDtoUSB as **SD
+CARD READER** in its **APPS** folder (menu v2; the first menu shows no
+folders). Pick it, copy, eject, then hold B to go back to the menu (B now
+resets instead of entering the bootloader).
+
+**A whole cart at once:** with the drive mounted,
+`chgame cart deploy <cart>.chgame --card <drive>` writes its games, menu
+and data files (`--clean` empties `GAMES/` first) and flashes what the
+deploy rules say (spec/card.md).
 
 **What each game reads from the card:**
 - CHWords: `WORDS.DIC` in the root.
@@ -357,6 +381,9 @@ Then:
    `setup()`).
 4. Write its README in the one format ([docs/game-readme.md](docs/game-readme.md))
    and record its one GIF with `chgame gif`.
+5. Give it a `chgame.json` (title, author, genre, links; everything else
+   has a default: chcart/sources.py), check `chgame export`, and add it to
+   `tools/sdcard/casino.json` if it belongs on the casino card.
 
 ## Gotchas
 
