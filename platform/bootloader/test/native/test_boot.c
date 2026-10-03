@@ -12,6 +12,7 @@
 static struct { char name[16]; int code; uint32_t len, crc; char path[512]; } pk[MAXP];
 static int npk;
 static char img_fat32[512], img_fat16[512], img_nogames[512], img_boot[512];
+static char img_cart[512], img_cartlaunch[512], img_cartbadbg[512];
 static const char *frames, *frame_prefix = "";
 static uint8_t payload[CHGAME_APP_MAX_SIZE];
 
@@ -342,6 +343,130 @@ static void t_powercut_sweep(void)
     CHECK(bad == 0, "power cut at each of %u flash operations of an SD install", total);
 }
 
+/* ---- cards from the cart tools (boot_cases.py: cart_cards) -------------------------
+ *
+ * img_cart's GAMES/, as MENU.IDX orders it: ZULU (BRAVO's payload), the folder
+ * FOLDER ONE (ALPHA GAME, then the folder INNER holding BRAVO), MIKE; then
+ * AAA EXTRA, which is not in the index (and sorts first by title); the
+ * index's GHOST.CHG is not on the card. Folders are entered with A and left
+ * with B; every move redraws over the background read from the card, so the
+ * presses are spaced 300 ms apart. */
+
+static void keys_at(uint32_t at_ms, const uint32_t *k, int n)
+{
+    for (int i = 0; i < n; i++) press(at_ms + 300u * (uint32_t)i, k[i]);
+}
+
+static void t_cart_menu(void)
+{
+    card(img_cart);
+    B->limit_us = 2000000;
+    CHECK(host_boot() == END_HANG, "cart: menu");
+    lcd_sane("cart menu");
+    CHECK(B->flash_ops == 0, "showing the menu writes nothing");
+    snap("cart_menu");
+}
+
+static void t_cart_folders(void)
+{
+    static const uint32_t into[] = { BTN_DOWN, BTN_A, BTN_DOWN, BTN_A };
+    static const uint32_t back[] = { BTN_DOWN, BTN_A, BTN_DOWN, BTN_A, BTN_B, BTN_B };
+    static const uint32_t inner[] = { BTN_DOWN, BTN_A, BTN_DOWN, BTN_A, BTN_A };
+    card(img_cart);
+    keys_at(800, into, 2);
+    B->limit_us = 2400000;
+    CHECK(host_boot() == END_HANG, "A on FOLDER ONE: its list");
+    snap("cart_folder");
+    host_init();
+    card(img_cart);
+    keys_at(800, into, 4);
+    B->limit_us = 3000000;
+    CHECK(host_boot() == END_HANG, "A on INNER: a folder in a folder");
+    snap("cart_inner");
+    host_init();
+    card(img_cart);
+    keys_at(800, back, 6);
+    B->limit_us = 3600000;
+    CHECK(host_boot() == END_HANG, "B twice: back at the top");
+    snap("cart_back");
+    host_init();
+    card(img_cart);
+    keys_at(800, inner, 5);
+    CHECK(host_boot() == END_RESET && B->retained[0] == CHGAME_BOOTREQ_RUN, "A on BRAVO inside INNER: installs, RUN");
+    CHECK(installed_is("BRAVO.CHG"), "BRAVO installed from two folders down");
+    lcd_sane("cart folders");
+}
+
+static void t_cart_order(void)
+{
+    static const uint32_t extra[] = { BTN_DOWN, BTN_DOWN, BTN_DOWN, BTN_A };
+    static const uint32_t mike[] = { BTN_DOWN, BTN_DOWN, BTN_A };
+    static const uint32_t alpha[] = { BTN_DOWN, BTN_A, BTN_A };
+    card(img_cart);
+    keys_at(800, extra, 4);
+    CHECK(host_boot() == END_RESET && installed_is("EXTRA.CHG"), "row 4: AAA EXTRA, after the indexed entries");
+    host_init();
+    card(img_cart);
+    keys_at(800, mike, 3);
+    CHECK(host_boot() == END_RESET && installed_is("MIKE.CHG"), "row 3: MIKE, in the index's order (GHOST skipped)");
+    host_init();
+    card(img_cart);
+    keys_at(800, alpha, 3);
+    CHECK(host_boot() == END_RESET && installed_is("ALPHA.CHG"), "FOLDER ONE's first row: ALPHA GAME");
+}
+
+static void t_cart_launch(void)
+{
+    card(img_cartlaunch);
+    B->limit_us = 8000000;
+    CHECK(host_boot() == END_RESET && B->retained[0] == CHGAME_BOOTREQ_RUN, "launch card: ALPHA installed, RUN");
+    CHECK(installed_is("ALPHA.CHG"), "the launch game, found inside FOLDER ONE");
+    CHECK(B->lcd.on, "installing it showed the progress");
+    lcd_sane("launch");
+    CHECK(host_boot() == END_JUMP, "and it starts");
+}
+
+static void t_cart_launch_installed(void)
+{
+    preinstall("ALPHA.CHG");
+    card(img_cartlaunch);
+    B->limit_us = 4000000;
+    CHECK(host_boot() == END_RESET && B->retained[0] == CHGAME_BOOTREQ_RUN, "launch game installed: RUN at once");
+    CHECK(B->flash_ops == 0, "nothing written (%u ops)", B->flash_ops);
+    CHECK(!B->lcd.on, "the panel never switched on");
+    CHECK(B->now_us < 1000000, "power-on to RUN in %llu ms", (unsigned long long)(B->now_us / 1000));
+}
+
+static void t_cart_launch_start_held(void)
+{
+    preinstall("ALPHA.CHG");
+    card(img_cartlaunch);
+    host_keys(0, BTN_START);                 /* held from power-on... */
+    host_keys(1500, 0);
+    B->limit_us = 2500000;
+    CHECK(host_boot() == END_HANG, "START held at power-on: the menu, not the launch game");
+    CHECK(B->flash_ops == 0, "nothing written");
+    snap("cart_launch_start");
+}
+
+static void t_cart_launch_soft_reset(void)
+{
+    preinstall("ALPHA.CHG");
+    card(img_cartlaunch);
+    B->soft_reset = 1;                       /* a game's START-held exit */
+    B->limit_us = 2000000;
+    CHECK(host_boot() == END_HANG, "after a software reset: the menu");
+}
+
+static void t_cart_bad_background(void)
+{
+    card(img_cartbadbg);
+    B->limit_us = 2000000;
+    CHECK(host_boot() == END_HANG, "MENU.BG cut short: the menu, in its own colours");
+    lcd_sane("bad background");
+    snap("cart_bad_bg");
+}
+
 /* The real card from tools/sdcard/mkcard.py: install every program in menu
    order, each over the one before, and check what is installed each time. */
 static void t_real_card(void)
@@ -383,6 +508,9 @@ int main(int argc, char **argv)
             if (!strcmp(b, "fat16")) snprintf(img_fat16, sizeof img_fat16, "%s", c);
             if (!strcmp(b, "nogames")) snprintf(img_nogames, sizeof img_nogames, "%s", c);
             if (!strcmp(b, "boot")) snprintf(img_boot, sizeof img_boot, "%s", c);
+            if (!strcmp(b, "cart")) snprintf(img_cart, sizeof img_cart, "%s", c);
+            if (!strcmp(b, "cartlaunch")) snprintf(img_cartlaunch, sizeof img_cartlaunch, "%s", c);
+            if (!strcmp(b, "cartbadbg")) snprintf(img_cartbadbg, sizeof img_cartbadbg, "%s", c);
         } else if (!strcmp(a, "pkg") && npk < MAXP) {
             sscanf(line, "%*s %15s %d %u %x %511s", pk[npk].name, &pk[npk].code, &pk[npk].len, &pk[npk].crc, pk[npk].path);
             npk++;
@@ -412,5 +540,13 @@ int main(int argc, char **argv)
     TEST(t_upload_at_menu);
     TEST(t_card_dies_mid_install);
     TEST(t_powercut_sweep);
+    TEST(t_cart_menu);
+    TEST(t_cart_folders);
+    TEST(t_cart_order);
+    TEST(t_cart_launch);
+    TEST(t_cart_launch_installed);
+    TEST(t_cart_launch_start_held);
+    TEST(t_cart_launch_soft_reset);
+    TEST(t_cart_bad_background);
     return test_summary();
 }

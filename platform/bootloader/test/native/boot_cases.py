@@ -49,6 +49,59 @@ def zoo(pk):
     return z
 
 
+def cart_cards(build_dir, pk):
+    """Three cards made by the reference implementation (tools/chcart), as
+    test_boot.c's t_cart_* expect them:
+
+      cart        GAMES/ in MENU.IDX's order: ZULU (BRAVO's payload), the
+                  folder FOLDER ONE (ALPHA GAME, then the folder INNER with
+                  BRAVO), MIKE; then EXTRA.CHG ("AAA EXTRA"), copied in by
+                  hand and not in the index; the index also names GHOST.CHG,
+                  which is not on the card. A background of four colours with
+                  a band in the rainbow colour.
+      cartlaunch  the same cart launching ALPHA GAME (inside FOLDER ONE)
+      cartbadbg   cart with its MENU.BG cut short: the menu's own look
+
+    Returns ({name: image path}, {pkg name: CHG bytes}) for the extra
+    payloads (MIKE, EXTRA)."""
+    from PIL import Image, ImageDraw
+    from chcart import model, runtime
+    def payload(n):
+        return pk[n][0][512:512 + chgpack.parse(pk[n][0])["payload_bytes"]]
+    alpha, bravo = payload("ALPHA.CHG"), payload("BRAVO.CHG")
+    mike = bytes((i * 7 + 3) & 0xFF for i in range(6000))
+    extra = bytes((i * 13 + 5) & 0xFF for i in range(3000))
+    im = Image.new("RGB", (128, 128), (0, 0, 64))
+    d = ImageDraw.Draw(im)
+    d.rectangle([0, 0, 127, 15], fill=(255, 0, 255))
+    d.rectangle([100, 30, 127, 127], fill=(0, 96, 0))
+    d.rectangle([0, 120, 60, 127], fill=(200, 200, 0))
+    import io
+    buf = io.BytesIO()
+    im.save(buf, "PNG")
+
+    def cart(launch=""):
+        G = model.Game
+        return model.Cart(title="TEST CART", launch=launch, background=buf.getvalue(), games=[
+            G("zulu", "ZULU", {"rev0": bravo}),
+            G("alpha", "ALPHA GAME", {"rev0": alpha}, folder="FOLDER ONE"),
+            G("bravo", "BRAVO", {"rev0": bravo}, folder="FOLDER ONE/INNER"),
+            G("mike", "MIKE", {"rev0": mike})])
+
+    out, extras = {}, {}
+    for name, c in (("cart", cart()), ("cartlaunch", cart("alpha")), ("cartbadbg", cart())):
+        files = runtime.prepare(c)
+        files["GAMES/EXTRA.CHG"] = chgpack.pack(extra, "AAA EXTRA")
+        files["GAMES/MENU.IDX"] += b"GHOST   CHG".ljust(32, b"\0")
+        if name == "cartbadbg":
+            files["GAMES/MENU.BG"] = files["GAMES/MENU.BG"][:-512]
+        out[name] = build_dir / f"{name}.img"
+        fatimg.build_image(str(out[name]), files, fs="fat32", lfn=True, fragment={"GAMES/MENU.BG": 3})
+    extras["MIKE.CHG"] = chgpack.pack(mike, "MIKE")
+    extras["EXTRA.CHG"] = chgpack.pack(extra, "AAA EXTRA")
+    return out, extras
+
+
 def run_all(build_dir, build, run, imgs, lay, pk, quick, pin=False):
     z = zoo(pk)
     pkdir = build_dir / "pk"
@@ -63,10 +116,14 @@ def run_all(build_dir, build, run, imgs, lay, pk, quick, pin=False):
                        fragment={"GAMES/ALPHA.CHG": 7, "GAMES/BRAVO.CHG": 3}, dir_pieces={"GAMES": 2})
     order = sorted(z, key=lambda n: display_title(n, z[n]))
     from run_tests import hostpath   # noqa: E402  (paths as the test program sees them)
+    carts, extras = cart_cards(build_dir, pk)
     man = [f"img fat32 {hostpath(card)}", f"img fat16 {hostpath(imgs['fat16'])}",
            f"img nogames {hostpath(imgs['nogames'])}"]
-    for n in order:
-        d = z[n]
+    man += [f"img {k} {hostpath(v)}" for k, v in carts.items()]
+    for n in order + sorted(extras):             # (the zoo first: menu_index() is its position)
+        d = z.get(n) or extras[n]
+        if n in extras:
+            (pkdir / n).write_bytes(d)
         try:
             info = chgpack.parse(d, check_payload=False)
             ln, crc = info["payload_bytes"], info["payload_crc32"]

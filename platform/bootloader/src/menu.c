@@ -188,8 +188,7 @@ static uint32_t scan(int app)
         if (rc) {
             g->flags |= G_BAD;
             g->err = (uint8_t)(rc < 0 ? INST_E_READ : INST_E_PKG);
-            g->title[8] = g->title[9] = g->title[10] = ' ';     /* its file name stands in, without "CHG" */
-            continue;
+            continue;                       /* (its 8.3 name stands in: "BADFILE CHG") */
         }
         set_title(g, buf + CHG_OFF_TITLE);
         if (app == APP_VALID && m->length == n && m->crc32 == crc) {
@@ -307,11 +306,11 @@ static void light(void)
 
 /* ---- keys ------------------------------------------------------------------------- */
 
-static uint32_t k_prev, k_last, k_rep;
+static uint32_t k_prev = BTN_ALL, k_last, k_rep;
 
 /* Newly pressed keys, sampled every 15 ms (debounce), with UP/DOWN repeating
-   after 400 ms every 80 ms. Keys held when the menu starts count only after a
-   release. */
+   after 400 ms every 80 ms. Keys held when the menu starts (START at
+   power-on) count only after a release: k_prev starts with every key down. */
 static uint32_t keys(void)
 {
     uint32_t t = sys_ticks(), now, out;

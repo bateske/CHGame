@@ -125,7 +125,9 @@ func upload(c *Client, image []byte, progress func(done, total int), verify bool
 		res.KiBps = float64(len(image)) / 1024.0 / writeS
 	}
 
-	if verify {
+	// Bootloader v2 (BOOT_VERSION 3) has no READ: END's own CRC check of what
+	// is in flash is the check there, and Verified stays false.
+	if verify && h.BootVersion < 3 {
 		ok, err := readbackMatches(c, h, image)
 		if err != nil {
 			return res, err

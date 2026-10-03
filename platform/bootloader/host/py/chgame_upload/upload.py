@@ -80,7 +80,10 @@ def upload(c: Client, image: bytes,
     }
 
     if verify_readback:
-        result["readback_ok"] = readback_matches(c, h.app_start, image, h.max_payload)
+        # Bootloader v2 (BOOT_VERSION 3) has no READ: END's own CRC check of
+        # what is in flash is the check there (None: not available).
+        result["readback_ok"] = (readback_matches(c, h.app_start, image, h.max_payload)
+                                 if h.boot_version < 3 else None)
 
     return result
 
@@ -190,8 +193,10 @@ def flash_file(image_path, *, port: str | None = None, run: bool = True, verify:
         say(f"erase   : {r['erase_s']:.2f} s")
         say(f"write   : {r['write_s']:.2f} s  ({r['kbps']:.1f} KiB/s, {r['chunk']} B chunks)")
         if verify:
-            say(f"readback: {'MATCHES' if r['readback_ok'] else 'MISMATCH'}")
-            if not r["readback_ok"]:
+            ok = r["readback_ok"]
+            say("readback: " + ("MATCHES" if ok else "MISMATCH" if ok is False else
+                                "not available (bootloader v3 has no READ; END checked the CRC in flash)"))
+            if ok is False:
                 return r
         say(f"total   : {r['total_s']:.2f} s  -- image accepted and marked valid")
         if run:

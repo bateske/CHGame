@@ -28,9 +28,12 @@ same thing uninstalled.
   size    [BUILDDIR] [--top N] [--symbols]
                                          flash and RAM report of a build (default build/release)
   audio   OUTDIR [--only NAME ...]       the sound effects and songs as WAV, with a hash each
+  export  [--no-build] [--out F]         the sketch as a .chgame (build/<Name>.chgame): to share it
+  cart    ...                            .chgame files: info, verify, new, build, add, remove, order,
+                                         set, launch, background, prepare, flash, deploy (tools/chcart)
+  card    ...                            the repository's casino cart and its SD card (tools/sdcard/mkcard.py)
   uploader ARGS ...                      the uploader itself: probe, info, flash, selfupdate, burn ...
-  pack    ...                            .CHG packages (tools/chgpack.py)
-  card    ...                            build the whole SD card (tools/sdcard/mkcard.py)
+  pack    ...                            CHG files, the menu's install files (tools/chgpack.py)
 
 Exit codes: 0 done, 1 the thing run failed (a compile, a test, a check),
 2 usage or configuration (no sketch, a bad tools/game.py). `run` returns
@@ -47,7 +50,7 @@ sys.path.insert(0, str(TOOLS))
 sys.path.insert(0, str(TOOLS / "chsim"))        # before tools/: `chsim` is the module chsim.py
 import paths  # noqa: E402
 
-NEEDS_SKETCH = {"build", "upload", "sim", "run", "shot", "check", "test", "redraw", "size", "audio"}
+NEEDS_SKETCH = {"build", "upload", "sim", "run", "shot", "check", "test", "redraw", "size", "audio", "export"}
 
 
 def sketch_of(a):
@@ -172,6 +175,16 @@ def cmd_uploader(a, _sketch):
     return uploader_main(list(a.rest))
 
 
+def cmd_export(a, sketch):
+    from chcart import cli
+    return cli.export_main(list(a.rest), sketch)
+
+
+def cmd_cart(a, _sketch):
+    from chcart import cli
+    return cli.main(list(a.rest))
+
+
 def cmd_pack(a, _sketch):
     import chgpack
     return chgpack.main(list(a.rest))
@@ -223,9 +236,11 @@ def main(argv=None):
                         ("redraw", "the incremental-redraw check"),
                         ("size", "flash and RAM report"),
                         ("audio", "sound effects and songs to WAV"),
+                        ("export", "the sketch as a .chgame"),
+                        ("cart", ".chgame files: make, inspect, edit, prepare a card, deploy"),
                         ("uploader", "the uploader: probe, info, flash, selfupdate, burn ..."),
-                        ("pack", ".CHG packages"),
-                        ("card", "build the SD card")):
+                        ("pack", "CHG files (the menu's install files)"),
+                        ("card", "the casino cart and its SD card")):
         sub.add_parser(name, help=help_, add_help=False)
     p = sub.add_parser("gif", help="record the README's GIF", add_help=False)
     p.add_argument("--check", action="store_true")
