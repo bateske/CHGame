@@ -506,12 +506,10 @@ static void land() {
         fly.x1 = (int16_t)x; fly.y1 = (int16_t)y;
         fx::burst(fx::SPARK, cx, cy, 12, 36, GOLD);
         fx::burst(fx::STAR, cx, cy, 4, 24, WHITE);
-        fx::shake(10, 2);
         fx::banner("HIT!", fx::B_RED, 30, 50);
         audio::sfx(Sfx::Hit);
         audio::led(audio::LED_BLINK);
     } else {
-        fx::shake(3, 1);
         audio::sfx(Sfx::Land);
         // A point made (the second checker on it): a twinkle.
         if (shown.n[s][mv.to] == 2 && mv.to != BAR) fx::burst(fx::STAR, cx, cy, 5, 22, GOLD);
@@ -575,6 +573,15 @@ static void onDouble(uint8_t side, uint8_t log) {
     tapT = 1;
     (void)side;
     holdT = 30;
+}
+
+// A beaver or a raccoon: the floating cube turns over again, to twice that.
+static void onRedouble(uint8_t type, uint8_t log) {
+    offerLog = log;
+    cubeTurn = 1;
+    fx::banner(type == match::EV_BEAVER ? "BEAVER!" : "RACCOON!", fx::B_GOLD, 30, 70);
+    audio::sfx(Sfx::Doubles);
+    holdT = 40;
 }
 
 static void onTake(uint8_t taker, uint8_t log) {
@@ -689,6 +696,8 @@ void update() {
             case match::EV_PICKUP:  onPickup(e.a); break;
             case match::EV_DOUBLE:  onDouble(e.a, e.b); break;
             case match::EV_TAKE:    onTake(e.a, e.b); break;
+            case match::EV_BEAVER:
+            case match::EV_RACCOON: onRedouble(e.type, e.b); break;
             case match::EV_OVER:    onOver(e.a, e.b, e.c); break;
         }
     }
@@ -712,9 +721,8 @@ void update() {
         if (d.mode <= D_REST) continue;
         if (d.delay) { d.delay--; continue; }
         if (++d.t < d.T) continue;
-        if (d.mode == D_THROW) {                         // down: a puff of felt and a knock
+        if (d.mode == D_THROW) {                         // down: a puff of felt
             puff(d.x1 + DIE / 2, d.y1 + DIE / 2, DIE / 2 + 1, 6);
-            fx::shake(4, 1);
         }
         d.mode = d.mode == D_LEAVE ? D_OFF : D_REST;
     }
@@ -725,7 +733,6 @@ void update() {
     if (fly.on && ++fly.t >= fly.T) {
         fly.on = 0;
         puff(fly.x1 + CHIP / 2, fly.y1 + CHIP / 2, CHIP / 2, 9);
-        fx::shake(4, 1);
         audio::sfx(Sfx::Land);
         holdT = (uint8_t)(holdT > 16 ? holdT : 16);
         if (zoomTo > 5) outWait = true;
@@ -735,7 +742,6 @@ void update() {
         cubeFly.on = 0;
         if (!offered) {                                  // set down
             puff(cubeFly.x1 + CUBE / 2, cubeFly.y1 + CUBE / 2, CUBE / 2, 8);
-            fx::shake(4, 1);
             audio::sfx(Sfx::Land);
             if (zoomTo > 5) outWait = true;
         }
@@ -1052,7 +1058,6 @@ bool render(uint32_t frame, uint32_t ui) {
     drawHud(frame);
     fx::drawParticles((uint8_t)((2 * zoom + 2) / 5));
     fx::drawBanner();
-    fx::applyShake(10, 117);
     return true;
 }
 

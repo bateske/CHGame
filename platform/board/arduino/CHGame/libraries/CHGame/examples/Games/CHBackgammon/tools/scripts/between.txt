@@ -1,5 +1,6 @@
 # Between the games of a match: you win a gammon in a match to 5, the
 # result panel, the next game (and the score in the HUD).
+say U 1
 say V 0 1 w 2:1 1:1 r 6:5 5:5 4:5
 say C 7 1 0 0 2 0
 say D 21

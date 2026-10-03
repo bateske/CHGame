@@ -1,5 +1,5 @@
 // The screens and the moves between them: title, setup, play (the glove,
-// hints, the coach, the cube, pause and the result), options; and the debug
+// hints, the cube, pause and the result), options; and the debug
 // protocol's commands. The play screen's motion is Stage.cpp.
 #pragma GCC optimize("Os", "no-ipa-sra")   // cold code: size over speed (hot pixel loops live in Draw/Mask/Table)
 #include <Arduino.h>
@@ -50,12 +50,8 @@ static bg::Target held[4];           // where the picked-up checker may go
 static uint8_t nHeld;
 static bool resettle;                // a checker was just moved: the glove finds one that can move next
 
-// Asking the CPU's judgement for the player: a hint, or the coach's check
-// of a finished play. It thinks a slice per tick, as for its own moves.
-enum Ask : uint8_t { ASK_NONE, ASK_HINT, ASK_COACH };
-static uint8_t asking;
-static bool wasConfirm;
-static uint8_t errors, blunders;     // the coach's count, this game
+// Asking the CPU for a hint: it thinks a slice per tick, as for its own moves.
+static bool asking;
 static bg::Rng steady;               // (the expert has no use for it)
 
 static const char *const OPPONENT[match::LEVELS] = {"BEGINNER", "EXPERT", "GRANDMASTER"};
@@ -109,6 +105,8 @@ static void applyOptions() {
     pal::setTheme(opt.felt);
     stage::setFast(opt.speed != 0);
     table::mirror = opt.mirror != 0;
+    match::autoPlay = !(opt.rules & RULE_MANUAL);
+    match::beavers = (opt.rules & RULE_BEAVERS) != 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -188,7 +186,6 @@ static void newGame(uint8_t mode) {
     match::start(s);
     overlay = NONE;
     statsCounted = false;
-    errors = blunders = 0;
     go(Scr::Play);
 }
 
@@ -206,7 +203,7 @@ static void titleUpdate() {
             case I_TWO: twoPlayers = true; go(Scr::Setup); break;
 #endif
             case I_CONTINUE:
-                if (save::loadGame()) { overlay = NONE; statsCounted = false; errors = blunders = 0; go(Scr::Play); }
+                if (save::loadGame()) { overlay = NONE; statsCounted = false; go(Scr::Play); }
                 else { hasGame = false; audio::sfx(Sfx::Deny); }
                 break;
 #if !CHBG_LEAN
@@ -315,34 +312,40 @@ static uint8_t spots(uint8_t *list) {
     return n;
 }
 
-// The spot nearest `from` in screen direction (ux, uy), preferring ones
-// straight ahead. With none that way it wraps round to the farthest the other
-// way, so pressing on steps through every spot. (0, 0): simply the nearest.
+// Where the D-pad takes the glove from `from`. LEFT/RIGHT (ux): the next
+// spot that way on the same half of the board (top or bottom), wrapping to
+// the far end of that half. UP/DOWN (uy): the spot on the other half
+// nearest across. (0, 0): simply the nearest spot.
 static uint8_t nearest(const uint8_t *list, uint8_t n, uint8_t from, int ux, int uy) {
     int fx, fy;
     stage::spotXY(from, fx, fy);
-    uint8_t best = 0xFF, back = 0xFF;
-    int32_t bestS = 0x7FFFFFFF, backS = 0x7FFFFFFF;
+    bool top = fy < table::CY;
+    uint8_t best = 0xFF, wrap = 0xFF;
+    int bestS = 0x7FFF, wrapS = 0;
     for (uint8_t i = 0; i < n; i++) {
         if (list[i] == from) continue;
         int x, y;
         stage::spotXY(list[i], x, y);
-        int dx = x - fx, dy = y - fy;
-        int along = dx * ux + dy * uy, side = dx * uy - dy * ux;
-        if (side < 0) side = -side;
-        if (!ux && !uy) along = (dx < 0 ? -dx : dx) + (dy < 0 ? -dy : dy);
-        int32_t sc = along > 0 ? along + 2 * side : 4 * along + side;
-        if (along > 0 && sc < bestS) { bestS = sc; best = list[i]; }
-        if (along <= 0 && sc < backS) { backS = sc; back = list[i]; }
+        int dx = x - fx, dy = y - fy, ax = dx < 0 ? -dx : dx;
+        bool same = (y < table::CY) == top;
+        int sc;
+        if (uy) sc = same ? 0x7FFF : ax;                         // across: the nearest over there
+        else if (ux) {
+            if (!same) continue;
+            int along = dx * ux;
+            if (along <= 0) { if (-along >= wrapS) { wrapS = -along; wrap = list[i]; } continue; }
+            sc = along;                                          // that way: the next one
+        } else sc = ax + (dy < 0 ? -dy : dy);
+        if (sc < bestS) { bestS = sc; best = list[i]; }
     }
-    return best != 0xFF ? best : back;
+    return best != 0xFF ? best : wrap;
 }
 
 #if !CHBG_LEAN
 // Ask the CPU for the best play of the roll from the turn's start.
-static void ask(uint8_t what) {
+static void ask() {
     ai::start(match::turnStart(), match::side(), match::die(0), match::die(1), ai::EXPERT, steady);
-    asking = what;
+    asking = true;
 }
 
 static int32_t chancePct(int32_t score) { return (int32_t)((net::chance(score) * 100u + 32767u) >> 16); }
@@ -357,31 +360,13 @@ static void asked() {
         to[i] = bg::landing(pl.from[i], pl.die[i]);
         hit[i] = bg::doStep(b, match::side(), pl.from[i], pl.die[i]);
     }
-    char play[44], text[48], *p;
-    notate(play, pl.from, pl.die, hit, pl.n);
-    int32_t best = ai::bestScore();
-    bool race = ai::racingNow();
-    if (asking == ASK_HINT) {
-        p = fmtStr(fmtStr(text, "BEST "), play);
-        if (!race && p - text < 24) { p = fmtStr(p, "  "); p = fmtInt(p, chancePct(best)); fmtStr(p, "%"); }
-        stage::advise(text, GOLD, to, pl.n);
-        audio::sfx(Sfx::Coin);
-    } else {
-        // The coach: your play against the best, by the same yardstick.
-        int32_t mine = ai::judge(match::board);
-        int32_t loss = race ? (best - mine) * 16 / ai::RACE_ROLL                                 // 1/16 rolls
-                            : (int32_t)(((int32_t)net::chance(best) - (int32_t)net::chance(mine)) * 100) >> 16;   // percent
-        bool blunder = race ? loss >= 6 : loss >= 8, error = race ? loss >= 2 : loss >= 4;
-        if (best <= mine) stage::advise("BEST PLAY!", CYAN, nullptr, 0);
-        else if (error) {
-            p = fmtStr(text, blunder ? "BLUNDER! " : "ERROR: ");
-            fmtStr(fmtStr(p, play), " BEST");
-            stage::advise(text, blunder ? RED : GOLD, nullptr, 0);
-            if (blunder) blunders++; else errors++;
-            audio::sfx(Sfx::Deny);
-        }
-    }
-    asking = ASK_NONE;
+    char text[48], *p;
+    notate(p = fmtStr(text, "BEST "), pl.from, pl.die, hit, pl.n);
+    p += strlen(p);
+    if (!ai::racingNow() && p - text < 24) { p = fmtStr(p, "  "); p = fmtInt(p, chancePct(ai::bestScore())); fmtStr(p, "%"); }
+    stage::advise(text, GOLD, to, pl.n);
+    audio::sfx(Sfx::Coin);
+    asking = false;
 }
 #endif
 
@@ -408,7 +393,7 @@ static void playInput() {
 #if !CHBG_LEAN
     if (hintKey && (match::humanToMove() || match::humanToConfirm()) && !asking) {
         stage::advise("THINKING...", SILVER, nullptr, 0);
-        ask(ASK_HINT);
+        ask();
     }
 #else
     (void)hintKey;
@@ -416,8 +401,8 @@ static void playInput() {
     if (match::humanToConfirm()) {
         // The dice are played: pick them up, or take the last checker back.
         stage::setCursor(stage::AT_DICE);
-        if (a) { asking = ASK_NONE; stage::quiet(); match::confirm(); }
-        else if (b) { asking = ASK_NONE; stage::quiet(); match::takeBack(); }
+        if (a) { asking = false; stage::quiet(); match::confirm(); }
+        else if (b) { asking = false; stage::quiet(); match::takeBack(); }
         return;
     }
     if (!match::humanToMove()) return;
@@ -471,20 +456,30 @@ static void playInput() {
     stage::setCursor(nearest(to, k, c, 0, 0));
 }
 
-// The cube's verdict on a double, for the coach's line on the answer panel
-// (and the debug protocol's player).
-static bool cubeSaysTake() {
-    uint8_t s = match::side() ^ 1;               // the side doubled
+#ifdef CHSIM
+// The cube's verdict on a double, for the debug protocol's player: 0 pass,
+// 1 take, 2 beaver. Beavered, the doubler's: 1 take, 2 raccoon.
+static uint8_t cubeSays() {
+    uint8_t s = match::side() ^ (match::beavered() ? 0 : 1);     // the side answering
     int a = match::setup.length - match::score[s], b = match::setup.length - match::score[s ^ 1];
-    return cube::wantsTake(a, b, match::cubeValue(), match::postCrawford(), net::chance(net::eval(match::board, s)));
+    uint32_t p = net::chance(net::eval(match::board, match::side() ^ 1));     // the side on roll's opponent, after its move
+    if (s == match::side()) p = 65535u - p;
+    if (!match::beavered() && !cube::wantsTake(a, b, match::cubeValue(), match::postCrawford(), p)) return 0;
+    return match::canBeaver() && p >= cube::BEAVER_AT ? 2 : 1;
 }
+#endif
+
+// The answer panel's choices: TAKE, PASS, BEAVER; beavered, TAKE, RACCOON.
+static uint8_t answers() { return match::beavered() ? 2 : match::canBeaver() ? 3 : 2; }
 
 static void answerInput() {
-    if (menuNav(2)) {
+    if (menuNav(answers())) {
         overlay = NONE;
         audio::sfx(Sfx::Select);
         if (sel == 0) match::take();
-        else match::pass();
+        else if (match::beavered()) match::raccoon();
+        else if (sel == 1) match::pass();
+        else match::beaver();
     }
 }
 
@@ -521,7 +516,6 @@ static void playUpdate() {
                 audio::sfx(Sfx::Select);
                 overlay = NONE;
                 statsCounted = false;
-                errors = blunders = 0;
                 if (match::between()) { match::nextGame(); persist(true); }
                 else { persist(false); newGame(match::setup.mode); }
             }
@@ -544,10 +538,6 @@ static void playUpdate() {
             break;
     }
 #if !CHBG_LEAN
-    // The coach looks at each finished play.
-    bool confirm = match::humanToConfirm() && stage::ready();
-    if (confirm && !wasConfirm && opt.coach && !asking) ask(ASK_COACH);
-    wasConfirm = confirm;
     if (asking && (match::humanToMove() || match::humanToConfirm()) && ai::step(64)) asked();
 #endif
 #if CHGAME_DEBUG
@@ -586,21 +576,23 @@ static void playRender(uint32_t frame) {
             centred2(y, PAUSE_ITEM[i], i == sel ? FX_B : WHITE);
         }
     } else if (overlay == ANSWER) {
-        // Doubled: take, or pass and lose what the cube says now.
-        panel(72, opt.coach ? 48 : 41);
-        fmtInt(fmtStr(buf, "DOUBLED TO "), match::cubeValue() * 2);
-        centred35(76, buf, GOLD);
-        static const char *const ANS[2] = {"TAKE", "PASS"};
-        for (uint8_t i = 0; i < 2; i++) {
-            int y = 86 + i * 14;
-            if (i == sel) fillRound(30, y - 3, 68, 16, 3, INK);
-            centred2(y, ANS[i], i == sel ? FX_B : WHITE);
+        // Doubled: take, pass and lose what the cube says now, or beaver.
+        // Beavered: take it, or raccoon.
+        bool bv = match::beavered();
+        uint8_t n = answers();
+        int y0 = 72 - (n - 2) * 14;
+        panel(y0, 41 + (n - 2) * 14);
+        fmtInt(fmtStr(buf, bv ? "BEAVERED TO " : "DOUBLED TO "), match::cubeValue() * (bv ? 4 : 2));
+        centred35(y0 + 4, buf, GOLD);
+        static const char *const ANS[5] = {"TAKE", "PASS", "BEAVER", "TAKE", "RACCOON"};
+        for (uint8_t i = 0; i < n; i++) {
+            int y = y0 + 14 + i * 14;
+            if (i == sel) fillRound(20, y - 3, 88, 16, 3, INK);
+            centred2(y, ANS[i + (bv ? 3 : 0)], i == sel ? FX_B : WHITE);
         }
-        if (opt.coach) centred35(113, cubeSaysTake() ? "COACH: TAKE" : "COACH: PASS", CYAN);
     } else if (overlay == RESULT) {
         bool white = match::winner == bg::WHITE, done = match::matchOver(), live = match::cubeLive();
-        bool coach = opt.coach && vsCpu;
-        int y = 84 - (live ? 8 : 0) - (coach ? 7 : 0);
+        int y = 84 - (live ? 8 : 0);
         panel(y, 124 - y);
         const char *head;
         if (done && live) head = vsCpu ? (white ? "MATCH WON!" : "MATCH LOST") : white ? "WHITE WINS" : "RED WINS";
@@ -623,13 +615,6 @@ static void playRender(uint32_t frame) {
             fmtInt(fmtStr(p, "  OF "), match::setup.length);
             centred35(ly += 8, buf, WHITE);
         } else centred35(ly, why, SILVER);
-        if (coach) {
-            p = fmtInt(fmtStr(buf, "COACH: "), errors);
-            p = fmtStr(p, errors == 1 ? " ERROR, " : " ERRORS, ");
-            p = fmtInt(p, blunders);
-            fmtStr(p, blunders == 1 ? " BLUNDER" : " BLUNDERS");
-            centred35(ly += 8, buf, CYAN);
-        }
         centred35(114, done ? (vsCpu ? "A REMATCH   B MENU" : "A AGAIN   B MENU") : "A NEXT GAME   B MENU", WHITE);
     }
 }
@@ -639,13 +624,22 @@ static void playRender(uint32_t frame) {
 // their tests start games directly)
 // ---------------------------------------------------------------------------
 #if !CHBG_LEAN
-enum Opt : uint8_t { O_SOUND, O_FELT, O_HOME, O_SPEED, O_COACH, O_BACK, OPT_COUNT };
+enum Opt : uint8_t { O_SOUND, O_FELT, O_HOME, O_SPEED, O_AUTO, O_BEAVERS, O_BACK, OPT_COUNT };
 static const char *const OPT_TEXT[OPT_COUNT] = {
-    "SOUND|OFF|ON", "FELT|GREEN|BLUE|RED|PURPLE", "HOME|RIGHT|LEFT", "PACE|FUN|QUICK", "COACH|OFF|ON", "BACK",
+    "SOUND|OFF|ON", "FELT|GREEN|BLUE|RED|PURPLE", "HOME|RIGHT|LEFT", "PACE|FUN|QUICK",
+    "AUTO|ON|OFF", "BEAVERS|OFF|ON", "BACK",
 };
-// Each row's byte in Options.
-static const uint8_t OPT_AT[OPT_COUNT - 1] = {0, 1, 4, 2, 5};
-static uint8_t &optByte(uint8_t i) { return ((uint8_t *)&opt)[OPT_AT[i]]; }
+// Each row's place in Options: a byte, or (high nibble) a bit of `rules`.
+static const uint8_t OPT_AT[OPT_COUNT - 1] = {0, 1, 4, 2, 0x10, 0x20};
+static uint8_t optGet(uint8_t i) {
+    uint8_t a = OPT_AT[i];
+    return a >> 4 ? (opt.rules >> ((a >> 4) - 1)) & 1 : ((uint8_t *)&opt)[a];
+}
+static void optSet(uint8_t i, uint8_t v) {
+    uint8_t a = OPT_AT[i];
+    if (a >> 4) opt.rules = (uint8_t)((opt.rules & ~(1 << ((a >> 4) - 1))) | v << ((a >> 4) - 1));
+    else ((uint8_t *)&opt)[a] = v;
+}
 
 static uint8_t optField(const char *s, uint8_t k, char *buf) {
     uint8_t n = 0;
@@ -667,8 +661,7 @@ static void optionsUpdate() {
     if (d && sel != O_BACK) {
         char tmp[12];
         uint8_t n = (uint8_t)(optField(OPT_TEXT[sel], 0, tmp) - 1);
-        uint8_t &f = optByte(sel);
-        f = (uint8_t)((f + n + d) % n);
+        optSet(sel, (uint8_t)((optGet(sel) + n + d) % n));
         applyOptions();
         audio::sfx(Sfx::Coin);
     }
@@ -687,16 +680,15 @@ static void optionsRender(uint32_t frame) {
         char label[12], value[12];
         optField(OPT_TEXT[i], 0, label);
         if (i == sel) {
-            fillRound(8, y - 3, 112, 15, 3, NAVY);
-            roundRect(8, y - 3, 112, 15, 3, (frame & 16) ? FX_B : GOLD);
+            fillRound(6, y - 3, 116, 15, 3, NAVY);
+            roundRect(6, y - 3, 116, 15, 3, (frame & 16) ? FX_B : GOLD);
         }
         if (i == O_BACK) { centred2(y, label, i == sel ? GOLD : WHITE); continue; }
-        fontText(13, y, label, i == sel ? GOLD : WHITE);
-        optField(OPT_TEXT[i], (uint8_t)(optByte(i) + 1), value);
-        fontText(115 - fontWidth(value, 0), y, value, i == sel ? WHITE : FELT_LT, 0);
+        fontText(10, y, label, i == sel ? GOLD : WHITE);
+        optField(OPT_TEXT[i], (uint8_t)(optGet(i) + 1), value);
+        fontText(118 - fontWidth(value, 0), y, value, i == sel ? WHITE : FELT_LT, 0);
     }
-    centred35(109, "THE CPU TAUGHT ITSELF", SILVER);
-    centred35(116, "3X5 FONT: PRESS PLAY ON TAPE", SILVER);
+    centred35(119, "3X5 FONT: PRESS PLAY ON TAPE", SILVER);
 }
 #endif
 
@@ -714,6 +706,7 @@ static void optionsRender(uint32_t frame) {
 //   E                                the network's opinion of the opening position (a check that
 //                                    the device, the simulator and the trainer agree)
 //   J <T|S|O>                        jump to title/setup/options
+//   U <bits>                         the rules options (RULE_*: 1 manual, no auto play; 2 beavers)
 //   X <side> <position>              two players from a position, <side> to roll
 //   V <side> <level> <position>      ... you against the CPU
 //   R <spot>                         the D-pad route to a spot: ROUTE UDLR..
@@ -758,7 +751,7 @@ static bool debugHook(char cmd, const char *args) {
             s.seed = dbg::parseNum(args, 10);
             s.length = (uint8_t)dbg::parseNum(args, 10);
             match::start(s);
-            overlay = NONE; statsCounted = false; errors = blunders = 0;
+            overlay = NONE; statsCounted = false;
             enter(Scr::Play);
             return true;
         }
@@ -788,6 +781,10 @@ static bool debugHook(char cmd, const char *args) {
         case 'D':
             match::stackDice(args);
             return true;
+        case 'U':
+            opt.rules = (uint8_t)dbg::parseNum(args, 10);
+            applyOptions();
+            return true;
         case 'J': {
             static const char K[] = "TSO";
             const char *q = strchr(K, args[0]);
@@ -802,7 +799,11 @@ static bool debugHook(char cmd, const char *args) {
             int need = match::setup.length - match::score[s], other = match::setup.length - match::score[s ^ 1];
             if (match::humanToAnswer()) {
                 overlay = NONE;
-                if (cubeSaysTake()) match::take(); else match::pass();
+                uint8_t c = cubeSays();
+                if (match::beavered()) { if (c == 2) match::raccoon(); else match::take(); }
+                else if (c == 2) match::beaver();
+                else if (c) match::take();
+                else match::pass();
                 return true;
             }
             if (match::humanToRoll()) {

@@ -2,6 +2,7 @@
 # scaled by the primitives the CHGfx benchmark measured on the board (cal).
 # An estimate only (it models neither flash wait states nor SRAM code): the
 # real numbers come from the device (perf on a device run).
+say U 1
 cal
 say J T
 wait 30

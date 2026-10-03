@@ -21,6 +21,7 @@ uint8_t winner, how, reason, points;
 uint8_t score[2], cube, cubeOwner = CENTRE;
 bool crawford;
 uint16_t turns;
+bool autoPlay, beavers;
 
 enum Phase : uint8_t {
     OFF,
@@ -29,8 +30,10 @@ enum Phase : uint8_t {
     TURN,           // hand the turn to `sideNow`
     ROLL,           // a human's turn: waiting for the throw (or a double)
     CPU_ROLL,       // the CPU's: it may double, then throws
-    DOUBLED,        // a human has been doubled: take or pass
+    DOUBLED,        // a human has been doubled: take, pass or beaver
     CPU_ANSWER,     // the CPU has been doubled
+    BEAVERED,       // a human's double has been beavered: take, or raccoon
+    CPU_RACCOON,    // the CPU's has
     HUMAN,          // moving checkers
     CONFIRM,        // all played: pick up the dice
     NO_MOVE,        // nothing can be played: the dice go back once that has been shown
@@ -52,6 +55,7 @@ static bg::Rng dice, cpuRng;
 static uint64_t cpuRngAtTurn;
 static ai::Play cpuPlay;
 static uint8_t cpuStep;
+static uint8_t offer;               // the value on the table while a double is answered (log2)
 
 #ifdef MATCH_SCRIPTED
 static char stacked[40];
@@ -91,7 +95,8 @@ const bg::Board &turnStart() { return turnBoard; }
 bool humanToRoll() { return phase == OPENING || phase == ROLL; }
 bool humanToMove() { return phase == HUMAN; }
 bool humanToConfirm() { return phase == CONFIRM; }
-bool humanToAnswer() { return phase == DOUBLED; }
+bool humanToAnswer() { return phase == DOUBLED || phase == BEAVERED; }
+bool beavered() { return phase == BEAVERED; }
 bool cpuThinking() { return phase == CPU_THINK; }
 bool cubeLive() { return setup.length > 1; }
 bool postCrawford() { return crawfordDone && !crawford; }
@@ -154,6 +159,21 @@ static void finish(uint8_t w, uint8_t h, uint8_t why, uint8_t pts) {
     push(EV_OVER, w, h, why, pts);
 }
 
+// The roll allows one play only (in cpuPlay): nothing for a human to decide.
+static bool onlyPlay() {
+    bg::Plays g;
+    bg::Board b = board;
+    uint8_t n = 0;
+    bg::begin(g, b, sideNow, rolled[0], rolled[1]);
+    while (bg::next(g, b)) {
+        if (++n > 1) return false;
+        cpuPlay.n = g.depth;
+        memcpy(cpuPlay.from, g.from, 4);
+        memcpy(cpuPlay.die, g.die, 4);
+    }
+    return true;
+}
+
 // The turn's dice are known: what can be done with them?
 static void dealt(uint8_t a, uint8_t b) {
     rolled[0] = a; rolled[1] = b;
@@ -163,7 +183,8 @@ static void dealt(uint8_t a, uint8_t b) {
     bg::beginTurn(turn, board, sideNow, a, b);
     push(EV_ROLL, a, b, turn.need, sideNow);
     if (!turn.need) phase = NO_MOVE;
-    else if (isHuman(sideNow)) phase = HUMAN;
+    else if (isHuman(sideNow) && !(autoPlay && onlyPlay())) phase = HUMAN;
+    else if (isHuman(sideNow)) { cpuStep = 0; phase = CPU_PLAY; }
     else {
         push(EV_THINK);
         ai::start(board, sideNow, a, b, setup.level, cpuRng);
@@ -218,10 +239,14 @@ static bool mayDouble(uint8_t s) {
     return cubeLive() && !crawford && cube < MAX_CUBE && (cubeOwner == CENTRE || cubeOwner == s);
 }
 
+static bool beaverOk() { return beavers && offer < MAX_CUBE; }
+bool canBeaver() { return beaverOk() && humanToAnswer(); }
+
 bool canDouble() { return phase == ROLL && mayDouble(sideNow); }
 
 static void doubled(uint8_t s) {
-    push(EV_DOUBLE, s, (uint8_t)(cube + 1));
+    offer = (uint8_t)(cube + 1);
+    push(EV_DOUBLE, s, offer);
     phase = isHuman(s ^ 1) ? DOUBLED : CPU_ANSWER;
 }
 
@@ -229,21 +254,39 @@ void offerDouble() {
     if (canDouble()) doubled(sideNow);
 }
 
-// The doubled side (the one not on roll) takes: the cube is its own, and
+// The answer is settled: the cube is `owner`'s at the value offered, and
 // the side on roll throws.
-static void taken() {
-    cube++;
-    cubeOwner = sideNow ^ 1;
-    push(EV_TAKE, cubeOwner, cube);
+static void settle(uint8_t owner) {
+    cube = offer;
+    cubeOwner = owner;
+    push(EV_TAKE, owner, cube);
     phase = isHuman(sideNow) ? ROLL : CPU_ROLL;
+}
+
+// The doubled side (the one not on roll) takes.
+static void taken() { settle(sideNow ^ 1); }
+
+// It beavers: takes, and redoubles at once, keeping the cube. The doubler
+// may raccoon (redouble again, and the cube is its own), but cannot pass.
+static void beaverNow() {
+    push(EV_BEAVER, sideNow ^ 1, ++offer);
+    if (offer < MAX_CUBE) phase = isHuman(sideNow) ? BEAVERED : CPU_RACCOON;
+    else taken();
+}
+
+static void raccoonNow() {
+    push(EV_RACCOON, sideNow, ++offer);
+    settle(sideNow);
 }
 
 static void passed() {
     finish(sideNow, 1, BY_PASS, (uint8_t)cubeValue());
 }
 
-void take() { if (phase == DOUBLED) taken(); }
+void take() { if (phase == DOUBLED || phase == BEAVERED) taken(); }
 void pass() { if (phase == DOUBLED) passed(); }
+void beaver() { if (phase == DOUBLED && canBeaver()) beaverNow(); }
+void raccoon() { if (phase == BEAVERED && canBeaver()) raccoonNow(); }
 
 // The chance (Q16) that side s wins the game from here, s about to roll: the
 // network's view of the position after the other side's move.
@@ -273,6 +316,11 @@ void update(bool stageBusy) {
             push(EV_TURN, sideNow, isHuman(sideNow), 0);
             phase = isHuman(sideNow) ? ROLL : CPU_ROLL;
             break;
+        case OPENING:
+        case ROLL:
+            // Nothing to decide (no double to offer): the dice are thrown.
+            if (autoPlay && (phase == OPENING || !mayDouble(sideNow))) roll();
+            break;
         case CPU_ROLL: {
             uint8_t s = sideNow;
             if (mayDouble(s) && cube::wantsDouble(need(s), need(s ^ 1), cubeValue(), cubeOwner == s, postCrawford(),
@@ -286,10 +334,17 @@ void update(bool stageBusy) {
         }
         case CPU_ANSWER: {
             uint8_t s = sideNow ^ 1;                // the CPU, doubled
-            if (cube::wantsTake(need(s), need(s ^ 1), cubeValue(), postCrawford(), 65535u - chanceOnRoll(sideNow))) taken();
-            else passed();
+            uint32_t p = 65535u - chanceOnRoll(sideNow);
+            if (!cube::wantsTake(need(s), need(s ^ 1), cubeValue(), postCrawford(), p)) passed();
+            else if (beaverOk() && p >= cube::BEAVER_AT) beaverNow();
+            else taken();
             break;
         }
+        case CPU_RACCOON:
+            // Beavered: the CPU redoubles again if it still likes its game.
+            if (offer < MAX_CUBE && chanceOnRoll(sideNow) >= cube::BEAVER_AT) raccoonNow();
+            else taken();
+            break;
         case NO_MOVE:
             pickup();
             break;

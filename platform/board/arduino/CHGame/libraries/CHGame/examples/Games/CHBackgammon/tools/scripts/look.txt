@@ -1,4 +1,5 @@
 # Looks: tall stacks, both bars, full trays; the title's close-up at a few moments.
+say U 1
 wait 20
 snap title0
 wait 120
