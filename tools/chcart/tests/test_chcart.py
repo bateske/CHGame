@@ -255,6 +255,29 @@ class Runtime(unittest.TestCase):
         self.assertEqual(row, bytes([0xF0, 0xB1, 0x0D]))
 
 
+class Fixtures(unittest.TestCase):
+    def test_expected(self):
+        from chcart import fixtures
+        self.assertEqual(fixtures.check(log=lambda s: None), [])
+
+    def test_schema_agrees(self):
+        """spec/info.schema.json accepts every good fixture's manifest and
+        refuses the bad ones whose fault is the manifest's shape."""
+        try:
+            import jsonschema
+        except ImportError:
+            self.skipTest("jsonschema is not installed")
+        from chcart import fixtures
+        schema = json.loads((fixtures.FIX.parent / "info.schema.json").read_text(encoding="utf-8"))
+        v = jsonschema.Draft202012Validator(schema)
+        for f in sorted((fixtures.FIX / "good").glob("*.chgame")):
+            with self.subTest(f.name):
+                self.assertEqual([e.message for e in v.iter_errors(zipio.read(f)[1])], [])
+        for code in ("schema-version", "missing-field", "bad-field", "bad-id", "bad-title", "bad-folder", "bad-device"):
+            with self.subTest(code):
+                self.assertTrue(list(v.iter_errors(zipio.read(fixtures.FIX / "bad" / f"{code}.chgame")[1])))
+
+
 class Commands(unittest.TestCase):
     def test_edit_and_prepare(self):
         with tempfile.TemporaryDirectory() as d:

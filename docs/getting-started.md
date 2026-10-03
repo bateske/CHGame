@@ -135,6 +135,36 @@ A script is a list of `wait 30`, `tap A`, `hold RIGHT`, `snap name`,
 debug build (`chgame build --debug`), so the screenshots can be
 compared.
 
+### Sharing it
+
+A `.chgame` file is how CHGame games travel, as `.arduboy` files do for the
+Arduboy: a ZIP with the program, its title, credits, pictures and the files
+it reads from the SD card. Uploaders, card builders and emulators take it as
+it is.
+
+```bash
+chgame --sketch Hello export        # build/Hello.chgame
+```
+
+What goes in comes from the sketch's `chgame.json`. Every key is optional:
+
+```json
+{"title": "HELLO", "author": "you", "genre": "Demo", "license": "MIT",
+ "url": "https://example.com/hello"}
+```
+
+- **Defaults** fill in the rest: the folder's name in capitals for the
+  title, the version from `config.h`, the README's first paragraph,
+  `LICENSE` and `NOTICE`, the `sdcard/` folder (its tree goes onto the
+  card's root), `docs/gameplay.gif` as the screenshot.
+- **On a CHGame:** `chgame cart deploy build/Hello.chgame` flashes it.
+  Give it `--card E:\` with the card mounted, and it also lands in the
+  menu, with its SD files.
+- **Several games in one cart:** `chgame cart new MyCart.chgame Hello.chgame
+  CHFour ...`, then `add`, `remove`, `order`, `set --game ID folder=PUZZLES`,
+  `launch ID` (the game started at power-on), `background menu.png`.
+- **The format** is [spec/chgame.md](../spec/chgame.md).
+
 ## A real game
 
 Copy the game closest to yours. CHFour is small and recent, and has the full tooling: `check.py`, tests, scripts and the asset pipeline. Then follow [CLAUDE.md's "Starting a new game"](../CLAUDE.md#starting-a-new-game). From the library you already have the frame loop's parts, the palette effects, the sound engine, saving, the debug protocol and the simulator; the game folder holds its rules, its screens, its art, its sounds and its scripts.

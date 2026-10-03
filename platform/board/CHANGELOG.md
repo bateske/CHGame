@@ -42,12 +42,20 @@ package's maintainer is shown as **bateske**.
   sketch's `build` folder. Its title is the sketch's name in capitals.
   (`chgame-upload pack`, with `-title`, `-author` and `-gameversion` when
   run by hand.)
-- **The SD card's contents** for every game, as a zip beside the release
+- **Every game and app as one `.chgame` cart** beside the release
+  (`CHGame-Casino-<version>.chgame`; the format is the repository's
+  `spec/chgame.md`), and its SD card's contents as a zip
   (`CHGame-sdcard-<version>.zip`): built from this package's own examples.
-- **Tools > Bootloader** chooses what *Burn Bootloader* writes: the SD game
-  menu in one of three colour themes, **SD Game Menu (Rainbow)** (the
-  default), **(Plain)** or **(Casino)**, or **USB Only**, the same
-  bootloader without the menu. The 0.2.4 bootloader is no longer shipped.
+  Each example has a `chgame.json` describing it.
+- **Tools > Bootloader** chooses what *Burn Bootloader* writes: the **SD
+  Game Menu**, or **USB Only**, the same bootloader without the menu. The
+  0.2.4 bootloader is no longer shipped.
+- **The SD Game Menu takes its look from the card:** the picture behind it
+  (`GAMES/MENU.BG`; every card the tools prepare has the CHGAME logo, its
+  colours turning), the order of the games and folders of games
+  (`GAMES/MENU.IDX`), and optionally a game started at power-on instead of
+  the menu (hold START while switching on for the menu). Errors are shown as
+  a number (the repository's docs/sd-menu.md lists them).
 - **Programmer "CHGame USB (requires CHGame bootloader, no drivers)"**:
   *Burn Bootloader* through the bootloader that
   is already on the board. No driver and no buttons; a port must be

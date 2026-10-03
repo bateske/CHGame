@@ -13,7 +13,9 @@ it, and one utility exposes it over USB.
 | CHSDtoUSB | its own read-write driver (from sdfatlib, CRC-checked, DMA) | the whole card, block by block, for the PC | GPL-3.0 |
 
 The **bootloader** reads the card too: its game menu lists and installs
-`GAMES/*.CHG` packages ([sd-menu.md](sd-menu.md)). It uses its own C port of
+the CHG files in `GAMES/` and its folders, in the order and over the
+picture the card gives it ([sd-menu.md](sd-menu.md),
+[../spec/card.md](../spec/card.md)). It uses its own C port of
 CHSd (`platform/bootloader/src/sd.c`, `fat.c`), which follows any amount of
 fragmentation and recovers a card that a reset left mid-transfer.
 
@@ -64,10 +66,15 @@ generated from CHSd's `host/`) give the game a pretend card:
 
 ## Putting files on a real card
 
-**Everything at once:** `python tools/sdcard/mkcard.py` builds every game,
-packs them for the menu and lays out the whole card in `out/sdcard/`:
-`GAMES/*.CHG`, `WORDS.DIC`, `PHRASES.BNK` and `CHCW/`. Copy its contents to
-the card's root.
+**Everything at once:** `chgame card` builds every game into one cart,
+`out/CHGame-Casino.chgame`, and lays out its card in `out/sdcard/`: `GAMES/`
+(the CHG files, the APPS folder, `MENU.IDX`, `MENU.BG`), `WORDS.DIC`,
+`PHRASES.BNK`, `CHCW/` and `MODELS/`. Copy its contents to the card's root,
+or `chgame cart deploy out/CHGame-Casino.chgame --card <drive>`.
+
+**One game's files** travel in its `.chgame` (`chgame export`): its
+`sdcard/` folder becomes the cart's SD files, and deploying the cart puts
+them where the game reads them ([../spec/chgame.md](../spec/chgame.md)).
 
 **From a PC with a card reader:** copy the game's files from its `sdcard/`
 folder to the card. Follow the paths above exactly: the root for

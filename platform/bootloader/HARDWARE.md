@@ -19,6 +19,64 @@ There are two routes:
 Every step can be rolled back over USB, and the factory ISP is the last
 resort ([recovery.md](../board/docs/recovery.md)).
 
+## Menu v2 (BOOT_VERSION 3): the next run
+
+The steps below were written for the first menu, and they still describe
+how to install a bootloader. Menu v2 (README.md, "Menu v2") has passed the
+PC suite but has not yet run on a board, so `release/` still holds the first
+menu's binaries. This is the run that changes that, on a board that has the
+first menu bootloader (or any bootloader with self-update).
+
+1. **The card.** The first menu does not show folders, and the casino card
+   keeps SD CARD READER in its APPS folder. So upload the reader directly:
+   - `chgame --sketch CHSDtoUSB upload` (its own options, `tools/game.py`);
+   - a drive appears;
+   - `chgame card`, then
+     `chgame cart deploy out/CHGame-Casino.chgame --card <drive> --clean`;
+   - eject.
+2. **Dry run (optional, the bootloader untouched).**
+   - Build with `./build.sh app`, then upload with
+     `UP flash platform/bootloader/build/app/chgame_boot.bin --run --port <PORT>`.
+   - The menu appears as a program. SELECT leaves to the installed
+     bootloader's USB mode.
+   - Check the points of step 4 that do not need a reset. A on a game says
+     DRY RUN OK and writes nothing.
+3. **Install it.** Build with `./build.sh release`, then run
+   `UP selfupdate platform/bootloader/build/release/chgame_boot.bin --yes`.
+   `UP info` should report bootloader v3.
+4. **What to check and report:**
+   - **The look.** It should match [docs/menu.png](docs/menu.png):
+     - the CHGAME logo, crisp, its colours turning, with the rule under it;
+     - A:PLAY B:BACK at the foot;
+     - the selection bar turning too.
+
+     Report any tearing or flicker.
+   - **Speed.** How scrolling feels: UP/DOWN once, and held (it repeats every
+     80 ms). Each move reads the background from the card and sends the
+     whole screen, about 70 ms. Is that slow?
+   - **Folders.** APPS (the last row, with `>`): A opens it, B goes back to
+     the APPS row. From APPS, STL VIEWER installs and starts.
+   - **The games.** Install one at the top level. Hold START 3 s in it: the
+     menu comes back with it marked.
+   - **USB.** `chgame upload` in a game folder while the menu is up: the
+     sketch starts. At the next power-on it is INSTALLED PROGRAM, the top
+     row.
+   - **Errors.** Copy a CHG file cut short to `GAMES/` (through the reader).
+     Its row is grey, under its file name, and A says ERROR 5.
+   - **Launch.**
+     - Run `chgame cart launch out/CHGame-Casino.chgame chfour`, deploy
+       again, then switch off and on: FOUR IN A ROW starts with no menu,
+       after an install if it was not the installed game.
+     - Hold START while switching on: the menu.
+     - Hold START 3 s in the game: the menu, not the game again.
+     - Undo with `chgame cart launch ... none` and deploy.
+   - **B at power-on** still gives USB mode.
+   - **The uploaders.** `UP flash <some .bin> -verify` ends with
+     "readback: not available".
+5. **Afterwards.** Record the run as for the first menu (below), then run
+   `tools/dist.sh` to put menu v2 in `release/` and the board package, and
+   commit.
+
 ## Before starting
 
 - **Software.** This branch checked out. Python 3 with `pip install -r
@@ -35,8 +93,11 @@ resort ([recovery.md](../board/docs/recovery.md)).
   (the 0.2.4 bootloader) at hand.
 - **What gets flashed.** The binaries are in [release/](release), with
   SHA-256 sums. `tools/dist.sh` rebuilds them byte-identical.
-- **Card contents.** `python tools/sdcard/mkcard.py` builds and packs all 20
-  games plus the SD card reader into `out/sdcard/`.
+- **Card contents.** `chgame card` builds the casino cart
+  (`out/CHGame-Casino.chgame`: the 20 games, the STL viewer and the SD card
+  reader) and its card in `out/sdcard/`. (For the first menu, which shows
+  no folders, the two apps in APPS stay out of reach: copy their CHG files
+  up into `GAMES/` by hand if you need them there.)
 
 ## The direct route
 

@@ -17,6 +17,15 @@ from the IDE
 and publishing it. The list at the end, *Before and at the release*, has
 it in order.
 
+**Since (2026-10-03):** the `.chgame` format, the way games are shared
+([spec/chgame.md](../spec/chgame.md)), with its reference implementation
+(`tools/chcart`, `chgame export`, `chgame cart ...`) and conformance
+fixtures; the release attaches every game as one cart. The bootloader's
+menu v2 reads what runtime preparation writes ([spec/card.md](../spec/card.md)):
+folders, the card's order and background, a game started at power-on. It
+has passed the PC suite, not yet a board, so the release still carries the
+first menu until then (item 1 below).
+
 This page records what is in place and what each step involved.
 
 ## What is in place
@@ -24,7 +33,8 @@ This page records what is in place and what each step involved.
 | | Where | State |
 |---|---|---|
 | Arduino core, variant, linker scripts, Tools menus | `platform/board/arduino/CHGame` | 0.3.0, built and tested, not yet published (0.2.4 is the published one) |
-| Bootloader with the SD game menu | `platform/bootloader` | built and tested on the PC; installed and checked on a board on 2026-10-01 (`test/hil/RESULTS-2026-10-01.md`) |
+| Bootloader with the SD game menu | `platform/bootloader` | the first menu: built and tested on the PC, installed and checked on a board on 2026-10-01 (`test/hil/RESULTS-2026-10-01.md`). Menu v2 (2026-10-03): PC suite only |
+| The `.chgame` format and the SD card's layout | `spec/`, `tools/chcart` | version 1 and layout 2; reference implementation, 16 unit tests, 24 conformance fixtures; the repository's games and release use it |
 | Uploader: `chgame-upload` in Go (the executable the board package installs; Windows, Linux, macOS) and the same tool in Python (`chgame_upload`, what the repository's tools use) | `platform/bootloader/host/go`, `host/py` | 0.2.0 here, with the bootloader update over USB and `burn`; the installed package has 0.1.0. Shared test vectors (`test/protocol/`) hold the two together |
 | Graphics | `platform/board/arduino/CHGame/libraries/CHGfx` | 1.3.0 |
 | SD card / FAT | `platform/board/arduino/CHGame/libraries/CHSd` | 1.0.0; never yet run against a real card on a board |
@@ -171,8 +181,10 @@ reaches them through the `chgame` command, and they take a game by name
 What an Arduino user needs is in the package, in `chgame-upload` (the one
 executable the IDE can run): upload, burn the bootloader, and, since
 2026-10-02, `pack`, which every build runs so that *Export Compiled Binary*
-leaves a `.chg` for the SD menu. The SD card with every game is a zip
-beside each release. The developer tools (simulator, scripts, screenshots,
+leaves a `.chg` for the SD menu. Every game is a `.chgame` cart beside
+each release, with its SD card as a zip. Making, editing and deploying carts
+is Python (`chgame cart`), offline: the web emulator and its tools, a
+separate project, build on `spec/`. The developer tools (simulator, scripts, screenshots,
 GIFs, sound preview) are Python and need a clone. Before that, what was
 done to use them without reading the source:
 
@@ -206,7 +218,11 @@ It is ours now:
 
 ## Before and at the release
 
-1. **On a board, from the IDE**, with the staged package
+1. **Menu v2 on a board** ([HARDWARE.md](../platform/bootloader/HARDWARE.md),
+   "Menu v2"), then `platform/bootloader/tools/dist.sh` to put it in
+   `release/` and the package; until then both hold the first menu. The
+   run also settles how fast the menu redraws (about 70 ms expected).
+2. **On a board, from the IDE**, with the staged package
    ([trying-a-release.md](../platform/board/docs/trying-a-release.md)):
    *Burn Bootloader* with **CHGame USB** from the installed package
    (tried with `arduino-cli` already, not yet from the IDE); Hello and a
@@ -214,10 +230,10 @@ It is ours now:
    *Export Compiled Binary* started from the menu; the SD card zip on a
    real card (CHSd has never read a real card on a board). CHSDtoUSB stays
    on `-Os` on the card until it is tried with LTO.
-2. **Date the changelog heading**, then `python tools/release/release.py`
-   (it runs the new-user test again and publishes v0.3.0 with the SD card
-   zip).
-3. **The old URL.** People with the CH32SerialBoot URL are not told about
+3. **Date the changelog heading**, then `python tools/release/release.py`
+   (it runs the new-user test again and publishes v0.3.0 with the casino
+   cart and the SD card zip).
+4. **The old URL.** People with the CH32SerialBoot URL are not told about
    this one. A last release there that points here is one way.
-4. **Third-party archives.** The toolchain and wchisp are referenced at
+5. **Third-party archives.** The toolchain and wchisp are referenced at
    their upstream URLs, not mirrored (`platform/board/THIRD-PARTY.md`).

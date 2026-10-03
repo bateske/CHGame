@@ -1,0 +1,54 @@
+{
+ "warnings": [
+  "long-title",
+  "save-pages",
+  "title-chars",
+  "unknown-key",
+  "unused-file"
+ ],
+ "games": [
+  {
+   "id": "a",
+   "title": "A TITLE OF TWENTY ONE",
+   "folder": "",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {}
+  },
+  {
+   "id": "b",
+   "title": "B{}",
+   "folder": "",
+   "binaries": {
+    "rev0": {
+     "size": 50440,
+     "sha256": "f8d9d594404c5a4d6553922f9379b240351ab8ebdd8676e1c65e327f203d6a99"
+    }
+   },
+   "sdcard": {}
+  }
+ ],
+ "launch": "",
+ "card": {
+  "GAMES/MENU.IDX": {
+   "size": 96,
+   "sha256": "50cb4bbd081cc0eaaf9596af2a22663cb66797d6a5d29c89069f13a8bc280bd7"
+  },
+  "GAMES/MENU.BG": {
+   "size": 8704,
+   "sha256": "e5a5ad143ea0990fe057d149d3e51705216aab6cb35f90425041a6072d019b6e"
+  },
+  "GAMES/ATITLEOF.CHG": {
+   "size": 11348,
+   "sha256": "04312ac1428f1aad646db1780cfa1840e38bd8b7f1c214d5b3106649863f861b"
+  },
+  "GAMES/B.CHG": {
+   "size": 50952,
+   "sha256": "c0ca51defd0e7967e81928e680f3752fd3d3a4a955efafc71708240deaef4a74"
+  }
+ }
+}

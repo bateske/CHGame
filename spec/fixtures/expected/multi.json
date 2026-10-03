@@ -1,0 +1,150 @@
+{
+ "warnings": [
+  "long-title"
+ ],
+ "games": [
+  {
+   "id": "zulu",
+   "title": "ZULU",
+   "folder": "",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {
+    "SHARED.DAT": "585fa48f91601b37e77fa5462d06513700fe334c53cb80de6d465d63ee42d682"
+   }
+  },
+  {
+   "id": "alpha",
+   "title": "Alpha game",
+   "folder": "TOYS",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {}
+  },
+  {
+   "id": "inner",
+   "title": "INNER GAME",
+   "folder": "TOYS/BOX",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {
+    "SHARED.DAT": "585fa48f91601b37e77fa5462d06513700fe334c53cb80de6d465d63ee42d682"
+   }
+  },
+  {
+   "id": "words",
+   "title": "WORDS",
+   "folder": "",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {}
+  },
+  {
+   "id": "words-2",
+   "title": "WORDS",
+   "folder": "TOYS",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {}
+  },
+  {
+   "id": "con",
+   "title": "CON",
+   "folder": "",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {}
+  },
+  {
+   "id": "long",
+   "title": "A TITLE LONGER THAN THE MENU",
+   "folder": "",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {}
+  }
+ ],
+ "launch": "inner",
+ "card": {
+  "GAMES/MENU.IDX": {
+   "size": 192,
+   "sha256": "98545287d8f1491226d652fa1604297826599bb05170f17be9480c1d515db0cd"
+  },
+  "GAMES/MENU.BG": {
+   "size": 8704,
+   "sha256": "81ac4a758bb0447a292ef5ebd9fcfb35fe027eb37fab6f598ced2d912fbd7354"
+  },
+  "GAMES/ZULU.CHG": {
+   "size": 11348,
+   "sha256": "2378e6c65d9ee905c117ae1177504584259e03e7a2f964b6d963880087891217"
+  },
+  "GAMES/WORDS.CHG": {
+   "size": 11348,
+   "sha256": "2b55e8e80944dbf0de8fabb3a910a74ebe8c19bb84f7a05dc3341732e635892b"
+  },
+  "GAMES/CON2.CHG": {
+   "size": 11348,
+   "sha256": "399fde826abdc6a6773dab4640e747ba3f43c045b0f018070dce0c4ad51f1f51"
+  },
+  "GAMES/ATITLELO.CHG": {
+   "size": 11348,
+   "sha256": "5f4b11887ded48d22deb69682c6f659ea2a4d8603d522f4787c09d0211c004c2"
+  },
+  "GAMES/TOYS/MENU.IDX": {
+   "size": 128,
+   "sha256": "ba6474933f7f70f2c8e12924f739db0899f0be86ef13a3e374f9c0598aa058ed"
+  },
+  "GAMES/TOYS/MENU.BG": {
+   "size": 8704,
+   "sha256": "47cb96ba9a066faf81a2ea56c4c74ae1072d08ecdf99f3da79dadcd3dfd52eba"
+  },
+  "GAMES/TOYS/ALPHAGAM.CHG": {
+   "size": 11348,
+   "sha256": "1c0af87343ce338264cb0444bff2707729aabed0a87f8c0bb9a93c75a628a70f"
+  },
+  "GAMES/TOYS/WORDS.CHG": {
+   "size": 11348,
+   "sha256": "2b55e8e80944dbf0de8fabb3a910a74ebe8c19bb84f7a05dc3341732e635892b"
+  },
+  "GAMES/TOYS/BOX/MENU.IDX": {
+   "size": 64,
+   "sha256": "76b6c73f1e102c97c73fcec2d993aed397780e579a3c1bd007de4676e809e5ff"
+  },
+  "GAMES/TOYS/BOX/INNERGAM.CHG": {
+   "size": 11348,
+   "sha256": "8d8c8d05797073ce186fc8d69bac06443119a5f06a308306b0890f9f40f182bc"
+  },
+  "SHARED.DAT": {
+   "size": 20,
+   "sha256": "585fa48f91601b37e77fa5462d06513700fe334c53cb80de6d465d63ee42d682"
+  }
+ }
+}

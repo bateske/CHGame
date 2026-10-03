@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Make, check and list CHGame packages (.CHG) for the SD game menu.
+"""Make, check and list CHG files, what the SD game menu installs.
 
-A package is a 512-byte header plus the program image exactly as
-chgame-upload would write it (docs/chg-format.md). Copy packages into the
-card's GAMES folder; the menu shows the title from the header.
+A CHG file is a 512-byte header plus the program image exactly as
+chgame-upload would write it (spec/chg.md). It is the runtime form: games
+are shared as .chgame files, and `chgame cart prepare` writes their CHG
+files with the rest of the card (spec/card.md). By hand, copy CHG files into
+the card's GAMES folder; the menu shows the title from the header.
 
     python tools/chgpack.py pack build/release/CHFour.ino.bin FOURROW.CHG --title "FOUR IN A ROW"
     python tools/chgpack.py verify FOURROW.CHG [more.CHG ...]
