@@ -175,14 +175,15 @@ differences from 0.2.4, building, testing and installing.
 
 **Menu v2** (2026-10-03, BOOT_VERSION 3): folders, the card's order and
 background (`GAMES/MENU.IDX`, `MENU.BG`: [../spec/card.md](../spec/card.md)),
-a game started at power-on (START held: the menu), the moving rainbow as a
+a game started at power-on (START held: the menu), the turning rainbow as a
 colour of the picture. Errors are shown as numbers; `fault.c`, the STATUS
 and READ commands, the colour themes and the code-drawn title went for
-flash (11,908 B, 380 B free; a folder lists 240 entries, which fills the RAM: [bootloader/SIZES.md](bootloader/SIZES.md)). It passes the PC suite,
-which boots it on cards made by `tools/chcart`; it has not run on a board
-yet. So `bootloader/release/` and `board/.../bootloaders/CHGame/` still hold
-the first menu, until that run ([bootloader/HARDWARE.md](bootloader/HARDWARE.md),
-"Menu v2") and `bootloader/tools/dist.sh`.
+flash (11,908 B, 380 B free; a folder lists 240 entries, which fills the RAM: [bootloader/SIZES.md](bootloader/SIZES.md)).
+Two styles: Rainbow (the default) and White. It passes the PC suite, which
+boots it on cards made by `tools/chcart`, and it ran on the board on
+2026-10-03 ([bootloader/test/hil/RESULTS-2026-10-03.md](bootloader/test/hil/RESULTS-2026-10-03.md)):
+`bootloader/release/` and `board/.../bootloaders/CHGame/` carry the images
+that ran.
 
 ## Changing a platform piece
 

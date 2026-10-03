@@ -19,13 +19,15 @@ There are two routes:
 Every step can be rolled back over USB, and the factory ISP is the last
 resort ([recovery.md](../board/docs/recovery.md)).
 
-## Menu v2 (BOOT_VERSION 3): the next run
+## Menu v2 (BOOT_VERSION 3)
 
 The steps below were written for the first menu, and they still describe
-how to install a bootloader. Menu v2 (README.md, "Menu v2") has passed the
-PC suite but has not yet run on a board, so `release/` still holds the first
-menu's binaries. This is the run that changes that, on a board that has the
-first menu bootloader (or any bootloader with self-update).
+how to install a bootloader. Menu v2 (README.md, "Menu v2") ran on a board
+on 2026-10-03 ([test/hil/RESULTS-2026-10-03.md](test/hil/RESULTS-2026-10-03.md):
+steps 1, 3 and the first points of step 4, in both styles). These steps
+install it on a board that has the first menu bootloader (or any bootloader
+with self-update); `release/chgame_sdboot.bin` and `chgame_sdboot_white.bin`
+are the images that ran, and `build/release/` gives the same bytes.
 
 1. **The card.** The first menu does not show folders, and the casino card
    keeps SD CARD READER in its APPS folder. So upload the reader directly:

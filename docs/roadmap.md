@@ -22,9 +22,10 @@ it in order.
 (`tools/chcart`, `chgame export`, `chgame cart ...`) and conformance
 fixtures; the release attaches every game as one cart. The bootloader's
 menu v2 reads what runtime preparation writes ([spec/card.md](../spec/card.md)):
-folders, the card's order and background, a game started at power-on. It
-has passed the PC suite, not yet a board, so the release still carries the
-first menu until then (item 1 below).
+folders, the card's order and picture, a game started at power-on, in a
+Rainbow and a White style. It ran on the board on 2026-10-03
+([RESULTS](../platform/bootloader/test/hil/RESULTS-2026-10-03.md)), and
+`release/` and the board package carry it.
 
 This page records what is in place and what each step involved.
 
@@ -33,7 +34,7 @@ This page records what is in place and what each step involved.
 | | Where | State |
 |---|---|---|
 | Arduino core, variant, linker scripts, Tools menus | `platform/board/arduino/CHGame` | 0.3.0, built and tested, not yet published (0.2.4 is the published one) |
-| Bootloader with the SD game menu | `platform/bootloader` | the first menu: built and tested on the PC, installed and checked on a board on 2026-10-01 (`test/hil/RESULTS-2026-10-01.md`). Menu v2 (2026-10-03): PC suite only |
+| Bootloader with the SD game menu | `platform/bootloader` | menu v2 (2026-10-03), Rainbow and White: the PC suite, and installed and checked on a board the same day (`test/hil/RESULTS-2026-10-03.md`; the first menu on 2026-10-01) |
 | The `.chgame` format and the SD card's layout | `spec/`, `tools/chcart` | version 1 and layout 2; reference implementation, 20 unit tests, 25 conformance fixtures; the repository's games and release use it |
 | Uploader: `chgame-upload` in Go (the executable the board package installs; Windows, Linux, macOS) and the same tool in Python (`chgame_upload`, what the repository's tools use) | `platform/bootloader/host/go`, `host/py` | 0.2.0 here, with the bootloader update over USB and `burn`; the installed package has 0.1.0. Shared test vectors (`test/protocol/`) hold the two together |
 | Graphics | `platform/board/arduino/CHGame/libraries/CHGfx` | 1.3.0 |
@@ -218,10 +219,12 @@ It is ours now:
 
 ## Before and at the release
 
-1. **Menu v2 on a board** ([HARDWARE.md](../platform/bootloader/HARDWARE.md),
-   "Menu v2"), then `platform/bootloader/tools/dist.sh` to put it in
-   `release/` and the package; until then both hold the first menu. The
-   run also settles how fast the menu redraws (about 70 ms expected).
+1. **The rest of menu v2 on a board** (optional; the PC suite covers it):
+   the launch game at power-on and START held, the ERROR n boxes, the
+   INSTALLED PROGRAM row, a picture of one's own
+   ([RESULTS-2026-10-03](../platform/bootloader/test/hil/RESULTS-2026-10-03.md)
+   lists them; [HARDWARE.md](../platform/bootloader/HARDWARE.md), "Menu v2",
+   has the steps).
 2. **On a board, from the IDE**, with the staged package
    ([trying-a-release.md](../platform/board/docs/trying-a-release.md)):
    *Burn Bootloader* with **CHGame USB** from the installed package

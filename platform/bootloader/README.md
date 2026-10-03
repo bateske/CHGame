@@ -196,8 +196,8 @@ The menu draws into a framebuffer and takes its look from the card
   the rainbow's gradient, and out-of-line SPI bytes. The release image went
   from 12,032 B to 11,908 B.
 - **A redraw** reads the background (17 sectors) and sends the whole screen.
-  The model's wire time is about 25 ms; on the board, with the CPU's part,
-  expect around 70 ms. To be measured on the board (HARDWARE.md).
+  The model's wire time is about 25 ms; on the board scrolling felt right
+  (2026-10-03: [test/hil/RESULTS-2026-10-03.md](test/hil/RESULTS-2026-10-03.md)).
 - `python3 tools/screens.py` redraws the pictures in `docs/` after
   `test/native/run_tests.py -k boot`.
 
@@ -265,9 +265,6 @@ The hardware steps are in [HARDWARE.md](HARDWARE.md).
   No driver, no buttons. The installed sketch is erased. It needs a board
   package that carries this bootloader and `chgame-upload` 0.2.0 (the next
   release; [docs/roadmap.md](../../docs/roadmap.md)).
-- **Menu v2 is not in `release/` yet.** The binaries there are the
-  first menu's until menu v2 has run on a board: `./build.sh release` and
-  `build/release/chgame_boot.bin` until then, then `tools/dist.sh`.
 - **By hand, the same thing:** `chgame-upload selfupdate
   release/chgame_sdboot.bin` ([host/go](host/go/README.md)), or
   `chgame uploader selfupdate release/chgame_sdboot.bin --yes` (the Python
