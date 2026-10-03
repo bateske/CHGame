@@ -1,4 +1,4 @@
-# Differential run (tools/chsim/diffdrive.py): every frame of the incremental
+# Differential run (chgame redraw): every frame of the incremental
 # redraw against a forced full redraw, through a buy-in, a round played with
 # the buttons, power-ups, a win with both banners, and a rival's win.
 say R 7

@@ -1,7 +1,7 @@
 # The big moments, a recording of each, kept as a test (the README's one GIF
 # is gameplay.txt's): the title, a bingo, the CPU's reply, a hint and a word
 # the list has not got, the end of a game.
-#   python tools/chsim/chdrive.py --sim . tools/scripts/showcase.txt out/showcase
+#   chgame run tools/scripts/showcase.txt out/showcase
 wait 20
 rec start 3
 wait 150

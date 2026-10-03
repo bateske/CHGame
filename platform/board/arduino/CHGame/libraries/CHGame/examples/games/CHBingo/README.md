@@ -40,14 +40,14 @@ Buy up to nine cards and race a hall of rivals to the first line, while the deal
 
 Options, lifetime statistics, the jackpot and a game in progress, the round being played included, are saved and survive re-uploading: SAVE & QUIT from the pause menu, then CONTINUE. **STATS** shows the lifetime numbers; hold SELECT there to reset them.
 
-To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `python tools/device.py upload` from this folder.
+To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `chgame upload` from this folder.
 
 ## Developer notes
 
 - **A hall that costs no RAM.** At the start of a round `src/game/Bingo.cpp` shuffles the draw, deals each rival card, reduces it to the call on which it completes a line and throws it away; only the earliest of those calls is kept.
 - **A saved round is a seed.** `src/save/Save.cpp` stores the round's seed and the daubs in the library's two flash save pages; the draw, the cards and the hall are dealt again from the seed.
 - **Animation through the palette.** The frame of a card with a number waiting, its pip (`src/render/Cards.cpp`) and the winning line are drawn in one palette entry that cycles through the rainbow, so nothing is redrawn to animate them.
-- **Redraws by band.** `src/fx/Presenter.cpp` redraws the wall, the plaque, the felt and the bar only when what they show changes or something moving touches them; `tools/chsim/diffdrive.py` checks every frame against a full redraw.
+- **Redraws by band.** `src/fx/Presenter.cpp` redraws the wall, the plaque, the felt and the bar only when what they show changes or something moving touches them; `chgame redraw` checks every frame against a full redraw.
 - **Rules without graphics.** `src/game/Bingo.*` has no drawing and no sound, so the host tests in `tools/tests` play thousands of rounds and check the set-up against an independent Python model.
 - More in [NOTES.md](NOTES.md): design decisions, tests, the script commands and open items.
 

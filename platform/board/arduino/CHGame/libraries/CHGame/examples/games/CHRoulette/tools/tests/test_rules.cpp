@@ -1,5 +1,5 @@
 // Host tests for the rules: src/game Wheel, Spots, Nav and Roulette.
-//   python tools/tests/run_tests.py
+//   chgame test
 //   test_rules --dump     the spot model, diffed against ref_roulette.py
 #include <stdio.h>
 #include <stdlib.h>

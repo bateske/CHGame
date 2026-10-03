@@ -1,6 +1,6 @@
 # Single moments as GIFs: title, toss-up, spin, three N's, bankrupt, the
 # bonus round's end. Kept as a test; the README's GIF is gameplay.txt's.
-#   python tools/chsim/chdrive.py --sim . tools/scripts/showcase.txt out/showcase
+#   chgame run tools/scripts/showcase.txt out/showcase
 say R 7
 say J T
 wait 30

@@ -1,5 +1,5 @@
 // Host tests: the puzzle decoder against the Python reference (expect.h is
-// written by run_tests.py from tools/puzzles/cwformat.py), the rules and
+// written by tools/tests/cwtests.py from tools/puzzles/cwformat.py), the rules and
 // the score, saving, and damaged data.
 #include <stdint.h>
 #include <stdio.h>

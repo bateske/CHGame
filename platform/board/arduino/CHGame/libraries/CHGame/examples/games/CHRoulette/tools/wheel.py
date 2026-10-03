@@ -29,6 +29,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
+sys.path.insert(0, str(HERE.parents[9] / "tools"))   # the repository's tools/: pixkit
 from pixkit import (FB, ellipse_rows, isin, INK, WHITE, FELT_DK, FELT,  # noqa: E402
                     SILVER, RED, WINE, GOLD, WOOD, NAVY, FX_A, FX_B)
 

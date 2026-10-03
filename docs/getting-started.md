@@ -101,8 +101,8 @@ It uses 10.8 KB of flash and 11.9 KB of RAM, most of the RAM being the
 **To build it:**
 - **From the repository** (the library and CHGfx come from `platform/board/arduino/CHGame/libraries`):
   ```bash
-  python tools/device.py --sketch platform/board/arduino/CHGame/libraries/CHGame/examples/Hello build
-  python tools/device.py --sketch platform/board/arduino/CHGame/libraries/CHGame/examples/Hello upload
+  chgame --sketch Hello build
+  chgame --sketch Hello upload
   ```
 - **Arduino IDE:**
   1. Install the CHGame board package ([README](../README.md#installing)).
@@ -124,13 +124,13 @@ sketch through the library's **serial debug protocol** (`dbg::begin()` in
 scripted:
 
 ```bash
-python tools/chsim/chdrive.py --sim platform/board/arduino/CHGame/libraries/CHGame/examples/Hello myscript.txt out/hello
+chgame --sketch Hello run myscript.txt out/hello
 ```
 
 A script is a list of `wait 30`, `tap A`, `hold RIGHT`, `snap name`,
 `gif name 40 2` ... (the full list is at the top of
 `tools/chsim/chdrivelib.py`). The same script runs on the board against a
-debug build (`tools/device.py build --debug`), so the screenshots can be
+debug build (`chgame build --debug`), so the screenshots can be
 compared.
 
 ## A real game

@@ -1,6 +1,6 @@
 // Host tests for the rules: the puzzle board, the wheel layouts, the spin
 // solver, the show's flow and money, the CPU contestants.
-//   python tools/tests/run_tests.py
+//   chgame test
 #include <stdio.h>
 #include <string.h>
 #include <string>

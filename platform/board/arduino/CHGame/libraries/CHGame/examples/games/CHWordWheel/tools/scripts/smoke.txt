@@ -1,5 +1,5 @@
 # Every screen once and the start of an episode: a contact sheet for a quick look.
-#   python tools/chsim/chdrive.py --sim . tools/scripts/smoke.txt out/smoke
+#   chgame run tools/scripts/smoke.txt out/smoke
 wait 30
 snap 01_title
 say J O

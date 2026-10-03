@@ -4,7 +4,7 @@
 
 namespace music {
 
-// Debug builds (the test protocol: tools/device.py --debug) leave the scores
+// Debug builds (the test protocol: chgame build --debug) leave the scores
 // out - the protocol needs the flash, and the tests never listen.
 #if !CHGAME_DEBUG
 static const uint8_t TITLE[453] = {

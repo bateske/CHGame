@@ -41,7 +41,7 @@ SELECT shows the best play of your roll and your chances. With COACH on, every p
 
 The dice are the same for everyone: one generator, seeded from the moment you press the button, that the CPU cannot see or touch. OPTIONS has sound, the felt (green, blue, red, purple), HOME LEFT to mirror the board, the pace (FUN, or QUICK: no close-ups and shorter pauses) and the coach. Options, your record against each opponent (hold SELECT on that screen to clear it) and a game or match in progress (SAVE + QUIT, then CONTINUE) are saved.
 
-To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `python tools/device.py upload` from this folder.
+To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `chgame upload` from this folder.
 
 ## Developer notes
 

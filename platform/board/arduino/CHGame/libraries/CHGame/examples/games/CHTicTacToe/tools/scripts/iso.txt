@@ -1,5 +1,5 @@
 # The iso table up close: the board landing, pieces falling, a win, the map.
-#   python tools/chsim/chdrive.py --sim . tools/scripts/iso.txt out/iso
+#   chgame run tools/scripts/iso.txt out/iso
 say R 3
 say D 0
 say J P 0

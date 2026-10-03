@@ -1,7 +1,7 @@
 // The CHGame library's build switches.
 //
 // The library is compiled on its own, so it cannot see a sketch's config.h:
-// set these with build.extra_flags (tools/device.py --debug passes
+// set these with build.extra_flags (chgame build --debug passes
 // -DCHGAME_DEBUG=1), and read them in the sketch from here.
 //
 //   CHGAME_DEBUG    the serial debug protocol (chgame/Debug.h): screenshots,

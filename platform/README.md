@@ -12,7 +12,7 @@ here. The table's "Came from" column is history, not something to sync with.
 | `board/arduino/CHGame/libraries/CHGame/` | The CHGame library: `CHGame.h`, the one include of a sketch (buttons, pacing, palette, drawing, sound, saving, the debug protocol) | 0.1.0 | built here (2026-10-02) from the code the twenty games shared | Apache-2.0 (`LICENSE`, `NOTICE`) |
 | `board/arduino/CHGame/libraries/CHGfx/` | The graphics library | 1.3.0 | CHGfx tag `1.3.0` (838bbb0) | MIT (+ font notices in its `LICENSE`) |
 | `board/arduino/CHGame/libraries/CHSd/` | Read-only SD card + FAT16/32 library | 1.0.0 | never had a repository of its own | MIT |
-| `bootloader/` | The bootloader with the SD game menu: sources, PC test suite, built binaries, and the uploader's source (`host/go`; `host/py` is the Python reference) | 0.2.4 + the SD menu (BOOT_VERSION 2) | CH32SerialBoot tag `v0.2.4` (5de3006): `bootloader/`, `shared/`, `host/py/`, `test/` | MIT (+ BSD font, `bootloader/NOTICE`) |
+| `bootloader/` | The bootloader with the SD game menu: sources, PC test suite, built binaries, and the uploader in Go (`host/go`, the executable the board package installs) and in Python (`host/py`, what the repository's tools use) | 0.2.4 + the SD menu (BOOT_VERSION 2) | CH32SerialBoot tag `v0.2.4` (5de3006): `bootloader/`, `shared/`, `host/py/`, `test/` | MIT (+ BSD font, `bootloader/NOTICE`) |
 | `hardware/` | Rev 0 schematic (PDF) and netlist (EasyEDA `.tel`) | 2026-08-21 | | |
 
 The third-party code inside these (the WCH core and SPL, the USB CDC stack,
@@ -33,14 +33,18 @@ done, the pieces are used as described below.
 
 **Installing.** Install the board package through the Arduino Boards
 Manager. That also installs the RISC-V GCC 8.2 toolchain, `chgame-upload`
-and `wchisp`. Until the first release is cut from this repository, 0.2.4 is
-served from its old release URL:
+and `wchisp`:
 
 ```bash
-arduino-cli config add board_manager.additional_urls https://github.com/bateske/CH32SerialBoot/releases/latest/download/package_chgame_index.json
+arduino-cli config add board_manager.additional_urls https://github.com/bateske/CHGame/releases/latest/download/package_chgame_index.json
 arduino-cli core update-index
-arduino-cli core install CHGame:ch32v@0.2.4
+arduino-cli core install CHGame:ch32v
 ```
+
+Until 0.3.0, the first release cut from this repository, is published, 0.2.4
+is still served from
+`https://github.com/bateske/CH32SerialBoot/releases/latest/download/package_chgame_index.json`
+(install `CHGame:ch32v@0.2.4` from there meanwhile).
 
 **What the copy here is:**
 - the source of the next release. A change made here does not reach a build
@@ -56,9 +60,8 @@ arduino-cli core install CHGame:ch32v@0.2.4
 **Gaps:**
 - The board docs sometimes refer to `bootloader/`, `host/` or `tools/`
   paths as they were in CH32SerialBoot. `bootloader/` and `host/py` are now
-  under [bootloader/](bootloader). The release scripts they mention
-  (`tools/release.sh`, `make_package.py`, `make_tool_archives.py`) were not
-  brought over; see the roadmap.
+  under [bootloader/](bootloader). The release scripts are
+  `tools/release/` (Python), described in `board/docs/building.md`.
 - `board/docs/hardware-pinmap.md` leaves some ports as "—". The variant
   header has them all; the summary is in
   [../docs/platform.md](../docs/platform.md).
@@ -66,11 +69,14 @@ arduino-cli core install CHGame:ch32v@0.2.4
   behaviour and memory report are described in
   [../README.md](../README.md) and [../CLAUDE.md](../CLAUDE.md).
 
+**Fixed here, not yet released:**
+- **Linux builds failed.** `cores/arduino/ch32/lib/ch32yyxx.h` included
+  `core_riscv_cH32yyxx.h`; the file is `core_riscv_ch32yyxx.h`, so it only
+  resolved on case-insensitive file systems (Windows, default macOS). Fixed
+  in this copy (ships with 0.3.0); CLAUDE.md gives the symlink workaround
+  for an installed 0.2.4.
+
 **Known problems, to fix here:**
-- **Linux builds fail.** `cores/arduino/ch32/lib/ch32yyxx.h` includes
-  `core_riscv_cH32yyxx.h`; the file is `core_riscv_ch32yyxx.h`. It works only
-  on case-insensitive file systems (Windows, default macOS). CLAUDE.md gives
-  the symlink workaround for an installed 0.2.4.
 - **Stale comments.** Several say the bootloader is 8 KB and the app starts
   at 0x2000 (`link_chgame_app.ld`, `chgame_map.h`); the code says 12 KB and
   0x3000.
@@ -101,9 +107,10 @@ The games compile against this copy:
 - Its README documents the API, draw modes and configuration macros.
 - Its README links `../PERFORMANCE.md`. Here that document is
   [../docs/performance.md](../docs/performance.md).
-- `extras/sim` is CHGfx's own small simulator, used to test the library
-  itself. It is a different program from the repository's `tools/chsim`,
-  which runs whole games.
+- `extras/tests` is the library's own test suite (about 20,000 checks). It
+  runs on the repository's simulator, `tools/chsim`, which took over CHGfx's
+  own `extras/sim` on 2026-10-02 together with its panel model: `python
+  tools/chsim/chsim.py test`, or `chgame --sketch CHGfx test`.
 
 ## CHSd (`board/arduino/CHGame/libraries/CHSd/`)
 
@@ -117,7 +124,7 @@ cd platform/board/arduino/CHGame/libraries/CHSd
 python tests/run_tests.py          # FAT16/FAT32 images, every failure mode
 ```
 
-Then run `tools/check.py` in each of the three games. Its `tools/fatimg.py`
+Then run `chgame check` in each of the three games. Its `tools/fatimg.py`
 builds and reads FAT16/FAT32 card images; it is useful for any SD work.
 
 ## The bootloader (`bootloader/`)
@@ -146,7 +153,7 @@ differences from 0.2.4, building, testing and installing.
 
 1. Make the change here and say what it is for in the commit. For the
    bootloader, also list it in its README.
-2. Rebuild every game. `python tools/device.py build` in each game must still
+2. Rebuild every game. `chgame build` in each game must still
    fit, and the simulator frames must be unchanged or deliberately changed
    (CLAUDE.md rules 2 and 3).
 3. `bootloader/src/sd.c` and `fat.c` are a C fork of CHSd: a fix to one
@@ -156,6 +163,29 @@ differences from 0.2.4, building, testing and installing.
 
 ## Changes since the copies were taken
 
+- 2026-10-02: `chgame/Sizzle` (`libraries/CHGame/src/chgame/Sizzle.h` and
+  `Sizzle.inl`): the particle pool, the banners and the floating texts the
+  twenty games each carried in `src/fx/Fx.cpp` are one body in the
+  library, configured per game with `SIZZLE_*` switches in its `src/fx/Fx.h`
+  and compiled in its `src/fx/Fx.cpp` under its own size pragma (an
+  implementation header, since the library is compiled apart from the
+  sketch). Checked: all twenty release images byte for byte the same as
+  before, static RAM unchanged, every script's frames, every README GIF,
+  check, redraw and save test the same. (CHSlots' device debug image is 4 B
+  smaller: LTO partitions the unchanged code differently; the release image
+  is identical.)
+- 2026-10-02: one simulator. `tools/chsim` took over CHGfx's `extras/sim`: its
+  panel model (the measured wire rate scaled by the SPI divider, 45 us of
+  setup, rows landing on a simulated panel as they convert, per-column
+  tearing detection, the board's palette) and its free-running mode; CHGfx's
+  tests moved to `extras/tests` and run on it. A full 12 bpp flush is 28 us
+  shorter than the old model's; games that take a seed or an animation phase
+  from the clock take another branch from there on, so 11 of 201 script runs
+  and CHCheckers' README GIF were re-recorded (CHBoardwalk `save`, CHCheckers
+  `gameplay`, CHFour `play1` and `showcase`, CHPoker `monkey` and `showcase`,
+  CHSlots `save`, CHSolitaire `cascade`, `save` and `screens`, CHWords
+  `card_words`); every other run is frame for frame the same, with no `BUG:`
+  line anywhere, and every check, redraw and save test unchanged.
 - `board/`: the core is as released; `arduino/CHGame/libraries/` gained CHGame, CHGfx and CHSd.
 - `board/arduino/CHGame/libraries/CHGfx/`: `library.properties` gives this repository's URL.
 - `board/arduino/CHGame/libraries/CHGame/`: new.

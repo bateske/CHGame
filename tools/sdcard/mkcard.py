@@ -6,8 +6,8 @@
     python tools/sdcard/mkcard.py --image out/sdcard.img   # also a FAT32 card image
     python tools/sdcard/mkcard.py --only CHFour CHChess
 
-For every program in games.json it builds the release image (each game's
-tools/device.py build, or arduino-cli for the utilities), wraps it in a .CHG
+For every program in games.json it builds the release image (tools/device.py's
+build(), or arduino-cli for the utilities), wraps it in a .CHG
 package with tools/chgpack.py, and copies the data files the games read from
 the card. Copy the CONTENTS of out/sdcard/ to the root of a FAT16/FAT32 card
 (for example through platform/board/arduino/CHGame/libraries/CHGame/examples/apps/CHSDtoUSB): GAMES/ holds the packages, the
@@ -46,9 +46,9 @@ def version_of(d: pathlib.Path) -> str:
 def build(p: dict) -> pathlib.Path:
     d = REPO / p["dir"]
     name = d.name
-    if (d / "tools" / "device.py").exists() and "fqbn" not in p:
-        r = subprocess.run([sys.executable, "tools/device.py", "build"], cwd=d, capture_output=True, text=True)
-        out = d / "build" / "release"
+    if "fqbn" not in p:
+        import device
+        return device.build(d, False) / f"{name}.ino.bin"
     else:
         out = d / "build" / "release"
         cmd = ["arduino-cli", "compile", "-b", p.get("fqbn", RELEASE_FQBN), "--build-path", str(out),
@@ -61,13 +61,13 @@ def build(p: dict) -> pathlib.Path:
     return out / f"{name}.ino.bin"
 
 
-def main() -> int:
+def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--out", default=str(REPO / "out" / "sdcard"))
     ap.add_argument("--image", help="also write a FAT32 card image here")
     ap.add_argument("--no-build", action="store_true", help="use the existing build/release/*.ino.bin")
     ap.add_argument("--only", nargs="*", help="folder names to include (default: all)")
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
     progs = json.loads((pathlib.Path(__file__).parent / "games.json").read_text())["programs"]
     if a.only:
         progs = [p for p in progs if pathlib.Path(p["dir"]).name in a.only]

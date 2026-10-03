@@ -1,6 +1,6 @@
 """Drive a CHGame sketch - in the simulator or on the board - with a script.
 
-    python tools/chsim/chdrive.py --sim <sketch dir> <script> <outdir>
+    chgame --sketch <sketch dir> run <script> <outdir>
     python tools/chsim/chdrive.py --device [--port COMx] <script> <outdir>
 
 (chdrive.py runs this module's main(); a game's own driver imports it.)
@@ -8,7 +8,7 @@
 Any sketch that runs the CHGame library's debug protocol (chgame/Debug.h:
 dbg::begin() in setup(), dbg::poll() at the top of loop()) can be driven:
 the simulator always has it, a board build has it with
-`tools/device.py build --debug`. Both targets speak the same protocol, so
+`chgame build --debug`. Both targets speak the same protocol, so
 one script gives comparable screenshots from each. --id checks the start
 of the sketch's hello line (what dbg::begin() was given).
 

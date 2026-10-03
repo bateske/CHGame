@@ -1,5 +1,5 @@
 # How games end: a win with its strike, a loss, a cat's game, a mine, a blitz.
-#   python tools/chsim/chdrive.py --sim . tools/scripts/endings.txt out/endings
+#   chgame run tools/scripts/endings.txt out/endings
 say R 3
 say M 110
 say J P 0

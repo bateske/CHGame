@@ -1,6 +1,6 @@
 # The title, the deck of card backs and the win, each as a GIF: a test of
 # those screens now (the README's one GIF comes from gameplay.txt).
-#   python tools/chsim/chdrive.py --sim . tools/scripts/showcase.txt out/showcase
+#   chgame run tools/scripts/showcase.txt out/showcase
 wait 20
 rec start 4
 wait 420

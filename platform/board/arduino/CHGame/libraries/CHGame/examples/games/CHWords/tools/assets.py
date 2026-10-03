@@ -3,10 +3,11 @@
     python tools/assets.py         # build src/assets/*, write previews to build/assets/
 
 Sources, all in tools/art/:
-  * hand.png if present (palette-exact, hand-finished: CHChess's), else the
-    palette letters in hand.txt: the pointing glove.
+  * hand.png if present (palette-exact, hand-finished: CHChess's; the shared
+    tools/art/common/ copy), else the palette letters in hand.txt: the glove.
   * arrow.txt: the way the word runs (right; down is it turned on its side).
-  * font.txt: the display font.
+  * font.txt: the display font (the shared one, tools/art/common/font.txt;
+    this game keeps its capitals, digits and punctuation only).
   * tilefont.txt: the tiles' letters close up and in the rack (DejaVu Serif
     Bold, from CHCrossword).
 
@@ -27,6 +28,9 @@ from PIL import Image
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 ART = HERE / "art"
+import sys  # noqa: E402
+sys.path.insert(0, str(HERE.parents[9] / "tools"))     # the repository's tools/: artlib (shared art in tools/art/common)
+import artlib  # noqa: E402
 GEN = ART / "gen"
 OUT_H = ROOT / "src" / "assets" / "Assets.h"
 OUT_C = ROOT / "src" / "assets" / "Assets.cpp"
@@ -81,7 +85,7 @@ def load_art(name):
     """tools/art/<name>.txt: palette letters, one row per line; '#' starts a comment line.
     Several images may follow each other, separated by a blank line."""
     imgs, cur = [], []
-    for ln in (ART / f"{name}.txt").read_text().splitlines():
+    for ln in (artlib.art(HERE, f"{name}.txt")).read_text().splitlines():
         if ln.startswith("#"):
             continue
         if not ln.strip():
@@ -101,14 +105,14 @@ def load_art(name):
 
 def source(name):
     """tools/art/<name>.png if someone has drawn one, else the letters in <name>.txt."""
-    png = ART / f"{name}.png"
+    png = artlib.art(HERE, f"{name}.png")
     return load_png(png) if png.exists() else load_art(name)[0]
 
 
 def load_font():
     """tools/art/font.txt -> {char: {"w", "top", "rows"}} (rows of 0/1, all-clear rows trimmed)."""
     font, cur = {}, None
-    for ln in (ART / "font.txt").read_text().splitlines():
+    for ln in (artlib.art(HERE, "font.txt")).read_text().splitlines():
         if not ln.strip() or ln.startswith("# "):           # (glyph rows are only '#' and '.')
             continue
         if ln.startswith("= "):
@@ -222,7 +226,7 @@ def main():
     preview("arrow", [right, down])
 
     # The display font.
-    font = {c: g for c, g in load_font().items() if c not in "',-.:?"}
+    font = {c: g for c, g in load_font().items() if c not in "',-.:?" and not c.islower()}
     data = pack_font(font)
     defs.append(c_array("FONT", data))
     decls.append(f"extern const uint8_t FONT[{len(data)}];                         // the display font (tools/art/font.txt): per glyph its\n"
@@ -233,7 +237,7 @@ def main():
     # its ink pixels row by row and its half-ink pixels the same way, MSB
     # first, to the next byte.
     glyphs, cur = {}, None
-    for ln in (ART / "tilefont.txt").read_text().splitlines():
+    for ln in (artlib.art(HERE, "tilefont.txt")).read_text().splitlines():
         if ln.startswith("= "):
             cur = glyphs.setdefault(ln[2], [])
         elif ln.strip() and not ln.startswith("# "):

@@ -2,7 +2,7 @@
 # game against the HIGH ROLLER, played with the D-pad as a player would, and
 # the end of a game. Each clip is its own recording, named in the order it
 # is shown; ../../../../../../../../../tools/readme_gif.py runs this script and joins them:
-#   python tools/run.py readme_gif.py
+#   chgame gif
 # Only the first rack is set.
 rec start 3
 wait 120

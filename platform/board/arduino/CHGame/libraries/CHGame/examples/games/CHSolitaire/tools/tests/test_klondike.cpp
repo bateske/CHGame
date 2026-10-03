@@ -1,4 +1,4 @@
-// Host tests for src/game/Klondike.cpp: python tools/tests/run_tests.py
+// Host tests for src/game/Klondike.cpp: chgame test
 #include <stdio.h>
 #include <string.h>
 #include "../../src/game/Klondike.h"

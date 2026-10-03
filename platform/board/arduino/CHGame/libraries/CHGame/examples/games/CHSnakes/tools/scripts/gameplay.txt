@@ -2,7 +2,7 @@
 # chosen in ARCADE, a snake's meal, a rival bumped and the roll home. Each
 # clip is its own recording, named in the order it is shown;
 # ../../../../../../../../../tools/readme_gif.py runs this script and joins them:
-#   python tools/run.py readme_gif.py
+#   chgame gif
 wait 30
 rec start 5
 wait 150

@@ -1,5 +1,5 @@
 // Host tests for the rules engine (src/game/Round.cpp).
-//   python tools/tests/run_tests.py
+//   chgame test
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

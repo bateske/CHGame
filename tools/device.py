@@ -1,28 +1,31 @@
 """Build, upload and drive a CHGame sketch on the attached board.
 
-    python tools/device.py [--sketch DIR] build [--debug]     compile (release by default)
-    python tools/device.py [--sketch DIR] upload [--debug]    compile + upload
-    python tools/device.py [--sketch DIR] run SCRIPT OUTDIR   debug build, upload, run a chdrive script
-    python tools/device.py [--sketch DIR] shot OUT.png        screenshot of a running debug build
+    chgame build [--debug]                 compile (release by default)
+    chgame upload [--debug] [--arduino]    compile + flash
+    chgame run --device SCRIPT OUTDIR      debug build, upload, run a chdrive script
+    chgame shot OUT.png                    screenshot of a running debug build
 
-The sketch is DIR (a folder, or the name of a game or app: CHFour,
-CHSDtoUSB), else the current folder. Each game has a
-tools/device.py that runs this one on itself, so from a game's folder
-`python tools/device.py build` does the same.
+(or `python tools/device.py [--sketch DIR] build|upload|run|shot`, the same
+without the entry point). The sketch is DIR (a folder, or the name of a
+game or app: CHFour, CHSDtoUSB), else the current folder.
 
-Builds use the CHGfx and CHGame libraries in platform/board/arduino/CHGame/libraries (the copies
-the simulator uses too). Both use opt=oslto (Tools > Optimize > "Smallest +
-LTO": -Os -flto, about 3.9 KB smaller than plain -Os) and periph=game (the
-default Peripherals setting). Release builds add usb=uploadonly (Tools >
-USB > "Upload only": compiles out Serial, which release code never uses,
-but keeps the 1200-baud upload handshake, so uploading still needs no
-button press). Debug builds keep USB Serial, which the debug protocol talks
-over, and turn the protocol on with -DCHGAME_DEBUG=1 in build.extra_flags
-(empty on this platform). A build ends with tools/check_size.py's report:
-flash, the image against the save pages, and RAM.
+Builds use the CHGfx, CHGame and CHSd libraries in
+platform/board/arduino/CHGame/libraries (the copies the simulator uses
+too). Both use opt=oslto (Tools > Optimize > "Smallest + LTO": -Os -flto,
+about 3.9 KB smaller than plain -Os) and periph=game (the default
+Peripherals setting). Release builds add usb=uploadonly (Tools > USB >
+"Upload only": compiles out Serial, which release code never uses, but
+keeps the 1200-baud upload handshake, so uploading still needs no button
+press). Debug builds keep USB Serial, which the debug protocol talks over,
+and turn the protocol on with -DCHGAME_DEBUG=1 in build.extra_flags (empty
+on this platform). A build ends with tools/check_size.py's report: flash,
+the image against the save pages, and RAM.
 
-`run` and `shot` talk to the sketch through its tools/chsim/chdrive.py.
-Needs the CHGame board package 0.2.4+.
+Uploads go through the Python uploader (platform/bootloader/host/py), which
+does the 1200-baud touch, the flash, the verify and the restart itself;
+`--arduino` uses `arduino-cli upload` and the board package's Go tool
+instead, the path an IDE user takes. `run` and `shot` talk to the sketch
+through its tools/chsim/chdrive.py. Needs the CHGame board package 0.2.4+.
 """
 import argparse
 import subprocess
@@ -38,7 +41,9 @@ FQBN_DEBUG = "CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game"
 FQBN_RELEASE = FQBN_DEBUG + ",usb=uploadonly"
 
 
-def build(sketch, debug, flags=""):
+def build(sketch, debug=False, flags=""):
+    """Compile; returns the build folder (build/release or build/debug)."""
+    sketch = paths.sketch(sketch)
     out = sketch / "build" / ("debug" if debug else "release")
     cmd = ["arduino-cli", "compile", "-b", FQBN_DEBUG if debug else FQBN_RELEASE,
            "--build-path", str(out)]
@@ -57,18 +62,54 @@ def build(sketch, debug, flags=""):
     return out
 
 
-def upload(sketch, out, port=None):
-    sys.path.insert(0, str(REPO / "tools"))      # tools/serialcap.py
+def image(sketch, out):
+    """The .bin arduino-cli wrote in the build folder."""
+    return Path(out) / f"{paths.sketch(sketch).name}.ino.bin"
+
+
+def upload(sketch, out, port=None, arduino=False):
+    sketch = paths.sketch(sketch)
     from serialcap import find_port
     port = port or find_port()
     if not port:
         raise SystemExit("no CHGame found on USB (VID 16C0:27DD): plug it in, or pass --port")
-    r = subprocess.run(["arduino-cli", "upload", "-b", "CHGame:ch32v:CHGame", "-p", port,
-                        "--input-dir", str(out), str(sketch)], capture_output=True, text=True)
-    if r.returncode:
-        sys.stderr.write(r.stdout + r.stderr)
-        raise SystemExit("upload failed")
-    print(r.stdout.strip().splitlines()[-1])
+    if arduino:
+        r = subprocess.run(["arduino-cli", "upload", "-b", "CHGame:ch32v:CHGame", "-p", port,
+                            "--input-dir", str(out), str(sketch)], capture_output=True, text=True)
+        if r.returncode:
+            sys.stderr.write(r.stdout + r.stderr)
+            raise SystemExit("upload failed")
+        print(r.stdout.strip().splitlines()[-1])
+        return
+    from chgame_upload.upload import flash_file
+    try:
+        flash_file(image(sketch, out), port=port, run=True)
+    except Exception as e:                  # NoDevice, StatusError, TimeoutError ...
+        raise SystemExit(f"upload failed: {e}")
+
+
+def run(sketch, script, outdir, port=None, flags=""):
+    """Debug build, upload, then the sketch's chdrive.py --device on the script."""
+    sketch = paths.sketch(sketch)
+    upload(sketch, build(sketch, True, flags), port)
+    chdrive = sketch / "tools" / "chsim" / "chdrive.py"
+    if not chdrive.exists():
+        chdrive = REPO / "tools" / "chsim" / "chdrive.py"
+    cmd = [sys.executable, str(chdrive), "--device", str(script), str(outdir)]
+    if port:
+        cmd[3:3] = ["--port", port]
+    return subprocess.run(cmd, cwd=sketch).returncode
+
+
+def shot(sketch, out, port=None):
+    sketch = paths.sketch(sketch)
+    sys.path.insert(0, str(REPO / "tools" / "chsim"))
+    from chdrivelib import Driver, SerialTransport
+    from fbimage import to_image
+    d = Driver(SerialTransport(port))
+    d.handshake()
+    to_image(d.shot(), 3).save(out)
+    print(out)
 
 
 def main(sketch=None, flags=""):
@@ -81,6 +122,8 @@ def main(sketch=None, flags=""):
         p = sub.add_parser(name)
         p.add_argument("--debug", action="store_true")
         p.add_argument("--port")
+        if name == "upload":
+            p.add_argument("--arduino", action="store_true", help="through arduino-cli and the Go tool")
     p = sub.add_parser("run")
     p.add_argument("script")
     p.add_argument("outdir")
@@ -90,26 +133,14 @@ def main(sketch=None, flags=""):
     p.add_argument("--port")
     a = ap.parse_args()
     sketch = paths.sketch(sketch or a.sketch)
-    chsim = sketch / "tools" / "chsim"
     if a.cmd == "build":
         build(sketch, a.debug, flags)
     elif a.cmd == "upload":
-        upload(sketch, build(sketch, a.debug, flags), a.port)
+        upload(sketch, build(sketch, a.debug, flags), a.port, a.arduino)
     elif a.cmd == "run":
-        upload(sketch, build(sketch, True, flags), a.port)
-        cmd = [sys.executable, str(chsim / "chdrive.py"), "--device", a.script, a.outdir]
-        if a.port:
-            cmd[3:3] = ["--port", a.port]
-        raise SystemExit(subprocess.run(cmd).returncode)
+        raise SystemExit(run(sketch, a.script, a.outdir, a.port, flags))
     elif a.cmd == "shot":
-        sys.path.insert(0, str(chsim))
-        sys.path.insert(0, str(REPO / "tools" / "chsim"))
-        from chdrive import Driver, SerialTransport
-        from fbimage import to_image
-        d = Driver(SerialTransport(a.port))
-        d.handshake()
-        to_image(d.shot(), 3).save(a.out)
-        print(a.out)
+        shot(sketch, a.out, a.port)
 
 
 if __name__ == "__main__":

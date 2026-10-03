@@ -40,7 +40,7 @@ At the table your tiles stand on the rack at the foot of the screen, and tiles t
 
 OPTIONS has sound, the felt (green, blue, red, purple), the pace (FUN, or QUICK for shorter pauses) and your set of TILES: white, black, ivory, red, blue, jade, grape or pink. Options, records and a match in progress (SAVE + QUIT, then CONTINUE) are kept in flash.
 
-To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `python tools/device.py upload` from this folder.
+To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `chgame upload` from this folder.
 
 ## Developer notes
 

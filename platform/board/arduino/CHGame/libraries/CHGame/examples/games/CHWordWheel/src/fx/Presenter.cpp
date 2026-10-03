@@ -555,6 +555,9 @@ static void summaryCard(const Show &s) {
 }
 
 bool render(const Show &s, uint32_t frame) {
+#ifdef CHSIM_FORCE_FULL
+    forceAll = true;                                        // the redraw check's reference build (chgame redraw)
+#endif
     static_assert(F_RAISED == stage::E_RAISED && F_SMILE == stage::E_SMILE && F_SURPRISED == stage::E_SURPRISED,
                   "a Face is an Expr");
     uint8_t expr = face;

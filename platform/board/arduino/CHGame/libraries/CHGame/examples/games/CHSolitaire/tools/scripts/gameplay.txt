@@ -3,7 +3,7 @@
 # tests' sensible player and written here as glove moves), and the end of a
 # game with the win. Each clip is its own recording, named in the order it
 # is shown; ../../../../../../../../../tools/readme_gif.py runs this script and joins them:
-#   python tools/run.py readme_gif.py
+#   chgame gif
 wait 20
 rec start 3
 wait 150

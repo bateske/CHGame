@@ -689,6 +689,9 @@ static void wallBand(const Roulette &r, uint8_t expr) {
 }
 
 bool render(const Roulette &r, uint32_t frame) {
+#ifdef CHSIM_FORCE_FULL
+    forceAll = true; wheelFull = true;                      // the redraw check's reference build (chgame redraw)
+#endif
     uint8_t expr = exprFor(face);
     if (bubOn && bubChars < bubLen && ((frame >> 2) & 1)) expr = table::E_TALK;
     if (blinking) expr = table::E_BLINK;

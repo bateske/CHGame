@@ -25,6 +25,9 @@ from PIL import Image
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 ART = HERE / "art"
+import sys  # noqa: E402
+sys.path.insert(0, str(HERE.parents[9] / "tools"))     # the repository's tools/: artlib (shared art in tools/art/common)
+import artlib  # noqa: E402
 OUT_H = ROOT / "src" / "assets" / "Assets.h"
 OUT_C = ROOT / "src" / "assets" / "Assets.cpp"
 PREVIEW = ROOT / "build" / "assets"
@@ -40,7 +43,7 @@ TRANSPARENT = 16
 PIECES = ["pawn", "knight", "bishop", "rook", "queen", "king"]
 NAMES = ["INK", "WHITE", "FELT_DK", "FELT", "FELT_LT", "SILVER", "RED", "WINE",
          "GOLD", "WOOD", "BLUE", "NAVY", "SKIN", "CYAN", "FX_A", "FX_B"]
-SIDES = ART / "sides.txt"
+SIDES = artlib.art(HERE, "sides.txt")
 SIDES_HEADER = """# The palette swap that dresses the one set of piece art as each side.
 # The art (tools/art/pieces/, else tools/art/gen/) is drawn in its own
 # tones - the MASTER row of tools/sheet.py's sheet - with an INK outline.
@@ -84,7 +87,7 @@ def load_piece(name):
 
 
 def load_hand():
-    png = ART / "hand.png"
+    png = artlib.art(HERE, "hand.png")
     return load_png(png) if png.exists() else load_art("hand")[0]
 
 
@@ -128,7 +131,7 @@ def load_art(name):
     """tools/art/<name>.txt: palette letters, one row per line; '#' starts a comment line.
     Several images may follow each other, separated by a blank line."""
     imgs, cur = [], []
-    for ln in (ART / f"{name}.txt").read_text().splitlines():
+    for ln in (artlib.art(HERE, f"{name}.txt")).read_text().splitlines():
         if ln.startswith("#"):
             continue
         if not ln.strip():

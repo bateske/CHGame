@@ -2,7 +2,7 @@
 # betting, a spin, a straight-up hit paid 35 to 1 and the bank breaking.
 # Each clip is its own recording, named in the order it is shown;
 # ../../../../../../../../../tools/readme_gif.py runs this script and joins them:
-#   python tools/run.py readme_gif.py
+#   chgame gif
 say R 21
 say J T
 wait 4

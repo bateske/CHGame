@@ -48,7 +48,7 @@ Pick one of three games with LEFT / RIGHT on the title:
 
 In the staked games a **YACHT** (five of a kind in the yacht box, or a bonus yacht) pays the ante again on the spot, and reaching the **upper bonus** pays a fifth of it. The ante is $5, $25 or $100 (OPTIONS). The purse starts at $500 and is saved with the game. Open boxes on the card show what the dice on the table would score.
 
-To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `python tools/device.py upload` from this folder.
+To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `chgame upload` from this folder.
 
 ## Developer notes
 

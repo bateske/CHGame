@@ -23,6 +23,9 @@ from PIL import Image
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 ART = HERE / "art"
+import sys  # noqa: E402
+sys.path.insert(0, str(HERE.parents[9] / "tools"))     # the repository's tools/: artlib (shared art in tools/art/common)
+import artlib  # noqa: E402
 OUT_H = ROOT / "src" / "assets" / "Assets.h"
 OUT_C = ROOT / "src" / "assets" / "Assets.cpp"
 PREVIEW = ROOT / "build" / "assets"
@@ -40,7 +43,7 @@ CHIP_ANCHOR = (6, 6)                 # the base centre of the chip
 CROWN = 8                            # the art colour of the crown (GOLD)
 NAMES = ["INK", "WHITE", "FELT_DK", "FELT", "FELT_LT", "SILVER", "RED", "WINE",
          "GOLD", "WOOD", "BLUE", "NAVY", "SKIN", "CYAN", "FX_A", "FX_B"]
-SIDES = ART / "sides.txt"
+SIDES = artlib.art(HERE, "sides.txt")
 SIDES_HEADER = """# The palette swap that dresses the one chip as each side. The art
 # (tools/art/chip.txt, chiptop.txt, or the .png beside them) is drawn in its
 # own tones - the MASTER row of tools/sheet.py's sheet - with an INK outline.
@@ -81,7 +84,7 @@ def king_maps(maps):
 
 def load_sprite(name):
     """tools/art/<name>.png if present, else <name>.txt -> rows of palette indices."""
-    png = ART / f"{name}.png"
+    png = artlib.art(HERE, f"{name}.png")
     return load_png(png) if png.exists() else load_art(name)[0]
 
 
@@ -129,7 +132,7 @@ def load_art(name):
     """tools/art/<name>.txt: palette letters, one row per line; '#' starts a comment line.
     Several images may follow each other, separated by a blank line."""
     imgs, cur = [], []
-    for ln in (ART / f"{name}.txt").read_text().splitlines():
+    for ln in (artlib.art(HERE, f"{name}.txt")).read_text().splitlines():
         if ln.startswith("#"):
             continue
         if not ln.strip():

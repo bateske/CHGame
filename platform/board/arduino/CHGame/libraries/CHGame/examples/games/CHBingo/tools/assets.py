@@ -29,6 +29,9 @@ from PIL import Image
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 ART = HERE / "art"
+import sys  # noqa: E402
+sys.path.insert(0, str(HERE.parents[9] / "tools"))     # the repository's tools/: artlib (shared art in tools/art/common)
+import artlib  # noqa: E402
 OUT_H = ROOT / "src" / "assets" / "Assets.h"
 OUT_C = ROOT / "src" / "assets" / "Assets.cpp"
 PREVIEW = ROOT / "build" / "assets"
@@ -54,7 +57,7 @@ def rgb(i):
 def text_rows(name):
     """Pixel rows of a text art file: comment lines start with '# ' (a pixel
     row never holds a space)."""
-    return [ln.rstrip() for ln in (ART / name).read_text(encoding="utf-8").splitlines()
+    return [ln.rstrip() for ln in (artlib.art(HERE, name)).read_text(encoding="utf-8").splitlines()
             if ln.strip() and not ln.startswith("# ")]
 
 
@@ -201,7 +204,7 @@ def main():
     o = Out()
 
     # The caller.
-    dealer = load_png(ART / "dealer.png")
+    dealer = load_png(artlib.art(HERE, "dealer.png"))
     assert len(dealer) == 42 and all(len(r) == 48 for r in dealer), "dealer.png must be 48x42"
     o.array("DEALER", pack_span4(dealer), comment="the caller 48x42, row spans")
     preview("dealer", dealer, bg=11)
@@ -211,7 +214,7 @@ def main():
 
     # Faces: NORMAL as a 24x18 patch at (12,14); every other expression as the
     # pixels that differ from it (16-bit words: index y*24+x << 4 | colour).
-    sheet = load_png(ART / "faces.png")
+    sheet = load_png(artlib.art(HERE, "faces.png"))
     assert len(sheet) == 18 and len(sheet[0]) == 24 * len(FACES), "faces.png must be 7 cells of 24x18"
     faces = [[row[24 * k:24 * k + 24] for row in sheet] for k in range(len(FACES))]
     normal = faces[0]
@@ -232,7 +235,7 @@ def main():
     # The glove (CHChess): pointing down, fingertip on the bottom row; and
     # turned a quarter and flipped (pointing right, fingertip in the last
     # column) for menus.
-    hand = load_png(ART / "hand.png")
+    hand = load_png(artlib.art(HERE, "hand.png"))
     o.array("HAND", pack_span4(hand), comment="the glove 13x16, row spans; fingertip on the bottom row")
     tip = [x for x, v in enumerate(hand[-1]) if v != TRANSPARENT]
     o.const("HAND_TIP", (tip[0] + tip[-1]) // 2, "the fingertip's column")

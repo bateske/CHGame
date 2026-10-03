@@ -1,0 +1,7 @@
+"""CHMahjong: what the shared tools need to know (the schema is in
+the repository's tools/gamecfg.py; `chgame test`, `chgame check`,
+`chgame redraw` read this)."""
+
+TESTS = {"test_board": dict(sources=["tools/tests/test_board.cpp", "src/game/Board.cpp?", "src/game/Nav.cpp?",
+                                     "src/game/Layouts.cpp?"], args="none")}
+QUICK_ARGS = []

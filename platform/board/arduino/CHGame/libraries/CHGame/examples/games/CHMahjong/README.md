@@ -45,7 +45,7 @@ OPTIONS has sound, the table colour (green, blue, red or purple felt), TILES (CL
 
 Options, bests and a game in progress (SAVE + QUIT, then CONTINUE) are kept in flash and survive re-uploading. The games share the same two save pages, so saving in another game replaces this one's.
 
-To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `python tools/device.py upload` from this folder.
+To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `chgame upload` from this folder.
 
 ## Developer notes
 

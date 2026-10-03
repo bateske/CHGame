@@ -1,6 +1,6 @@
 # The moments worth seeing, each as its own GIF (a test: the README's
 # picture comes from gameplay.txt).
-#   python tools/chsim/chdrive.py --sim . tools/scripts/showcase.txt out/showcase
+#   chgame run tools/scripts/showcase.txt out/showcase
 wait 20
 gif title 150 2
 say R 21

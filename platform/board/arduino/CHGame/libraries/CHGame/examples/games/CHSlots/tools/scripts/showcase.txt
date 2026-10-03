@@ -1,5 +1,5 @@
 # A tour of LUCKY 7 and DRAGON FORTUNE, every feature forced once. (The README's GIF is gameplay.txt.)
-#   python tools/chsim/chdrive.py --sim . tools/scripts/showcase.txt out/showcase
+#   chgame run tools/scripts/showcase.txt out/showcase
 say R 2026
 say J T
 rec start 3

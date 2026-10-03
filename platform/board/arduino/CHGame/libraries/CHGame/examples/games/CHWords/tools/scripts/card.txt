@@ -1,4 +1,4 @@
-# With the full list on the card (CHSD_CARD: tools/check.py sets it for this
+# With the full list on the card (CHSD_CARD: chgame check sets it for this
 # script): a word the flash list has not got is played; then the card is
 # pulled out and the next one is refused by the flash list.
 wait 30

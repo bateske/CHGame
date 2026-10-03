@@ -1,5 +1,5 @@
 # Round 3's final spin, then the bonus round played with the buttons.
-#   python tools/chsim/chdrive.py --sim . tools/scripts/final_bonus.txt out/final
+#   chgame run tools/scripts/final_bonus.txt out/final
 say R 9
 say J P
 wait 30

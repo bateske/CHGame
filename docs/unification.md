@@ -91,7 +91,7 @@ are at the end.
 | Palette (`gfx/Palette`) | 20 | 13 `.cpp` variants | **Mid-way.** A superset is feasible; themes and modes become data. |
 | Drawing helpers (`gfx/Draw`) | 20 | 14 files, most functions identical | **Mid-way.** The 3x5 font has a real pixel conflict. |
 | Banner lettering (`gfx/Mask`) | 20 | 4 API families | **Mid-way.** One signature covers the others. |
-| Effects (`fx/Fx`, `fx/Ease`) | 20 | 13 | **Mid-way** for the maths and particles; banners and particle kinds stay per game. |
+| Effects (`fx/Fx`, `fx/Ease`) | 20 | 13 | **Done.** The maths went first; the particles, banners and floats followed as `chgame/Sizzle` (see below). |
 | Sound (`audio/`) | 20 | 14 distinct engines | **Far.** The hardest layer. |
 | CHGfx | 1 library | | **Ready.** Already a library; every game builds against `platform/board/arduino/CHGame/libraries/CHGfx`. |
 | CHSd | 1 library + 3 generated copies | | **Done** 2026-10-02: one library, no copies. |
@@ -315,6 +315,18 @@ The xorshift `rnd` is the same everywhere; only the particle pool size around it
 - `Presenter`, `stage/` and `render/` are per game in pattern only.
 
 **For the library:** `isin`, `rnd`, `spawn`, `shake`, and `ease` in both tables, or one after a decision. Particle kinds and banners stay with the games.
+
+**What happened (2026-10-02):** the maths, randomness and shake became
+`chgame/Fx`, and later the same day the particle pool, the banners and the
+floating texts became `chgame/Sizzle`, an implementation header a game
+configures with `SIZZLE_*` switches in its `src/fx/Fx.h` and compiles
+once in its `src/fx/Fx.cpp`. The five families (the CHBlackjack lineage,
+the CHChess board games, CHBoardwalk's coins, the CHPoker card games,
+CHFour's drop-in banner) are switch settings of one body; the differences
+that were only code shape (where a local was declared, the order of two
+cases) are switches too, so that all twenty release images stayed byte
+for byte identical. The table of settings is in
+[chgame-library.md](chgame-library.md).
 
 ### Sound: `audio/`
 

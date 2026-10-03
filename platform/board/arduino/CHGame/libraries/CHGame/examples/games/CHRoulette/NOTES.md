@@ -9,10 +9,10 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 - Save pages: `../../../../../../../../../tools/check_size.py` reports the image as 49,796 B, 256 B more than the compile's flash figure. Both A/B pages (0xF500, 0xF600) fit while the image is at most 50,432 B, so only 636 B of headroom remain. Past that, the CHGame library's `chgame/Save.cpp` saves to page B only. Flash is the wall.
 - Simulator-verified (as of 2026-10-01):
   - The game plays end to end: betting, whip, spin, payout, save/continue.
-  - `python tools/tests/run_tests.py` passes: rules against the independent `ref_roulette.py` model, navigation, limits, the spin flow, a money-conservation fuzz.
+  - `chgame test` passes: rules against the independent `ref_roulette.py` model, navigation, limits, the spin flow, a money-conservation fuzz.
   - `python tools/tests/run_ball_tests.py` passes: about 1.2M cases, every pocket, wheel and pace.
   - An adversarial review found 13 integration bugs, and all are fixed.
-  - `tools/chsim/diffdrive.py` reports 0 stale pixels.
+  - `chgame redraw` reports 0 stale pixels.
 - Device: never run on the board. Phase P7 (device bring-up) is pending.
 
 ## Design decisions
@@ -27,7 +27,7 @@ The design specs are in `docs/design/*.md`. Where they conflict, `critique.md` d
 - Chosen: the camera whips to a tilted wheel for the spin.
 - Chosen: green felt only, with no felt themes. The zero, "0 GREEN" and the green banner rely on it.
 - Chosen: winning stakes stay up, and only the winnings travel.
-- Chosen: a new musette waltz as the title tune (over reusing CHBlackjack's). It was cut to 8 bars, about 304 B, to save flash; `tools/make_music.py` writes `src/audio/Music.cpp`.
+- Chosen: a new musette waltz as the title tune (over reusing CHBlackjack's). It was cut to 8 bars, about 304 B, to save flash; `tools/make_music.py` (the songs; the composer is the repository's `tools/music/composer.py`) writes `src/audio/Music.cpp`.
 - Chosen: about 4 s of wheel time on FUN (shorter than the spec's 5 s). The tuning is the `PACE` table in `src/wheel/Ball.cpp`; that file's header comment still says "about 5 s".
 - Chosen: logo A, the chunky 1 bpp "Roulette" in `tools/art/logo.txt`, over the spec's recommended `title35` lettering.
 - Plan defaults, never contested:
@@ -48,15 +48,15 @@ The design specs are in `docs/design/*.md`. Where they conflict, `critique.md` d
 
 ## Gotchas
 
-- Every `CHGAME_DEBUG` build has no music scores (`Music.cpp`), and that includes the simulator; its `playSong()` is empty, so the library's score player is left out too (about 0.5 KB). Audition the tunes with `python tools/run.py audio/preview.py . out/audio` (the shared preview: the CHGame library's engine with `src/audio/Sounds.cpp` and `Music.cpp`).
+- Every `CHGAME_DEBUG` build has no music scores (`Music.cpp`), and that includes the simulator; its `playSong()` is empty, so the library's score player is left out too (about 0.5 KB). Audition the tunes with `chgame audio out/audio` (the shared preview: the CHGame library's engine with `src/audio/Sounds.cpp` and `Music.cpp`).
 - Device debug builds (`CHRL_LEAN`) also drop the credits page and use `title35` lettering on the win/broke screens instead of PPOT's bitmaps. `-DCHRL_FULL` forces a full device debug build.
 - Device debug builds write flash only after a script sends `say E 1`, because the save pages are shared with the release build and the other games.
   - `architecture.md` §1.2 calls this hook `Y`; the code uses `E`.
   - The other hooks are in `CHRoulette.ino`: R seed, F force pockets (37 = 00), J screen, G glove, W bet, M purse, and `Q` calibration (simulator only).
-- `diffdrive.py` lives in this game's `tools/chsim/`, not in the shared tools. Its scripts are in `tools/scripts/diff/`. Rerun it after touching any band redraw.
+- The redraw check (`chgame redraw`) takes its scripts from `tools/scripts/diff/`; `chgame check` runs them all. Rerun it after touching any band redraw.
 - Tools that read sibling games in `../` (`games/`):
   - `tools/assets.py` checks that the dealer, faces, end-screen lettering and glove come out byte-identical to `../CHBlackjack` and `../CHChess` `src/assets/Assets.cpp`. If a sibling is missing it prints "unchecked" instead of failing.
-  - `tools/pixkit.py` (mockups) and `tools/logo_preview.py` load art from the same siblings.
+  - `tools/logo_preview.py` reads `../CHBlackjack`'s `src/assets/Assets.cpp`. The mock-up kit is the repository's `tools/pixkit.py` (shared with CHWordWheel); it takes the dealer and the glove from the shared `tools/art/common/`.
 - The ball:
   - The rules pick the number at SPIN.
   - The solver dry-runs the spin and turns the rotor by whole pockets so the ball lands there.
@@ -69,21 +69,21 @@ The design specs are in `docs/design/*.md`. Where they conflict, `critique.md` d
 
 Everything can be checked on a PC (Python 3 with `pip install -r ../../../../../../../../../tools/requirements.txt`, and a C++ compiler for the simulator and tests: root CLAUDE.md).
 
-    python tools/tests/run_tests.py          # the rules, navigation, limits, spin flow, saving, a 16,000-spin money fuzz
+    chgame test          # the rules, navigation, limits, spin flow, saving, a 16,000-spin money fuzz
     python tools/tests/run_ball_tests.py     # the ball lands on the chosen pocket: every pocket, wheel, pace, many seeds
-    python tools/run.py chsim/chsim.py build .
-    python tools/chsim/chdrive.py --sim . tools/scripts/smoke.txt out/smoke
-    python tools/run.py readme_gif.py         # tools/scripts/gameplay.txt -> docs/gameplay.gif (the README's one GIF, <= 1 MB)
-    python tools/chsim/diffdrive.py tools/scripts/diff/diff_soak.txt out/d 3
+    chgame sim
+    chgame run tools/scripts/smoke.txt out/smoke
+    chgame gif         # tools/scripts/gameplay.txt -> docs/gameplay.gif (the README's one GIF, <= 1 MB)
+    chgame redraw tools/scripts/diff/diff_soak.txt out/d 3
     python tools/assets.py                   # art in tools/art -> src/assets
     python tools/wheel.py                    # the wheel's map (src/assets/WheelMap.*) and previews
     python tools/make_music.py               # the tunes -> src/audio/Music.cpp
-    python tools/run.py audio/preview.py . out/audio
-    python tools/device.py upload [--debug]  # build and upload (--debug adds the CHGame library's serial protocol, chgame/Debug.h)
+    chgame audio out/audio
+    chgame upload [--debug]  # build and upload (--debug adds the CHGame library's serial protocol, chgame/Debug.h)
 
-- The build needs link-time optimisation to fit: `opt=oslto` and `usb=uploadonly` (in the IDE, *Tools > Optimize > Smallest + LTO* and *Tools > USB > Upload only*). `python tools/device.py build` does it; by hand, `arduino-cli compile -b CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly` with CHGfx and the CHGame library from `platform/board/arduino/CHGame/libraries/`.
+- The build needs link-time optimisation to fit: `opt=oslto` and `usb=uploadonly` (in the IDE, *Tools > Optimize > Smallest + LTO* and *Tools > USB > Upload only*). `chgame build` does it; by hand, `arduino-cli compile -b CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly` with CHGfx and the CHGame library from `platform/board/arduino/CHGame/libraries/`.
 - Scripts (`tools/scripts/*.txt`): `say F <n>` forces the next number (37 = 00), `say W <spot> <amount>` places a bet, `say G <spot>` moves the glove (165 is SPIN), `say J <T|P|W|L|O|S|C>` jumps to a screen, `say M <amount>` sets the purse, `say R <seed>` reseeds. `gameplay.txt` records the README's clips; `showcase.txt`, `smoke.txt`, `spin_forced.txt`, `american.txt`, `bet_tour.txt` and `save_continue.txt` are tests to look at; `perf.txt` estimates the device's render times.
-- `diffdrive.py` runs a script on the game and on a copy that redraws everything every frame, and reports any pixel the incremental redraws left stale.
+- `chgame redraw` runs a script on the game and on a build that redraws everything every frame, and reports any pixel the incremental redraws left stale.
 - `tools/mockup.py` drew the design mockups (`docs/design/` has the specs).
 
 How it fits:
@@ -99,7 +99,7 @@ Files:
     src/game/               the rules (Roulette), the betting spots, the glove's
                             navigation, the wheels' orders - no graphics, host-tested
     src/wheel/              the ball and its solver; the wheel's drawing
-    src/fx/                 the presenter (events -> motion), particles, banners, floating text
+    src/fx/                 the presenter (events -> motion); the library's chgame/Sizzle configured in Fx.h
     src/render/             the wall and croupier, the felt layout, chips, the action bar
     src/gfx/Remap.*         the glove's colour remaps
     src/states/Screens.*    title, play, options, stats, won, broke

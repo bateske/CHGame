@@ -21,12 +21,13 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[10] / "tools"))   # the repository's tools/: pixkit
 import pixkit as pk  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 OUT = HERE.parent / "out" / "logo"
 LOGO_TXT = HERE / "art" / "logo.txt"
-BJ_ASSETS = pk.WORKSPACE / "CHBlackjack/src/assets/Assets.cpp"
+BJ_ASSETS = HERE.parents[1] / "CHBlackjack/src/assets/Assets.cpp"      # the sibling game (examples/games/)
 
 
 def load_logo(path=LOGO_TXT):

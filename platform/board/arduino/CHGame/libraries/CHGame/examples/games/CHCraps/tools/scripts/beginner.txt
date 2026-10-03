@@ -1,7 +1,7 @@
 # TABLE: BEGINNER - the line, odds, field and place 6 and 8 on a roomier
 # layout. Spots: 0-5 the numbers (6 and 8 take bets: 2, 3), 6 FIELD,
 # 7 DON'T PASS, 8 LAY, 9 PASS LINE, 10 ODDS, 11-14 the chips, 15 ROLL.
-#   python tools/chsim/chdrive.py --sim . tools/scripts/beginner.txt out/beginner
+#   chgame run tools/scripts/beginner.txt out/beginner
 say J B
 wait 40
 rec start 3

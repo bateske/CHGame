@@ -27,6 +27,9 @@ from PIL import Image
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 ART = HERE / "art"
+import sys  # noqa: E402
+sys.path.insert(0, str(HERE.parents[9] / "tools"))     # the repository's tools/: artlib (shared art in tools/art/common)
+import artlib  # noqa: E402
 OUT_H = ROOT / "src" / "assets" / "Assets.h"
 OUT_C = ROOT / "src" / "assets" / "Assets.cpp"
 PREVIEW = ROOT / "build" / "assets"
@@ -75,7 +78,7 @@ def load_art(name):
     """tools/art/<name>.txt: palette letters, one row per line; '#' starts a comment line.
     Several images may follow each other, separated by a blank line."""
     imgs, cur = [], []
-    for ln in (ART / f"{name}.txt").read_text().splitlines():
+    for ln in (artlib.art(HERE, f"{name}.txt")).read_text().splitlines():
         if ln.startswith("#"):
             continue
         if not ln.strip():
@@ -94,7 +97,7 @@ def load_art(name):
 
 
 def load_hand():
-    png = ART / "hand.png"
+    png = artlib.art(HERE, "hand.png")
     return load_png(png) if png.exists() else load_art("hand")[0]
 
 
@@ -124,7 +127,7 @@ def load_tiles(name="tiles.txt", fw=FACE_W, fh=FACE_H):
             faces.append(face)
         block.clear()
 
-    for ln in (ART / name).read_text().splitlines():
+    for ln in (artlib.art(HERE, name)).read_text().splitlines():
         if ln.startswith("#"):
             continue
         if not ln.strip():
@@ -195,7 +198,7 @@ def pack_span4(img, trans=TRANSPARENT):
 def load_logo():
     """tools/art/logo.txt -> rows of 0/1 ('#' set). Comment lines are '# ' and text
     (a row of the picture never has a space in it)."""
-    rows = [ln.rstrip() for ln in (ART / "logo.txt").read_text().splitlines() if ln.strip() and " " not in ln.strip()]
+    rows = [ln.rstrip() for ln in (artlib.art(HERE, "logo.txt")).read_text().splitlines() if ln.strip() and " " not in ln.strip()]
     w = max(len(r) for r in rows)
     return [[1 if ch == "#" else 0 for ch in r.ljust(w, ".")] for r in rows]
 
@@ -209,7 +212,7 @@ def load_bird():
             cur[3].append([[TRANSPARENT if ch == "." else LETTER[ch] for ch in r] for r in img])
             img.clear()
 
-    for ln in (ART / "bird.txt").read_text().splitlines():
+    for ln in (artlib.art(HERE, "bird.txt")).read_text().splitlines():
         if ln.startswith("@"):
             flush()
             _, name, w, h = ln.split()

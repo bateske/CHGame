@@ -44,7 +44,8 @@ menu, then *Upload Using Programmer* and a normal upload.
 ## Building
 
 ```bash
-./build.sh        # needs Go 1.25 or later; writes out/chgame-upload/<host>/ at the repository root
+python tools/release/build_uploader.py     # needs Go 1.25 or later; writes out/chgame-upload/<host>/ at the repository root
+go test ./...                              # against test/protocol/vectors.json, shared with the Python uploader
 ```
 
 It cross-compiles all five hosts from one machine, with cgo off:
@@ -72,9 +73,13 @@ Arduino always passes the port.
 | `upload.go` | upload, the bootloader update, the factory ISP image and `wchisp` |
 | `ports_usb.go`, `ports_darwin.go` | finding the board |
 
-`../py` is the same protocol in Python: the reference the bootloader's
-hardware tests drive. The version is `version` in `main.go`; the board
-package's index names the version it installs.
+`../py` (the package `chgame_upload`) is the same tool in Python, with the
+same verbs and flags: what the repository's tools and the bootloader's
+hardware tests use. `protocol_test.go` and `upload_test.go` check this tool
+against `../../test/protocol/vectors.json`, which the Python package
+writes, so the two cannot drift apart. The version is `version` in
+`main.go` (and `__version__` in the Python package; the tests refuse a
+mismatch); the board package's index names the version it installs.
 
 It came from CH32SerialBoot v0.2.4 (`host/go`, tool version 0.1.0). Changed
 here: `selfupdate` and `burn` (0.2.0). MIT licence, as the bootloader

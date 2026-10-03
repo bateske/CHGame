@@ -40,7 +40,7 @@ Check is an event: *CHECK!* stays up until you press a button, the king's square
 
 OPTIONS has sound on or off, the board colour (green, blue, red or purple felt), and PACE: QUICK makes the CPU's turns and the moves faster and drops the zoom on them. Options, records and a game in progress (SAVE + QUIT, then CONTINUE) are saved to flash and survive re-uploading.
 
-To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `python tools/device.py upload` from this folder.
+To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `chgame upload` from this folder.
 
 ## Developer notes
 

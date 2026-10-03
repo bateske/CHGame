@@ -2,8 +2,9 @@
 
 The version is the `version=` line in `arduino/CHGame/platform.txt`. That is the
 number Boards Manager compares with what a user has installed, so every release
-bumps it. `tools/release.sh <version> bateske/CH32SerialBoot` publishes the
-release and uses the matching section of this file as the GitHub release notes.
+bumps it. `python tools/release/release.py --repo bateske/CHGame` (in the
+repository root) publishes the release and uses the matching section of this
+file as the GitHub release notes.
 
 ## Unreleased
 
@@ -24,6 +25,10 @@ release and uses the matching section of this file as the GitHub release notes.
 
 ### Fixed
 
+- **Linux builds.** `cores/arduino/ch32/lib/ch32yyxx.h` included
+  `core_riscv_cH32yyxx.h` with a capital H; the file is
+  `core_riscv_ch32yyxx.h`, so the core only compiled on case-insensitive file
+  systems.
 - **A crash no longer leaves the piezo sounding.** A hard fault, or an
   interrupt with no handler, used to spin with interrupts off, and the timer
   driving the piezo held the note that was playing. Now the piezo pin is

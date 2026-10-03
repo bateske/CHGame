@@ -54,7 +54,7 @@ The top line shows whose turn it is and the tally: the chips you have taken, the
 
 OPTIONS has SOUND, BOARD (the felt's colour), MUSIC (the title's tune) and PACE: FUN is the full show, QUICK drops the camera's dive on every move and hurries the CPU's hand.
 
-To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `python tools/device.py upload` from this folder.
+To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `chgame upload` from this folder.
 
 ## Developer notes
 

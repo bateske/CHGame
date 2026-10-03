@@ -1,5 +1,6 @@
 """Render a game's sound effects and music to WAV on the PC, from the real code.
 
+    chgame audio OUTDIR [--only NAME ...]          (from a game's folder)
     python tools/audio/preview.py <game dir> OUTDIR [--only NAME ...]
 
 Compiles the CHGame library's chgame/Audio.cpp with the game's sounds
@@ -63,12 +64,12 @@ def run(exe, wav, mode, kind, index, ms, log=None):
     return r.stdout.strip()
 
 
-def main():
+def main(argv=None):
     p = argparse.ArgumentParser()
     p.add_argument("game", help="the game's folder, or its name")
     p.add_argument("outdir")
     p.add_argument("--only", nargs="*", help="just these effects/songs (by name)")
-    a = p.parse_args()
+    a = p.parse_args(argv)
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     import paths
     game = paths.sketch(a.game)
@@ -93,7 +94,8 @@ def main():
             continue
         stem = f"sfx_{name}"
         print(f"{stem:28s}", run(exe, out / f"{stem}.wav", 1, "sfx", i, SFX_MS))
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

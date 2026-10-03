@@ -1,5 +1,5 @@
 // Host tests of the card side: CHSd's Fat.cpp and src/pack/Pack.cpp reading
-// packs out of real FAT images (made by run_tests.py with tools/puzzles/
+// packs out of real FAT images (made by tools/tests/cwtests.py with tools/puzzles/
 // mkcard.py: FAT16 and FAT32, long names, decoy entries, fragmented files,
 // files that are not packs), and what happens when the card stops answering.
 //

@@ -1,5 +1,5 @@
 // Host tests for CHPoker's rules: the hand evaluator, the table (betting,
-// pots, every variant) and the CPU players. Built by run_tests.py.
+// pots, every variant) and the CPU players. Built by chgame test.
 //
 //   test_poker [--long]      --long also enumerates all 133,784,560 seven-card hands
 #include <stdio.h>

@@ -1,5 +1,5 @@
 # Render cost screen by screen (host time, scaled by cal to device ms).
-#   python tools/chsim/chdrive.py --sim . tools/scripts/perf.txt out/perf
+#   chgame run tools/scripts/perf.txt out/perf
 cal
 say R 7
 say J T

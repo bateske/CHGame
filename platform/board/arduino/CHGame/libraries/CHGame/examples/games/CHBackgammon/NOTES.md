@@ -6,9 +6,9 @@ Agent-facing notes for continuing work on this game. Rules and controls are in [
 
 - Imported from https://github.com/bateske/CHBackgammon at commit 80cf126 (2026-10-01). Develop here now, not in the old repo.
 - Release build (`CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly`, core 0.2.4, CHGfx 1.3.0): flash 49,268 of 50,944 B (1,676 spare), static RAM 16,924 of 18,416 B (1,492 spare).
-- Save pages: `python tools/run.py check_size.py build/release` reports the image as 49,524 B. Both A/B save pages (0xF500/0xF600) need the image to stay at or below 50,432 B, so the real margin was about 900 B at import. On the CHGame library's sound engine (2026-10-02) the image is 50,152 B; on its debug protocol, saving and RAMFUNC (below) 50,232 B: 200 B left. The pages are the CHGame library's (`chgame/Save.cpp`). Treat flash as full.
+- Save pages: `chgame size` reports the image as 49,524 B. Both A/B save pages (0xF500/0xF600) need the image to stay at or below 50,432 B, so the real margin was about 900 B at import. On the CHGame library's sound engine (2026-10-02) the image is 50,152 B; on its debug protocol, saving and RAMFUNC (below) 50,232 B: 200 B left. The pages are the CHGame library's (`chgame/Save.cpp`). Treat flash as full.
 - The debug protocol (`chgame/Debug.h`, `CHGAME_DEBUG`), the flash save record (`chgame/Save.h`; `src/save/Save.cpp` says only what the record holds, byte for byte the old layout) and RAMFUNC are the CHGame library's since 2026-10-02, and `tools/chsim/chdrive.py` is the shared `tools/chsim/chdrivelib.py` plus this game's `goto`, `move`, `auto`, `board`, `waitturn` and `cal`. Image 50,152 -> 50,232 B (the library's `audio::setOn()` out of line, about +18 B; the rest its save code and LTO's inlining), static RAM 16,892 B unchanged; debug image 49,728 -> 49,844 B; frames unchanged.
-- Verification as of 2026-10-01: simulator only. `python tools/check.py` passes. It runs the host tests (UBSan, rules against a naive reference, whole matches, the CPU), runs every script twice with identical frames, checks that the network's evaluation is bit-identical in the simulator and on the host, and compiles the release build.
+- Verification as of 2026-10-01: simulator only. `chgame check` passes. It runs the host tests (UBSan, rules against a naive reference, whole matches, the CPU), runs every script twice with identical frames, checks that the network's evaluation is bit-identical in the simulator and on the host, and compiles the release build.
 - It has never run on the board. Frame times, CPU thinking time, sound and saving on the hardware are all unmeasured.
 
 ## Design decisions
@@ -16,7 +16,7 @@ Agent-facing notes for continuing work on this game. Rules and controls are in [
 - Chosen: a top-down view with the whole board always visible. A 2x punch-in whip zoom is kept for the big moments only.
 - Chosen: the default is a single game without the cube. Match play (MATCH TO 3/5/7) with the doubling cube, Crawford and the game's own match equity table (`tools/train/met.py`) is opt-in on the setup screen.
 - Chosen: at the end of a turn the glove goes to the dice. A picks them up and passes the turn; B takes the last move back. Nothing is final until the dice are up.
-- Chosen: the game has its own slab-serif display font (`tools/art/font.txt`) for the logo, banners and headings, like Blackjack's title lettering.
+- Chosen: the game has its own slab-serif display font (drawn here; now the shared `tools/art/common/font.txt`, used by CHCrossword, CHFour and CHWords too) for the logo, banners and headings, like Blackjack's title lettering.
   - The logo uses a plain lower-case 'o'.
   - Rejected: a checker as the logo's 'o'.
   - Rejected: a dark red (WINE) drop shadow on display-font lettering.
@@ -28,9 +28,9 @@ Agent-facing notes for continuing work on this game. Rules and controls are in [
 ## Open items
 
 - Device run (kit ready, never run; follow "The device" in the root CLAUDE.md).
-  - `python tools/device.py run tools/scripts/device_render.txt out/dev_render`: render cost per section (`say Y`) and whole-frame perf.
-  - `python tools/device.py run tools/scripts/device_think.txt out/dev_think`: `say W` prints positions weighed, ms and `slice_us`. The longest slice should stay under about 8 ms; tune `QUANTUM` (64 positions a tick) in `src/game/Match.cpp`.
-  - Then run `python tools/check.py --compare out/<sim run> out/<device run>`.
+  - `chgame run --device tools/scripts/device_render.txt out/dev_render`: render cost per section (`say Y`) and whole-frame perf.
+  - `chgame run --device tools/scripts/device_think.txt out/dev_think`: `say W` prints positions weighed, ms and `slice_us`. The longest slice should stay under about 8 ms; tune `QUANTUM` (64 positions a tick) in `src/game/Match.cpp`.
+  - Then run `chgame check --compare out/<sim run> out/<device run>`.
   - Simulator estimates (host-time, unreliable): play averages about 5-7 ms and peaks at about 11-13 ms; the title takes about 12 ms.
 - Device checks still to do: sound by ear, saving and CONTINUE on hardware, and `say E` on the board, which should match the host network value.
 - Choices the owner has not reviewed yet:
@@ -132,7 +132,7 @@ Agent-facing notes for continuing work on this game. Rules and controls are in [
   the checker for the close-ups. A still board is not redrawn: the frame is
   sent again, so the palette effects (the shimmering targets, the outlines,
   the lettering's shimmer) keep moving for free.
-* **The lettering** is a slab serif drawn for the game (`tools/art/font.txt`,
+* **The lettering** is a slab serif drawn for the game (the shared `tools/art/common/font.txt`,
   capitals and figures 11 pixels high, a few lower-case letters for the
   logo): 600 bytes of packed bits, drawn through CHBlackjack's mask code
   for the outlined, gradient-filled logo, banners and headings, and plain
@@ -154,19 +154,19 @@ Agent-facing notes for continuing work on this game. Rules and controls are in [
 
 Everything can be checked on a PC (Python 3 with `pip install -r ../../../../../../../../../tools/requirements.txt`, and a C++ compiler for the host builds: root CLAUDE.md).
 
-    python tools/check.py               # host tests, every script twice, net check, device compile + size
-    python tools/tests/run_tests.py     # the rules, the dice, whole matches, the cube, the CPU
-    python tools/run.py chsim/chsim.py build .
-    python tools/chsim/chdrive.py --sim . tools/scripts/showcase.txt out/showcase
-    python tools/run.py readme_gif.py    # tools/scripts/gameplay.txt -> docs/gameplay.gif (the README's one GIF, <= 1 MB)
+    chgame check               # host tests, every script twice, net check, device compile + size
+    chgame test     # the rules, the dice, whole matches, the cube, the CPU
+    chgame sim
+    chgame run tools/scripts/showcase.txt out/showcase
+    chgame gif    # tools/scripts/gameplay.txt -> docs/gameplay.gif (the README's one GIF, <= 1 MB)
     python tools/assets.py              # art -> src/assets (previews in tools/art/gen)
-    python tools/device.py upload       # build and upload the release
-    python tools/run.py audio/preview.py . out/audio     # the sound effects as WAV
+    chgame upload       # build and upload the release
+    chgame audio out/audio     # the sound effects as WAV
 
-- `tools/check.py`: the host tests; each script in `tools/scripts` run in the simulator twice (the frames must be identical; `--quick` runs each once); the network's evaluation the same in the simulator as on the host; the device build compiled and sized (`--no-device` skips it). `--compare A B` compares two runs' images (the simulator's against the board's).
-- `tools/tests/run_tests.py`: the rules against the reference implementation, the step-by-step validator (every way of playing a turn ends on a legal position, and can never get stuck), the dice (chi-square), hundreds of whole matches through the game's own calls with take-backs, doubles, takes, passes, the Crawford rule, save and reload, the notation, the cube's judgement, and the CPU (always legal, the same choice however its thinking is sliced; its incremental evaluation the same as a fresh one).
+- `chgame check`: the host tests; each script in `tools/scripts` run in the simulator twice (the frames must be identical; `--quick` runs each once); the network's evaluation the same in the simulator as on the host; the device build compiled and sized (`--no-device` skips it). `--compare A B` compares two runs' images (the simulator's against the board's).
+- `chgame test`: the rules against the reference implementation, the step-by-step validator (every way of playing a turn ends on a legal position, and can never get stuck), the dice (chi-square), hundreds of whole matches through the game's own calls with take-backs, doubles, takes, passes, the Crawford rule, save and reload, the notation, the cube's judgement, and the CPU (always legal, the same choice however its thinking is sliced; its incremental evaluation the same as a fresh one).
 - Scripts: `say X <side> <position>` sets up a position (`w 6:5 8:3 r 24:2 ..`: each side's points and counts; `say V <side> <opponent> <position>` against the CPU), `say G <mode> <level> <seed> [length]` starts a game (mode 0 against the CPU, 1 two players), `say C <length> <white> <red> <cube> <owner> <crawford>` sets the match, `say D 6431` stacks the next rolls, `move 13 7` walks the glove with D-pad presses and picks up and sets down, `waitturn` waits for your turn, `auto` plays on for you, `snap` and `rec` take pictures, `cal` and `perf` estimate the device's render time. `showcase.txt` and the others are tests now: only `gameplay.txt` makes a README picture.
 - Training: `python tools/train/train.py train out/net.bin --games 600000` trains a network from nothing; `bench int:tools/train/net.bin heur` plays two players against each other (`random`, `pips`, `heur`, `float:<file>`, `int:<file>`, and the game's own opponents `ai0:` `ai1:` `ai2:`); `export tools/train/net.bin src/ai/NetData.cpp` writes the tables; `race src/ai/RaceData.cpp` fits the race table. `python tools/train/met.py src/ai/MetData.cpp` works out the match equity table.
-- `python tools/device.py upload --debug` adds the serial protocol (screenshots, injected input, lockstep); the debug build is lean (Gotchas). `tools/scripts/device_render.txt` and `device_think.txt` measure the render time and the CPU on the board.
+- `chgame upload --debug` adds the serial protocol (screenshots, injected input, lockstep); the debug build is lean (Gotchas). `tools/scripts/device_render.txt` and `device_think.txt` measure the render time and the CPU on the board.
 - Art: to redraw a drawing, copy it from `tools/art/gen/` up to `tools/art/` (`checker.png`, `checker_big.png`, `dice.png`, `hand.png`), edit it with the palette's 16 colours, and run `tools/assets.py` again. The display font is `tools/art/font.txt`, `#` and `.` per glyph.
 - Arduino IDE: *Tools > Optimize > Smallest + LTO* (the game needs link-time optimisation to fit) and *Tools > USB > Upload only*.

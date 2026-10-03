@@ -28,8 +28,8 @@ sys.path.insert(0, str(ROOT / "host" / "py"))
 sys.path.insert(0, str(ROOT / "tools"))
 
 import chgame_map as M                                   # noqa: E402
-from chgame.client import Client, find_ports             # noqa: E402
-from chgame import protocol as P                         # noqa: E402
+from chgame_upload.client import Client, find_ports             # noqa: E402
+from chgame_upload import protocol as P                         # noqa: E402
 
 results: list[tuple[bool, str, str]] = []
 

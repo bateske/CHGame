@@ -6,7 +6,7 @@
 // can win, who just missed it, what the search saw coming); this picks the
 // words. Lines are at most three rows of twelve characters, in capitals and
 // the 3x5 font's punctuation, a newline between rows; '#' is replaced by a
-// number. tools/check.py checks every line fits the bubble.
+// number. chgame check checks every line fits the bubble.
 #pragma once
 #include <stdint.h>
 #include "../rules/Board.h"

@@ -48,7 +48,7 @@ Exactly as the game's NOTICE gives them.
 - **The picture.** One GIF, `docs/gameplay.gif`, no more than 1 MB: the
   title screen, then several short clips of play. No other GIF, no table
   of GIFs, no screenshots. `tools/scripts/gameplay.txt` records the clips
-  (`01_title`, `02_...`) and `python tools/run.py readme_gif.py` joins them
+  (`01_title`, `02_...`) and `chgame gif` joins them
   and checks the size; `--check` checks every game's.
 - **Controls.** One table, a row per button or gesture. START held for
   three seconds is the platform's exit to the menu: not listed.
@@ -56,7 +56,7 @@ Exactly as the game's NOTICE gives them.
   scoring tables belong here.
 - **How to play.** Modes, opponents, stakes, options, what is saved. It
   ends with the same line in every game, pointing at the root README's
-  *Installing* and at `python tools/device.py upload`.
+  *Installing* and at `chgame upload`.
 - **Developer notes.** A short list for someone reading the game as an
   example sketch: which library module it shows off, a technique worth
   copying, where the size or speed was won. Sizes, test instructions,

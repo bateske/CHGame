@@ -7,7 +7,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 - Imported from https://github.com/bateske/CHCrossword at commit 68c482e (2026-10-01); develop here now, not in the old repo.
 - Release build (`opt=oslto,rtlib=nano,periph=game,usb=uploadonly`, core 0.2.4, CHGfx 1.3.0): flash 50,006 of 50,944 B (938 spare), static RAM 17,276 of 18,416 B (1,140 spare) (2026-10-02, on the CHGame library's sound engine, debug protocol and saving).
 - Flash is full in practice: the image (`../../../../../../../../../tools/check_size.py`'s `image:` line, 50,352 B) sits only 80 B under the 50,432 B that keeps both A/B save pages (0xF500/0xF600, the CHGame library's `chgame/Save.cpp`). Any new feature needs a cut first.
-- Verification: simulator only. `python tools/check.py` passes: puzzle check, host tests (decoder vs the Python reference, rules and score, saving, FAT16/FAT32 card images with a read failure at every point), every script twice with identical frames, device compile and size.
+- Verification: simulator only. `chgame check` passes: puzzle check, host tests (decoder vs the Python reference, rules and score, saving, FAT16/FAT32 card images with a read failure at every point), every script twice with identical frames, device compile and size.
 - As of 2026-10-01 it has never run on the device, and CHSd (its SD driver) has never read a real card in any game.
 
 ## Design decisions
@@ -33,25 +33,25 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
   - no numbers in the small cells (the clue bar shows 14A); the side HUD column; wide M/W glyphs in cells;
   - the glove only pokes keys; auto-check locks words (CHECKING OFF as the option);
   - 15x15 at 7 px for SD packs only; light casino flavour in titles and clues; the COMBO / CROSS! / SOLVED! banners.
-- First device run, which is also the first hardware test of CHSd: `python tools/device.py run tools/scripts/device/perf.txt OUTDIR` for render times, then `python tools/check.py --compare` against the simulator's run of the same script. Try a FAT32 card, a FAT16 card, an exFAT card (should say FORMAT IT AS FAT32), no `CHCW` folder, and pulling the card mid-puzzle.
+- First device run, which is also the first hardware test of CHSd: `chgame run --device tools/scripts/device/perf.txt OUTDIR` for render times, then `chgame check --compare` against the simulator's run of the same script. Try a FAT32 card, a FAT16 card, an exFAT card (should say FORMAT IT AS FAT32), no `CHCW` folder, and pulling the card mid-puzzle.
 - The clues were written for the game and only spot-checked; a full proofread has not been done.
 
 ## Gotchas
 
 - Flash: a built-in puzzle is ~700 B. The save page holds records for exactly the 20 built-in puzzles, so adding built-ins also needs a save-layout change (and a cut elsewhere).
 - Device debug builds are `CHCW_LEAN` (config.h derives it from `CHGAME_DEBUG` on the board; the simulator is never lean; `-DCHCW_FULL` turns it off, and does not fit): only the first three built-in puzzles, no saving, no Options; start puzzles with `say G <i>`.
-- SD (MIT, HypeRunner's clean-room driver): CHSd is used as a library (`#include <Fat.h>`, `<SdSpi.h>`; `../../../../CHSd`); the game holds no copy of it. `tools/device.py` passes it with `--library`, and the simulator builds its `src/Fat.cpp` with the pretend card in its `host/` folder (`$CHSD_CARD`). After changing CHSd run its tests (`python platform/board/arduino/CHGame/libraries/CHSd/tests/run_tests.py`) and this game's `tools/check.py`. `tools/puzzles/mkcard.py` uses CHSd's `tools/fatimg.py`.
+- SD (MIT, HypeRunner's clean-room driver): CHSd is used as a library (`#include <Fat.h>`, `<SdSpi.h>`; `../../../../CHSd`); the game holds no copy of it. `chgame build` passes it with `--library`, and the simulator builds its `src/Fat.cpp` with the pretend card in its `host/` folder (`$CHSD_CARD`). After changing CHSd run its tests (`python platform/board/arduino/CHGame/libraries/CHSd/tests/run_tests.py`) and this game's `chgame check`. `tools/puzzles/mkcard.py` uses CHSd's `tools/fatimg.py`.
 - The card shares SPI1 with the LCD: it is read only between frames and only on the puzzle list; a card puzzle is copied into 2 KB of RAM at start. Keep card access out of play and out of an in-flight flush.
 - Simulator card: `tools/chsim/chdrive.py --card IMG` (sets `CHSD_CARD`); images come from `tools/puzzles/mkcard.py`. `check.py` runs `card_*.txt` scripts with `out/card.img` in the slot. `say X 0|1` (simulator) pulls / inserts the card.
 - `check.py` runs every script twice and fails on any frame difference or a simulator BUG line (drawing into a frame still being sent): keep the game deterministic.
 - Puzzle pipeline: `tools/puzzles/newgrid.py` fills a grid, clues are written into `tools/puzzles/src/*.txt`, `build_pack.py` checks them and regenerates `src/game/PuzzleData.cpp`. `tools/puzzles/cwformat.py` holds the reference decoder the host tests hold the game to: change the format in both.
 - The grid maker needs `wordfreq` (`pip install wordfreq`, or `pip install --target tools/puzzles/data/pylib wordfreq`; that folder is gitignored). `tools/puzzles/avoid.txt` is the curated block list of junk words: add to it rather than hand-editing fills.
 - Letters: `tools/tilefont.py` rasterizes DejaVu Serif Bold into `tools/art/tilefont.txt`; `tools/assets.py` packs the art into `src/assets/`.
-- Sound: the CHGame library's engine (`chgame/Audio.h`); the effect tables are `src/audio/Sounds.*` in `Sfx` order. A locking word's rising notes (and the deal, title and result ticks) are `audio::note(hz, ms, 2)`: they give way only to the fanfares. `frame::begin()` starts the engine (`audio::begin(..., false)`), `applyOptions()` switches it with `audio::setOn()` (calling `begin()` there instead would be 8 B smaller). WAVs: `python tools/run.py audio/preview.py . out/audio`.
+- Sound: the CHGame library's engine (`chgame/Audio.h`); the effect tables are `src/audio/Sounds.*` in `Sfx` order. A locking word's rising notes (and the deal, title and result ticks) are `audio::note(hz, ms, 2)`: they give way only to the fanfares. `frame::begin()` starts the engine (`audio::begin(..., false)`), `applyOptions()` switches it with `audio::setOn()` (calling `begin()` there instead would be 8 B smaller). WAVs: `chgame audio out/audio`.
 - Debug hooks (above the hook in `src/states/Screens.cpp`): `G` start puzzle, `H` STATE line, `W` next word, `C` cursor, `Z` fill all but the last k words, `U` advance the clock, `J` jump, `X` and `Q` simulator only. chdrive extras: `state`, `expect`, `waitstate`, `type`, `solve [N]`, `wrong`, `mark`/`delta`, `solveto`, `solvemost`, `rec pause/resume`, `cal` and a calibrated `perf`, `--card`.
 - The debug protocol is the CHGame library's (`chgame/Debug.h`, on with `CHGAME_DEBUG`); the save record's pages and CRC are the library's too (`chgame/Save.cpp`), the game's `src/save/Save.*` says what goes in it (unchanged layout: magic "CHCW", version 1, the puzzle-in-progress flag in the header). The script driver is the shared `../../../../../../../../../tools/chsim/chdrivelib.py`; tools/chsim/chdrive.py adds the commands above.
-- `src/fx` has only what the game uses: SPARK, CONFETTI and STAR particles, RAINBOW and GOLD banners (the DUST puffs and the RED, CYAN and WHITE banners copied from the casino games were never used, and were cut for 140 B on 2026-10-02).
-- `tools/scripts/gameplay.txt` records the clips of the README's one GIF (`docs/gameplay.gif`); `python tools/run.py readme_gif.py` runs it and joins them (see Development).
+- `src/fx` has only what the game uses: SPARK, CONFETTI and STAR particles, RAINBOW and GOLD banners (the DUST puffs and the RED, CYAN and WHITE banners copied from the casino games were never used, and were cut for 140 B on 2026-10-02). Since the library's `chgame/Sizzle` took the code later that day, that choice is `SIZZLE_KIND_DUST 0` and `SIZZLE_STYLES` in `src/fx/Fx.h`; the image did not move.
+- `tools/scripts/gameplay.txt` records the clips of the README's one GIF (`docs/gameplay.gif`); `chgame gif` runs it and joins them (see Development).
 - Credits are exactly those in NOTICE (Press Play On Tape's 3x5 font, DejaVu, CHSd/HypeRunner, ENABLE and wordfreq as build-time aids); add no others. CHSd (the library, with its `fatimg.py`) is MIT, the game Apache-2.0.
 - The simulator is `../../../../../../../../../tools/chsim/chsim.py` (shared); per-game tools stay in `tools/`. For host builds set `CHSIM_CXX` or have zig/clang++/g++ on PATH (see root CLAUDE.md).
 - Device debug builds leave out saving and most puzzles; the board may be in use, so announce a debug upload and put the release back afterwards.
@@ -60,15 +60,15 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 
 Everything can be checked on a PC (Python 3 with `pillow`, `tools/requirements.txt`, and a C++ compiler for the host builds: `CHSIM_CXX`, zig, clang++ or g++, root CLAUDE.md).
 
-    python tools/check.py                 # puzzles, host tests, every script twice, device build
-    python tools/tests/run_tests.py       # the host tests alone
-    python tools/run.py chsim/chsim.py build .
-    python tools/chsim/chdrive.py --sim . tools/scripts/play.txt out/play
-    python tools/chsim/chdrive.py --sim . --card out/card.img tools/scripts/card_packs.txt out/card
-    python tools/run.py readme_gif.py      # tools/scripts/gameplay.txt -> docs/gameplay.gif (the README's one GIF, <= 1 MB)
+    chgame check                 # puzzles, host tests, every script twice, device build
+    chgame test       # the host tests alone
+    chgame sim
+    chgame run tools/scripts/play.txt out/play
+    chgame run --card out/card.img tools/scripts/card_packs.txt out/card
+    chgame gif      # tools/scripts/gameplay.txt -> docs/gameplay.gif (the README's one GIF, <= 1 MB)
     python tools/assets.py                # art -> src/assets
-    python tools/device.py build [--debug] | upload | run SCRIPT OUTDIR
-    python tools/run.py check_size.py build/release --top 20
+    chgame build [--debug] | upload | run --device SCRIPT OUTDIR
+    chgame size --top 20
 
 - The README's picture: `tools/scripts/gameplay.txt` records six clips into `out/gameplay` (`01_title` ... `06_solved`, one puzzle played and recorded at its highlights; the last clip at `rec start 4` to stay under 1 MB) and `readme_gif.py` joins them. `tools/scripts/showcase.txt` is kept as a test of the same screens (title, list, close-up, wrong word, the show); its GIFs stay in `out/`.
 - The host tests hold the game's decoder to the Python reference on every puzzle, play whole puzzles through the rules, and read packs out of FAT16 and FAT32 images - fragmented files, long names, decoy entries, files that are not packs - with the card failing at every possible read.

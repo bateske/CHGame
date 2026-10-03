@@ -6,8 +6,12 @@ the CHGame bootloader. Three implementations must agree:
 | Implementation | Location |
 |---|---|
 | Device (C) | `bootloader/src/proto.{h,c}` |
-| Host (Go) — shipping | `platform/bootloader/host/go/protocol.go` |
-| Host (Python) — reference and tests | `host/py/chgame/protocol.py` |
+| Host (Go) — the board package's tool | `platform/bootloader/host/go/protocol.go` |
+| Host (Python) — the repository's tools and the tests | `platform/bootloader/host/py/chgame_upload/protocol.py` |
+
+`platform/bootloader/test/protocol/vectors.json` (written by `python -m
+chgame_upload.vectors --write`) holds frames, checksums and image rules that
+the Go and Python hosts are both tested against.
 
 A browser implementation for the Web Serial updater will be a fourth. The whole
 point of a small binary protocol over plain CDC is that all four can be the same

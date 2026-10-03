@@ -157,7 +157,7 @@ def cmd_info(a) -> int:
     return 1 if bad else 0
 
 
-def main() -> int:
+def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("pack", help="wrap a program image in a package")
@@ -174,7 +174,7 @@ def main() -> int:
     p = sub.add_parser("info", help="list the packages on a card, a folder or a FAT image")
     p.add_argument("where")
     p.set_defaults(fn=cmd_info)
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
     try:
         return a.fn(a)
     except (ValueError, OSError) as e:

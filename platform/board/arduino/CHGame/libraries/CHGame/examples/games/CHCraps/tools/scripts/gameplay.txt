@@ -1,7 +1,7 @@
 # The README's one picture (docs/gameplay.gif): the title, then clips of a
 # hand at the table. Each clip is its own recording, named in the order it
 # is shown; ../../../../../../../../../tools/readme_gif.py runs this script and joins them:
-#   python tools/run.py readme_gif.py
+#   chgame gif
 #
 # Spots (Classic, src/render/Zones.cpp): 0-5 place 4 5 6 8 9 10, 6-11 their
 # come odds, 12 COME, 13 FIELD, 14 DON'T PASS, 15 LAY, 16 PASS LINE, 17 ODDS,

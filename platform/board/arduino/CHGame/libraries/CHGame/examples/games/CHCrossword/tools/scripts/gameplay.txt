@@ -2,7 +2,7 @@
 # puzzle played, recorded only at its highlights. Each clip is its own
 # recording, named in the order it is shown; ../../../../../../../../../tools/readme_gif.py runs
 # this script and joins them:
-#   python tools/run.py readme_gif.py
+#   chgame gif
 rec start 3
 wait 130
 rec stop 01_title

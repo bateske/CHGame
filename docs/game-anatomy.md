@@ -11,7 +11,7 @@ which is small and recent.
 | | |
 |---|---|
 | `<Name>.ino` | Includes `<CHGame.h>` (first, then `config.h`). `setup()` calls `arduboy.boot()`, `dbg::begin("<ID> <version>")`, `gfx_begin(...)` and the frame loop's `begin()`; `loop()` runs one frame. |
-| `config.h` | The game's build switches, prefixed with its four letters (`CHF4_`): its version, frame rate, often `<PFX>_LEAN` (drops saving or screens so a device debug build fits, derived from the library's `CHGAME_DEBUG`). It includes `<chgame/Config.h>`, the library's switches (`CHGAME_DEBUG`: the serial debug protocol, on in the simulator, set on the board by `tools/device.py build --debug`; `CHGAME_PROFILE`). Put new switches here, not in build flags. |
+| `config.h` | The game's build switches, prefixed with its four letters (`CHF4_`): its version, frame rate, often `<PFX>_LEAN` (drops saving or screens so a device debug build fits, derived from the library's `CHGAME_DEBUG`). It includes `<chgame/Config.h>`, the library's switches (`CHGAME_DEBUG`: the serial debug protocol, on in the simulator, set on the board by `chgame build --debug`; `CHGAME_PROFILE`). Put new switches here, not in build flags. |
 | `README.md` | The hook, one GIF, controls, rules, how to play, developer notes, credits: the format in [game-readme.md](game-readme.md). Its GIF, `docs/gameplay.gif`, comes from `tools/scripts/gameplay.txt` by way of `tools/readme_gif.py`. |
 | `NOTES.md` | For developers: snapshot, design decisions, open items, gotchas. |
 | `LICENSE`, `NOTICE` | Apache-2.0, plus attribution for anything derived from elsewhere. |
@@ -32,7 +32,7 @@ engine (`audio::`), saving (`save::`), the debug protocol (`dbg::`) and
 | `audio/Sounds.h/.cpp` | The game's sound effects (`enum class Sfx`, step tables, `SOUNDS[]` for `audio::begin`), and `playSong()` if it has music; `Music.*` holds generated Playtune scores. |
 | `save/Save.h/.cpp` | What a save holds (the game's `Data` struct, its magic and version) and how it goes in and out; the library keeps the record in flash. |
 | `gfx/` | (some games) the game's own drawing: a display font, tiles, colour tables, remaps. |
-| `fx/` | Banners, particles, coin fountains, floating text; `Presenter` in the Blackjack lineage. Built from `fx::` maths. |
+| `fx/` | `Fx.h` configures the library's `chgame/Sizzle` (particles, banners, floating text) for this game and `Fx.cpp` compiles it under the game's size pragma; `Presenter` in the Blackjack lineage turns events into motion. Built from `fx::` maths. |
 | `stage/` or `render/` | The play screen's presentation. The game logic emits events; the stage animates them and reports `busy()` until it has shown them, so the CPU and the rules wait for the animation. |
 | `states/` | Title, menus, options, results; the debug hook (the game's own protocol commands) is usually here (`Screens.cpp`). |
 | `game/`, `rules/`, `ai/`, `engine/` | Pure logic with no drawing, covered by host unit tests. |
@@ -68,8 +68,8 @@ game has:
 - `assets.py` and `art/`, the art pipeline;
 - `scripts/*.txt` for `chsim/chdrive.py` (the shared driver,
   `tools/chsim/chdrivelib.py`, plus the game's own script commands);
-- `tests/` with `run_tests.py`;
-- `device.py` (it runs the shared `tools/device.py` on the game);
+- `tests/` (the host tests' sources; `tools/game.py` lists them);
+- `game.py` (the game's description for the shared tools: its host tests, its scripts' needs);
 - often `check.py`.
 
 The simulator, the driver, `device.py`, the sound preview
@@ -81,13 +81,13 @@ shared in the root `tools/`.
 1. Read the game's `NOTES.md` (decisions and open items) and the README
    section for the area you're changing.
 2. Run the relevant scripts first, to keep a baseline:
-   `python tools/chsim/chdrive.py --sim . tools/scripts/<s>.txt out/before_<s>`.
+   `chgame run tools/scripts/<s>.txt out/before_<s>`.
 3. Make the change. Rerun `tools/assets.py` if art changed.
-4. Run `python tools/tests/run_tests.py`, `python tools/check.py` if the
+4. Run `chgame test`, `chgame check` if the
    game has one (otherwise the scripts), and
-   `python tools/device.py build` for the size.
+   `chgame build` for the size.
 5. Compare frames with the baseline. Re-record the README's GIF if the look
-   changed on purpose (`python tools/run.py readme_gif.py`).
+   changed on purpose (`chgame gif`).
 6. If a device check is needed, follow "The device" in
    [../CLAUDE.md](../CLAUDE.md). Record what was or was not measured on
    hardware in the game's `NOTES.md`.

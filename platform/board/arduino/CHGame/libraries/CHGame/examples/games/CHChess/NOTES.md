@@ -8,7 +8,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 - Release build (`opt=oslto,rtlib=nano,periph=game,usb=uploadonly`, core 0.2.4, CHGfx 1.3.0): flash 48,628 of 50,944 B (2,316 spare), static RAM 17,872 of 18,416 B (544 spare). The image (`../../../../../../../../../tools/check_size.py`'s `image:` line) is 48,884 B, 1,548 B under the 50,432 B that keeps both A/B save pages.
 - Without LTO it overflows (~350 B over). Device debug build (`-DCHGAME_DEBUG=1`, which turns on `CHCH_LEAN`: no saving, no Options screen) was 49,484 B / 17,904 B.
 - 2026-10-02: the debug protocol, saving and RAMFUNC are the CHGame library's (`chgame/Debug.h`, `chgame/Save.h`, `chgame/RamFunc.h`), no longer game copies. The save record (magic "CHCS", version 2, pages 0xF500/0xF600 in `chgame/Save.cpp`) is byte for byte the old one, so existing saves load. Release image 48,656 -> 48,776 B (RAM 17,544 unchanged); device debug 49,452 -> 49,544 B (RAM 17,560 -> 17,580). P's `fstk=` (the frame stack, `dbg::frameStack` in `src/Frame.cpp`) is on the board only now; the simulator, which has no second stack, leaves it out.
-- Verification: simulator - `tools/tests/run_tests.py` (perft, draw rules, book, snapshots, every CPU level, fuzzed games with undo and save/load) and the chdrive scripts in `tools/scripts`. There is no `tools/check.py` in this game. Device: the CHGfx 1.3 release has run on the board, and the render times, think times and stack peaks under Gotchas were measured there.
+- Verification: simulator - `chgame test` (perft, draw rules, book, snapshots, every CPU level, fuzzed games with undo and save/load) and the chdrive scripts in `tools/scripts`. There is no `chgame check` in this game. Device: the CHGfx 1.3 release has run on the board, and the render times, think times and stack peaks under Gotchas were measured there.
 
 ## Design decisions
 
@@ -76,17 +76,17 @@ Opponents and flash priorities:
 
 Everything can be checked on a PC (Python 3 with `pip install -r ../../../../../../../../../tools/requirements.txt`, and a C++ compiler for the host builds: zig, clang++ or g++ on the PATH, `pip install ziglang`, or `CHSIM_CXX="path/to/zig c++"`; root CLAUDE.md).
 
-    python tools/tests/run_tests.py     # perft on five positions, draw rules, book, snapshots, every CPU level, ~100,000 fuzzed moves with undo and save/load
-    python tools/run.py chsim/chsim.py build .
-    python tools/chsim/chdrive.py --sim . tools/scripts/showcase.txt out/showcase
-    python tools/run.py readme_gif.py    # tools/scripts/gameplay.txt -> docs/gameplay.gif (the README's one GIF, <= 1 MB)
-    python tools/device.py build        # release build and size (the Arduino IDE: Tools > Optimize > Smallest + LTO, Tools > USB > Upload only)
-    python tools/device.py upload [--debug]
+    chgame test     # perft on five positions, draw rules, book, snapshots, every CPU level, ~100,000 fuzzed moves with undo and save/load
+    chgame sim
+    chgame run tools/scripts/showcase.txt out/showcase
+    chgame gif    # tools/scripts/gameplay.txt -> docs/gameplay.gif (the README's one GIF, <= 1 MB)
+    chgame build        # release build and size (the Arduino IDE: Tools > Optimize > Smallest + LTO, Tools > USB > Upload only)
+    chgame upload [--debug]
     python tools/sheet.py export        # the art as one indexed PNG; `import` takes the edits back
     python tools/pieces.py              # render the pieces from the 3D models (tools/art/gen)
     python tools/assets.py              # art -> src/assets
     python tools/book.py N              # cut the opening book to N plies
-    python tools/run.py audio/preview.py . out/audio    # the sound effects as WAV
+    chgame audio out/audio    # the sound effects as WAV
 
 - The build needs link-time optimisation to fit, and `usb=uploadonly` saves 0.6 KB (the game has no use for USB Serial). By hand: `arduino-cli compile -b CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly --library ../../../../CHGfx --library ../../../../CHGame .`. `--debug` adds the CHGame library's serial protocol (`chgame/Debug.h`) for screenshots, injected input and lockstep.
 - Scripts: `goto SQ` walks the glove to a square with D-pad presses, `waitturn` waits for your move, `rec start N` / `rec stop NAME` record across a script, `gif` and `snap` take pictures. `say G <mode> <black> <level> <seed>` starts a game, `say X <fen>` sets up a position for two players and `say V <fen>` against the CPU, `say M <from> <to> [promo]` plays a move (squares 0 = a1 .. 63 = h8). `cal` and `perf` estimate the device's render time. A move to the last rank made with the buttons opens the PROMOTE TO panel: `tap A` takes the queen.

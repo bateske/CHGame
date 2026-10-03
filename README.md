@@ -70,18 +70,17 @@ games' twenty copies of their shared code became it.
 
 ## Installing
 
-> **Until the first release from this repository,** the board package is
-> still served from its old release URL, shown below. It will move to
-> `https://github.com/bateske/CHGame/releases/latest/download/package_chgame_index.json`
-> with that release, and this section will change with it.
-
 **The board package** (the toolchain and the uploader come with it):
 
 ```bash
-arduino-cli config add board_manager.additional_urls https://github.com/bateske/CH32SerialBoot/releases/latest/download/package_chgame_index.json
+arduino-cli config add board_manager.additional_urls https://github.com/bateske/CHGame/releases/latest/download/package_chgame_index.json
 arduino-cli core update-index
-arduino-cli core install CHGame:ch32v@0.2.4
+arduino-cli core install CHGame:ch32v
 ```
+
+(Until 0.3.0, the first release cut from this repository, is published,
+0.2.4 is still served from
+`https://github.com/bateske/CH32SerialBoot/releases/latest/download/package_chgame_index.json`.)
 
 In the Arduino IDE 2.x: add the same URL under *File > Preferences >
 Additional boards manager URLs*, then install **CHGame** from the Boards
@@ -102,7 +101,7 @@ board already has: no driver, no buttons. From the next board package
 release that is *Tools > Programmer* **CHGame USB**, then *Tools > Burn
 Bootloader* (*Tools > Bootloader* chooses between the SD game menu, no menu
 and the 0.2.4 one). Until then:
-`python platform/bootloader/host/py/chgame_upload.py selfupdate platform/bootloader/release/chgame_sdboot.bin`
+`chgame uploader selfupdate platform/bootloader/release/chgame_sdboot.bin`
 ([platform/bootloader](platform/bootloader/README.md#installing-it-on-a-board)).
 The WCH driver and the BOOT button are only for recovery.
 
@@ -179,13 +178,13 @@ pip install -r tools/requirements.txt ziglang
 
 # 3. Build a game (from its folder) against this repository's libraries
 cd platform/board/arduino/CHGame/libraries/CHGame/examples/games/CHFour
-python tools/device.py build              # release build + size report
-python tools/check.py --no-device         # host tests + every sim script, twice (games that have check.py)
-python tools/run.py chsim/chsim.py build . # just the PC simulator
-python tools/chsim/chdrive.py --sim . tools/scripts/endings.txt out/endings   # screenshots in out/endings
+chgame build              # release build + size report
+chgame check --no-device         # host tests + every sim script, twice (games that have check.py)
+chgame sim # just the PC simulator
+chgame run tools/scripts/endings.txt out/endings   # screenshots in out/endings
 
 # 4. On a board (plugged in by USB)
-python tools/device.py upload
+chgame upload
 
 # 5. A card for the game menu: builds and packs every game into out/sdcard/
 cd ../..
@@ -278,7 +277,7 @@ it; [docs/sd-menu.md](docs/sd-menu.md) is the players' guide and
 
 The tools for working with the system outside the Arduino IDE:
 - **`device.py`**: builds, uploads and drives any sketch on the board (each
-  game's `tools/device.py` runs it on that game);
+  `chgame` command runs it on the game it is started in);
 - the **PC simulator** (`tools/chsim`): it compiles a sketch's real code
   with CHGfx's and the library's for the PC, runs it deterministically, and
   produces screenshots and GIFs; its **script driver** (`chdrivelib.py`,
@@ -292,12 +291,18 @@ The tools for working with the system outside the Arduino IDE:
   `.CHG` for the SD menu, checks packages, lists a card;
 - the **card builder** (`sdcard/mkcard.py`): builds every game and lays out
   a whole card;
-- the **uploader** (`platform/bootloader/host/go`): the source of
-  `chgame-upload`, the program the board package installs for Windows,
-  Linux and macOS (`host/py` beside it is the same protocol in Python).
+- the **uploader**: `chgame upload` and `chgame uploader ...` go through the
+  Python one (`platform/bootloader/host/py`, the package `chgame_upload`);
+  `platform/bootloader/host/go` is the same tool in Go, `chgame-upload`, the
+  executable the board package installs for Windows, Linux and macOS. The
+  two share their test vectors;
+- the **release scripts** (`tools/release/`): the uploader for five hosts,
+  the platform archive and the Boards Manager index, published with `gh`
+  ([platform/board/docs/building.md](platform/board/docs/building.md)).
 
 What is a game's own stays with it: its script commands (`chdrive.py`),
-`check.py`, the tests and the asset pipeline. [tools/README.md](tools/README.md) classifies every tool in
+its description for the shared checks (`game.py`), the tests and the asset
+pipeline. [tools/README.md](tools/README.md) classifies every tool in
 the repository.
 
 ## Licences
@@ -309,12 +314,13 @@ Each folder carries its own licence:
 | `platform/board/arduino/CHGame/libraries/CHGame/examples/games/*` | Apache-2.0 (see each game's `LICENSE` and `NOTICE`). CHChess's engine `src/engine/ch2k.hpp` is MPL-2.0. |
 | `tools/` | Apache-2.0 (`tools/LICENSE`, `tools/NOTICE`) |
 | `platform/board/` | MIT (`platform/board/LICENSE`, `THIRD-PARTY.md`) |
-| `platform/bootloader/` | MIT (`LICENSE`, `THIRD-PARTY.md`, `NOTICE`: its 5x7 font is Adafruit glcdfont, BSD) |
+| `platform/bootloader/` | MIT (`LICENSE`, `THIRD-PARTY.md`, `NOTICE`: its 5x7 font is Adafruit glcdfont, BSD); `host/` (the uploader, Go and Python) with it, `go.bug.st/serial` BSD-3-Clause in `THIRD-PARTY.md` |
 | `platform/board/arduino/CHGame/libraries/CHGame/` | Apache-2.0 (`LICENSE`, `NOTICE`: the 3x5 font is Press Play On Tape's, by way of CHBlackjack) |
 | `platform/board/arduino/CHGame/libraries/CHGfx/` | MIT; some fonts carry their own notices (in its `LICENSE`, e.g. the 3x5 font is Apache-2.0) |
 | `platform/board/arduino/CHGame/libraries/CHSd/` | MIT |
 | `platform/board/arduino/CHGame/libraries/CHGame/examples/apps/CHSDtoUSB/` | GPL-3.0 (its SD layer comes from sdfatlib) |
-| `docs/`, root files | Apache-2.0, like the games |
+| `platform/hardware/` | No licence stated yet (schematic and netlist) |
+| `docs/`, root files | Apache-2.0 (`LICENSE`, `NOTICE`) |
 
 ## History
 

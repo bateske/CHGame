@@ -7,11 +7,13 @@ geometry in docs/design/layout.md and wheel.md, written to out/mockups/.
 import sys
 from pathlib import Path
 
-import pixkit as k
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE.parents[9] / "tools"))   # the repository's tools/: pixkit
+import pixkit as k  # noqa: E402
 from pixkit import (INK, WHITE, FELT_DK, FELT, FELT_LT, SILVER, RED, WINE, GOLD, WOOD,
                     BLUE, NAVY, SKIN, CYAN, FX_A, FX_B)
 
-OUT = k.GAME / "out" / "mockups"
+OUT = HERE.parent / "out" / "mockups"
 
 RED_NUMS = {1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36}
 ZERO = FELT_LT          # zero cell fill (green felt only)
@@ -538,7 +540,7 @@ def felt_backdrop(fb):
 
 
 def logo_bits():
-    rows = [ln.rstrip() for ln in (k.GAME / "tools/art/logo.txt").read_text().splitlines()
+    rows = [ln.rstrip() for ln in (HERE / "art" / "logo.txt").read_text().splitlines()
             if ln.strip() and not ln.startswith("# ")]
     return rows
 

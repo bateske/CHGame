@@ -1,7 +1,7 @@
 // Host tests for the game logic: layouts, the free rule, deals, matching,
 // undo, shuffles, saved games and the cursor's hops.
 //
-//   python tools/tests/run_tests.py
+//   chgame test
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

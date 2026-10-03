@@ -6,12 +6,12 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 
 - Imported from https://github.com/bateske/CHYacht at commit 751b026 (2026-10-01); develop here now, not in the old repo.
 - Release build (FQBN `CHGame:ch32v:CHGame:opt=oslto,rtlib=nano,periph=game,usb=uploadonly`, core 0.2.4, CHGfx 1.3.0, the CHGame library): flash 43,674 of 50,944 B (7,270 spare; the image is 44,036 B, so both save pages fit with 6,396 B to go), static RAM 15,260 of 18,416 B (3,156 spare).
-- On the CHGame library since 2026-10-02 (`#include <CHGame.h>`): its input, palette, drawing (sprite4, dither, fillConvex, the 3x5 font), masks, fx maths, screen shake and formatting replace the game's copies; `src/fx` keeps only the game's particles, banners and floating texts. The debug protocol (`chgame/Debug.h`, `CHGAME_DEBUG`), the flash save record (`chgame/Save.h`; src/save/Save.cpp says only what the record holds, byte for byte the old layout) and RAMFUNC are the library's too, and tools/chsim/chdrive.py is the shared tools/chsim/chdrivelib.py plus this game's `idle` and `cal` (its copy's `goto ZONE`, a CHCraps leftover with no `Z` hook here, is gone). The score-zero shake (`fx::applyShake(0, TRIM_Y - 1, -1)` in src/fx/Presenter.cpp) now also shifts the rows and the 2 px edge it uncovers instead of leaving them as they were.
-- Verification: simulator and host tests only, all passing as of 2026-10-01 (not re-run since the import). There is no tools/check.py here; run these by hand:
-  - `tools/tests/run_tests.py`: the rules against an oracle over all 7,776 rolls, the house player's self-play and the paytable's return, the 3D dice physics at every power for every set of kept dice.
+- On the CHGame library since 2026-10-02 (`#include <CHGame.h>`): its input, palette, drawing (sprite4, dither, fillConvex, the 3x5 font), masks, fx maths, screen shake and formatting replace the game's copies; `src/fx` keeps only the switches that configure the library's `chgame/Sizzle` (particles, banners and floating texts; since later that day, image unchanged). The debug protocol (`chgame/Debug.h`, `CHGAME_DEBUG`), the flash save record (`chgame/Save.h`; src/save/Save.cpp says only what the record holds, byte for byte the old layout) and RAMFUNC are the library's too, and tools/chsim/chdrive.py is the shared tools/chsim/chdrivelib.py plus this game's `idle` and `cal` (its copy's `goto ZONE`, a CHCraps leftover with no `Z` hook here, is gone). The score-zero shake (`fx::applyShake(0, TRIM_Y - 1, -1)` in src/fx/Presenter.cpp) now also shifts the rows and the 2 px edge it uncovers instead of leaving them as they were.
+- Verification: simulator and host tests only, all passing as of 2026-10-01 (not re-run since the import). `chgame check` runs these:
+  - `chgame test`: the rules against an oracle over all 7,776 rolls, the house player's self-play and the paytable's return, the 3D dice physics at every power for every set of kept dice.
   - `tools/tests/sim_save.py`: save mid-turn, reboot, continue; a finished game leaves nothing to continue but keeps the purse.
   - The scripts in tools/scripts (look, modes, perf, showcase, gameplay) through `tools/chsim/chdrive.py --sim .`.
-  - `python tools/device.py build` for the release image and its size.
+  - `chgame build` for the release image and its size.
 - Never run on a CHGame. The dice cam is estimated at 10-14 ms a frame in the simulator (about 30 fps during the throw, like CHCraps); unmeasured.
 
 ## Design decisions
@@ -36,23 +36,23 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 - src/cam (Cam.*, Dice3D.*) is a fork of CHCraps's (../CHCraps), grown from two dice to five; fixes do not flow between the two automatically.
 - Drawing is CHBlackjack's band redraw (seats and card, tray, bar repainted only when they change), but the dice cam repaints the whole screen every frame: it is the frame-time hot spot.
 - The house player (`ai::` in src/game/Yacht.cpp) looks one roll ahead over all 32 hold masks and is spread over a few frames while it "shakes"; `say A 1` lets it play every seat for whole-game scripts.
-- tools/assets.py clones Press Play On Tape's Blackjack into tools/.cache/ppot (gitignored) pinned to `PPOT_COMMIT`: needs git and network on first run. tools/art/dealer.png (CHBlackjack's hand-painted dealer) replaces the recoloured PPOT bust; the chips are tools/art/chip_*.txt (CHBlackjack's chip, captured).
+- tools/assets.py clones Press Play On Tape's Blackjack into tools/.cache/ppot (gitignored) pinned to `PPOT_COMMIT`: needs git and network on first run. The shared tools/art/common/dealer.png (CHBlackjack's hand-painted dealer, repository root) replaces the recoloured PPOT bust; the chips are the shared chip_*.txt there too (CHBlackjack's chip, captured; CHCraps uses the same).
 - Debug hooks (list at the end of src/states/Screens.cpp): `R`, `F`, `J <T|P|C|2|3|4|O|S|E|L>`, `M purse`, `V` reboot (reload from the save), `A 0|1`, `C focus index`, `G box`, `H` state line, `Q` (sim) timing calibration.
 - tools/tests/sim_save.py drives the simulator through this game's tools/chsim/chdrive.py and the shared chsim; it builds the simulator itself.
-- Simulator: `../../../../../../../../../tools/chsim/chsim.py` (shared). Set `CHSIM_CXX` or have zig/clang++/g++ on PATH (see root CLAUDE.md). Size report: `../../../../../../../../../tools/check_size.py` (`tools/device.py build` runs it).
+- Simulator: `chgame sim` (the repository's `tools/chsim`). Set `CHSIM_CXX` or have zig/clang++/g++ on PATH (see root CLAUDE.md). Size report: `chgame size` (`chgame build` runs it).
 
 ## Development
 
 Everything can be checked on a PC (Python 3 with Pillow, and a C++ compiler for the simulator and host tests: `CHSIM_CXX`, zig, clang++ or g++; root CLAUDE.md). Device builds need the CHGame board package 0.2.4+, CHGfx 1.3 and the CHGame library, all in `../../../../../../../../../platform`.
 
-    python tools/tests/run_tests.py     # rules, house player, dice physics
+    chgame test     # rules, house player, dice physics
     python tools/tests/sim_save.py      # save mid-turn, reboot, continue
-    python tools/run.py chsim/chsim.py build .
-    python tools/chsim/chdrive.py --sim . tools/scripts/look.txt out/look
-    python tools/run.py readme_gif.py    # tools/scripts/gameplay.txt -> docs/gameplay.gif (the README's one GIF, <= 1 MB)
+    chgame sim
+    chgame run tools/scripts/look.txt out/look
+    chgame gif    # tools/scripts/gameplay.txt -> docs/gameplay.gif (the README's one GIF, <= 1 MB)
     python tools/assets.py              # art -> src/assets
-    python tools/device.py build        # release image + size report
-    python tools/device.py upload       # ... and upload it
+    chgame build        # release image + size report
+    chgame upload       # ... and upload it
 
 - Scripts in tools/scripts drive the game through its serial debug protocol (the CHGame library's `chgame/Debug.h`; the game's commands are listed at the end of src/states/Screens.cpp). `say R seed` fixes the dice, `say F a b c d e` forces the next roll, `say J P` jumps to a solo game, `idle [W]` runs until the dice cam and the payout are over. The same scripts run on the board with `--device` (a debug build).
 - gameplay.txt records the README's clips (01_title, 02_turn, 03_yacht, 04_dealer, 05_result), each its own `rec start 3` / `rec stop`; readme_gif.py joins them. look.txt, modes.txt, showcase.txt and perf.txt are tests: every screen, the three modes, one recorded turn, estimated render cost.

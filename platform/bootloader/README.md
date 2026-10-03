@@ -97,7 +97,7 @@ the measurements behind them.
   reserved vector slot (offset 8), and `appmeta_check()` refuses any image
   that carries it. A bootloader staged for self-update can then never be
   launched as a program, even if the host stops between staging and
-  promoting it. The vendored `host/py` also unlocks before staging.
+  promoting it. The Python uploader (`host/py`) also unlocks before staging.
 - **Trims.**
   - The Arduino core 0.2.4's direct-register `USB_init`.
   - No `atexit`/`__libc_init_array`.
@@ -216,7 +216,8 @@ The hardware steps are in [HARDWARE.md](HARDWARE.md).
   release; [docs/roadmap.md](../../docs/roadmap.md)).
 - **By hand, the same thing:** `chgame-upload selfupdate
   release/chgame_sdboot.bin` ([host/go](host/go/README.md)), or
-  `python host/py/chgame_upload.py selfupdate release/chgame_sdboot.bin --yes`.
+  `chgame uploader selfupdate release/chgame_sdboot.bin --yes` (the Python
+  uploader, `host/py`).
 - **Factory ISP:** hold BOOT across power-on, then `wchisp flash
   release/chgame_sdboot.bin`.
 - **The first time:** [HARDWARE.md](HARDWARE.md) has two routes. The direct
@@ -240,8 +241,9 @@ The hardware steps are in [HARDWARE.md](HARDWARE.md).
 | `src/proto.c`, `usb.c`, `flash.c`, `appmeta.c`, `jump.c`, `startup_chgame_boot.S`, ... | CH32SerialBoot 0.2.4, changed as listed above |
 | `shared/chgame_bootreq.h` | the boot request reasons |
 | `vendor/` | WCH SPL and the USB CDC stack (`vendor/usbcdc/VENDORED.md` lists the changes) |
-| `host/go/` | `chgame-upload`, the uploader the board package installs ([its README](host/go/README.md)) |
-| `host/py/` | the same protocol in Python: the reference the hardware tests drive (`probe`, `info`, `flash`, `selfupdate`) |
+| `host/go/` | `chgame-upload`, the Go uploader the board package installs ([its README](host/go/README.md)); built by `python tools/release/build_uploader.py` |
+| `host/py/` | `chgame_upload`, the same uploader in Python (every verb and flag of the Go one): what the repository's tools and the hardware tests use (`python -m chgame_upload`, `chgame uploader`). `test/protocol/vectors.json` keeps the two in step |
+| `test/protocol/` | the uploaders' parity tests (`python -m unittest discover -s platform/bootloader/test/protocol`, `go test` in `host/go`) |
 | `test/hil/` | CH32SerialBoot's hardware tests |
 | `test/native/` | the PC suite |
 | `tools/` | `size_report.py`, `dist.sh`, `screens.py` (the pictures in `docs/`), `bootcheck.py` (boot region read back over USB), `chgame_map.py`, `mkimage.py` |

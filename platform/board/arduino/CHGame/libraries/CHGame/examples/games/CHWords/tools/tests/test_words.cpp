@@ -1,6 +1,6 @@
 // Host tests: the flash dictionary against the list it was built from, the
 // rules against a second implementation, whole games between two CPUs, and
-// saving. Run from the sketch folder (tools/tests/run_tests.py does).
+// saving. Run from the sketch folder (chgame test does).
 //
 //   test_words.exe [--quick]
 #include <stdio.h>

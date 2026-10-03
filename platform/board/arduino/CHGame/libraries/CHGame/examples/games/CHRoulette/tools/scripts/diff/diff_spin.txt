@@ -1,4 +1,4 @@
-# Differential run (scratch diffdrive.py): every frame of the incremental
+# Differential run (chgame redraw): every frame of the incremental
 # redraw against a forced full redraw. A spin with a straight-up hit (big
 # win), the whip both ways, the payout, then betting again.
 say R 7

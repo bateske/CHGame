@@ -1,5 +1,5 @@
 # Three CPUs play a whole episode on their own: nothing may hang or draw into a frame in flight.
-#   python tools/chsim/chdrive.py --sim . tools/scripts/soak_cpu.txt out/soak
+#   chgame run tools/scripts/soak_cpu.txt out/soak
 say W 1 2 3
 say R 5
 say J P

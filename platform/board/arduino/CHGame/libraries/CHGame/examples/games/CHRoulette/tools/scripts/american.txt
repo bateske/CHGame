@@ -1,5 +1,5 @@
 # The American wheel: the 00 on the layout, a top line, and 00 coming up.
-#   python tools/chsim/chdrive.py --sim . tools/scripts/american.txt out/american
+#   chgame run tools/scripts/american.txt out/american
 say R 11
 say J O
 wait 20

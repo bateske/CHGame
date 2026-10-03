@@ -3,7 +3,7 @@
 # with D-pad presses; the simulator plans the route). Each clip is its own
 # recording, named in the order it is shown; ../../../../../../../../../tools/readme_gif.py runs
 # this script and joins them:
-#   python tools/run.py readme_gif.py
+#   chgame gif
 # Squares: a1 = 0 .. h8 = 63.
 rec start 4
 wait 120

@@ -36,7 +36,7 @@ What he says is about the position in front of you: *WELL SPOTTED!* for a good b
 
 OPTIONS has sound on or off, and PACE: QUICK drops the close-up on the winning four and shortens his pauses.
 
-To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `python tools/device.py upload` from this folder.
+To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `chgame upload` from this folder.
 
 ## Developer notes
 

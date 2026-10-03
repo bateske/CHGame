@@ -3,7 +3,7 @@
 # would; the dice are stacked, the CPU plays its own moves. Each clip is
 # its own recording, named in the order it is shown;
 # ../../../../../../../../../tools/readme_gif.py runs this script and joins them:
-#   python tools/run.py readme_gif.py
+#   chgame gif
 wait 8
 rec start 3
 wait 150

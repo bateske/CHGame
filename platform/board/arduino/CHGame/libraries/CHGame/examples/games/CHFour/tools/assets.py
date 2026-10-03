@@ -26,6 +26,9 @@ from PIL import Image
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 ART = HERE / "art"
+import sys  # noqa: E402
+sys.path.insert(0, str(HERE.parents[9] / "tools"))     # the repository's tools/: artlib (shared art in tools/art/common)
+import artlib  # noqa: E402
 GEN = ART / "gen"
 OUT_H = ROOT / "src" / "assets" / "Assets.h"
 OUT_C = ROOT / "src" / "assets" / "Assets.cpp"
@@ -45,7 +48,7 @@ NAMES = ["INK", "WHITE", "FELT_DK", "FELT", "FELT_LT", "SILVER", "RED", "WINE",
 def load_sides():
     """tools/art/sides.txt -> {section: [white, red]}, each art colour -> side colour (16 entries)."""
     out, cur = {}, None
-    for ln in (ART / "sides.txt").read_text().splitlines():
+    for ln in (artlib.art(HERE, "sides.txt")).read_text().splitlines():
         words = ln.split("#", 1)[0].split()
         if not words:
             continue
@@ -97,7 +100,7 @@ def load_art(name):
     """tools/art/<name>.txt: palette letters, one row per line; '#' starts a comment line.
     Several images may follow each other, separated by a blank line."""
     imgs, cur = [], []
-    for ln in (ART / f"{name}.txt").read_text().splitlines():
+    for ln in (artlib.art(HERE, f"{name}.txt")).read_text().splitlines():
         if ln.startswith("#"):
             continue
         if not ln.strip():
@@ -117,7 +120,7 @@ def load_art(name):
 
 def source(name):
     """tools/art/<name>.png if someone has drawn one, else the letters in <name>.txt."""
-    png = ART / f"{name}.png"
+    png = artlib.art(HERE, f"{name}.png")
     return load_png(png) if png.exists() else load_art(name)[0]
 
 
@@ -173,7 +176,7 @@ FACES = ["NORMAL", "ANGRY", "RAISED", "BLINK", "SMILE", "SURPRISED", "TALK"]
 def load_font():
     """tools/art/font.txt -> {char: {"w", "top", "rows"}} (rows of 0/1, all-clear rows trimmed)."""
     font, cur = {}, None
-    for ln in (ART / "font.txt").read_text().splitlines():
+    for ln in (artlib.art(HERE, "font.txt")).read_text().splitlines():
         if not ln.strip() or ln.startswith("# "):           # (glyph rows are only '#' and '.')
             continue
         if ln.startswith("= "):
@@ -271,7 +274,7 @@ def main():
 
     # The dealer (CHBlackjack's, as CHRoulette carries him: dealer.png and
     # faces.png are that game's files, unchanged).
-    dealer = load_png(ART / "dealer.png")
+    dealer = load_png(artlib.art(HERE, "dealer.png"))
     assert len(dealer) == 42 and all(len(r) == 48 for r in dealer), "dealer.png must be 48x42"
     data = pack_span4(dealer)
     defs.append(c_array("DEALER", data))
@@ -280,7 +283,7 @@ def main():
     preview("dealer", [dealer], scale=4, bg=11)
     # Faces: NORMAL as a 24x18 patch at (12,14); every other expression as the
     # pixels that differ from it (16-bit words: index y*24+x << 4 | colour).
-    sheet = load_png(ART / "faces.png")
+    sheet = load_png(artlib.art(HERE, "faces.png"))
     assert len(sheet) == 18 and len(sheet[0]) == 24 * len(FACES), "faces.png must be 7 cells of 24x18"
     faces = [[row[24 * k:24 * k + 24] for row in sheet] for k in range(len(FACES))]
     normal = faces[0]
@@ -306,7 +309,7 @@ def main():
     preview("faces", faces, scale=4, bg=11)
 
     # The disc, and at twice the size for the close-ups.
-    disc = load_png(ART / "disc.png") if (ART / "disc.png").exists() else draw_disc(10)
+    disc = load_png(artlib.art(HERE, "disc.png")) if (artlib.art(HERE, "disc.png")).exists() else draw_disc(10)
     save_png(GEN / "disc.png", disc)
     data = pack_span4(disc)
     defs.append(c_array("DISC", data))
@@ -315,7 +318,7 @@ def main():
                  "extern const uint8_t DISC_REMAP[2][16];                     // ... as RED's, as GOLD's (tools/art/sides.txt)")
     total += len(data) + 32
     preview("disc", [remapped(disc, m) for m in sides["disc"]], bg=10)
-    big = load_png(ART / "disc_big.png") if (ART / "disc_big.png").exists() else draw_disc(20)
+    big = load_png(artlib.art(HERE, "disc_big.png")) if (artlib.art(HERE, "disc_big.png")).exists() else draw_disc(20)
     save_png(GEN / "disc_big.png", big)
     data = pack_span4(big)
     defs.append(c_array("DISC_BIG", data))

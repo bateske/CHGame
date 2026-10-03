@@ -47,17 +47,17 @@ FULL EPISODE is a toss-up, three rounds at the wheel, the final spin and the bon
 
 111 puzzles are built in. Copy [`sdcard/PHRASES.BNK`](sdcard/PHRASES.BNK) to the top level of a FAT32 or FAT16 microSD card and the game draws from 606; the title screen says **CARD 606 PUZZLES** when it has found the file.
 
-To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `python tools/device.py upload` from this folder.
+To put it on the handheld, see [Installing](../../../../../../../../../README.md#installing), then run `chgame upload` from this folder.
 
 ## Developer notes
 
 - **An SD card that is optional.** `src/bank/SdBank.cpp` reads plain 64-byte records, one block a puzzle, through the CHSd library (`<Fat.h>`); `src/states/Screens.cpp` calls it only after `gfx_wait()`, because the card shares SPI1 with the display, and falls back to the built-in bank if the card goes.
 - **Text packed into what flash is left.** `src/bank/FlashBank.cpp` decodes canonical Huffman a bit at a time, about 12 bytes a puzzle, and deals each section without repeats through a small Feistel permutation, so the save holds a seed and three counters, not a list.
 - **A wheel that never decides anything.** The rules draw the stop and `src/game/Spin.cpp` solves the spin to end there; `src/render/WheelStrip.cpp` draws the wedges as spans between edges stepped in fixed point toward a hub below the screen, with its pixel loops in SRAM (`RAMFUNC`).
-- **Redrawing only what changed.** `src/fx/Presenter.cpp` repaints the wall, the board panel by panel, the podiums and the prompt bar as they change, and `tools/chsim/diffdrive.py` checks it against a build that redraws everything every frame.
+- **Redrawing only what changed.** `src/fx/Presenter.cpp` repaints the wall, the board panel by panel, the podiums and the prompt bar as they change, and `chgame redraw` checks it against a build that redraws everything every frame.
 - **Size from compiler settings.** Every size-optimised file starts with one `#pragma GCC optimize(...)` line of `Os` and four switches, each measured, worth about 1 KB against plain `-Os` with LTO.
 - More in [NOTES.md](NOTES.md): design decisions, the puzzle banks, tests, the script commands and open items.
 
 ## Credits
 
-Apache License 2.0; see `LICENSE` and `NOTICE`. The SD reader is the CHSd library, HypeRunner's clean-room SPI-mode driver and FAT reader cut down to read-only, under the MIT License. The host and the 3x5 font are from "Blackjack" for the Arduboy by Press Play On Tape - Simon Holmes (filmote), code, and Stephane C (vampirics), art (Apache-2.0) - by way of CHBlackjack and CHRoulette. The soft clock ticks are from CHChess, and the shape of `tools/check.py` from CHBackgammon (both Apache-2.0).
+Apache License 2.0; see `LICENSE` and `NOTICE`. The SD reader is the CHSd library, HypeRunner's clean-room SPI-mode driver and FAT reader cut down to read-only, under the MIT License. The host and the 3x5 font are from "Blackjack" for the Arduboy by Press Play On Tape - Simon Holmes (filmote), code, and Stephane C (vampirics), art (Apache-2.0) - by way of CHBlackjack and CHRoulette. The soft clock ticks are from CHChess, and the shape of `chgame check` from CHBackgammon (both Apache-2.0).

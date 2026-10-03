@@ -5,12 +5,16 @@ game will use (src/render/Layout.h), written to out/mockups/.
     python tools/mockup.py wheel      # scenes whose name contains 'wheel'
 """
 import sys
+from pathlib import Path
 
-import pixkit as k
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE.parents[9] / "tools"))   # the repository's tools/: pixkit
+import pixkit as k  # noqa: E402
 from pixkit import (INK, WHITE, FELT_DK, FELT, FELT_LT, SILVER, RED, WINE, GOLD, WOOD,
                     BLUE, NAVY, SKIN, CYAN, FX_A, FX_B)
 
-OUT = k.GAME / "out" / "mockups"
+k.set_upper35(True)                     # the game upper-cases what it draws
+OUT = HERE.parent / "out" / "mockups"
 
 VOWELS = "AEIOU"
 POD_C = [RED, GOLD, BLUE]
