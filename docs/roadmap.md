@@ -34,7 +34,7 @@ This page records what is in place and what each step involved.
 |---|---|---|
 | Arduino core, variant, linker scripts, Tools menus | `platform/board/arduino/CHGame` | 0.3.0, built and tested, not yet published (0.2.4 is the published one) |
 | Bootloader with the SD game menu | `platform/bootloader` | the first menu: built and tested on the PC, installed and checked on a board on 2026-10-01 (`test/hil/RESULTS-2026-10-01.md`). Menu v2 (2026-10-03): PC suite only |
-| The `.chgame` format and the SD card's layout | `spec/`, `tools/chcart` | version 1 and layout 2; reference implementation, 16 unit tests, 24 conformance fixtures; the repository's games and release use it |
+| The `.chgame` format and the SD card's layout | `spec/`, `tools/chcart` | version 1 and layout 2; reference implementation, 17 unit tests, 24 conformance fixtures; the repository's games and release use it |
 | Uploader: `chgame-upload` in Go (the executable the board package installs; Windows, Linux, macOS) and the same tool in Python (`chgame_upload`, what the repository's tools use) | `platform/bootloader/host/go`, `host/py` | 0.2.0 here, with the bootloader update over USB and `burn`; the installed package has 0.1.0. Shared test vectors (`test/protocol/`) hold the two together |
 | Graphics | `platform/board/arduino/CHGame/libraries/CHGfx` | 1.3.0 |
 | SD card / FAT | `platform/board/arduino/CHGame/libraries/CHSd` | 1.0.0; never yet run against a real card on a board |
