@@ -1,4 +1,5 @@
 # QUICK pace: no close-ups, shorter pauses. A hit and a few turns each.
+say U 1
 say J O
 wait 20
 tap DOWN

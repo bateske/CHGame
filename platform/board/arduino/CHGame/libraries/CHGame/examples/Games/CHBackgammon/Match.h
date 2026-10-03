@@ -32,6 +32,8 @@ enum Ev : uint8_t {
     EV_PICKUP,      // a = side: its dice are picked up, the turn is over
     EV_DOUBLE,      // a = side offering, b = the value offered (log2)
     EV_TAKE,        // a = side taking: the cube is theirs, at the value offered
+    EV_BEAVER,      // a = side doubled: it takes and redoubles at once, b = the value now (log2)
+    EV_RACCOON,     // a = side that doubled: it redoubles the beaver, b = the value now (log2)
     EV_OVER,        // a = winner, b = 1 single / 2 gammon / 3 backgammon, c = Reason, d = points won
 };
 enum : uint8_t {
@@ -58,6 +60,8 @@ extern uint8_t cube;                // the cube: log2 of its value (0: 1)
 extern uint8_t cubeOwner;           // bg::WHITE, bg::RED or CENTRE
 extern bool crawford;               // this is the Crawford game: no doubling
 extern uint16_t turns;              // turns completed this game
+extern bool autoPlay;               // the dice are thrown when there is no cube to decide on, forced plays made
+extern bool beavers;                // a doubled side may beaver, and the doubler then raccoon
 
 void start(const Setup &s);         // a new match
 void nextGame();                    // after a game, when the match goes on
@@ -72,7 +76,9 @@ bool isHuman(uint8_t side);
 bool humanToRoll();                 // waiting for the dice to be thrown (the opening roll too)
 bool humanToMove();                 // waiting for a checker to be moved
 bool humanToConfirm();              // the dice are played: pick them up, or take a move back
-bool humanToAnswer();               // a human has been doubled: take or pass
+bool humanToAnswer();               // a human has been doubled (take, pass or beaver) or beavered (take or raccoon)
+bool beavered();                    // ... beavered: take() accepts it, raccoon() redoubles
+bool canBeaver();                   // the doubled side may beaver (the doubler raccoon)
 bool cpuThinking();
 inline uint16_t cubeValue() { return (uint16_t)(1u << cube); }
 bool cubeLive();                    // a match with a cube: longer than one point
@@ -84,6 +90,8 @@ bool canDouble();                   // the side to roll may double now
 void offerDouble();
 void take();
 void pass();
+void beaver();                      // doubled: take and redouble at once, keeping the cube
+void raccoon();                     // beavered: redouble again, and the cube is the doubler's
 uint8_t targetsFrom(uint8_t from, bg::Target *out);     // where the checker on `from` may go (<= 4)
 bool play(uint8_t from, const bg::Target &t);           // set it down there
 bool canTakeBack();

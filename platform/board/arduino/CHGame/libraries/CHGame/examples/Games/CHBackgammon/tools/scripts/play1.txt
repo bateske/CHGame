@@ -1,4 +1,5 @@
 # Opening roll, a move with each die, picking up the dice, and the CPU's reply.
+say U 1
 say G 0 1 5
 say D 6243
 wait 30

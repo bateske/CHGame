@@ -26,6 +26,10 @@ uint32_t equity(int a, int b, bool post);
 // p: the chance (Q16) of winning the game for the side deciding, which
 // needs `a` points against `b`; v the cube's value now.
 bool wantsTake(int a, int b, int v, bool post, uint32_t p);
+// With beavers allowed: a side that should take beavers (and a beavered
+// doubler raccoons) when its chance on the other side's roll is this good -
+// the double was a mistake, so make it pay twice.
+constexpr uint32_t BEAVER_AT = 36045;           // 55%
 bool wantsDouble(int a, int b, int v, bool owned, bool post, uint32_t p, bool gammonish);
 // The other side looks like losing a gammon: none of its checkers off, and
 // three or more still in `side`'s home board or on the bar.

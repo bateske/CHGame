@@ -4,6 +4,7 @@
 # its own recording, named in the order it is shown;
 # ../../../../../../../../../tools/readme_gif.py runs this script and joins them:
 #   chgame gif
+say U 1
 wait 8
 rec start 3
 wait 150

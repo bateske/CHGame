@@ -2,6 +2,7 @@
 # what a frame costs to draw, scene by scene. Y prints microseconds per
 # section (board + targets, checkers, dice + glove, HUD + plate, particles +
 # banner); perf prints the average and worst whole frame since the last perf.
+say U 1
 say G 0 0 3
 wait 40
 say Y

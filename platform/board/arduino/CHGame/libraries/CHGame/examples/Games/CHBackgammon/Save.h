@@ -16,9 +16,13 @@ struct Options {
     uint8_t speed;      // 0 fun, 1 quick (no close-ups, shorter pauses)
     uint8_t level;      // last opponent chosen
     uint8_t mirror;     // 1: the home boards on the left
-    uint8_t coach;      // 1: the coach has its say on each of your plays
+    uint8_t coach;      // (unused: the coach was cut for room; kept for the record's layout)
     uint8_t length;     // last match length chosen (an index: single game, 3, 5, 7)
-    uint8_t pad;
+    uint8_t rules;      // RULE_* bits (0: the defaults)
+};
+enum : uint8_t {
+    RULE_MANUAL = 1,    // no automatic throws or forced plays
+    RULE_BEAVERS = 2,   // beavers and raccoons
 };
 
 // Against the CPU: games, and matches longer than one point.

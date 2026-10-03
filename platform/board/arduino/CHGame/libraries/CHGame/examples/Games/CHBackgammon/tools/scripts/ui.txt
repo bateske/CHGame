@@ -1,4 +1,5 @@
 # The screens: title, setup, options and its felts, pause, two players, save and continue.
+say U 1
 wait 40
 snap title
 tap A

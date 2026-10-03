@@ -1,6 +1,6 @@
 # CHBackgammon
 
-Throw the dice, carry your chips round the board with a pointing glove, knock blots to the bar and bear off before Red does. It is the casino's third table: green felt seen from above, a doubling cube, a coach at your elbow, and a CPU opponent that learned the game by playing itself.
+Throw the dice, carry your chips round the board with a pointing glove, knock blots to the bar and bear off before Red does. It is the casino's third table: green felt seen from above, a doubling cube, a hint when you want one, and a CPU opponent that learned the game by playing itself.
 
 ![CHBackgammon gameplay](docs/gameplay.gif)
 
@@ -9,7 +9,7 @@ Throw the dice, carry your chips round the board with a pointing glove, knock bl
 | Button | Action |
 |---|---|
 | A | Throw the dice (on the cube: double); pick a checker up and set it down; pick the dice up to end your turn; select |
-| D-pad | Move the glove between your points or, holding a checker, between the places it can go; before you throw, between the dice and the cube; menus |
+| D-pad | Move the glove between your points or, holding a checker, between the places it can go: LEFT and RIGHT to the next one along the same half of the board (round to the far end), UP and DOWN across to the nearest on the other half; before you throw, between the dice and the cube; menus |
 | B | Put the checker back; with an empty hand, take your last move back; back |
 | SELECT | A hint: the best play of your roll, and your chances |
 | START | Pause: resume, resign, save and quit |
@@ -22,6 +22,7 @@ Throw the dice, carry your chips round the board with a pointing glove, knock bl
 - You must play both dice if you can, and the higher if only one can be played. With no move at all the turn passes (NO MOVES, or DANCE! when you are stuck on the bar).
 - You bear off once all your checkers are in your home board.
 - In a match a game is worth the doubling cube's value, twice that for a gammon and three times for a backgammon. Refusing a double gives the doubler what the cube showed before. When a side first needs just one point, the next game is the Crawford game, played without the cube.
+- With BEAVERS on (a house rule: tournaments play matches without it), a side that is doubled may beaver: take, and at once redouble, keeping the cube. The doubler cannot refuse, but may raccoon: redouble again and take the cube back.
 
 ## How to play
 
@@ -33,13 +34,13 @@ Throw the dice, carry your chips round the board with a pointing glove, knock bl
 | EXPERT | Its best play, every roll |
 | GRANDMASTER | Looks a roll ahead: every roll you could throw next, and your best answer to it |
 
-A single game without the cube is the default; a match to 3, 5 or 7 points brings the cube in. It sits on the bar showing 64: before you throw, move the glove from the dice to the cube and press A to double; doubled yourself, choose TAKE or PASS. The CPU uses the cube too.
+A single game without the cube is the default; a match to 3, 5 or 7 points brings the cube in. It sits on the bar showing 64: before you throw, move the glove from the dice to the cube and press A to double; doubled yourself, choose TAKE or PASS (or BEAVER, with beavers on; beavered, TAKE or RACCOON). The CPU uses the cube too, and beavers and raccoons when it likes its game.
 
 On your turn the glove stops on your points, and a checker you pick up lights the places it can go: a point for each die and for both together, pulsing red where it would hit. A plate at the foot of the screen names what the glove is on, and plays are called in the notation players use ("24/18* 13/11", "8/5(2)"). Nothing is final until you pick the dice up: until then B takes moves back, hits and all.
 
-SELECT shows the best play of your roll and your chances. With COACH on, every play you finish is checked before you pick up the dice: ERROR or BLUNDER! with the better play, or BEST PLAY!
+SELECT shows the best play of your roll and your chances.
 
-The dice are the same for everyone: one generator, seeded from the moment you press the button, that the CPU cannot see or touch. OPTIONS has sound, the felt (green, blue, red, purple), HOME LEFT to mirror the board, the pace (FUN, or QUICK: no close-ups and shorter pauses) and the coach. Options, your record against each opponent (hold SELECT on that screen to clear it) and a game or match in progress (SAVE + QUIT, then CONTINUE) are saved.
+The dice are the same for everyone: one generator, seeded from the moment you press the button, that the CPU cannot see or touch. OPTIONS has sound, the felt (green, blue, red, purple), HOME LEFT to mirror the board, the pace (FUN, or QUICK: no close-ups and shorter pauses), AUTO and BEAVERS. With AUTO on (the default) the dice are thrown for you when there is no cube to decide on, and a roll that allows only one play, such as most of a bear-off, is played for you. Options, your record against each opponent (hold SELECT on that screen to clear it) and a game or match in progress (SAVE + QUIT, then CONTINUE) are saved.
 
 To put it on the handheld: in the Arduino IDE, with the CHGame board package installed ([Installing](https://github.com/bateske/CHGame#installing)), open it from *File > Examples > CHGame > Games*, set *Tools > USB* to **Upload only** and upload; from a clone of the repository, `chgame upload` in this folder. On a card for the game menu it is in the release's SD card zip.
 

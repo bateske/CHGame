@@ -14,6 +14,7 @@ struct Driven {
     int saveAt;                 // tick to save and reload at (-1: never)
     bool reloaded;
     long games, doubles, takes, passes;
+    long beavers, raccoons, forced;     // ... and with beavers and auto play on
 };
 
 static uint32_t drnd(Driven &d) { d.rng ^= d.rng << 13; d.rng ^= d.rng >> 17; d.rng ^= d.rng << 5; return d.rng; }
@@ -28,7 +29,8 @@ static uint32_t boardHash(const Board &b, uint32_t h) {
 static bool drive(Driven &d) {
     Board shadow = match::board, atRoll = match::board;
     uint8_t side = 0, d1 = 0, d2 = 0, scoreSeen[2] = {match::score[0], match::score[1]}, cubeSeen = match::cube;
-    bool rolled = false, over = false;
+    uint8_t offerSeen = 0;
+    bool rolled = false, over = false, chose = false;   // chose: the human was asked to move this turn
     for (int tick = 0; !over; tick++) {
         if (tick > 2000000) { printf("FAIL a match did not end\n"); failures++; return false; }
         match::update(false);
@@ -54,7 +56,7 @@ static bool drive(Driven &d) {
                 case match::EV_START: shadow = match::board; rolled = false; cubeSeen = match::cube; break;
                 case match::EV_TURN: side = e.a; CHECK_EQ(e.b, match::isHuman(e.a)); break;
                 case match::EV_ROLL:
-                    d1 = e.a; d2 = e.b; rolled = true;
+                    d1 = e.a; d2 = e.b; rolled = true; chose = false;
                     atRoll = shadow;
                     CHECK_EQ(e.d, side);
                     CHECK_EQ(e.c, maxPlayable(shadow, side, roll2(e.a, e.b)));
@@ -83,6 +85,12 @@ static bool drive(Driven &d) {
                     }
                     d.hash = boardHash(shadow, d.hash);
                     if (!match::isHuman(side)) d.cpuTurns++;
+                    else if (!chose) {
+                        // Never asked: no move at all, or played for the human
+                        // (auto play) - either way the roll had no other play.
+                        CHECK_EQ(want.size(), 1u);
+                        if (memcmp(shadow.n, atRoll.n, sizeof shadow.n)) { CHECK(match::autoPlay); d.forced++; }
+                    }
                     rolled = false;
                     break;
                 }
@@ -91,10 +99,21 @@ static bool drive(Driven &d) {
                     CHECK(match::setup.length > 1);
                     CHECK_EQ(e.b, cubeSeen + 1);
                     CHECK(!rolled);
+                    offerSeen = e.b;
                     d.doubles++;
                     break;
+                case match::EV_BEAVER:          // the doubled side redoubles
+                case match::EV_RACCOON:         // ... and the doubler again
+                    CHECK(match::beavers);
+                    CHECK_EQ(e.a, e.type == match::EV_BEAVER ? side ^ 1 : side);
+                    CHECK_EQ(e.b, offerSeen + 1);
+                    CHECK(e.b <= 6);
+                    offerSeen = e.b;
+                    if (e.type == match::EV_BEAVER) d.beavers++; else d.raccoons++;
+                    break;
                 case match::EV_TAKE:
-                    CHECK_EQ(e.b, cubeSeen + 1);
+                    CHECK_EQ(e.b, offerSeen);
+                    CHECK(e.b >= cubeSeen + 1 && e.b <= cubeSeen + 3);
                     cubeSeen = e.b;
                     CHECK_EQ(match::cubeOwner, e.a);
                     d.takes++;
@@ -129,14 +148,21 @@ static bool drive(Driven &d) {
         // The human's side of it.
         if (match::between()) match::nextGame();
         else if (match::humanToAnswer()) {
-            if (drnd(d) % 3) match::take(); else match::pass();
+            uint32_t r = drnd(d) % 6;
+            CHECK_EQ(match::canBeaver(), match::beavers && offerSeen < 6);
+            if (match::beavered()) { if (r < 3) match::raccoon(); else match::take(); }
+            else if (r < 2 && match::canBeaver()) match::beaver();
+            else if (r < 4) match::take();
+            else match::pass();
         } else if (match::humanToRoll()) {
             if (match::canDouble() && drnd(d) % 9 == 0) match::offerDouble();
             else match::roll();
         } else if (match::humanToConfirm()) {
+            chose = true;
             if (drnd(d) % 4 == 0) { CHECK(match::takeBack()); d.takeBacks++; }
             else match::confirm();
         } else if (match::humanToMove()) {
+            chose = true;
             if (match::canTakeBack() && drnd(d) % 6 == 0) { CHECK(match::takeBack()); d.takeBacks++; continue; }
             struct Opt { uint8_t from; Target t; };
             std::vector<Opt> opts;
@@ -216,6 +242,8 @@ static void testMatch(bool quick) {
         for (int g = 0; g < games; g++) {
             match::Setup s = {(uint8_t)(mode == 3 ? match::TWO_PLAYER : match::VS_CPU), (uint8_t)(mode % 3),
                               LEN[g & 3], (uint32_t)(g * 31 + mode + 1)};
+            match::beavers = (g >> 2) & 1;
+            match::autoPlay = (g >> 3) & 1;
             match::start(s);
             Driven d = {};
             d.rng = (uint32_t)(g * 977 + mode * 13 + 5);
@@ -224,6 +252,7 @@ static void testMatch(bool quick) {
             total.events += d.events; total.steps += d.steps; total.takeBacks += d.takeBacks;
             total.cpuTurns += d.cpuTurns; total.games += d.games; total.doubles += d.doubles;
             total.takes += d.takes; total.passes += d.passes;
+            total.beavers += d.beavers; total.raccoons += d.raccoons; total.forced += d.forced;
             if (d.maxQueue > total.maxQueue) total.maxQueue = d.maxQueue;
             CHECK(!match::active());
             CHECK(match::matchOver());
@@ -234,12 +263,16 @@ static void testMatch(bool quick) {
            total.doubles, total.takes, total.passes, total.maxQueue);
     CHECK(total.maxQueue <= 8);
     CHECK(total.doubles > 0 && total.takes > 0 && total.passes > 0);
+    printf("beavers: %ld beavers, %ld raccoons; auto play: %ld forced turns played for the human\n", total.beavers,
+           total.raccoons, total.forced);
+    CHECK(total.beavers > 0 && total.raccoons > 0 && total.forced > 0);
 
     // The same seed and the same choices give the same match - and so does
     // saving and reloading in the middle of it.
     for (int g = 0; g < (quick ? 6 : 60); g++) {
         match::Setup s = {match::VS_CPU, (uint8_t)(g % 3), LEN[(g / 3) & 3], (uint32_t)(5000 + g)};
         uint32_t hashes[3];
+        match::beavers = match::autoPlay = g & 1;
         for (int run = 0; run < 3; run++) {
             match::start(s);
             Driven d = {};
@@ -252,6 +285,7 @@ static void testMatch(bool quick) {
         CHECK_EQ(hashes[0], hashes[1]);
         CHECK_EQ(hashes[0], hashes[2]);
     }
+    match::beavers = match::autoPlay = false;
 
     // The Crawford rule: a side reaching match point makes the next game the
     // Crawford game (no doubling); the games after it have the cube again.
