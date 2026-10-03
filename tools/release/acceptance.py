@@ -10,15 +10,18 @@ Arduino setup is not touched), and checks:
   - Boards Manager installs CHGame from the one URL, with its three tools;
   - CHGame, CHGfx and CHSd come with it (platform libraries, nothing to add);
   - File > Examples has CHGame's Hello, the twenty games, CHStlView and CHSDtoUSB;
-  - Tools > Bootloader offers the three bootloaders, and their files are there;
+  - Tools > Bootloader offers the two bootloaders, and their files are there;
   - Tools > Programmer offers CHGame USB and the WCH factory ISP;
   - examples copied to the sketchbook (what the IDE does when one is saved)
     compile with plain `arduino-cli compile`, no --library, and Export
     Compiled Binary leaves a .bin and a .chg for the SD menu beside them.
 
 --all compiles every game and app from the installed package (release
-options), and --card then packs them into the SD card's contents as a zip:
-the card that goes with the release, built from exactly what it delivers.
+options, or a sketch's own FQBN in its tools/game.py), and --card then makes
+the casino cart from them (tools/sdcard/casino.json) beside the zip, as
+CHGame-Casino-<version>.chgame, and packs its card's contents (chcart's
+runtime preparation) as the zip: the cart and the card that go with the
+release, built from exactly what it delivers.
 
 Nothing here touches a board. The bootloader and upload paths are for a
 person with a board in hand (platform/board/docs/building.md).
@@ -42,10 +45,13 @@ sys.path.insert(0, str(HERE.parent / "sdcard"))
 from _common import OUT, fail, say  # noqa: E402
 import serve  # noqa: E402
 import chgpack  # noqa: E402
+import device  # noqa: E402
+import gamecfg  # noqa: E402
 import mkcard  # noqa: E402
+from chcart import runtime, zipio  # noqa: E402
 
 FQBN = "CHGame:ch32v:rev0"
-RELEASE_FQBN = mkcard.RELEASE_FQBN
+RELEASE_FQBN = device.FQBN_RELEASE
 NEWUSER = OUT / "newuser"
 DOWNLOADS = OUT / "arduino-downloads"     # kept between runs: the toolchain is ~100 MB; our archives are deleted
 DEFAULT_JOBS = max(1, min(4, (os.cpu_count() or 2) // 2))
@@ -153,7 +159,7 @@ def run(dist: Path, port: int, build_all: bool, card: Path | None, jobs: int) ->
     say("=== Tools menus ===")
     det = cli("board", "details", "-b", FQBN, json_out=True)
     opts = {o["option"]: [v["value"] for v in o["values"]] for o in det.get("config_options", [])}
-    check(opts.get("boot", []) == ["sdmenu", "sdplain", "sdcasino", "nomenu"], "Tools > Bootloader", ", ".join(opts.get("boot", [])))
+    check(opts.get("boot", []) == ["sdmenu", "nomenu"], "Tools > Bootloader", ", ".join(opts.get("boot", [])))
     progs = {p["id"]: p["name"] for p in det.get("programmers", [])}
     check({"chgameusb", "wchisp"} <= set(progs), "Tools > Programmer", "; ".join(progs.values()))
     boards_txt = (plat / "boards.txt").read_text(encoding="utf-8", errors="replace")
@@ -197,11 +203,11 @@ def run(dist: Path, port: int, build_all: bool, card: Path | None, jobs: int) ->
         say(f"=== every game and app, from the installed package ({jobs} at a time) ===")
         progs_ = mkcard.programs()
 
-        def build_one(p):
-            d = mkcard.folder(p, plat)
+        def build_one(name):
+            d = mkcard.folder(name, plat)
             out = NEWUSER / "build" / "all" / d.name
-            ok, log = compile_sketch(cli, d, p.get("fqbn", RELEASE_FQBN), out)
-            return p, d, out / f"{d.name}.ino.bin", ok, log
+            ok, log = compile_sketch(cli, d, gamecfg.load(d).FQBN or RELEASE_FQBN, out)
+            return name, d, out / f"{d.name}.ino.bin", ok, log
 
         results = [build_one(progs_[0])]          # one first: it fills the core cache the rest share
         with cf.ThreadPoolExecutor(max_workers=max(1, jobs)) as pool:
@@ -211,12 +217,16 @@ def run(dist: Path, port: int, build_all: bool, card: Path | None, jobs: int) ->
             size = binf.stat().st_size if ok and binf.is_file() else 0
             if not check(ok and size > 0, f"{d.name}", f"{size:,} B (room under 50,432: {50432 - size:,})" if size else "failed"):
                 say(log[-2000:])
-            bins[p["dir"]] = binf
+            bins[d.name] = binf
         if card and not check.failed:
-            say("=== the SD card ===")
-            stage = NEWUSER / "sdcard"
-            files = mkcard.make_card(progs_, stage, lambda p, d: bins[p["dir"]], platform_dir=plat)
+            say("=== the casino cart and its SD card ===")
+            cart = mkcard.make_cart(binary=lambda d: bins[d.name], platform_dir=plat, version=expected)
+            cart_file = card.with_name(f"CHGame-Casino-{expected}.chgame")
             card.parent.mkdir(parents=True, exist_ok=True)
+            data = zipio.write(cart, cart_file)
+            check(not [i for i in zipio.check(cart_file) if i.error], "the cart",
+                  f"{cart_file.name}, {len(cart.games)} games, {len(data):,} B")
+            files = runtime.prepare(cart)
             with zipfile.ZipFile(card, "w", zipfile.ZIP_DEFLATED) as z:
                 z.writestr("README.txt", CARD_README.format(version=expected))
                 for name in sorted(files):
@@ -243,9 +253,14 @@ for 3 seconds in a game goes back to the menu.
 
 The menu is part of the CHGame bootloader. A board that does not show it
 needs the menu bootloader once: in the Arduino IDE, choose Tools > Board >
-CHGame Boards > CHGame Rev0, Tools > Bootloader > SD Game Menu (Rainbow, Plain or Casino),
+CHGame Boards > CHGame Rev0, Tools > Bootloader > SD Game Menu,
 Tools > Programmer > CHGame USB,
 then Tools > Burn Bootloader.
+
+The same games come as one file, CHGame-Casino-{version}.chgame, beside this
+zip: the format games are shared in (the repository's spec/chgame.md).
+`chgame cart deploy CHGame-Casino-{version}.chgame --card E:\\` writes this
+card from it.
 
 Your own sketches: Sketch > Export Compiled Binary leaves a .chg file in the
 sketch's build folder. Copy it into GAMES (a short name, like MYGAME.CHG).

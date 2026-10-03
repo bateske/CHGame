@@ -132,18 +132,14 @@ rev0.menu.usb.serial.build.usb_flags=-DUSE_CHGAME_USB_CDC
 rev0.menu.usb.uploadonly=Upload only: no Serial (~0.7 KB smaller)
 rev0.menu.usb.uploadonly.build.usb_flags=-DUSE_CHGAME_USB_BOOTONLY
 
-# Which bootloader Burn Bootloader writes. It changes nothing in a sketch: all
-# four keep the same memory map, USB identity and upload protocol, so a sketch
-# built for one runs under the others. The three menus differ only in their
-# colours (platform/bootloader/build.sh --theme=). The sources and what each
-# one does are in platform/bootloader; bootloaders/CHGame/README.md says where
-# each binary comes from.
-rev0.menu.boot.sdmenu=SD Game Menu (Rainbow)
+# Which bootloader Burn Bootloader writes. It changes nothing in a sketch:
+# both keep the same memory map, USB identity and upload protocol, so a sketch
+# built for one runs under the other. The menu's look comes from the card
+# (GAMES/MENU.BG, spec/card.md), not from the bootloader. The sources and what
+# each one does are in platform/bootloader; bootloaders/CHGame/README.md says
+# where each binary comes from.
+rev0.menu.boot.sdmenu=SD Game Menu
 rev0.menu.boot.sdmenu.bootloader.file=CHGame/chgame_sdboot.bin
-rev0.menu.boot.sdplain=SD Game Menu (Plain)
-rev0.menu.boot.sdplain.bootloader.file=CHGame/chgame_sdboot_plain.bin
-rev0.menu.boot.sdcasino=SD Game Menu (Casino)
-rev0.menu.boot.sdcasino.bootloader.file=CHGame/chgame_sdboot_casino.bin
 rev0.menu.boot.nomenu=USB Only
 rev0.menu.boot.nomenu.bootloader.file=CHGame/chgame_boot_nomenu.bin
 

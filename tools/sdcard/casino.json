@@ -1,0 +1,31 @@
+{
+  "_comment": "The repository's cart (tools/sdcard/mkcard.py, `chgame card`), as a recipe for `chgame cart build` (tools/chcart/cli.py): the programs in menu order by sketch name, the two apps in a folder. Each sketch's chgame.json gives its title, details and SD files.",
+  "title": "CHGame Casino",
+  "author": "bateske",
+  "description": "The CHGame board package's twenty casino games, with the STL viewer and the SD card reader.",
+  "url": "https://github.com/bateske/CHGame",
+  "games": [
+    {"sketch": "CHBackgammon"},
+    {"sketch": "CHBingo"},
+    {"sketch": "CHBlackjack"},
+    {"sketch": "CHBoardwalk"},
+    {"sketch": "CHCheckers"},
+    {"sketch": "CHChess"},
+    {"sketch": "CHCraps"},
+    {"sketch": "CHCrossword"},
+    {"sketch": "CHDominoes"},
+    {"sketch": "CHFour"},
+    {"sketch": "CHMahjong"},
+    {"sketch": "CHPoker"},
+    {"sketch": "CHRoulette"},
+    {"sketch": "CHSlots"},
+    {"sketch": "CHSnakes"},
+    {"sketch": "CHSolitaire"},
+    {"sketch": "CHTicTacToe"},
+    {"sketch": "CHWordWheel"},
+    {"sketch": "CHWords"},
+    {"sketch": "CHYacht"},
+    {"sketch": "CHStlView", "folder": "APPS"},
+    {"sketch": "CHSDtoUSB", "folder": "APPS"}
+  ]
+}

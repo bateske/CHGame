@@ -138,7 +138,7 @@ def readme_paragraph(d):
             if para:
                 break
             continue
-        if s.startswith(("#", "![", "|", "```", "<")):
+        if s.startswith(("#", "![", "|", "```", "<", ">")):    # (a blockquote: a note, not the description)
             if para:
                 break
             continue

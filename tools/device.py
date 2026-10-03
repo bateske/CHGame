@@ -41,12 +41,18 @@ FQBN_DEBUG = "CHGame:ch32v:rev0:opt=oslto,rtlib=nano,periph=game"
 FQBN_RELEASE = FQBN_DEBUG + ",usb=uploadonly"
 
 
+def fqbn(sketch, debug=False):
+    """The board and options a sketch builds with: its tools/game.py's FQBN,
+    else the release or debug default."""
+    import gamecfg
+    return gamecfg.load(sketch).FQBN or (FQBN_DEBUG if debug else FQBN_RELEASE)
+
+
 def build(sketch, debug=False, flags=""):
     """Compile; returns the build folder (build/release or build/debug)."""
     sketch = paths.sketch(sketch)
     out = sketch / "build" / ("debug" if debug else "release")
-    cmd = ["arduino-cli", "compile", "-b", FQBN_DEBUG if debug else FQBN_RELEASE,
-           "--build-path", str(out)]
+    cmd = ["arduino-cli", "compile", "-b", fqbn(sketch, debug), "--build-path", str(out)]
     extra = ("-DCHGAME_DEBUG=1 " if debug else "") + flags
     if extra.strip():
         cmd += ["--build-property", "build.extra_flags=" + extra.strip()]

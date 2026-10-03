@@ -7,7 +7,8 @@ Checks the tree, runs the uploader's parity tests, builds the Go uploader
 for every host, archives it, packs the platform and writes the index, runs
 the new-user test against them (acceptance.py: a fresh arduino-cli installs
 them from a local server, every example compiles from the installed package,
-and the SD card's contents are packed from those builds), then publishes all of it as a GitHub release tagged v<version> (notes: the
+and the casino cart and its SD card's contents are made from those builds),
+then publishes all of it as a GitHub release tagged v<version> (notes: the
 matching section of platform/board/CHANGELOG.md) and re-uploads the index
 to every earlier v* release, so a user on an explicit version URL is
 offered the update too. --dry-run builds everything into out/dist/ and
@@ -140,7 +141,7 @@ def main(argv=None) -> int:
         card = DIST / f"CHGame-sdcard-{version}.zip"
         if acceptance.run(DIST, acceptance.serve.DEFAULT_PORT, True, card, acceptance.DEFAULT_JOBS):
             fail("the new-user test failed (above); nothing published")
-        assets.append(card)
+        assets += [card, card.with_name(f"CHGame-Casino-{version}.chgame")]     # (acceptance writes both)
     say("=== release assets ===")
     for f in assets:
         say(f"  {f.name:60s} {f.stat().st_size:>10,} B")

@@ -117,9 +117,17 @@ def cmd_new(a):
     return 0
 
 
-def build_recipe(recipe_path, build=True, platform_dir=None, binary=None):
+def recipe_sketches(recipe_path):
+    """The sketch names a recipe takes its games from, in order."""
+    r = json.loads(pathlib.Path(recipe_path).read_text(encoding="utf-8"))
+    return [e["sketch"] for e in r.get("games", []) if "sketch" in e]
+
+
+def build_recipe(recipe_path, build=True, platform_dir=None, binary=None, only=None):
     """A Cart from a recipe file. `binary(sketch_dir)` may supply each release
-    .bin instead of building (tools/release/acceptance.py)."""
+    .bin instead of building (tools/release/acceptance.py); `platform_dir`
+    finds the sketches in an installed board package instead of here; `only`
+    keeps the games of those sketches."""
     import paths
     r = json.loads(pathlib.Path(recipe_path).read_text(encoding="utf-8"))
     base = pathlib.Path(recipe_path).parent
@@ -127,6 +135,8 @@ def build_recipe(recipe_path, build=True, platform_dir=None, binary=None):
     for e in r.get("games", []):
         e = dict(e)
         name = e.pop("sketch")
+        if only and name not in only:
+            continue
         d = paths.sketch(name) if platform_dir is None else _in_platform(name, platform_dir)
         if binary is not None:
             g = sources.from_sketch(d, pathlib.Path(binary(d)).read_bytes())
