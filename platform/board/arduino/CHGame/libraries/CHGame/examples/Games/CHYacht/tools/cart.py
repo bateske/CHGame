@@ -11,8 +11,7 @@ from boxart import NAVY, INK, WHITE  # noqa: E402
 
 
 def draw():
-    fb = bx.canvas()
-    bx.felt(fb, NAVY, INK)
+    fb = bx.game()                                      # the games' green felt
     bx.logo(fb, bx.load_logo(HERE / "art" / "logo.txt"), 8)
     for x, y in ((14, 40), (50, 36), (86, 40), (32, 74), (68, 74)):
         bx.die(fb, x, y, 6, 28)

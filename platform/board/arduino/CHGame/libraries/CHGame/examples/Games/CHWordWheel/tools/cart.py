@@ -15,7 +15,7 @@ RING = "WHEELSOR"
 
 
 def draw():
-    fb = bx.canvas(NAVY)
+    fb = bx.game()                                      # the games' green felt
     fb.dither(0, 0, 128, 128, INK, 1)
     bx.title(fb, "WORD WHEEL", 9, scale=1)
     cx, cy, r = 64, 78, 34

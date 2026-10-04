@@ -42,7 +42,7 @@ def board(fb, y):
 
 
 def draw():
-    fb = bx.canvas(NAVY)
+    fb = bx.game()                                      # the games' green felt
     fb.dither(0, 0, 128, 44, INK, 0)
     board(fb, 92)
     man(fb, 40, 92, RED, WINE, WINE)                     # the red king: two men, crowned

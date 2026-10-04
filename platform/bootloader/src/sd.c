@@ -43,12 +43,6 @@ void __attribute__((noinline)) sd_frames(uint32_t ctl)
 {
     hal_spi_frames(ctl);
 }
-
-/* The block a read last delivered, and where: asked for again, it is still
-   there. Following a file's clusters asks for the same FAT block many times
-   running (a game's picture lies some 100 blocks in). */
-static uint32_t last_lba;
-static const uint8_t *last_dst;
 #endif
 
 /* Clocks 0xFF until a token arrives (tok: a byte other than 0xFF) or the busy
@@ -141,9 +135,6 @@ static int ident(void)
 int sd_init(void)
 {
     int rc;
-#if MENU_UI == MENU_UI_VISUAL
-    last_dst = 0;                               /* (another card, perhaps) */
-#endif
     sd_speed(SPI_BR_187K5);                     /* identification at <= 400 kHz */
     hal_sd_select(0);
     for (uint32_t k = 10; k; k--) x(0xFF);      /* >= 74 clocks with CS high */
@@ -158,28 +149,10 @@ int sd_init(void)
 int sd_read(uint32_t lba, uint8_t *dst)
 {
     int ok;
-#if MENU_UI == MENU_UI_VISUAL
-    if (dst == last_dst && lba == last_lba) return 0;
-    last_dst = 0;
-#endif
     hal_sd_select(1);
     ok = wait(0, WAIT_BUSY_MS) == 0xFF && cmd(17, hc ? lba : lba << 9) == 0 && wait(1, WAIT_TOKEN_MS) == 0xFE;
     if (ok) {
-#if MENU_UI == MENU_UI_VISUAL
-        /* Two bytes a frame at 24 MHz (CHSd streams at 24 MHz on this board):
-           about a third of the time a byte at a time takes at 12 MHz. */
-        sd_frames(HAL_SPI_16BIT | SPI_BR_24M << 3);
-        for (uint8_t *p = dst; p < dst + 512; p += 2) {
-            uint32_t v = hal_spi_xfer16(0xFFFF);
-            p[0] = (uint8_t)(v >> 8);
-            p[1] = (uint8_t)v;
-        }
-        sd_frames(SD_SPI_BR << 3);
-        last_dst = dst;
-        last_lba = lba;
-#else
         for (uint32_t i = 0; i < 512; i++) dst[i] = x(0xFF);
-#endif
         x(0xFF);                                /* the CRC16, unused */
         x(0xFF);
     }

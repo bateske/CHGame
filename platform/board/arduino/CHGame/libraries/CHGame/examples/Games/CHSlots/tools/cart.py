@@ -19,8 +19,7 @@ def symbol(k, row=0):
 
 
 def draw():
-    fb = bx.canvas()
-    bx.felt(fb, WINE, INK)
+    fb = bx.game()                                      # the games' green felt
     bx.logo(fb, bx.load_logo(HERE / "art" / "logo.txt"), 7)
     fb.fill_round(8, 34, 112, 78, 6, INK)                # the machine
     fb.fill_round(10, 35, 108, 74, 5, GOLD)

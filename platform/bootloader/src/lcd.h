@@ -68,7 +68,12 @@ void lcd_text(uint32_t x, uint32_t y, const char *s, uint32_t n, uint32_t c);
 #define LCD_DARK 6
 extern uint32_t lcd_dark;
 /* The framebuffer slides in over the panel's picture from one side, in
-   eight steps. */
+   LCD_SLIDE_STEPS steps, each followed by LCD_SLIDE_STEP_MS (with the
+   sending, about 0.25 s in all). A fade's step (LCD_DARK of them each way)
+   is followed by LCD_FADE_STEP_MS. Tune the feel here. */
+#define LCD_SLIDE_STEPS   16
+#define LCD_SLIDE_STEP_MS 6
+#define LCD_FADE_STEP_MS  25
 #define LCD_FROM_BOTTOM 0
 #define LCD_FROM_TOP    1
 #define LCD_FROM_RIGHT  2

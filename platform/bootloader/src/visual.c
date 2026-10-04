@@ -14,10 +14,15 @@
  *   UP/DOWN      the row before or after, round the folder
  *   LEFT/RIGHT   the folder beside: at the top, GAMES/ and its folders in a
  *                ring; below the top, the folders of the same parent
- *   A/START      a game: play it (install first if need be); a folder: open
- *                it; a cover: its first row
- *   B            below the top: back up a level; at the top: the about page
- *                (SYSTEM.PIC), which any key closes
+ *   A            a game: play it (install first if need be); a folder: open
+ *                it; a folder's cover: its first row; the cart's cover
+ *                (GAMES/'s): the installed program's picture, where A runs
+ *                it and B goes back
+ *   B            in a folder's folder: up a level; at the root or in one of
+ *                its folders: the cart's cover; on that cover: the about
+ *                page (SYSTEM.PIC), which any key closes
+ *   SELECT       the cart's cover from anywhere; at the root: the about page
+ *   START        nothing (held at power-on: the menu, not the launch game)
  *
  * Each picture is read from the card when it is shown: there is RAM for one.
  * A screen the card cannot give is drawn from a built-in icon (icons.h).
@@ -45,6 +50,11 @@
 #define BAR_W       108u
 #define BAR_H       6u
 #define PIC_SECTORS (CARD_BG_BYTES / 512)
+#if LCD_TURNS
+#define MARK        LCD_RAINBOW /* the installed game's border: the turning colour */
+#else
+#define MARK        CARD_C_TEXT /* ...the menu's near-white, #FFF4D6 (static) */
+#endif
 
 static uint32_t up[DEPTH];      /* the folders above `here`: up[0] is GAMES/ */
 static uint32_t row;            /* 0: the folder's cover; k: games[k - 1] */
@@ -113,7 +123,12 @@ static void show(void)
     if (!g->clus) screen(CARD_SYS_INSTALLED, ICON_GAME);       /* the program in flash */
     else if (g->flags & G_BAD) screen(CARD_SYS_ERROR + g->err - 1, ICON_ERROR);
     else if (!g->pic || pic(g->clus, g->size, g->pic)) screen(CARD_SYS_GAME, ICON_GAME);
-    if (g->flags & G_INSTALLED) lcd_fill(2, 2, 4, 4, CARD_C_MARK);   /* the chip */
+    if (g->flags & G_INSTALLED) {          /* the installed game: a border round the picture */
+        lcd_fill(0, 0, LCD_W, 1, MARK);
+        lcd_fill(0, LCD_H - 1, LCD_W, 1, MARK);
+        lcd_fill(0, 0, 1, LCD_H, MARK);
+        lcd_fill(LCD_W - 1, 0, 1, LCD_H, MARK);
+    }
 }
 
 /* Whole frames toward lcd_dark == to: 0 the picture, LCD_DARK black. */
@@ -122,6 +137,7 @@ static void fade(uint32_t to)
     while (lcd_dark != to) {
         lcd_dark += lcd_dark < to ? 1 : (uint32_t)-1;
         lcd_flush(0, LCD_H);
+        sys_delay_ms(LCD_FADE_STEP_MS);
     }
 }
 
@@ -170,6 +186,14 @@ static void enter(uint32_t i, int app)  /* into the folder of entry i */
     up[depth++] = here;
     here = games[i].clus;
     scan(app);
+}
+
+static void home(int app)              /* GAMES/, on the cart's cover */
+{
+    if (depth) here = up[0];
+    depth = 0;
+    scan(app);
+    row = 0;
 }
 
 static uint32_t leave(int app)          /* a level up; the entry of the folder left */
@@ -225,7 +249,7 @@ static int seek(uint32_t want, int app)
     }
 }
 
-/* A or START on entry i: a folder opens on its first row (the installed game
+/* A on entry i: a folder opens on its first row (the installed game
    if it is there), a game runs (installed first if need be). Returns only for
    a folder (0) or an error (INST_E_*). */
 static int start(uint32_t i, int app)
@@ -331,7 +355,7 @@ void menu_main(int app, int launch)
             continue;
         }
         k = keys();
-        if (modal) {                        /* an error or the about page: any key closes it */
+        if (modal == 1) {                   /* an error or the about page: any key closes it */
             if (k) {
                 modal = 0;
                 show();
@@ -340,9 +364,20 @@ void menu_main(int app, int launch)
             continue;
         }
 #if CHBOOT_APP
-        if (k & BTN_SELECT) boot_reset(CHGAME_BOOTREQ_USB);
+        if (k & BTN_START) boot_reset(CHGAME_BOOTREQ_USB);  /* (the dry run's way out; START does nothing in the menu) */
 #endif
-        if (!row && k & (BTN_A | BTN_START)) k = BTN_DOWN;   /* A on a cover: its first row */
+        if (modal) {                        /* the installed program, from the cart's cover: A runs it, B goes back */
+            if (!(k & (BTN_A | BTN_B))) continue;
+            modal = 0;
+            if (k & BTN_B) k = BTN_SELECT;
+        }
+        if (k & BTN_A && !row) {            /* A on a cover */
+            if (depth) k = BTN_DOWN;        /* a folder's: its first row */
+            else if (seek(G_INSTALLED, app)) {   /* the cart's: the installed program's picture */
+                modal = 2;
+                k = 0;                      /* (the next A runs it) */
+            }
+        }
         if (k & (BTN_UP | BTN_DOWN)) {
             n = ngames + 1;
             do row = (row + n + (k & BTN_UP ? (uint32_t)-1 : 1u)) % n;
@@ -354,19 +389,20 @@ void menu_main(int app, int launch)
             lcd_slide(k & BTN_LEFT ? LCD_FROM_LEFT : LCD_FROM_RIGHT);
             continue;
         }
-        if (k & BTN_B) {
-            if (depth > 1) row = leave(app) + 1;
-            else if (!pic(sys.clus, sys.size, CARD_SYS_ABOUT * PIC_SECTORS)) {
+        if (k & (BTN_B | BTN_SELECT)) {
+            if (k & BTN_B && depth > 1) row = leave(app) + 1;  /* B in a folder's folder: up a level */
+            else if (depth || (row && k & BTN_B)) home(app);    /* SELECT, or B at the root: the cart's cover */
+            else if (!pic(sys.clus, sys.size, CARD_SYS_ABOUT * PIC_SECTORS)) {   /* ...there (SELECT: at the root): about */
                 lcd_flush(0, LCD_H);
                 modal = 1;
                 continue;
             } else show();                  /* (no about page: the row's picture back, as on the panel) */
         }
-        if (row && k & (BTN_A | BTN_START)) rc = start(row - 1, app);
+        if (row && k & BTN_A) rc = start(row - 1, app);
         if (here != was) crossfade();       /* in or out of a folder: through black */
         else if (row != old) {              /* the same folder: it slides in */
             show();
-            lcd_slide(k & BTN_UP ? LCD_FROM_TOP : LCD_FROM_BOTTOM);
+            lcd_slide(k & (BTN_UP | BTN_B | BTN_SELECT) ? LCD_FROM_TOP : LCD_FROM_BOTTOM);
         }
     }
 }

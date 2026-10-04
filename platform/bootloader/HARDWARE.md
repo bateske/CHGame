@@ -103,13 +103,13 @@ installed game stay. `UP` is the uploader as above (`chgame uploader` or
    --ui=visual`, then `UP flash platform/bootloader/build/app-visual/chgame_boot.bin
    --run --port <PORT>` (or `release/chgame_visual_dryrun.bin`). The menu
    appears as a program: check the points of step 4 that need no install. A
-   on a game shows the check mark and writes nothing; SELECT leaves.
+   on a game shows the check mark and writes nothing; START leaves.
 3. **Install it.** `./build.sh release --ui=visual`, then
    `UP selfupdate platform/bootloader/build/release-visual/chgame_boot.bin --yes`
    (or `release/chgame_sdvisual.bin`). `UP info` reports bootloader v3.
 4. **What to check and report:**
    - **Power-on.** The cover fades in (CHGAME CASINO), then, after about
-     1.5 s, the installed game's picture with the red chip in its corner. No
+     1.5 s, the installed game's picture with a one-pixel border round it (rainbow; Static: white). No
      game installed: the cover stays.
    - **The look.** Every picture as in
      [docs/visual_cards.png](docs/visual_cards.png): colours, no tearing.
@@ -123,11 +123,15 @@ installed game stay. `UP` is the uploader as above (`chgame uploader` or
      cover.
    - **Install.** A on a game: the bar over its picture fills, the screen
      fades and the game starts. Hold START 3 s: back to the menu, on that
-     game, with the chip.
-   - **B at the top:** the about page; any key closes it.
+     game, with the border.
+   - **The keys.** B from a game at the root or in a genre folder: the cart's
+     cover; B there: the about page (any key closes it). SELECT from inside a
+     folder: the cart's cover; SELECT there: the about page. START: nothing.
+     A on the cart's cover: the installed game's picture; A plays it, B goes
+     back to the cover, other keys do nothing.
    - **USB.** `chgame upload` with the menu up: the USB plug screen, then the
      sketch runs. At the next power-on it is the first picture after the
-     cover (INSTALLED, with the chip); A runs it.
+     cover (INSTALLED, with the border); A runs it.
    - **Errors.** A CHG file cut short in `GAMES/APPS/` (through the reader):
      its picture is ERROR 5, and A shows it too.
    - **Launch.** `chgame cart launch out/CHGame-Casino.chgame chfour`,

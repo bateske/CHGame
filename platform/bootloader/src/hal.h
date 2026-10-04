@@ -53,7 +53,6 @@ void     hal_spi_speed(uint32_t br);
 uint8_t  hal_spi_xfer(uint8_t b);
 void     hal_spi_frames(uint32_t ctl);
 void     hal_spi_put16(uint32_t v);
-uint32_t hal_spi_xfer16(uint32_t v);
 void     hal_sd_select(int on);
 void     hal_lcd_select(int on);
 void     hal_lcd_dc(int data);
@@ -137,14 +136,6 @@ static inline void hal_spi_put16(uint32_t v)
 {
     while (!(SPI1->STATR & SPI_STATR_TXE)) { }
     SPI1->DATAR = (uint16_t)v;
-}
-
-/* One 16-bit frame out and its echo back (the card's data, first byte high). */
-static inline uint32_t hal_spi_xfer16(uint32_t v)
-{
-    SPI1->DATAR = (uint16_t)v;
-    while (!(SPI1->STATR & SPI_STATR_RXNE)) { }
-    return SPI1->DATAR;
 }
 
 static inline void hal_sd_select(int on)  { if (on) GPIOB->BCR = 1u << 11; else GPIOB->BSHR = 1u << 11; }

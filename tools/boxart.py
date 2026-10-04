@@ -7,8 +7,8 @@ menu's four (#FFF4D6, #808080, #000000, #D62020). This module draws them as
 the games draw their title screens, on a pixkit.FB of HOUSE palette indices:
 
     import boxart as bx
-    fb = bx.canvas()
-    bx.felt(fb, bx.FELT, bx.FELT_DK)            # felt, dithered edges, gold frame
+    fb = bx.game()                              # a game: green felt, gold frame
+                                                # (bx.folder(): blue felt; bx.cart(): black)
     bx.logo(fb, bx.load_logo(path), 8)          # a game's logo.txt in the titles' gold
     bx.title(fb, "CHESS", 8, scale=2)           # or its name in the display font
     ...                                         # charms: fb.sprite(), bx.card(), bx.die(), pixkit.chip()
@@ -49,6 +49,52 @@ def canvas(fill=INK):
 
 
 # ---- backgrounds ------------------------------------------------------------------
+# The pictures made here keep to one rule, so a folder never passes for a game:
+# a folder is the navy gradient with its art in blues, folder() then blues();
+# the cart's own cover (the splash) is black, cart(); every game is on the
+# dark green felt, game(). (The apps' secret-agent screens show a style of
+# their own, as a user's art may.)
+
+def game():
+    """A game's picture, ready for its charm: green felt, gold frame."""
+    fb = canvas()
+    felt(fb)
+    return fb
+
+
+def folder():
+    """A folder's cover, ready for its word and charm: the navy gradient (dark
+    above, a navy band below) in a frame. Draw on it in any colours, then
+    blues() for the folders' palette."""
+    fb = canvas(INK)
+    fb.dither(0, 0, 128, 128, NAVY, 0)
+    fb.fill_rect(3, 74, 122, 51, NAVY)
+    fb.rect(2, 2, 124, 124, GOLD)
+    return fb
+
+
+# Every house colour to its blue: the titles' gold ramp to white, cyan and
+# blue, reds and greens to blues, warm lights to silver and white. Black, navy, the
+# blues, silver, white and the menu's colours stay.
+BLUES = {FX_B: WHITE, GOLD: CYAN, WOOD: BLUE, WINE: INK, RED: BLUE, SKIN: SILVER,
+         FELT_DK: NAVY, FELT: BLUE, FELT_LT: CYAN, CREAM: WHITE}
+
+
+def blues(fb, box=(0, 0, 128, 128)):
+    """The folders' palette: every pixel in box through BLUES."""
+    x0, y0, w, h = box
+    for y in range(y0, y0 + h):
+        for x in range(x0, x0 + w):
+            i = y * 128 + x
+            fb.p[i] = BLUES.get(fb.p[i], fb.p[i])
+
+
+def cart():
+    """The cart's cover (the splash): black, gold frame."""
+    fb = canvas(INK)
+    fb.rect(2, 2, 124, 124, GOLD)
+    return fb
+
 
 def felt(fb, base=FELT, dark=FELT_DK, frame=GOLD):
     """The games' title backdrop (CHBlackjack's feltBackdrop): `base`, its
@@ -434,12 +480,13 @@ def titled(fb, s, y_mid, max_lines=3):
 
 def shot_backdrop(fb, shot):
     """A game's screenshot (PNG or GIF bytes, the screen at any scale; its
-    first frame), dimmed into four shades of navy behind everything else."""
+    first frame), dimmed into four shades of the games' green behind
+    everything else."""
     from PIL import Image
     im = Image.open(io.BytesIO(shot))
     im.seek(0)
     im = im.convert("L").resize((128, 128), Image.NEAREST)
-    shades = [INK, NAVY, BLUE, SILVER]
+    shades = [INK, FELT_DK, FELT, FELT_LT]
     lum = im.tobytes()
     for i, v in enumerate(lum):
         fb.p[i] = shades[min(3, v // 72)]
@@ -449,28 +496,26 @@ def placeholder(title_text, shot=None):
     """A game without a picture of its own: its title over its first gameplay
     frame (dimmed), or on felt. What `chgame export` and the cart tools give
     it (spec/card.md keeps it outside the format: the cart carries the PNG)."""
-    fb = canvas()
+    fb = game()
     if shot:
         shot_backdrop(fb, shot)
         fb.fill_rect(3, 40, 122, 48, INK)
         fb.hline(3, 39, 122, GOLD)
         fb.hline(3, 88, 122, GOLD)
-    else:
-        felt(fb)
     fb.rect(2, 2, 124, 124, GOLD)
     titled(fb, title_text, 64)
     return png(fb)
 
 
 def folder_cover(name):
-    """A folder without a cover: a folder and its name, on navy."""
-    fb = canvas(NAVY)
-    fb.rect(2, 2, 124, 124, GOLD)
+    """A folder without a cover: a folder and its name, in the folders' blues."""
+    fb = folder()
     fb.fill_round(36, 14, 22, 10, 2, WOOD)
     fb.fill_round(36, 19, 56, 35, 3, WOOD)
     fb.fill_round(38, 23, 52, 29, 2, GOLD)
     fb.hline(40, 27, 48, WHITE)
     titled(fb, name, 88, 2)
+    blues(fb)
     return png(fb)
 
 

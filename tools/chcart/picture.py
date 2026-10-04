@@ -14,8 +14,9 @@ menu.colors. #FF00FF is colour 15: on a Rainbow bootloader it turns through
 the colour wheel, so use it on purpose (a logo, a glint). convert() makes any
 image fit, as `chgame background` does for the list menu's picture.
 
-What the bootloader draws over a picture (src/visual.c): the installed
-game's chip, red, at x 2-5, y 2-5; while installing, a bar over rows 110-119
+What the bootloader draws over a picture (src/visual.c): over the installed
+game, a border one pixel wide round the whole picture in colour 15 (the
+rainbow; Static: #FFF4D6); while installing, a bar over rows 110-119
 (x 8-119: a frame in colour 15, black inside, filling in colour 15). The rest
 is the picture's own.
 """
@@ -26,9 +27,9 @@ import pathlib
 
 from . import background, model, runtime
 
-# src/visual.c's BAR_X, BAR_Y, BAR_W, BAR_H and the chip
+# src/visual.c's BAR_X, BAR_Y, BAR_W, BAR_H and the installed game's border
 BAR_X, BAR_Y, BAR_W, BAR_H = 10, 112, 108, 6
-CHIP = (2, 2, 4, 4)
+BORDER = ((0, 0, 128, 1), (0, 127, 128, 1), (0, 0, 1, 128), (127, 0, 1, 128))
 
 
 def convert(src, fit="cover", dither=False):
@@ -42,12 +43,12 @@ def ready(png):
 
 def template():
     """A blank picture to paint on: the marks the menu draws over a picture
-    shown where they go (the chip corner, the install bar's rows)."""
+    shown where they go (the installed game's border, the install bar's rows)."""
     from PIL import Image, ImageDraw
     im = Image.new("RGB", (128, 128), (32, 32, 40))
     d = ImageDraw.Draw(im)
     d.rectangle([BAR_X - 2, BAR_Y - 2, BAR_X + BAR_W + 1, BAR_Y + BAR_H + 1], outline=(128, 128, 128))
-    d.rectangle([CHIP[0], CHIP[1], CHIP[0] + CHIP[2] - 1, CHIP[1] + CHIP[3] - 1], fill=(214, 32, 32))
+    d.rectangle([0, 0, 127, 127], outline=(255, 0, 255))
     background.text(lambda x, y, c: d.point((x, y), fill=c), 22, 58, "YOUR PICTURE", (255, 244, 214))
     background.text(lambda x, y, c: d.point((x, y), fill=c), 34, 100, "THE BAR", (128, 128, 128))
     b = io.BytesIO()
@@ -55,9 +56,9 @@ def template():
     return b.getvalue()
 
 
-def preview(png, phase=0, scale=3, style="rainbow", chip=False, bar=None, dark=0):
+def preview(png, phase=0, scale=3, style="rainbow", mark=False, bar=None, dark=0):
     """A PIL image of the picture as the panel shows it (RGB565): with the
-    installed game's chip, the install bar at `bar` (0..1, None: none), every
+    installed game's border (mark), the install bar at `bar` (0..1, None: none), every
     colour halved `dark` times (a fade). Colour 15 is the rainbow's colour at
     `phase`, or #FF00FF (style "static")."""
     from PIL import Image
@@ -73,8 +74,9 @@ def preview(png, phase=0, scale=3, style="rainbow", chip=False, bar=None, dark=0
         for yy in range(y, y + h):
             for xx in range(x, x + w):
                 idx[yy * 128 + xx] = c
-    if chip:
-        fill(*CHIP, 14)
+    if mark:
+        for edge in BORDER:
+            fill(*edge, 15 if style == "rainbow" else 11)
     if bar is not None:
         fill(BAR_X - 2, BAR_Y - 2, BAR_W + 4, BAR_H + 4, 15)
         fill(BAR_X - 1, BAR_Y - 1, BAR_W + 2, BAR_H + 2, 13)
@@ -89,7 +91,7 @@ def save_preview(png, path, scale=3, style="rainbow"):
     fading out (.gif), as the visual menu shows a game."""
     path = pathlib.Path(path)
     if path.suffix.lower() != ".gif":
-        preview(png, scale=scale, style=style, chip=True).save(path)
+        preview(png, scale=scale, style=style, mark=True).save(path)
         return
     frames, ph = [], 0
     for d in range(6, -1, -1):

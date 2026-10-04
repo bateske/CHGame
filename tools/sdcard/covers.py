@@ -35,9 +35,9 @@ def logo(fb, y):
 
 
 def cover():
-    """The splash: CHGAME CASINO over a hand of cards, dice and chips."""
-    fb = bx.canvas()
-    bx.felt(fb)
+    """The splash: CHGAME CASINO over a hand of cards, dice and chips, on the
+    cart cover's black."""
+    fb = bx.cart()
     y = logo(fb, 9)
     bx.title(fb, "CASINO", y + 4, scale=2)
     cards = bx.layer()
@@ -53,13 +53,12 @@ def cover():
 
 
 def word_cover(word, charm):
-    """A folder's cover: its name, big, on the dark, over its charm."""
-    fb = bx.canvas(INK)
-    fb.dither(0, 0, 128, 128, NAVY, 0)
-    fb.fill_rect(3, 74, 122, 51, NAVY)
+    """A folder's cover: its name, big, over its charm, on the navy gradient,
+    all in the folders' blues."""
+    fb = bx.folder()
     charm(fb)
-    fb.rect(2, 2, 124, 124, GOLD)
     bx.title(fb, word, 16, scale=2)
+    bx.blues(fb)
     return fb
 
 
@@ -117,13 +116,17 @@ def words_charm(fb):
 
 
 def apps_cover():
-    """The apps' folder in the apps' own look: green on black, the corner marks."""
+    """The apps' folder: a folder like the others (the navy gradient), wearing
+    the apps' secret-agent look: their green lettering, the corner marks and
+    scan lines of their screens, the SD card and a wireframe. Two styles mixed,
+    on purpose: what a cart of a user's own looks like next to ours."""
     sd = recipe("CHSDtoUSB")
-    fb = bx.canvas(INK)
-    for y in range(52, 124, 8):
-        fb.hline(4, y, 120, FELT_DK)
-    sd.corners(fb, 4, 4, 120, 120, bx.FELT_LT, 8)
-    bx.title(fb, "APPS", 16, scale=2, colours=sd.GREEN, shadow=FELT_DK)
+    fb = bx.folder()
+    fb.rect(2, 2, 124, 124, bx.CYAN)                    # the folders' frame (blues() makes theirs cyan)
+    for y in range(78, 124, 6):                         # the scan lines, over the navy band
+        fb.hline(4, y, 120, INK)
+    sd.corners(fb, 6, 6, 116, 116, bx.FELT_LT, 8)
+    bx.title(fb, "APPS", 16, scale=2, colours=sd.GREEN, shadow=INK)
     sd.sd_card(fb, 22, 64)
     stl = recipe("CHStlView")
     v, edges = stl.icosahedron()

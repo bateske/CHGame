@@ -38,8 +38,7 @@ def card(fb, x, y):
 
 
 def draw():
-    fb = bx.canvas()
-    bx.felt(fb, NAVY, INK)
+    fb = bx.game()                                      # the games' green felt
     bx.logo(fb, bx.load_logo(HERE / "art" / "logo.txt"), 7)
     card(fb, 46, 66)
     ball(fb, 24, 52, RED, "7")

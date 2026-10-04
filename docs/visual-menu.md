@@ -35,13 +35,15 @@ the Static style they stay magenta, as painted.
 |---|---|
 | UP / DOWN | the picture before or after: the folder's cover, then its games (and the folders inside it), round and round |
 | LEFT / RIGHT | the folder beside this one, on its cover. At the top: the card's own games and its folders, in a ring |
-| A or START | play the game (installed first if need be); open a folder; on a cover, go to its first game |
-| B | back out of a folder inside a folder; at the top, the about page (how the menu works). Any key closes it |
+| A | play the game (installed first if need be); open a folder; on a folder's cover, go to its first game. On the card's own cover: the installed game's picture, then A plays it and B goes back |
+| B | back: out of a folder inside a folder; from anywhere else, to the card's cover. On the card's cover, the about page (how the menu works). Any key closes it |
+| SELECT | straight back to the card's cover from anywhere; there, the about page |
+| START | nothing (in a game, hold it 3 s to come back here) |
 
 - **Switching on.** The card's cover appears while the menu looks for the
-  game you played last, then that game's picture comes up. It carries a red
-  chip in its top-left corner, which marks the installed game. A plays it at
-  once and writes nothing.
+  game you played last, then that game's picture comes up. A one-pixel
+  border round the whole picture, turning through the rainbow (white on a
+  Static bootloader), marks the installed game. A plays it at once and writes nothing.
 - **Moving.** The next picture slides in from the side you pressed: up or
   down within a folder, left or right to the folder beside. Into or out of a
   folder (A, B), the screen fades through black.
@@ -52,7 +54,7 @@ the Static style they stay magenta, as painted.
   the game if need be and starts it. Holding START while switching on gives
   you the menu instead.
 - **A sketch you uploaded** that is not on the card comes up as the first
-  picture after the cover, with the chip. A runs it.
+  picture after the cover, with the border. A runs it.
 - **Errors** are a picture each, numbered as in [sd-menu.md](sd-menu.md).
   Any key goes back. If the card cannot be read at all, the menu draws its
   own built-in screens: an error triangle, a USB plug for an upload, an
@@ -84,12 +86,12 @@ Every picture is a 128x128 PNG, opaque, with **at most 11 colours** besides
 rainbow colour, so use it on purpose. The palette in
 [tools/art/common/bootloader_palette.ACT](../tools/art/common/bootloader_palette.ACT)
 follows the rule and works in any paint program. Over a game's picture the
-menu draws only the installed game's chip (x 2-5, y 2-5) and, while
-installing, the bar over rows 110-119. Keep anything important clear of
+menu draws only the installed game's border (the outermost pixel all round) and,
+while installing, the bar over rows 110-119. Keep anything important clear of
 those spots.
 
 ```
-chgame picture --template my-art.png           # a blank picture with the chip and the bar marked
+chgame picture --template my-art.png           # a blank picture with the border and the bar marked
 chgame picture my-art.png --preview p.gif      # as the menu shows it: fading in, installing, fading out
 chgame picture photo.jpg --out my-art.png      # any image made to follow the rule (scaled, colours reduced)
 chgame picture my-art.png --card E:\           # straight onto a card as its cover (the splash)
@@ -115,8 +117,7 @@ Python recipe, `tools/cart.py`, using the house style in
 import boxart as bx
 
 def draw():
-    fb = bx.canvas()
-    bx.felt(fb)                                      # felt, dithered edges, a gold frame
+    fb = bx.game()                                   # green felt, dithered edges, a gold frame
     bx.logo(fb, bx.logo_from_assets(HERE.parent), 8) # the game's logo, in the titles' gold
     cards = bx.layer()                               # charms: from the game's own art
     bx.card(cards, 0, 0, "A", "s")
@@ -130,8 +131,12 @@ def draw():
 is up to date, and `chgame boxart --sheet out.png` puts them all side by
 side. The house style is the games' own title screens: the game's logo, or
 its name in the display font, in gold over felt; one bold charm from its own
-sprites; a gold frame. Folders are one big gold word on the dark, so a
-folder never looks like a game. The two apps use their own green and cyan.
+sprites; a gold frame; every game on the dark green felt (`bx.game()`).
+**A folder never looks like a game:** every folder is the navy gradient with
+its word and charm in blues (`bx.folder()`, then `bx.blues()`), and the
+cart's own cover is black (`bx.cart()`). Art of your own needn't follow any
+of it: the two apps wear their own secret-agent style, and the APPS folder
+mixes it with the folders' navy, the way a cart of yours sits beside these.
 
 ![Every cover and game picture on the casino card, as the visual menu shows them](../platform/bootloader/docs/visual_cards.png)
 
@@ -148,7 +153,7 @@ rebuild the bootloader. The PC suite fails if `src/icons.h` is out of date.
 ## For developers
 
 - **The bootloader:** [platform/bootloader](../platform/bootloader).
-  `build.sh release --ui=visual [--style=static]` builds it (12,028 B, 260 B
+  `build.sh release --ui=visual [--style=static]` builds it (12,080 B, 208 B
   spare); `src/visual.c` is the menu. It shares the card's code with the
   list menu (`src/card.c`). [SIZES.md](../platform/bootloader/SIZES.md) says
   where every byte went: no font and no text paid for the pictures, the

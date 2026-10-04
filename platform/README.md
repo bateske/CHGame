@@ -192,8 +192,8 @@ shown one picture at a time, no text, as the Arduboy FX does
 ([../docs/visual-menu.md](../docs/visual-menu.md)). The card's cover at
 power-on, the folders' covers (LEFT/RIGHT), the games' pictures (UP/DOWN;
 each in its CHG file), an about page, its own screens from the card
-(`SYSTEM.PIC`) and built-in icons when the card cannot give one. 12,028 B
-(260 B free), Rainbow and Static; Burn Bootloader offers both beside the
+(`SYSTEM.PIC`) and built-in icons when the card cannot give one. 12,080 B
+(208 B free), Rainbow and Static; Burn Bootloader offers both beside the
 list menu. The list and visual menus share `bootloader/src/card.c`; the
 list builds stayed byte-identical. Not yet run on a board.
 
