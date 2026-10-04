@@ -91,25 +91,33 @@ def dpad(fb, x, y, lit):
         fb.fill_rect(x + 14, y + 8, 6, 5, GOLD)
 
 
+def select_key(fb, x, y):
+    """SELECT: a grey pill."""
+    fb.fill_round(x, y + 3, 19, 7, 3, INK)
+    fb.fill_round(x, y + 2, 19, 7, 3, GREY)
+
+
 def about():
     fb = bx.canvas(NAVY)
     frame(fb)
     bx.title(fb, "HOW IT WORKS", 7, scale=1)
-    y = 25
+    y = 22
     dpad(fb, 8, y, "ud")
     bx.small(fb, "GAMES IN", y + 2, CREAM, 36)
     bx.small(fb, "A FOLDER", y + 11, CREAM, 36)
-    y += 24
+    y += 23
     dpad(fb, 8, y, "lr")
     bx.small(fb, "FOLDERS", y + 2, CREAM, 36)
     bx.small(fb, "SIDE BY SIDE", y + 11, CREAM, 36)
-    y += 25
+    y += 24
     key(fb, 13, y, "A")
     bx.small(fb, "PLAY, OPEN", y + 2, CREAM, 36)
-    key(fb, 13, y + 13, "B", BLUE)
-    bx.small(fb, "BACK, THIS PAGE", y + 15, CREAM, 36)
-    bx.small(fb, "IN A GAME, HOLD", 103, GOLD)
-    bx.small(fb, "START 3 S: BACK HERE", 112, GOLD)
+    key(fb, 13, y + 12, "B", BLUE)
+    bx.small(fb, "BACK", y + 14, CREAM, 36)
+    select_key(fb, 9, y + 24)
+    bx.small(fb, "HOME, THIS PAGE", y + 26, CREAM, 36)
+    bx.small(fb, "IN A GAME, HOLD", 106, GOLD)
+    bx.small(fb, "START 3 S: BACK HERE", 115, GOLD)
     return fb
 
 
@@ -161,12 +169,12 @@ def folder_art(fb, x, y, body=GOLD, dark=WOOD):
 
 
 def folder():
-    fb = bx.canvas(INK)
-    frame(fb, GOLD)
+    fb = bx.folder()                                   # in a folder's place: a folder's look
     folder_art(fb, 36, 18)
     bx.title(fb, "FOLDER", 70, scale=1)
     bx.small(fb, "WITHOUT A COVER", 94, CREAM)
     bx.small(fb, "A: OPEN IT", 113, GOLD)
+    bx.blues(fb)
     return fb
 
 

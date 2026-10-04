@@ -8,7 +8,9 @@ from `tools/size_report.py`.
 
 **The reservation:** 12,288 B at 0x0000-0x2FFF, unchanged, so `APP_START`
 stays at 0x3000 and every game keeps its 50,944 B. The size gate (gate A) is
-a boot image of at most 12,288 B with at least 256 B to spare.
+a boot image of at most 12,288 B with at least 256 B to spare; for the
+visual menu, by the owner's choice (2026-10-03, its key map), 192 B
+(`build.sh` passes `--margin 192` for `--ui=visual`).
 
 ## Current builds (2026-10-03, menu v2 and the visual menu)
 
@@ -16,13 +18,13 @@ a boot image of at most 12,288 B with at least 256 B to spare.
 |---|---|---|---|---|---|---|---|
 | **release** (list menu + USB upload + self-update; rainbow) | 11,228 | 596 | 84 | **11,908** | **380** | 17,704 | **20,448** |
 | release `--style=static` | 11,004 | 596 | 84 | 11,684 | 604 | 17,564 | 20,308 |
-| **release `--ui=visual`** (the visual menu; rainbow) | 11,372 | 584 | 72 | **12,028** | **260** | 17,544 | **20,264** |
-| release `--ui=visual --style=static` | 11,188 | 584 | 72 | 11,844 | 444 | 17,532 | 20,252 |
+| **release `--ui=visual`** (the visual menu; rainbow) | 11,424 | 580 | 76 | **12,080** | **208** | 17,536 | **20,256** |
+| release `--ui=visual --style=static` | 11,240 | 580 | 76 | 11,896 | 392 | 17,524 | 20,244 |
 | locked (list menu + USB upload) | 11,012 | 496 | 80 | 11,588 | 700 | 17,704 | 20,344 |
-| locked `--ui=visual` | | | | 11,724 | 564 | | 20,164 |
+| locked `--ui=visual` | | | | 11,784 | 504 | | 20,156 |
 | nomenu (USB upload + self-update, for HW2a) | 4,728 | 596 | 76 | 5,400 | 6,888 | 984 | 3,720 |
 | app (the list menu as a program at 0x3000, dry run) | 6,392 | 0 | 16 | 6,408 | - | 16,580 | 18,660 |
-| app `--ui=visual` (the visual menu's dry run) | 6,664 | 0 | 8 | 6,672 | - | 16,544 | 18,616 |
+| app `--ui=visual` (the visual menu's dry run) | 6,828 | 0 | 8 | 6,836 | - | 16,536 | 18,608 |
 
 Both faces share the card's code (`src/card.c`); `--ui=` picks `src/menu.c`
 or `src/visual.c`. Splitting `card.c` out of `menu.c` left every list build
@@ -83,6 +85,10 @@ Notes:
 | Visual: one cover lookup, `light()` on the USB path | 11,996 | 292 | Gate A passes. Static 11,744 |
 | Visual: pixels as 16-bit frames at 24 MHz | 11,992 | 296 | After the first board run ("pretty damn slow": about 75 ms a screen, 46 instructions a pixel through `px()`, `out()` and the save/restore millicode, each byte awaiting its echo at 12 MHz). `send()` now writes one 16-bit frame a pixel, queued, at 24 MHz, as CHGfx does (`hal_spi_frames()`, `hal_spi_put16()`): about 11 instructions a pixel, some 19 ms a screen, so a slide (4.5 screens) about 90 ms and a folder change (12) about 230 ms. Paid for by dropping the rows-with-colour-15 table (`shows[]`, 128 B of RAM too): each 40 ms rainbow step resends the whole picture. Static 11,808 |
 | Visual: sideways slides, faster card reads | 12,028 | 260 | The owner's Arduboy habit: LEFT/RIGHT slide the folder beside in from that side (`send()` takes a column window too; +116 B), A and B into and out of a folder, and the cover to the installed game at power-on, still fade. Card reads (+72 B): a block's 512 bytes as 16-bit frames at 24 MHz (the clock CHSd streams at on this board), and a block asked for again into the same buffer is not read again, so following a file's clusters reads its FAT block once instead of at every cluster (about 6 reads saved on the way into a game's picture). Paid for by: the SPI clock changes, the panel's byte and the card's byte through one out-of-line function each (`sd_frames()`, `sd_x()`; -68 B), CASET only per send, and three size flags for this build alone (`build.sh`: `-fno-guess-branch-probability -fno-shrink-wrap -fno-tree-scev-cprop`, -84 B; the pixel and card loops compile as before). Static 11,844 |
+| Visual: paced animations | 12,020 | 268 | The owner, after the speed-ups: "so good now it's actually too fast". A slide in 16 steps (it was 8), each followed by 6 ms; a fade's 6 steps each way followed by 25 ms (`LCD_SLIDE_STEPS`, `LCD_SLIDE_STEP_MS`, `LCD_FADE_STEP_MS` in `lcd.h`, to tune by eye): about 0.25 s a slide and a fade each way. +24 B, paid for by dropping the cache clear in `sd_init()` (every path to a new card goes through a reset or a failed read, which clear it) and a fourth size flag, `-fno-caller-saves` (the loops again unchanged). Static 11,840 |
+| Visual: the installed game's stripe | 12,020 | 268 | The owner found the 4x4 red chip hard to see. A one-pixel border round the picture would cost +56 B (four `lcd_fill()` calls) or +64 B (one loop over the framebuffer); a stripe along the top, rows 0-1 the whole width, is the same one `lcd_fill()` as the chip, so 0 B in the rainbow style: colour 15 there (it turns with the rest), colour 11 (#FFF4D6) in the static style (+4 B: a constant that does not fold). Static 11,844 |
+| Visual: the owner's key map | 12,056 | 232 | START does nothing; SELECT goes to the cart's cover from anywhere and at the root shows the about page; B at the root or in a genre folder goes to the cart's cover, and on it shows the about page; A on the cart's cover shows the installed program's picture, where only A (run) and B (back) count (+104 B; the dry run now leaves on START). Paid for, by the owner's choice: the repeat-read card cache (-40 B) and the 16-bit card reads (-36 B) are gone (card reads as the list menu's: a byte at a time at 12 MHz), and gate A's margin for this build is 192 B instead of 256. Static 11,868 |
+| Visual: the installed game's border | 12,080 | 208 | The owner asked for a one-pixel border round the picture instead of the stripe: four `lcd_fill()` calls, +52 B (a loop of two, or one pixel at a time, came out the same or larger). Paid for by a fifth size flag for this build, `-fno-tree-vrp` (-28 B; the pixel and card loops identical instruction for instruction), and 24 B of the 40 left under the 192 B margin. Static 11,896 |
 
 ## Where the visual menu's bytes go
 

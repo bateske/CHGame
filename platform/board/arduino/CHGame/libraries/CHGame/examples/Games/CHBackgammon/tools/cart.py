@@ -23,8 +23,7 @@ def point(fb, x, base, w, h, colour, up=True):
 
 
 def draw():
-    fb = bx.canvas()
-    bx.felt(fb, NAVY, INK)
+    fb = bx.game()                                      # the games' green felt
     fb.fill_rect(6, 40, 116, 82, WOOD)
     fb.fill_rect(8, 42, 112, 78, CREAM)
     for k in range(6):

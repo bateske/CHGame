@@ -53,7 +53,7 @@
 #define CARD_C_TEXT         11u           /* titles */
 #define CARD_C_DIM          12u           /* a file that is not a game */
 #define CARD_C_INK          13u           /* the selected title; the inside of boxes */
-#define CARD_C_MARK         14u           /* the installed game's chip */
+#define CARD_C_MARK         14u           /* the installed game's chip (the list menu) */
 #define CARD_C_RAINBOW      15u           /* the selection bar, boxes; the rainbow (or as painted) */
 
 /* SYSTEM.PIC: the visual menu's screens, in this order */

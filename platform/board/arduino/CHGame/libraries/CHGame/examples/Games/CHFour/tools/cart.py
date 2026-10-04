@@ -20,7 +20,7 @@ BOARD = ["....Y",
 
 
 def draw():
-    fb = bx.canvas(NAVY)
+    fb = bx.game()                                      # the games' green felt
     fb.dither(0, 0, 128, 128, INK, 0)
     bx.title(fb, "FOUR", 6, scale=2)
     bx.title(fb, "IN A ROW", 31, scale=1)

@@ -19,7 +19,7 @@ CELL = 19
 
 
 def draw():
-    fb = bx.canvas(NAVY)
+    fb = bx.game()                                      # the games' green felt
     fb.dither(0, 0, 128, 128, INK, 0)
     bx.title(fb, "CROSSWORD", 10, scale=1)
     x0, y0 = 64 - len(GRID[0]) * CELL // 2, 30

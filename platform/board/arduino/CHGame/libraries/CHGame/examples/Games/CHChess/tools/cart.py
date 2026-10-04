@@ -12,7 +12,7 @@ import pixkit as pk  # noqa: E402
 from boxart import INK, WHITE, SILVER, BLUE, NAVY, CYAN, GOLD, WOOD, WINE, FX_B, FELT, FELT_LT, SKIN  # noqa: E402
 
 PIECES = HERE / "art" / "pieces"
-BLACK = {WHITE: SILVER, SILVER: BLUE, BLUE: NAVY, CYAN: WHITE}     # tools/art/sides.txt, Black's column
+BLACK = {WHITE: SILVER, SILVER: BLUE, BLUE: INK, CYAN: WHITE}      # tools/art/sides.txt, Black's column (its navy as black: one colour fewer)
 
 
 def board(fb, y):
@@ -23,13 +23,13 @@ def board(fb, y):
         w, h = 13 + 4 * r, 5 + 2 * r
         for c in range(-6, 7):
             x0 = 64 + c * w - (w // 2 if r % 2 else 0)
-            fb.fill_rect(x0, top, w, h, FELT if (r + c) % 2 else SKIN)
+            fb.fill_rect(x0, top, w, h, WOOD if (r + c) % 2 else SKIN)   # a wooden board on the felt
         top += h
     fb.hline(0, y - 1, 128, INK)
 
 
 def draw():
-    fb = bx.canvas(NAVY)
+    fb = bx.game()                                      # the games' green felt
     fb.dither(0, 0, 128, 44, INK, 0)
     board(fb, 92)
     king, queen = bx.piece(PIECES / "king.png"), bx.piece(PIECES / "queen.png")

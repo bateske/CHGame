@@ -171,7 +171,7 @@ four (`bad-picture` otherwise).
 
   | | Picture | Shown |
   |---|---|---|
-  | 0 | the cart's `menu.about`, or [assets/about-default.png](assets/about-default.png) | B at the top: how the menu works |
+  | 0 | the cart's `menu.about`, or [assets/about-default.png](assets/about-default.png) | B on the cart's cover, or SELECT at the root: how the menu works |
   | 1 | [assets/system/installed.png](assets/system/installed.png) | the program in flash, when no game on the card holds it |
   | 2 | [assets/system/game.png](assets/system/game.png) | a game without a picture |
   | 3 | [assets/system/folder.png](assets/system/folder.png) | a folder without a cover |
@@ -257,17 +257,23 @@ order, the launch flags and the CHG headers exactly as the list menu does
 - **The ring:** LEFT and RIGHT step to the folder beside this one: at the
   top, `GAMES/` and its folders, round; below, the folders of the same
   parent. They land on that folder's cover.
-- **Keys:** A or START plays a game (installs it first if need be), opens a
-  sub-folder (on its first row), and on a cover goes to the first row. B
-  goes up a level; at the top it shows the about page (`SYSTEM.PIC` slot 0),
-  which any key closes.
+- **Keys:** A plays a game (installs it first if need be), opens a
+  sub-folder (on its first row), and on a folder's cover goes to the first
+  row; on the cart's cover (`GAMES/`'s) it shows the installed program's
+  picture, where A runs it and B goes back. B goes up a level from a folder's
+  folder; at the root or in one of its folders it goes to the cart's cover,
+  and on that cover it shows the about page (`SYSTEM.PIC` slot 0), which any
+  key closes. SELECT goes to the cart's cover from anywhere, and at the root
+  shows the about page. START does nothing.
 - **At power-on**, after the launch game (as the list menu, but showing the
   cover, then the game's picture, before it starts), the cover shows while
   the menu looks for the installed game: `GAMES/`'s games first, then each
   folder in order, depth first; the first copy found is the one shown. If no
   game holds it, `GAMES/` gets a first row for it (`SYSTEM.PIC` slot 1).
-- **What it draws over a picture:** the installed game's chip, colour 14, at
-  x 2-5, y 2-5; while installing, a bar: a frame of colour 15 over rows
+- **What it draws over a picture:** over the installed game, a border one
+  pixel wide round the whole picture (rows 0 and 127, columns 0 and 127), in
+  colour 15 (Static: colour 11, the
+  menu's `#FFF4D6`); while installing, a bar: a frame of colour 15 over rows
   110-119 (x 8-119), black inside, filling with colour 15. Everything else
   is the picture's.
 

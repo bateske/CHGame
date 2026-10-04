@@ -51,13 +51,17 @@ the same rules, and draws pictures instead of the list
 
 ```
 the menu: the cover (GAMES/COVER.PIC) fades in; the installed game is searched
-for (GAMES/'s games, then each folder, depth first) and shown, with its chip
+for (GAMES/'s games, then each folder, depth first) and shown, with its border
   UP/DOWN      the folder's rows: its cover, then its games and sub-folders (round)
   LEFT/RIGHT   the folder beside: at the top GAMES/ and its folders in a ring;
                below, the folders of the same parent (it slides in from that side)
-  A/START      a game: RUN, or install (a bar over its picture) then RUN;
-               a folder: open it; a cover: its first row
-  B            up a level; at the top the about page (SYSTEM.PIC 0)
+  A            a game: RUN, or install (a bar over its picture) then RUN;
+               a folder: open it; a folder's cover: its first row;
+               the cart's cover: the installed program's picture (A runs, B back)
+  B            up a level; at the root or in a genre folder: the cart's cover;
+               on the cart's cover: the about page (SYSTEM.PIC 0)
+  SELECT       the cart's cover from anywhere; at the root: the about page
+  START        nothing
 the launch game: the cover, then its picture, then it starts (installed first)
 a picture the card cannot give: SYSTEM.PIC's screen, else a built-in icon
 ```
@@ -168,9 +172,9 @@ copy of the script, to see by how much (never flash it).
 | `locked` | `release` without self-update; later bootloader updates then need the factory ISP | 11,588 B |
 | `nomenu` | USB upload + self-update, the old boot decision on the new code (hardware step HW2a) | 5,400 B |
 | `app` | the menu as a program linked at 0x3000: a dry run of card, panel and keys under any bootloader, with no USB and no flash writes (HW1) | 6,408 B |
-| `release --ui=visual` | the visual menu + USB upload + self-update | 12,028 B |
-| `release --ui=visual --style=static` | the same, colour 15 as painted | 11,844 B |
-| `app --ui=visual` | the visual menu's dry run, as a program | 6,672 B |
+| `release --ui=visual` | the visual menu + USB upload + self-update | 12,080 B |
+| `release --ui=visual --style=static` | the same, colour 15 as painted | 11,896 B |
+| `app --ui=visual` | the visual menu's dry run, as a program | 6,836 B |
 
 `tools/dist.sh` builds them into [release/](release) with `SHA256SUMS`
 (`chgame_sdvisual.bin`, `chgame_sdvisual_static.bin`,
@@ -283,7 +287,7 @@ real reset; flash, the card and the panel persist in shared memory.
 | boot | no card, empty card, menu, install, switch, every bad CHG file, USB notice, B escape, a probing host, upload at the menu, the card dying mid-install, a power cut at every flash operation of an SD install; and on cards made by `tools/chcart`'s `runtime.prepare()`: index order, an entry not in the index, an index record with no file, nested folders and B, launch (installed and not), START held at power-on, a software reset, a broken `MENU.BG`, an empty folder, a folder of 250 games (240 listed) |
 | boot_static | the static style: the same menu's screens, install, folders and launch |
 | boot_real | the real card from `chgame card --image out/sdcard.img`: every program installed from a fresh board through its folder, checked |
-| app / app_visual | the dry runs: no flash writes, a package checked, SELECT leaves |
+| app / app_visual | the dry runs: no flash writes, a package checked, SELECT (visual: START) leaves |
 | visual / visual_static | the visual menu (`test_visual.c`) on cards from `runtime.prepare()` with pictures: the splash, the search (found, the first copy, not on the card), rows, the ring at the top and below, in and out of folders, the about page, install (and its bar), errors from SYSTEM.PIC and from the built-in icons, the card dying mid-install, a power-cut sweep, launch (installed and not, START held), the USB notice and an upload, broken pictures (offset past the file, cut short, a short COVER.PIC, no SYSTEM.PIC), a folder of 250 |
 | visual_real | the real card in the visual menu: the splash, every folder's cover, every game's picture, and every program installed through its folder |
 | frames | 110 screens of both menus pinned by hash in `test/native/frames.json` (the `real_*` ones only when `out/sdcard.img` exists). PNGs are in `test/native/build/frames/` |

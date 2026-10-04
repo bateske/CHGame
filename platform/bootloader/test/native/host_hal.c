@@ -270,17 +270,6 @@ void hal_spi_frames(uint32_t ctl)
     B->spi_wide = (uint8_t)!!(ctl & HAL_SPI_16BIT);
 }
 
-uint32_t hal_spi_xfer16(uint32_t v)
-{
-    uint8_t w = B->spi_wide, h, l;
-    if (!w) B->wrong_frames++;
-    B->spi_wide = 0;                 /* (the byte model, twice) */
-    h = hal_spi_xfer((uint8_t)(v >> 8));
-    l = hal_spi_xfer((uint8_t)v);
-    B->spi_wide = w;
-    return (uint32_t)h << 8 | l;
-}
-
 void hal_spi_put16(uint32_t v)
 {
     uint8_t w = B->spi_wide;

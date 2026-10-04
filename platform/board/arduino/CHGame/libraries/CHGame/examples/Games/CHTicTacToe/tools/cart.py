@@ -15,7 +15,7 @@ BOARD = ["XO.", "OXO", ".OX"]
 
 
 def draw():
-    fb = bx.canvas(NAVY)
+    fb = bx.game()                                      # the games' green felt
     fb.dither(0, 0, 128, 128, INK, 1)
     bx.logo(fb, bx.load_logo(HERE / "art" / "logo.txt"), 7)
     bx.logo(fb, bx.load_logo(HERE / "art" / "royale.txt"), 21)

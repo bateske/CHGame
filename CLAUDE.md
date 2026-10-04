@@ -89,8 +89,8 @@ changing that game.
      paid for (`platform/bootloader/SIZES.md` lists where). Measure with
      `platform/bootloader/build.sh release`.
    - It has two faces from one source: the list menu (`src/menu.c`) and the
-     visual menu (`src/visual.c`, `build.sh --ui=visual`: 12,028 B, so
-     4 B left before gate A). Both read the card through `src/card.c`: a change
+     visual menu (`src/visual.c`, `build.sh --ui=visual`: 12,080 B; its gate keeps
+     192 B spare, by the owner's choice, so 16 B are left). Both read the card through `src/card.c`: a change
      there needs both built and both suites passed, and the list build's
      binaries should stay byte-identical unless the change is meant for it.
 7. **Every game needs its own save magic, debug handshake id and
@@ -214,7 +214,7 @@ override `compiler.cpp.extra_flags`.
 
 | | |
 |---|---|
-| Flash for the image | **50,944 B** (0x3000-0xF6FF). The bootloader takes 12 KB (the menu builds use up to 12,028 B of it, `platform/bootloader/SIZES.md`), and one page of metadata sits at 0xF700. |
+| Flash for the image | **50,944 B** (0x3000-0xF6FF). The bootloader takes 12 KB (the menu builds use up to 12,080 B of it, `platform/bootloader/SIZES.md`), and one page of metadata sits at 0xF700. |
 | Save pages | Two 256 B pages at the top of the app region. Keep the image ≤ **50,432 B** for both (A/B with CRC), ≤ 50,688 B for one. Past that, saving switches itself off. |
 | Static RAM | **18,416 B**: 20 KB less the 16 B boot block and the 2 KB stack. Under ~900 B free, Arduino warns. |
 | Stack | 2 KB (games report the high-water mark with the debug `P` command) |

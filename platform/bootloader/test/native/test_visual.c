@@ -17,6 +17,7 @@
  * launching ALPHA GAME; img_vcartbad breaks pictures (vcartbad below). */
 #include "testlib.h"
 #include "hal.h"
+#include "lcd.h"                  /* (LCD_SLIDE_STEPS) */
 #include "proto.h"
 #include "bootreq.h"
 #include "chgame_bootreq.h"
@@ -93,6 +94,16 @@ static int menu_index(const char *name) { return pkg(name); }
 static uint16_t ref[LCD_W * LCD_H];
 static void remember(void) { memcpy(ref, B->lcd.fb, sizeof ref); }
 static int same_as_remembered(void) { return !memcmp(ref, B->lcd.fb, sizeof ref); }
+/* The same inside the installed game's border (it turns with the rainbow). */
+static int same_inside_border(void)
+{
+    for (int y = 1; y < 127; y++)
+        if (memcmp(ref + y * 128 + 1, B->lcd.fb + y * 128 + 1, 126 * sizeof ref[0])) return 0;
+    return 1;
+}
+static uint16_t about_ref[LCD_W * LCD_H];
+static void remember_about(void) { memcpy(about_ref, B->lcd.fb, sizeof about_ref); }
+static int same_as_about(void) { return !memcmp(about_ref, B->lcd.fb, sizeof about_ref); }
 
 /* ---- power-on --------------------------------------------------------------------- */
 
@@ -126,29 +137,68 @@ static void t_splash(void)
     snap("splash");                          /* no program: the cover stays */
 }
 
+static uint16_t cover_ref[LCD_W * LCD_H];
+
+/* A boot with ALPHA installed (it is in FOLDER ONE) and these keys */
+static int alpha_keys(const uint32_t *k, int n)
+{
+    host_init();
+    preinstall("ALPHA.CHG");
+    card(img_vcart);
+    keys(k, n);
+    return host_boot();
+}
+
 static void t_found(void)
 {
-    static const uint32_t about[] = { BTN_B };
-    static const uint32_t back[] = { BTN_B, BTN_A };
+    static const uint32_t b[] = { BTN_B }, bb[] = { BTN_B, BTN_B }, bba[] = { BTN_B, BTN_B, BTN_A };
+    static const uint32_t sel[] = { BTN_SELECT }, selsel[] = { BTN_SELECT, BTN_SELECT }, start[] = { BTN_START };
+    static const uint32_t ba[] = { BTN_B, BTN_A }, baa[] = { BTN_B, BTN_A, BTN_A }, bab[] = { BTN_B, BTN_A, BTN_B };
+    static const uint32_t badown[] = { BTN_B, BTN_A, BTN_DOWN, BTN_LEFT, BTN_SELECT };
+    card(img_vcart);                         /* the cart's cover, nothing installed, for comparing */
+    B->limit_us = READY * 1000;
+    CHECK(host_boot() == END_HANG, "the cover");
+    memcpy(cover_ref, B->lcd.fb, sizeof cover_ref);
+    host_init();
     preinstall("ALPHA.CHG");
     card(img_vcart);
     B->limit_us = READY * 1000;
     CHECK(host_boot() == END_HANG, "menu");
     lcd_sane("found");
-    snap("found");                           /* ALPHA GAME, in FOLDER ONE, with the chip */
+    snap("found");                           /* ALPHA GAME, in FOLDER ONE, with the border */
+    {                                        /* the installed game's border: the outermost pixels, one colour */
+        uint32_t odd = 0;
+        for (int i = 0; i < 128; i++)
+            odd += (B->lcd.fb[i] != B->lcd.fb[0]) + (B->lcd.fb[127 * 128 + i] != B->lcd.fb[0])
+                 + (B->lcd.fb[i * 128] != B->lcd.fb[0]) + (B->lcd.fb[i * 128 + 127] != B->lcd.fb[0]);
+        CHECK(odd == 0, "the border: rows 0 and 127, columns 0 and 127, in one colour (%u pixels differ)", odd);
+        CHECK(B->lcd.fb[129] != B->lcd.fb[0] || B->lcd.fb[2 * 128 + 2] != B->lcd.fb[0], "one pixel wide");
+#if !LCD_TURNS
+        CHECK(B->lcd.fb[0] == 0xFFBA, "static: the border is the menu's near-white #FFF4D6 (%04X)", B->lcd.fb[0]);
+#endif
+    }
     remember();
-    host_init();
-    preinstall("ALPHA.CHG");
-    card(img_vcart);
-    keys(about, 1);
-    CHECK(host_boot() == END_HANG, "B at the top: the about page");
+#if !LCD_TURNS                               /* (the cover turns in the rainbow: compared in the static style) */
+#define ON_COVER(what) CHECK(!memcmp(cover_ref, B->lcd.fb, sizeof cover_ref), what)
+#else
+#define ON_COVER(what) (void)0
+#endif
+    CHECK(alpha_keys(start, 1) == END_HANG && same_inside_border(), "START does nothing");
+    CHECK(alpha_keys(b, 1) == END_HANG, "B in a folder of the root");
+    ON_COVER("B in a folder of the root: the cart's cover");
+    CHECK(alpha_keys(sel, 1) == END_HANG, "SELECT");
+    ON_COVER("SELECT: the cart's cover");
+    CHECK(alpha_keys(bb, 2) == END_HANG, "B on the cart's cover: the about page");
     snap("about");
-    host_init();
-    preinstall("ALPHA.CHG");
-    card(img_vcart);
-    keys(back, 2);
-    CHECK(host_boot() == END_HANG, "any key closes it");
-    CHECK(same_as_remembered(), "back on ALPHA GAME, as it was");
+    remember_about();
+    CHECK(alpha_keys(selsel, 2) == END_HANG && same_as_about(), "SELECT at the root: the about page");
+    CHECK(alpha_keys(bba, 3) == END_HANG, "any key closes it");
+    ON_COVER("any key closes it: the cover again");
+    CHECK(alpha_keys(ba, 2) == END_HANG && same_inside_border(), "A on the cart's cover: ALPHA GAME's picture");
+    CHECK(alpha_keys(badown, 5) == END_HANG && same_inside_border(), "...where only A and B count");
+    CHECK(alpha_keys(bab, 3) == END_HANG, "...B there");
+    ON_COVER("...B there: the cover again");
+    CHECK(alpha_keys(baa, 3) == END_RESET && B->retained[0] == CHGAME_BOOTREQ_RUN, "...A there: RUN");
     CHECK(B->flash_ops == 0, "nothing written");
 }
 
@@ -188,7 +238,7 @@ static void t_rows(void)
         card(img_vcart);
         keys(k, n);
         CHECK(host_boot() == END_HANG, "%d moves", n);
-        CHECK(B->lcd.col_writes == 0 && B->lcd.row_writes >= 7u * n, "%d moves: slides up or down (%u part steps)", n, B->lcd.row_writes);   /* (a slide's 8th step is the whole picture) */
+        CHECK(B->lcd.col_writes == 0 && B->lcd.row_writes >= (LCD_SLIDE_STEPS - 1u) * n, "%d moves: slides up or down (%u part steps)", n, B->lcd.row_writes);   /* (a slide's 8th step is the whole picture) */
         lcd_sane(tag[n - 1]);
         snap(tag[n - 1]);
     }
@@ -203,8 +253,8 @@ static void t_flip(void)
         card(img_vcart);
         keys(k, n);
         CHECK(host_boot() == END_HANG, "%d flips", n);
-        CHECK(B->lcd.col_writes == 7u * n, "%d flips: each slides in sideways (%u part steps, then the whole)", n, B->lcd.col_writes);
-        CHECK(B->lcd.first_col_xs == 2 + 128 - 16, "RIGHT: the first step at the right edge (x %u)", B->lcd.first_col_xs - 2u);
+        CHECK(B->lcd.col_writes == (LCD_SLIDE_STEPS - 1u) * n, "%d flips: each slides in sideways (%u part steps, then the whole)", n, B->lcd.col_writes);
+        CHECK(B->lcd.first_col_xs == 2 + 128 - 128 / LCD_SLIDE_STEPS, "RIGHT: the first step at the right edge (x %u)", B->lcd.first_col_xs - 2u);
         lcd_sane(tag[n - 1]);
         snap(tag[n - 1]);
     }
@@ -213,7 +263,7 @@ static void t_flip(void)
     card(img_vcart);
     keys(left, 1);
     CHECK(host_boot() == END_HANG, "LEFT from the cover");
-    CHECK(B->lcd.col_writes == 7 && B->lcd.first_col_xs == 2, "LEFT: from the left edge (x %u)", B->lcd.first_col_xs - 2u);
+    CHECK(B->lcd.col_writes == LCD_SLIDE_STEPS - 1 && B->lcd.first_col_xs == 2, "LEFT: from the left edge (x %u)", B->lcd.first_col_xs - 2u);
 }
 
 static void t_folders(void)
@@ -471,14 +521,14 @@ static void t_bad_pictures(void)
     card(img_vcartbad);
     keys(zulu, 1);
     CHECK(host_boot() == END_HANG, "ZULU, cut short");
-#ifdef MENU_STYLE                            /* (the static style: in the rainbow, colour 15 is never twice the same) */
+#if !LCD_TURNS                               /* (the static style: in the rainbow, colour 15 is never twice the same) */
     CHECK(same_as_remembered(), "ZULU's broken picture: the no-picture screen");
 #endif
     host_init();
     card(img_vcartbad);
     keys(mike, 2);
     CHECK(host_boot() == END_HANG, "MIKE, offset past its end");
-#ifdef MENU_STYLE
+#if !LCD_TURNS
     CHECK(same_as_remembered(), "MIKE's missing picture: the no-picture screen");
 #endif
     host_init();

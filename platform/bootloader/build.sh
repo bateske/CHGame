@@ -85,10 +85,12 @@ DEFS="$DEFS -DCHGAME_ALLOW_SELFUPDATE=$SELFUPDATE -DCHBOOT_MENU=$MENU $APPDEF -D
 DEFS="$DEFS -DMENU_UI=MENU_UI_$(echo "$UI" | tr a-z A-Z)"
 INC="-I$SHARED -I$SRC -I$USB -I$SPL -I$SPL/Core -I$SPL/Peripheral/inc"
 WARN="-Wall -Wextra -Wundef -Werror=implicit-function-declaration"
-# The visual menu fits gate A with three more size flags (SIZES.md, "Visual:
-# sideways slides, faster card reads"): together 84 B, none inside a loop.
+# The visual menu fits gate A with five more size flags (SIZES.md, "Visual:
+# sideways slides, faster card reads", "paced animations", "the border"):
+# together about 144 B; the pixel and card loops compile the same with or
+# without them.
 UIOPT=""
-[ "$UI" = visual ] && UIOPT="-fno-guess-branch-probability -fno-shrink-wrap -fno-tree-scev-cprop"
+[ "$UI" = visual ] && UIOPT="-fno-guess-branch-probability -fno-shrink-wrap -fno-tree-scev-cprop -fno-caller-saves -fno-tree-vrp"
 OPT="-Os $LTO -ffunction-sections -fdata-sections -fno-common -msmall-data-limit=8 -msave-restore -fno-jump-tables $UIOPT ${CHBOOT_EXTRA_CFLAGS:-}"
 CFLAGS="$ARCH $DEFS $INC $WARN $OPT -std=gnu11 -g"
 
@@ -130,7 +132,9 @@ done
 "$OBJCOPY" -O binary "$OUT/chgame_boot.elf" "$OUT/chgame_boot.bin"
 "$OBJDUMP" -d -S "$OUT/chgame_boot.elf" > "$OUT/chgame_boot.lst"
 
+# Gate A keeps 256 B spare; the visual menu, by the owner's choice
+# (2026-10-03, its key map), 192 B (SIZES.md).
 echo "== $MODE$([ "$UI" != list ] && echo " $UI")$([ "$STYLE" != rainbow ] && echo " $STYLE")$([ -z "$LTO" ] && echo " (no LTO)")"
 python3 "$HERE/tools/size_report.py" "$OUT/chgame_boot.elf" --size-tool "$SIZE" \
         ${LTO:+} $([ -z "$LTO" ] && echo --objects) \
-        $([ "$MODE" = app ] && echo --margin -999999)
+        $([ "$MODE" = app ] && echo --margin -999999)         $([ "$MODE" != app ] && [ "$UI" = visual ] && echo --margin 192)

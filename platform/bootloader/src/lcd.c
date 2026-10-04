@@ -224,10 +224,11 @@ void lcd_flush(uint32_t y0, uint32_t y1)
    picture comes in over the old from the side d names (LCD_FROM_*). */
 void lcd_slide(uint32_t d)
 {
-    for (uint32_t s = LCD_H / 8; s <= LCD_H; s += LCD_H / 8) {
+    for (uint32_t s = LCD_H / LCD_SLIDE_STEPS; s <= LCD_H; s += LCD_H / LCD_SLIDE_STEPS) {
         uint32_t f = d & 1 ? LCD_H - s : 0, t = d & 1 ? 0 : LCD_H - s;
         if (d & 2) send(0, 0, LCD_H, f, t, s);  /* columns */
         else send(f, t, s, 0, 0, LCD_W);        /* rows */
+        sys_delay_ms(LCD_SLIDE_STEP_MS);
     }
 }
 #endif
