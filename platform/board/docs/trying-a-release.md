@@ -84,7 +84,7 @@ Nothing needs to be copied into the sketchbook's `libraries/`:
 
 **The bootloader.** The SD game menu comes with the package:
 
-1. *Tools > Bootloader*: **SD Game Menu** (the default) or **USB Only**.
+1. *Tools > Bootloader*: **SD Text Menu** (the default) or **USB Only**.
    The menu's look comes from the card (a card the tools prepare carries
    the CHGAME logo).
 2. *Tools > Programmer*: **CHGame USB (requires CHGame bootloader, no

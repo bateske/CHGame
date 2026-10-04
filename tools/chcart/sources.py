@@ -17,7 +17,10 @@ The defaults: id from the folder's name; title the folder's name in capitals
 `#define <PFX>_VERSION "x"`; description the README's first paragraph;
 license from the LICENSE file's first line; licenseFiles LICENSE and NOTICE
 where they exist; sdcard `sdcard/` if it exists; screenshots
-docs/gameplay.gif if it exists.
+docs/gameplay.gif if it exists; cartImage docs/cart.png if it exists, else
+one drawn from the title over the first screenshot (tools/boxart.py: the
+visual menu shows it), as for a game from a .bin, .hex or .chg file without
+a picture.
 """
 from __future__ import annotations
 
@@ -73,9 +76,15 @@ def hex_to_bin(text, device="rev0"):
     return bytes(mem.get(a, 0xFF) for a in range(d.load_address, hi))
 
 
+def placeholder(title, shot=None):
+    """The picture a game without one gets (tools/boxart.py)."""
+    import boxart                           # (tools/ is on the path: runtime.py)
+    return boxart.placeholder(title, shot)
+
+
 def from_binary(path, title=None, gid=None, device="rev0"):
     """A Game from a .bin, .hex or .chg file (the .chg header gives its title,
-    author and version)."""
+    author and version, and its picture if it has one)."""
     p = pathlib.Path(path)
     data = p.read_bytes()
     meta = {}
@@ -90,10 +99,18 @@ def from_binary(path, title=None, gid=None, device="rev0"):
         img = data[chgpack.HEADER_BYTES:chgpack.HEADER_BYTES + info["payload_bytes"]]
         meta = {k: info[k] for k in ("author", "version") if info[k]}
         title = title or info["title"]
+        try:
+            pic = chgpack.read_picture(data)
+        except chgpack.ChgError:
+            pic = None
+        if pic:
+            from . import runtime
+            meta["cart_image"] = runtime.picture_png(pic)
     else:
         img = data
     stem = p.name.split(".")[0]
     title = title or stem.upper()[:model.TITLE_MAX]
+    meta.setdefault("cart_image", placeholder(title))
     return Game(id=gid or model.slug(title), title=title, binaries={device: img}, **meta)
 
 
@@ -182,12 +199,16 @@ def from_sketch(d, image, device="rev0"):
                 g.sd[f.relative_to(root).as_posix()] = f.read_bytes()
     if meta.get("cartImage"):
         g.cart_image = (d / meta["cartImage"]).read_bytes()
+    elif (d / "docs" / "cart.png").is_file():
+        g.cart_image = (d / "docs" / "cart.png").read_bytes()
     shots = meta.get("screenshots", ["docs/gameplay.gif"] if (d / "docs" / "gameplay.gif").is_file() else [])
     for s in shots:
         if isinstance(s, dict):
             g.screenshots.append(Screenshot((d / s["filename"]).read_bytes(), s.get("title", "")))
         else:
             g.screenshots.append(Screenshot((d / s).read_bytes()))
+    if g.cart_image is None:
+        g.cart_image = placeholder(g.title, g.screenshots[0].data if g.screenshots else None)
     g.buttons = [(b["control"], b["action"]) for b in meta.get("buttons", [])]
     return g
 

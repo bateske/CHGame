@@ -6,12 +6,13 @@
     chgame card --image out/sdcard.img   also a FAT32 card image
     chgame card --only CHFour CHChess    just these programs
 
-The programs, their order and the APPS folder are tools/sdcard/casino.json, a
-cart recipe (`chgame cart build`, tools/chcart/cli.py); each sketch's
-chgame.json gives its title, details and SD files. The cart is written to
-out/CHGame-Casino.chgame, and the card made from it (tools/chcart/runtime.py,
-spec/card.md: GAMES/ with the CHG files, MENU.IDX and MENU.BG, and the data
-files the games read) to out/sdcard/. Copy the CONTENTS of out/sdcard/ to the
+The programs, their order and their genre folders are tools/sdcard/casino.json,
+a cart recipe (`chgame cart build`, tools/chcart/cli.py); each sketch's
+chgame.json gives its title, details, SD files and picture. The cart is
+written to out/CHGame-Casino.chgame, and the card made from it
+(tools/chcart/runtime.py, spec/card.md: GAMES/ with the CHG files, MENU.IDX,
+MENU.BG, COVER.PIC and SYSTEM.PIC, and the data files the games read) to
+out/sdcard/. Copy the CONTENTS of out/sdcard/ to the
 root of a FAT16/FAT32 card (for example through the CHGame's SD CARD READER,
 in the menu's APPS folder), or `chgame cart deploy out/CHGame-Casino.chgame
 --card E:\\`.
@@ -76,7 +77,7 @@ def zip_games(cart, files):
     by_payload = {}
     for p, data in files.items():
         if p.endswith(".CHG"):
-            by_payload.setdefault(data[512:], p)
+            by_payload.setdefault(data[512:512 + chgpack.parse(data)["payload_bytes"]], p)   # (a picture may follow)
     return [(g, by_payload[chgpack.pad_image(g.binaries["rev0"])]) for g in cart.games]
 
 

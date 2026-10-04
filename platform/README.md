@@ -90,7 +90,7 @@ staged package, sizes unchanged):
   The release FQBN names `oslto` already, so the games are unchanged.
   CHSDtoUSB's `tools/game.py` pins it to `opt=osstd` (`FQBN`), what it was
   tested with.
-- **Tools > Bootloader** offers the SD Game Menu (Rainbow or Static) and
+- **Tools > Bootloader** offers the SD Text Menu (Rainbow or Static) and
   USB Only (2026-10-03: the Plain and Casino colour themes went with menu
   v2, whose look comes from the card; the two styles differ only in colour
   15, turning or as painted: the Static style was White until 2026-10-03,
@@ -187,6 +187,16 @@ boots it on cards made by `tools/chcart`, and it ran on the board on
 `bootloader/release/` and `board/.../bootloaders/CHGame/` carry the images
 that ran.
 
+**The visual menu** (2026-10-03, `build.sh --ui=visual`): the same card
+shown one picture at a time, no text, as the Arduboy FX does
+([../docs/visual-menu.md](../docs/visual-menu.md)). The card's cover at
+power-on, the folders' covers (LEFT/RIGHT), the games' pictures (UP/DOWN;
+each in its CHG file), an about page, its own screens from the card
+(`SYSTEM.PIC`) and built-in icons when the card cannot give one. 12,028 B
+(260 B free), Rainbow and Static; Burn Bootloader offers both beside the
+list menu. The list and visual menus share `bootloader/src/card.c`; the
+list builds stayed byte-identical. Not yet run on a board.
+
 ## Changing a platform piece
 
 1. Make the change here and say what it is for in the commit. For the
@@ -201,10 +211,22 @@ that ran.
 
 ## Changes since the copies were taken
 
+- 2026-10-03: the visual menu (above): `bootloader/src/card.c` split out of
+  `menu.c` (every list build byte-identical), `visual.c`, `icons.h` from
+  `art/icons/`; Burn Bootloader offers SD Graphic Menu (Rainbow, Static)
+  (`boards.txt`, `bootloaders/CHGame/`); `release.py` lists the five
+  shipped binaries (its stale `_plain`/`_casino` names fixed). The card
+  gains `COVER.PIC`, `SYSTEM.PIC` and a picture in each CHG file
+  ([../spec/card.md](../spec/card.md)); each example has `docs/cart.png`
+  from its `tools/cart.py`, and the casino card is in genre folders.
+  Checked: no library change (the 22 release images unchanged); the
+  bootloader's PC suite (both faces, the real card included), chcart's tests
+  and the conformance fixtures pass.
+
 - 2026-10-03: the bootloader's menu v2 (above). Both uploaders skip
   `-verify`'s readback on BOOT_VERSION 3, which has no READ
   (`host/py/chgame_upload/upload.py`, `host/go/upload.go`); their parity
-  tests pass. Burn Bootloader offers SD Game Menu (Rainbow, Static) and USB Only
+  tests pass. Burn Bootloader offers SD Text Menu (Rainbow, Static) and USB Only
   (`boards.txt`; the plain and casino binaries are gone). The examples each
   have a `chgame.json` (the `.chgame` format, [../spec/chgame.md](../spec/chgame.md)).
   Checked: the 22 release images unchanged (no library change); the

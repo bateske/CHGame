@@ -14,10 +14,11 @@ pass.
 | File | What it is | Who needs it |
 |---|---|---|
 | [chgame.md](chgame.md) | The `.chgame` format, version 1: the ZIP, `info.json`, devices, the rules and their codes | anyone reading or writing carts |
-| [card.md](card.md) | Runtime preparation and the SD card's layout v2 (`GAMES/`, `MENU.IDX`, `MENU.BG`), how the menu reads it, the deploy rules | card builders, uploaders, emulators |
+| [card.md](card.md) | Runtime preparation and the SD card's layout v2 (`GAMES/`, `MENU.IDX`, `MENU.BG`, the visual menu's `COVER.PIC` and `SYSTEM.PIC`), how both menus read it, the deploy rules | card builders, uploaders, emulators |
 | [chg.md](chg.md) | The CHG file the menu installs: a program behind a 512-byte header | the same, and anyone writing a CHG file by hand |
 | [info.schema.json](info.schema.json) | JSON Schema for `info.json`: its shape, for editors and quick checks. chgame.md has rules a schema cannot say (files, pictures, SD paths, the cart as a whole) | tools, editors (`"$schema"`) |
-| [assets/menu-default.png](assets/menu-default.png) | The background runtime preparation uses when a cart has none | card builders |
+| [assets/menu-default.png](assets/menu-default.png) | The list menu's background runtime preparation uses when a cart has none | card builders |
+| [assets/cover-default.png](assets/cover-default.png), [about-default.png](assets/about-default.png), [system/](assets/system) | The visual menu's defaults: the cover, the about page and its own screens (card.md, step 7) | card builders |
 | [fixtures/](fixtures) | Carts, good and bad, with what reading and preparing each must give | every implementation |
 
 **The reference implementation** is [tools/chcart](../tools/chcart)
@@ -31,7 +32,7 @@ not change them.
 
 **Who changes what.** The bootloader's side of card.md is
 [platform/bootloader](../platform/bootloader) (`shared/chgame_card.h`,
-`src/menu.c`). A change to the card's layout is made there, in
+`src/card.c`, `src/menu.c`, `src/visual.c`). A change to the card's layout is made there, in
 `tools/chcart/runtime.py`, in card.md and in the fixtures together, and the
 bootloader's PC tests (`test/native`, which boot the menu on cards that
 `runtime.prepare()` makes) must pass.

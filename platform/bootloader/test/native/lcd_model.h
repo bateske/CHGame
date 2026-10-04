@@ -26,6 +26,9 @@ typedef struct {
     uint32_t garbage_shown;
     uint32_t pixels;
     uint32_t dispon_count;
+    uint32_t col_writes;        /* RAMWR into fewer than all columns (a sideways slide's steps) */
+    uint32_t row_writes;        /* RAMWR into all columns but fewer than all rows */
+    uint16_t first_col_xs;      /* the first of those column windows' start (the panel's x, +2) */
 } lcd_model_t;
 
 void lcd_model_power(lcd_model_t *m);

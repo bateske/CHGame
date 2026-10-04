@@ -17,7 +17,7 @@ key hints at the foot. Messages (INSTALLING, errors) are boxes over rows
 
 The colours. Pure magenta, #FF00FF, is drawn in the menu's colour 15: one
 colour turning through the rainbow, or as painted on a bootloader built in
-the static style (Tools > Bootloader: SD Game Menu (Static); --style static
+the static style (Tools > Bootloader: SD Text Menu (Static); --style static
 here previews that). Besides
 it the picture may use 11 colours, plus the menu's own four (text #FFF4D6,
 greyed #808080, selected text #000000, chip #D62020, or the cart's

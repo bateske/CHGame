@@ -27,9 +27,17 @@
    "size": 8704,
    "sha256": "5c0d5aa0c249749aa45bd6c7c2d16260b6e1fb81bdbf5b57ff436cde0f68d711"
   },
+  "GAMES/COVER.PIC": {
+   "size": 8704,
+   "sha256": "1bd835708372c15667d4cb6d92ad51f6ab7ee4f963052781b260753f89fe4c83"
+  },
+  "GAMES/SYSTEM.PIC": {
+   "size": 78336,
+   "sha256": "a139390363bb48dfdfe6635d9f914a0e2c58dbfa3171698ca9b585e046b92d64"
+  },
   "GAMES/HELLOWIT.CHG": {
-   "size": 11348,
-   "sha256": "21786398917ae41847576eb1420565701f5f4b4d52f5d70cd6485d30ae10c182"
+   "size": 20480,
+   "sha256": "b677314a6102358f07e66ceb56d6b8b4f5fb24b6a7bde712feabdfce3d85384b"
   },
   "DATA/INFO.DAT": {
    "size": 1024,

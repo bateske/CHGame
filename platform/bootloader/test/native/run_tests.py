@@ -58,7 +58,8 @@ sys.path.insert(0, str(HERE))
 
 HOST = ["host_hal.c", "sd_model.c", "lcd_model.c", "testlib.c"]
 CORE = ["boot.c", "bootreq.c", "appmeta.c", "crc32.c", "crc16.c", "update.c", "proto.c"]
-MENU = ["sd.c", "fat.c", "chg.c", "install.c", "lcd.c", "menu.c"]
+MENU = ["sd.c", "fat.c", "chg.c", "install.c", "lcd.c", "card.c", "menu.c"]
+VISUAL = MENU[:-1] + ["visual.c"]
 
 
 def compiler():
@@ -150,18 +151,32 @@ def defines(path):
 
 
 def check_constants():
+    from chcart import runtime
     f = defines(SHARED / "chg_format.h")
     m = defines(SRC / "chgame_map.h")
+    c = defines(SHARED / "chgame_card.h")
     pairs = [("CHG_MAGIC", chgpack.MAGIC), ("CHG_FORMAT_VERSION", chgpack.FORMAT_VERSION),
              ("CHG_HEADER_BYTES", chgpack.HEADER_BYTES), ("CHG_TARGET_ID", chgpack.TARGET_ID),
-             ("CHG_LAYOUT_ID", chgpack.LAYOUT_ID)]
+             ("CHG_LAYOUT_ID", chgpack.LAYOUT_ID), ("CHG_OFF_IMAGE", chgpack.IMAGE_OFF)]
     bad = [n for n, v in pairs if f[n] != v]
+    card = [("CARD_BG_MAGIC", int.from_bytes(runtime.BG_MAGIC, "little")), ("CARD_IDX_MAGIC", int.from_bytes(runtime.IDX_MAGIC, "little")),
+            ("CARD_IDX_RECORD", runtime.IDX_RECORD), ("CARD_IDX_LAUNCH", runtime.IDX_LAUNCH),
+            ("CARD_SYS_COUNT", 1 + len(runtime.SYSTEM_SCREENS)), ("CARD_SYS_ERROR", 1 + runtime.SYSTEM_SCREENS.index("error-1")),
+            ("CARD_SYS_INSTALLED", 1 + runtime.SYSTEM_SCREENS.index("installed")),
+            ("CARD_SYS_GAME", 1 + runtime.SYSTEM_SCREENS.index("game")),
+            ("CARD_SYS_FOLDER", 1 + runtime.SYSTEM_SCREENS.index("folder"))]
+    bad += [n for n, v in card if c[n] != v]
+    if chgpack.PICTURE_BYTES != runtime.BG_BYTES or c["CARD_BG_HEADER"] + 128 * 64 != runtime.BG_BYTES:
+        bad.append("CARD_BG_BYTES")
+    if subprocess.run([sys.executable, str(BL / "tools" / "icons.py"), "--check"]).returncode:
+        bad.append("src/icons.h")
     if m["CHGAME_BOOT_SIG"] != chgpack.BOOT_SIG:
         bad.append("CHGAME_BOOT_SIG")
     app_max = 0xF800 - 256 - 0x3000
     if app_max != chgpack.APP_MAX_SIZE:
         bad.append("APP_MAX_SIZE")
-    print(f"{'constants':12s} {'ok' if not bad else 'FAILED':6s} chgpack.py vs chg_format.h/chgame_map.h {bad or ''}")
+    print(f"{'constants':12s} {'ok' if not bad else 'FAILED':6s} chgpack.py and chcart vs chg_format.h, chgame_map.h, "
+          f"chgame_card.h; icons.h vs art/icons {bad or ''}")
     return not bad
 
 
@@ -302,6 +317,8 @@ def main():
     if menu_built:
         suites.append(("core_menu", "test_core.c", ["-DCHBOOT_MENU=1", "-DCHGAME_ALLOW_SELFUPDATE=1"], CORE + MENU))
         suites.append(("core_locked", "test_core.c", ["-DCHBOOT_MENU=1", "-DCHGAME_ALLOW_SELFUPDATE=0"], CORE + MENU))
+        suites.append(("core_visual", "test_core.c", ["-DCHBOOT_MENU=1", "-DCHGAME_ALLOW_SELFUPDATE=1",
+                                                      "-DMENU_UI=MENU_UI_VISUAL"], CORE + VISUAL))
     sd_srcs = CORE + MENU if menu_built else CORE + ["sd.c", "fat.c", "chg.c"]
     sd_defs = ["-DCHBOOT_MENU=" + ("1" if menu_built else "0")]
     for name, main_c, defs, srcs in suites:
@@ -312,9 +329,12 @@ def main():
         spec = sd_spec(imgs, lay, pk, a.quick)
         ok &= run("sd", build("sd", "test_sd.c", sd_defs, sd_srcs), spec)
     if menu_built and a.k in "app" and (BUILD / "boot_fat32.img").exists():
-        app_srcs = ["boot.c", "bootreq.c", "appmeta.c", "crc32.c", "crc16.c", "sd.c", "fat.c", "chg.c", "install.c", "lcd.c", "menu.c"]
+        app_srcs = ["boot.c", "bootreq.c", "appmeta.c", "crc32.c", "crc16.c", "sd.c", "fat.c", "chg.c", "install.c", "lcd.c", "card.c", "menu.c"]
         exe = build("app", "test_app.c", ["-DCHBOOT_MENU=1", "-DCHBOOT_APP=1"], app_srcs)
         ok &= run("app", exe, BUILD / "boot_fat32.img")
+        exe = build("app_visual", "test_app.c", ["-DCHBOOT_MENU=1", "-DCHBOOT_APP=1", "-DMENU_UI=MENU_UI_VISUAL"],
+                    app_srcs[:-1] + ["visual.c"])
+        ok &= run("app_visual", exe, BUILD / "boot_fat32.img")
     if menu_built and a.k in "boot":
         if a.k not in "sd":
             imgs, lay, pk = build_images(a.quick)

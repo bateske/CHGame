@@ -52,6 +52,13 @@ changing that game.
    - Nothing of CHSd is copied any more: the three SD games include
      `<Fat.h>` / `<SdSpi.h>` from the library. After changing CHSd, run its
      `tests/run_tests.py` and `chgame check` in the three games.
+   - Each program's `docs/cart.png` (its picture in the visual menu) comes
+     from its `tools/cart.py` (`chgame boxart`; the house style is
+     `tools/boxart.py`); the casino's covers in `tools/sdcard/art/` from
+     `tools/sdcard/covers.py`; the bootloader's `src/icons.h` from
+     `platform/bootloader/art/icons/*.png` (`tools/icons.py`). The menu's
+     default pictures in `spec/assets/` are sources: `tools/menuart.py` only
+     draws missing ones.
 5. **The shared `tools/` serve all 20 games.** After changing anything in
    `tools/chsim` or `tools/*.py`, run `chgame check` in several games and
    compare sim frames against a run from before the change.
@@ -81,14 +88,19 @@ changing that game.
      entries (240, `MENU_MAX_GAMES`) as RAM allows. Every byte added must be
      paid for (`platform/bootloader/SIZES.md` lists where). Measure with
      `platform/bootloader/build.sh release`.
+   - It has two faces from one source: the list menu (`src/menu.c`) and the
+     visual menu (`src/visual.c`, `build.sh --ui=visual`: 12,028 B, so
+     4 B left before gate A). Both read the card through `src/card.c`: a change
+     there needs both built and both suites passed, and the list build's
+     binaries should stay byte-identical unless the change is meant for it.
 7. **Every game needs its own save magic, debug handshake id and
    `config.h` prefix.** All games share the same two flash save pages. The
    last collisions were fixed on 2026-10-01 (docs/status.md); check a new
    game's values against every other game's.
 8. **`spec/` is a contract with another project.** A change to the
    `.chgame` format or the card's layout is made in `spec/`,
-   `tools/chcart` (and, for the card, the bootloader's `menu.c` and
-   `shared/chgame_card.h`) together. Then `python tools/chcart/fixtures.py`
+   `tools/chcart` (and, for the card, the bootloader's `card.c`, `menu.c`,
+   `visual.c` and `shared/chgame_card.h`) together. Then `python tools/chcart/fixtures.py`
    regenerates the fixtures and their expected results; review the diff.
    chcart's tests and the bootloader's PC suite must pass.
 
@@ -170,7 +182,7 @@ it, `python tools/chgame.py` is the same thing. The shared tools under
 
 | What | Command |
 |---|---|
-| Build the bootloader (+ size report) | `platform/bootloader/build.sh [release\|locked\|nomenu\|app] [--style=rainbow\|static]` |
+| Build the bootloader (+ size report) | `platform/bootloader/build.sh [release\|locked\|nomenu\|app] [--ui=list\|visual] [--style=rainbow\|static]` |
 | Its PC test suite (flash/SD/panel models, power cuts, menu frames) | `python3 platform/bootloader/test/native/run_tests.py` |
 | Refresh the committed binaries | `platform/bootloader/tools/dist.sh` |
 | The casino cart, `out/CHGame-Casino.chgame` (`tools/sdcard/casino.json`), and its card in `out/sdcard/` (+ FAT32 image) | `chgame card [--no-build] [--image out/sdcard.img]` |
@@ -180,6 +192,9 @@ it, `python tools/chgame.py` is the same thing. The shared tools under
 | chcart's tests (the conformance fixtures included) / remake the fixtures | `python -m unittest discover -s tools/chcart/tests` / `python tools/chcart/fixtures.py` |
 | CHG files (the menu's install files): make one, check them, list a card | `chgame pack pack\|verify\|info` |
 | Install the menu bootloader on a board | `platform/bootloader/HARDWARE.md` (self-update over USB) |
+| The visual menu's pictures: convert any image, preview it, a template, onto a card; into a cart; placeholders for what has none (docs/visual-menu.md) | `chgame picture IMAGE [--preview F.gif] [--out F] [--card DRIVE]`, `chgame picture --template F`; `chgame cart picture\|art` |
+| A game's box art, `docs/cart.png`, from its `tools/cart.py` (the house style: `tools/boxart.py`) | `chgame boxart` (in its folder; `--check` from the root checks all 22, `--sheet F` shows them) |
+| The casino card's covers (`tools/sdcard/art/`) / the menu's default pictures (`spec/assets/`, never overwritten) / its built-in icons (`art/icons/` -> `src/icons.h`) | `python tools/sdcard/covers.py` / `python tools/menuart.py` / `python platform/bootloader/tools/icons.py` |
 | Build the uploader, `chgame-upload` (Go, five hosts, into `out/chgame-upload/`) | `python tools/release/build_uploader.py` |
 | The uploaders' parity tests (Python and Go against one vector file) | `python -m unittest discover -s platform/bootloader/test/protocol`; `go test ./...` in `host/go` |
 | Stage a release locally and test it as a new user (fresh arduino-cli in `out/newuser/`, every example compiled from the installed package, the casino cart and the SD card zip) | `python tools/release/stage.py [--quick] [--serve]` |
@@ -199,7 +214,7 @@ override `compiler.cpp.extra_flags`.
 
 | | |
 |---|---|
-| Flash for the image | **50,944 B** (0x3000-0xF6FF). The bootloader takes 12 KB (the menu build uses 12,032 B of it, `platform/bootloader/SIZES.md`), and one page of metadata sits at 0xF700. |
+| Flash for the image | **50,944 B** (0x3000-0xF6FF). The bootloader takes 12 KB (the menu builds use up to 12,028 B of it, `platform/bootloader/SIZES.md`), and one page of metadata sits at 0xF700. |
 | Save pages | Two 256 B pages at the top of the app region. Keep the image ≤ **50,432 B** for both (A/B with CRC), ≤ 50,688 B for one. Past that, saving switches itself off. |
 | Static RAM | **18,416 B**: 20 KB less the 16 B boot block and the 2 KB stack. Under ~900 B free, Arduino warns. |
 | Stack | 2 KB (games report the high-water mark with the debug `P` command) |
@@ -380,7 +395,10 @@ Then:
    needs a long START hold for itself (`chgame.startExits = false` in
    `setup()`).
 4. Write its README in the one format ([docs/game-readme.md](docs/game-readme.md))
-   and record its one GIF with `chgame gif`.
+   and record its one GIF with `chgame gif`. Give it its box art for the
+   visual menu: a `tools/cart.py` (copy one; `chgame boxart` writes
+   `docs/cart.png`) or a hand-drawn `docs/cart.png` (the picture rule:
+   [docs/visual-menu.md](docs/visual-menu.md)).
 5. Give it a `chgame.json` (title, author, genre, links; everything else
    has a default: chcart/sources.py), check `chgame export`, and add it to
    `tools/sdcard/casino.json` if it belongs on the casino card.

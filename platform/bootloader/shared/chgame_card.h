@@ -23,6 +23,16 @@
  *              draws it as one colour turning through the colour wheel
  *              instead, the static one as it is.
  *
+ * The visual menu (src/visual.c) reads pictures in MENU.BG's encoding
+ * (exactly CARD_BG_BYTES each, or they are not used), and no MENU.BG:
+ *
+ *   COVER.PIC  in any folder: the folder's cover. GAMES/COVER.PIC is the
+ *              cart's cover, the splash at power-on.
+ *   SYSTEM.PIC in GAMES/ only: the visual menu's own screens, one picture
+ *              after another, in the order of CARD_SYS_*. A screen it cannot
+ *              read is drawn from the bootloader's built-in icons instead.
+ *   A game's picture is in its CHG file (chg_format.h, CHG_OFF_IMAGE).
+ *
  * Integers are little-endian, as everywhere on the card.
  */
 #ifndef CHGAME_CARD_H
@@ -45,5 +55,13 @@
 #define CARD_C_INK          13u           /* the selected title; the inside of boxes */
 #define CARD_C_MARK         14u           /* the installed game's chip */
 #define CARD_C_RAINBOW      15u           /* the selection bar, boxes; the rainbow (or as painted) */
+
+/* SYSTEM.PIC: the visual menu's screens, in this order */
+#define CARD_SYS_ABOUT      0u            /* B at the top: how the menu works */
+#define CARD_SYS_INSTALLED  1u            /* the program in flash, when no card entry holds it */
+#define CARD_SYS_GAME       2u            /* a game without a picture */
+#define CARD_SYS_FOLDER     3u            /* a folder without a cover */
+#define CARD_SYS_ERROR      4u            /* errors 1..5 (install.h): CARD_SYS_ERROR + n - 1 */
+#define CARD_SYS_COUNT      9u
 
 #endif

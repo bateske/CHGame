@@ -3,7 +3,11 @@
 The CHGame's permanent bootloader (flash 0x0000-0x2FFF, 12 KB), extended
 with a game menu that installs games from a FAT microSD card. It keeps USB
 uploading, the recovery paths and the memory map of the 0.2.4 bootloader.
-The players' guide is [docs/sd-menu.md](../../docs/sd-menu.md). What it
+The menu has two faces, built from the same sources (`build.sh --ui=`): the
+**list menu**, a text list over the card's picture, and the **visual menu**,
+one picture at a time and no text, in the manner of the Arduboy FX
+([docs/visual-menu.md](../../docs/visual-menu.md)). The players' guide is
+[docs/sd-menu.md](../../docs/sd-menu.md). What it
 reads from the card is [spec/card.md](../../spec/card.md) (made by the
 tools from a `.chgame`, [spec/chgame.md](../../spec/chgame.md)); the CHG
 file it installs, and what a game needs to know, are in
@@ -14,6 +18,10 @@ file it installs, and what a game needs to know, are in
 ![The rainbow colour turning](docs/menu_rainbow.gif)
 
 ![The menu on the default picture, on a picture of a card's own, and on a card with none](docs/menu_cards.png)
+
+![The visual menu on the casino card: the splash, a folder's cover, two games](docs/visual.png)
+
+![The visual menu installing, its about page, and two of its built-in screens](docs/visual_screens.png)
 
 ## What it does
 
@@ -35,6 +43,23 @@ reset -> read and clear the boot request (16 B retained at 0x20000000)
            A on another game       -> install, then RUN reset
            USB upload starts       -> "USB UPLOAD", protocol only (HELLO doesn't count)
 USB mode has no timeout; a fresh press of B returns to the menu.
+```
+
+**The visual menu** (`--ui=visual`, `src/visual.c`) reads the same card and
+the same rules, and draws pictures instead of the list
+([spec/card.md](../../spec/card.md), "How the visual menu reads the card"):
+
+```
+the menu: the cover (GAMES/COVER.PIC) fades in; the installed game is searched
+for (GAMES/'s games, then each folder, depth first) and shown, with its chip
+  UP/DOWN      the folder's rows: its cover, then its games and sub-folders (round)
+  LEFT/RIGHT   the folder beside: at the top GAMES/ and its folders in a ring;
+               below, the folders of the same parent (it slides in from that side)
+  A/START      a game: RUN, or install (a bar over its picture) then RUN;
+               a folder: open it; a cover: its first row
+  B            up a level; at the top the about page (SYSTEM.PIC 0)
+the launch game: the cover, then its picture, then it starts (installed first)
+a picture the card cannot give: SYSTEM.PIC's screen, else a built-in icon
 ```
 
 **Leaving a game.** A game returns to the menu with a plain reset, so no
@@ -126,14 +151,15 @@ the measurements behind them.
 ## Building
 
 ```
-./build.sh [release|locked|nomenu|app] [--style=rainbow|static] [--nolto]
+./build.sh [release|locked|nomenu|app] [--ui=list|visual] [--style=rainbow|static] [--nolto] [--roomy]
 ```
 
 The toolchain comes with the board package (`arduino-cli core install
 CHGame:ch32v@0.2.4`) and is found in the usual Arduino folders, or set
 `CHGAME_TOOLCHAIN`. On Windows, use Git Bash. Output goes to
-`build/<mode>[-static]/chgame_boot.{bin,elf,map,lst}`, and a size report is
-printed.
+`build/<mode>[-visual][-static]/chgame_boot.{bin,elf,map,lst}`, and a size
+report is printed. `--roomy` links a build that does not fit against a 16 KB
+copy of the script, to see by how much (never flash it).
 
 | Mode | What | Size |
 |---|---|---|
@@ -142,9 +168,14 @@ printed.
 | `locked` | `release` without self-update; later bootloader updates then need the factory ISP | 11,588 B |
 | `nomenu` | USB upload + self-update, the old boot decision on the new code (hardware step HW2a) | 5,400 B |
 | `app` | the menu as a program linked at 0x3000: a dry run of card, panel and keys under any bootloader, with no USB and no flash writes (HW1) | 6,408 B |
+| `release --ui=visual` | the visual menu + USB upload + self-update | 12,028 B |
+| `release --ui=visual --style=static` | the same, colour 15 as painted | 11,844 B |
+| `app --ui=visual` | the visual menu's dry run, as a program | 6,672 B |
 
-`tools/dist.sh` builds all four into [release/](release) with
-`SHA256SUMS`. Two runs give identical files.
+`tools/dist.sh` builds them into [release/](release) with `SHA256SUMS`
+(`chgame_sdvisual.bin`, `chgame_sdvisual_static.bin`,
+`chgame_visual_dryrun.bin` for the visual ones). Two runs give identical
+files.
 
 ### Menu v2 (2026-10-03): the card's look, folders, order, launch
 
@@ -156,7 +187,7 @@ The menu draws into a framebuffer and takes its look from the card
   240-row game table the menu build uses 20,448 B of 20,480). It is sent to the panel through a
   16-colour palette, one row range at a time (`lcd_flush`).
 - **Colour 15, two styles** (`./build.sh release --style=rainbow|static`;
-  *Tools > Bootloader*: SD Game Menu (Rainbow), the default, or (Static)).
+  *Tools > Bootloader*: SD Text Menu (Rainbow), the default, or (Static)).
   It is the selection bar, the boxes and every `#FF00FF` pixel of a card's
   picture.
   - **Rainbow:** one colour turning through the colour wheel (`lcd_step`,
@@ -247,23 +278,30 @@ real reset; flash, the card and the panel persist in shared memory.
 
 | Suite | Covers |
 |---|---|
-| core_nomenu / core_menu / core_locked | the update path, the protocol (probes vs claims, resync after noise), self-update, the boot decision, a power cut at every flash operation of a USB upload |
+| core_nomenu / core_menu / core_locked / core_visual | the update path, the protocol (probes vs claims, resync after noise), self-update, the boot decision, a power cut at every flash operation of a USB upload |
 | sd | the SD driver against the card model, the FAT reader against FAT16/FAT32 images (MBR, superfloppy, partition 4, fragmented files and folders, decoy labels, four kinds of broken chain, exFAT, blank), every CHG header error |
 | boot | no card, empty card, menu, install, switch, every bad CHG file, USB notice, B escape, a probing host, upload at the menu, the card dying mid-install, a power cut at every flash operation of an SD install; and on cards made by `tools/chcart`'s `runtime.prepare()`: index order, an entry not in the index, an index record with no file, nested folders and B, launch (installed and not), START held at power-on, a software reset, a broken `MENU.BG`, an empty folder, a folder of 250 games (240 listed) |
 | boot_static | the static style: the same menu's screens, install, folders and launch |
-| boot_real | the real card from `chgame card --image out/sdcard.img`: the games at its top level installed in turn, each over the last, checked |
-| frames | 26 menu screens (17 rainbow, 9 static) pinned by hash in `test/native/frames.json`. PNGs are in `test/native/build/frames/` |
+| boot_real | the real card from `chgame card --image out/sdcard.img`: every program installed from a fresh board through its folder, checked |
+| app / app_visual | the dry runs: no flash writes, a package checked, SELECT leaves |
+| visual / visual_static | the visual menu (`test_visual.c`) on cards from `runtime.prepare()` with pictures: the splash, the search (found, the first copy, not on the card), rows, the ring at the top and below, in and out of folders, the about page, install (and its bar), errors from SYSTEM.PIC and from the built-in icons, the card dying mid-install, a power-cut sweep, launch (installed and not, START held), the USB notice and an upload, broken pictures (offset past the file, cut short, a short COVER.PIC, no SYSTEM.PIC), a folder of 250 |
+| visual_real | the real card in the visual menu: the splash, every folder's cover, every game's picture, and every program installed through its folder |
+| frames | 110 screens of both menus pinned by hash in `test/native/frames.json` (the `real_*` ones only when `out/sdcard.img` exists). PNGs are in `test/native/build/frames/` |
 | preview | `chgame background --preview` (tools/chcart/background.py) against the bootloader's own frames of a cart card: every pixel but the rainbow's (rainbow), every pixel (static) |
+| pictures | the visual menu's frames against the pictures `tools/chcart` made: every pixel (static), every pixel but colour 15's (rainbow) |
+| constants | `chgpack.py` and `chcart` against `chg_format.h`, `chgame_map.h` and `chgame_card.h`; `src/icons.h` against `art/icons/` |
 
 The hardware steps are in [HARDWARE.md](HARDWARE.md).
 
 ## Installing it on a board
 
 - **From the Arduino IDE, over USB** (any board that has a bootloader with
-  self-update, the 0.2.4 one included): *Tools > Bootloader* **SD Game
+  self-update, the 0.2.4 one included): *Tools > Bootloader* **SD Text
   Menu (Rainbow)** (`release/chgame_sdboot.bin`) or **(Static)**
-  (`release/chgame_sdboot_static.bin`), *Tools > Programmer* **CHGame USB**,
-  *Tools > Burn Bootloader*.
+  (`release/chgame_sdboot_static.bin`), or **SD Graphic Menu (Rainbow)**
+  (`release/chgame_sdvisual.bin`) or **(Static)**
+  (`release/chgame_sdvisual_static.bin`), *Tools > Programmer* **CHGame
+  USB**, *Tools > Burn Bootloader*.
   No driver, no buttons. The installed sketch is erased. It needs a board
   package that carries this bootloader and `chgame-upload` 0.2.0 (the next
   release; [docs/roadmap.md](../../docs/roadmap.md)).
@@ -286,8 +324,10 @@ The hardware steps are in [HARDWARE.md](HARDWARE.md).
 | Path | |
 |---|---|
 | `src/boot.c` | the boot decision, USB mode, `boot_reset()` |
-| `src/menu.c`, `lcd.c`, `font5x7.h` | the menu (folders, order, launch, keys, boxes), the framebuffer and the panel, the font (capitals only) |
-| `shared/chgame_card.h` | the menu's files on the card: `MENU.IDX`, `MENU.BG`, the palette's roles ([spec/card.md](../../spec/card.md)) |
+| `src/card.c` | the card as both menus see it: GAMES/, a folder's entries (MENU.IDX's order, then by title), the installed game, the keys |
+| `src/menu.c`, `lcd.c`, `font5x7.h` | the list menu (folders, order, launch, keys, boxes), the framebuffer and the panel, the font (capitals only) |
+| `src/visual.c`, `src/icons.h` | the visual menu (pictures, the ring, the search, fades and slides); its built-in screens, generated by `tools/icons.py` from `art/icons/*.png` (never edited by hand) |
+| `shared/chgame_card.h` | the menus' files on the card: `MENU.IDX`, `MENU.BG`, `COVER.PIC`, `SYSTEM.PIC` and its screens' order, the palette's roles ([spec/card.md](../../spec/card.md)) |
 | `src/install.c`, `update.c` | the SD install and the flash transaction it shares with USB |
 | `src/sd.c`, `fat.c` | SD card and FAT: a C fork of CHSd 1.0.0 (CLAUDE.md rule 4: changes found on hardware go back into CHSd too) |
 | `src/chg.c`, `shared/chg_format.h` | the CHG header ([spec/chg.md](../../spec/chg.md)) |
@@ -300,7 +340,7 @@ The hardware steps are in [HARDWARE.md](HARDWARE.md).
 | `test/protocol/` | the uploaders' parity tests (`python -m unittest discover -s platform/bootloader/test/protocol`, `go test` in `host/go`) |
 | `test/hil/` | CH32SerialBoot's hardware tests |
 | `test/native/` | the PC suite |
-| `tools/` | `size_report.py`, `dist.sh`, `screens.py` (the pictures in `docs/`), `bootcheck.py` (boot region read back over USB), `chgame_map.py`, `mkimage.py` |
+| `tools/` | `size_report.py`, `dist.sh`, `screens.py` (the pictures in `docs/`), `icons.py` (the visual menu's built-in screens), `bootcheck.py` (boot region read back over USB), `chgame_map.py`, `mkimage.py` |
 
 ## Where it came from
 

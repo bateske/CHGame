@@ -5,6 +5,11 @@ switch the CHGame on, pick one, and play. No PC is needed to change games.
 If you know the Arduboy FX, it works the same way: the menu appears at
 power-on, and the game you played last is already selected.
 
+This page is about the **list menu**, the titles in a list. The bootloader
+also comes as the **visual menu**: one picture per game and per folder, no
+text, like the FX's own menu ([visual-menu.md](visual-menu.md)). The same
+card works with both; *Tools > Bootloader* picks one.
+
 ![The menu with the casino games on the card](../platform/bootloader/docs/menu.png)
 
 ## Using it
@@ -62,7 +67,7 @@ Everything behind the list is one picture on the card, the CHGAME logo
 included, so every card can look its own way. Anything the picture paints
 in pure magenta (`#FF00FF`) turns through the colours, as the default
 logo and the selection bar do; on the bootloader's Static style (*Tools >
-Bootloader > SD Game Menu (Static)*) nothing turns and the picture shows
+Bootloader > SD Text Menu (Static)*) nothing turns and the picture shows
 as painted, magenta included. A folder can
 have a picture of its own.
 

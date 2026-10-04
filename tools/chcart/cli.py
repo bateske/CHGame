@@ -13,14 +13,22 @@
     chgame cart set PKG [--game ID] KEY=VALUE ... (KEY= clears; title, folder, author, ...)
     chgame cart launch PKG ID|none                the game started at power-on
     chgame cart background PKG IMAGE|none [--folder F] [--color KEY=#RRGGBB]
-                                                  the menu's picture (any image: converted, chcart/background.py)
+                                                  the list menu's picture (any image: converted, chcart/background.py)
+    chgame cart picture PKG IMAGE|none [--game ID | --folder F | --about]
+                                                  the visual menu's pictures: the cart's cover (the
+                                                  splash), a game's, a folder's cover, the about page
+    chgame cart art PKG [--redo]                  a picture for every game and folder cover missing
+                                                  one, drawn from its title (tools/boxart.py)
     chgame cart prepare PKG OUTDIR [--image IMG]  the card's files (spec/card.md), and a FAT32 image
     chgame cart flash PKG [--game ID] [--port P]  upload one game
     chgame cart deploy PKG [--card DIR] [--port P] [--clean] [--no-flash]
 
 A recipe is a manifest whose games may be {"sketch": "CHFour", "folder": ...,
 other game keys to override}: chgame cart build compiles each sketch (unless
---no-build) and takes its game from it (chcart/sources.py: chgame.json).
+--no-build) and takes its game from it (chcart/sources.py: chgame.json). Its
+menu's pictures (background, cover, about, folders' background and cover)
+are any images, converted, paths relative to the recipe; a folder without a
+cover gets one drawn from its name.
 Exit codes: 0 done, 1 an error in a cart or a failed step, 2 usage.
 """
 from __future__ import annotations
@@ -112,7 +120,7 @@ def cmd_new(a):
     cart = model.Cart(title=a.title or (first.title if first else games[0].title if len(games) == 1 else "CART"),
                       games=games)
     if first:                               # the first cart's menu and details carry over
-        for k in CART_SET[1:] + ("background", "colors", "folder_backgrounds"):
+        for k in CART_SET[1:] + ("background", "colors", "folder_backgrounds", "cover", "about", "folder_covers"):
             setattr(cart, k, getattr(first, k))
     _apply_cart_args(cart, a)
     _save(cart, a.out)
@@ -157,9 +165,34 @@ def build_recipe(recipe_path, build=True, platform_dir=None, binary=None, only=N
     ui = cart.ui_colors()
     if menu.get("background"):
         cart.background = _picture(base / menu["background"], ui)
+    for k in ("cover", "about"):
+        if menu.get(k):
+            setattr(cart, k, _picture(base / menu[k], model.UI_COLORS))
     for f in menu.get("folders", []):
-        cart.folder_backgrounds[f["name"]] = _picture(base / f["background"], ui)
+        if f.get("background"):
+            cart.folder_backgrounds[f["name"]] = _picture(base / f["background"], ui)
+        if f.get("cover"):
+            cart.folder_covers[f["name"]] = _picture(base / f["cover"], model.UI_COLORS)
+    fill_art(cart)
     return cart
+
+
+def fill_art(cart, redo=False):
+    """A picture for every game without one (its title, over its first
+    screenshot) and a cover for every folder without one (its name):
+    tools/boxart.py's placeholders. redo: every game's and folder's, even one
+    it has. Returns how many were drawn."""
+    n = 0
+    for g in cart.games:
+        if g.cart_image is None or redo:
+            g.cart_image = sources.placeholder(g.title, g.screenshots[0].data if g.screenshots else None)
+            n += 1
+    for f in cart.folders():
+        if f not in cart.folder_covers or redo:
+            import boxart                   # (tools/ is on the path: runtime.py)
+            cart.folder_covers[f] = boxart.folder_cover(f.rsplit("/", 1)[-1])
+            n += 1
+    return n
 
 
 def _picture(path, ui, fit="cover", dither=False):
@@ -270,6 +303,35 @@ def cmd_background(a):
     return 0
 
 
+def cmd_picture(a):
+    cart = _load(a.pkg)
+    png = None if a.png == "none" else _picture(a.png, model.UI_COLORS, a.fit, a.dither)
+    if a.game:
+        _game(cart, a.game).cart_image = png
+    elif a.folder:
+        if a.folder not in cart.folders():
+            raise CartError([model.Issue("bad-folder", a.folder, f"no game is in it (folders: {', '.join(cart.folders()) or 'none'})")])
+        if png is None:
+            cart.folder_covers.pop(a.folder, None)
+        else:
+            cart.folder_covers[a.folder] = png
+    elif a.about:
+        cart.about = png
+    else:
+        cart.cover = png
+    _save(cart, a.pkg)
+    return 0
+
+
+def cmd_art(a):
+    cart = _load(a.pkg)
+    n = fill_art(cart, a.redo)
+    print(f"{a.pkg}: {n} picture{'s' * (n != 1)} drawn")
+    if n:
+        _save(cart, a.pkg)
+    return 0
+
+
 def cmd_prepare(a):
     cart = _load(a.pkg)
     files = runtime.prepare(cart)
@@ -355,6 +417,18 @@ def parser():
                    help="the menu's text, disabled, selectedText or mark colour")
     p.add_argument("--fit", choices=["cover", "contain"], default="cover")
     p.add_argument("--dither", action="store_true")
+    p = sub.add_parser("picture", help="the visual menu's pictures (any image; converted to fit)")
+    p.add_argument("pkg")
+    p.add_argument("png", metavar="image", help="the picture, or none to remove it")
+    w = p.add_mutually_exclusive_group()
+    w.add_argument("--game", help="a game's picture (its cartImage)")
+    w.add_argument("--folder", help="a folder's cover")
+    w.add_argument("--about", action="store_true", help="the about page (B at the top)")
+    p.add_argument("--fit", choices=["cover", "contain"], default="cover")
+    p.add_argument("--dither", action="store_true")
+    p = sub.add_parser("art", help="pictures drawn for the games and folders that have none")
+    p.add_argument("pkg")
+    p.add_argument("--redo", action="store_true", help="redraw every game's and folder's picture from its title")
     p = sub.add_parser("prepare", help="the card's files")
     p.add_argument("pkg")
     p.add_argument("outdir")
@@ -429,6 +503,53 @@ def background_main(argv):
             print(f"{a.preview}: the menu on it")
         if a.card:
             print(f"{background.write_to_card(png, a.card, ui)}: written (eject the card before the CHGame reads it)")
+        if not (a.out or a.preview or a.card):
+            print("nothing written: add --preview FILE to see it, --out FILE to keep it, --card DRIVE to use it")
+        return 0
+    except CartError as e:
+        print(e, file=sys.stderr)
+        return 1
+    except (OSError, ValueError) as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
+
+
+def picture_main(argv):
+    """`chgame picture`: the visual menu's pictures (docs/visual-menu.md)."""
+    from . import picture
+    ap = argparse.ArgumentParser(prog="chgame picture", description=picture.__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("image", nargs="?", help="any picture: PNG, JPEG, BMP, GIF ...")
+    ap.add_argument("--template", metavar="OUT.png", help="write a blank picture with the menu's marks shown, to paint on")
+    ap.add_argument("--out", metavar="OUT.png", help="write the picture as the menu will use it")
+    ap.add_argument("--preview", metavar="FILE", help="as the menu shows it: .png, or .gif fading in, installing, out")
+    ap.add_argument("--card", metavar="DIR", help="write it to a mounted card as its cover (GAMES/COVER.PIC)")
+    ap.add_argument("--fit", choices=["cover", "contain"], default="cover",
+                    help="not 128x128: crop to fill (cover) or add black bars (contain)")
+    ap.add_argument("--dither", action="store_true", help="dither when reducing colours (photos)")
+    ap.add_argument("--style", choices=["rainbow", "static"], default="rainbow",
+                    help="--preview as the rainbow bootloader (default) or the static one shows it")
+    a = ap.parse_args(argv)
+    try:
+        if a.template:
+            pathlib.Path(a.template).write_bytes(picture.template())
+            print(f"{a.template}: a blank picture, 128x128. Paint it, then: chgame picture {a.template} --preview p.gif")
+            if not a.image:
+                return 0
+        if not a.image:
+            ap.error("give an image (or --template OUT.png)")
+        png, notes = picture.convert(a.image, a.fit, a.dither)
+        print(f"{a.image}: " + ("ready as it is" if not notes else "converted"))
+        for n in notes:
+            print(f"  {n}")
+        if a.out:
+            pathlib.Path(a.out).write_bytes(png)
+            print(f"{a.out}: written")
+        if a.preview:
+            picture.save_preview(png, a.preview, style=a.style)
+            print(f"{a.preview}: as the menu shows it")
+        if a.card:
+            print(f"{picture.write_to_card(png, a.card)}: written (eject the card before the CHGame reads it)")
         if not (a.out or a.preview or a.card):
             print("nothing written: add --preview FILE to see it, --out FILE to keep it, --card DRIVE to use it")
         return 0

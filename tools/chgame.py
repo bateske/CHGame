@@ -30,10 +30,15 @@ same thing uninstalled.
   audio   OUTDIR [--only NAME ...]       the sound effects and songs as WAV, with a hash each
   export  [--no-build] [--out F]         the sketch as a .chgame (build/<Name>.chgame): to share it
   cart    ...                            .chgame files: info, verify, new, build, add, remove, order,
-                                         set, launch, background, prepare, flash, deploy (tools/chcart)
+                                         set, launch, background, picture, art, prepare, flash, deploy
+                                         (tools/chcart)
   card    ...                            the repository's casino cart and its SD card (tools/sdcard/mkcard.py)
   background IMAGE [--preview F] [--out F] [--card DIR] | --template F
-                                         the SD menu's picture: convert, preview, put on a card (docs/menu-image.md)
+                                         the list menu's picture: convert, preview, put on a card (docs/menu-image.md)
+  picture IMAGE [--preview F] [--out F] [--card DIR] | --template F
+                                         a picture for the visual menu: a game's, a cover (docs/visual-menu.md)
+  boxart  [--check] [--sheet F]          draw the sketch's docs/cart.png from its tools/cart.py
+                                         (--check: every program's is up to date)
   uploader ARGS ...                      the uploader itself: probe, info, flash, selfupdate, burn ...
   pack    ...                            CHG files, the menu's install files (tools/chgpack.py)
 
@@ -187,6 +192,16 @@ def cmd_background(a, _sketch):
     return cli.background_main(list(a.rest))
 
 
+def cmd_picture(a, _sketch):
+    from chcart import cli
+    return cli.picture_main(list(a.rest))
+
+
+def cmd_boxart(a, sketch):
+    import boxart
+    return boxart.cli(list(a.rest) + (["--check"] if a.check else []), sketch)
+
+
 def cmd_cart(a, _sketch):
     from chcart import cli
     return cli.main(list(a.rest))
@@ -248,9 +263,12 @@ def main(argv=None):
                         ("uploader", "the uploader: probe, info, flash, selfupdate, burn ..."),
                         ("pack", "CHG files (the menu's install files)"),
                         ("card", "the casino cart and its SD card"),
-                        ("background", "the SD menu's picture: convert, preview, put on a card")):
+                        ("background", "the list menu's picture: convert, preview, put on a card"),
+                        ("picture", "a picture for the visual menu: convert, preview, put on a card")):
         sub.add_parser(name, help=help_, add_help=False)
     p = sub.add_parser("gif", help="record the README's GIF", add_help=False)
+    p.add_argument("--check", action="store_true")
+    p = sub.add_parser("boxart", help="draw docs/cart.png, the game's picture for the visual menu", add_help=False)
     p.add_argument("--check", action="store_true")
 
     # The pass-through commands take whatever follows them as it is.
@@ -259,7 +277,7 @@ def main(argv=None):
     if rest and a.cmd in {"build", "upload", "sim", "run", "shot"}:
         ap.error(f"unrecognized arguments: {' '.join(rest)}")
     sketch = None
-    if a.cmd in NEEDS_SKETCH or (a.cmd == "gif" and not a.check):
+    if a.cmd in NEEDS_SKETCH or (a.cmd in ("gif", "boxart") and not a.check):
         sketch = sketch_of(a)
         print(f"{sketch.name}: {a.cmd}", flush=True)
     fn = globals()[f"cmd_{a.cmd}"]

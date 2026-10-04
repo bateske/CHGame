@@ -89,6 +89,59 @@ colour 15.)
    `tools/dist.sh` to put menu v2 in `release/` and the board package, and
    commit.
 
+## The visual menu (`--ui=visual`)
+
+Not yet run on a board. It installs as menu v2 does (above), and switching
+between the two menus is a self-update either way: the card and the
+installed game stay. `UP` is the uploader as above (`chgame uploader` or
+`chgame-upload`).
+
+1. **The card.** As for menu v2, step 1, with the cart rebuilt by this
+   branch's `chgame card`: the games in genre folders, each with its
+   picture, and `COVER.PIC` and `SYSTEM.PIC` in `GAMES/`.
+2. **Dry run (optional, the bootloader untouched).** `./build.sh app
+   --ui=visual`, then `UP flash platform/bootloader/build/app-visual/chgame_boot.bin
+   --run --port <PORT>` (or `release/chgame_visual_dryrun.bin`). The menu
+   appears as a program: check the points of step 4 that need no install. A
+   on a game shows the check mark and writes nothing; SELECT leaves.
+3. **Install it.** `./build.sh release --ui=visual`, then
+   `UP selfupdate platform/bootloader/build/release-visual/chgame_boot.bin --yes`
+   (or `release/chgame_sdvisual.bin`). `UP info` reports bootloader v3.
+4. **What to check and report:**
+   - **Power-on.** The cover fades in (CHGAME CASINO), then, after about
+     1.5 s, the installed game's picture with the red chip in its corner. No
+     game installed: the cover stays.
+   - **The look.** Every picture as in
+     [docs/visual_cards.png](docs/visual_cards.png): colours, no tearing.
+     The CHGAME logo on the cover turns through the rainbow.
+   - **Speed and feel.** UP/DOWN once and held: each picture slides in
+     (eight steps, the panel's own pace). LEFT/RIGHT: the next folder's
+     cover slides in from that side. A into a folder and B out of it fade
+     through black. Too slow, too fast, jerky?
+   - **The ring.** LEFT/RIGHT from the cover go through CARDS ... APPS and
+     back round. In a folder, DOWN goes through its games and back to its
+     cover.
+   - **Install.** A on a game: the bar over its picture fills, the screen
+     fades and the game starts. Hold START 3 s: back to the menu, on that
+     game, with the chip.
+   - **B at the top:** the about page; any key closes it.
+   - **USB.** `chgame upload` with the menu up: the USB plug screen, then the
+     sketch runs. At the next power-on it is the first picture after the
+     cover (INSTALLED, with the chip); A runs it.
+   - **Errors.** A CHG file cut short in `GAMES/APPS/` (through the reader):
+     its picture is ERROR 5, and A shows it too.
+   - **Launch.** `chgame cart launch out/CHGame-Casino.chgame chfour`,
+     deploy, power-cycle: the cover, then FOUR IN A ROW's picture, then the
+     game (an install first if need be). START held at power-on: the menu.
+   - **The Static style.** As for menu v2, with `--ui=visual --style=static`:
+     the logo and the bar magenta and still.
+   - **A card without pictures** (an older card, or `GAMES/` copied by hand):
+     the built-in screens: a folder icon for the cover, a cartridge for each
+     game. Nothing worse.
+5. **Afterwards.** Record the run in `test/hil/`, then put back whichever
+   menu the owner wants (`UP selfupdate release/chgame_sdboot.bin --yes`
+   for the list menu).
+
 ## Before starting
 
 - **Software.** This branch checked out. Python 3 with `pip install -r

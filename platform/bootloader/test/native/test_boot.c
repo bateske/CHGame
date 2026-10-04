@@ -63,6 +63,7 @@ static void lcd_sane(const char *what)
     CHECK(B->lcd.garbage_shown == 0, "%s: display switched on over unwritten pixels", what);
     CHECK(B->bus_conflicts == 0, "%s: both chip selects low", what);
     CHECK(B->spi_off_xfers == 0, "%s: %u SPI transfers with SPI1 off (would hang the chip)", what, B->spi_off_xfers);
+    CHECK(B->wrong_frames == 0, "%s: %u transfers in the wrong frame size", what, B->wrong_frames);
     CHECK(B->sd.init_fast == 0, "%s: card identified above 400 kHz", what);
 }
 
@@ -502,8 +503,9 @@ static void t_cart_full_folder(void)
     CHECK(host_boot() == END_RESET && installed_is("G239.CHG"), "the last row is GAME 239, and it installs");
 }
 
-/* The real card from tools/sdcard/mkcard.py: install every program in menu
-   order, each over the one before, and check what is installed each time. */
+/* The real card from tools/sdcard/mkcard.py: install every program, each
+   from a fresh board, through its folder (the manifest's code: folder row
+   << 8 | row in it), and check what is installed. */
 static void t_real_card(void)
 {
     card(img_fat32);
@@ -511,20 +513,31 @@ static void t_real_card(void)
     CHECK(host_boot() == END_HANG, "real card: menu");
     lcd_sane("real menu");
     snap("real_menu");
-    host_keys_clear();
-    int sel = 0;
     for (int i = 0; i < npk; i++) {
-        B->limit_us = 8000000;
-        go_to(800, sel, i);
-        press(800 + 150u * (uint32_t)(i > sel ? i - sel : sel - i) + 200, BTN_A);
+        int folder = pk[i].code >> 8, row = pk[i].code & 255;
+        uint32_t at = 800;
+        host_init();
+        card(img_fat32);
+        B->limit_us = 10000000;
+        if (folder != 255) {
+            go_to(at, 0, folder);
+            at += 150u * (uint32_t)folder + 300;
+            press(at, BTN_A);
+            at += 600;
+        }
+        go_to(at, 0, row);
+        press(at + 150u * (uint32_t)row + 300, BTN_A);
         int end = host_boot();
         CHECK(end == END_RESET && installed_is(pk[i].name), "%s installs (end %d)", pk[i].name, end);
         CHECK(host_boot() == END_JUMP, "%s starts", pk[i].name);
         CHECK(B->boot_region_writes == 0, "boot region untouched");
-        host_power_cycle();
-        host_keys_clear();
-        sel = i;                             /* preselected next time */
-        if (i == 9) { B->limit_us = 2000000; host_boot(); snap("real_menu_installed"); host_power_cycle(); }
+        if (i == 9) {
+            host_power_cycle();
+            host_keys_clear();
+            B->limit_us = 2000000;
+            host_boot();
+            snap("real_menu_installed");
+        }
     }
 }
 

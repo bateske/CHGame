@@ -5,6 +5,10 @@ the SD card. The CHGAME logo at the top is part of that picture, not of the
 bootloader. So changing the picture changes everything you see behind the
 list: the logo, the title, the colours, the art.
 
+(This is the list menu's picture. The visual menu shows other pictures: the
+card's cover, the folders' covers and each game's box art, made the same
+way with `chgame picture`: [visual-menu.md](visual-menu.md).)
+
 ![The menu on the default picture, on a picture of a card's own, and on a card with none](../platform/bootloader/docs/menu_cards.png)
 
 `chgame background` does the work: it turns any image into one the menu can
@@ -33,7 +37,7 @@ Messages (INSTALLING, ERROR n, USB UPLOAD) are boxes over rows 36-87.
 - **The rainbow.** Paint anything in pure magenta, **#FF00FF**, and the menu
   draws it in one colour that turns through the rainbow, like the default
   logo and the selection bar. On a bootloader built in the Static style
-  (*Tools > Bootloader > SD Game Menu (Static)*) nothing turns: the
+  (*Tools > Bootloader > SD Text Menu (Static)*) nothing turns: the
   picture is shown exactly as painted, magenta included, and the selection
   bar is magenta.
 - **Colours.** Besides magenta, a picture holds 11 colours. More are

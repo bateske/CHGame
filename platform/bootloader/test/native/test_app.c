@@ -11,7 +11,12 @@ static void t_dry_run(void)
 {
     sd_model_insert(&B->sd, SD_SDHC, card_path);
     B->limit_us = 6000000;
+#ifdef MENU_UI                                       /* (the visual menu starts on the card's cover: A goes to the first game) */
+    host_keys(800, BTN_A);   host_keys(900, 0);
+    host_keys(1600, BTN_A);  host_keys(1700, 0);     /* check the first package */
+#else
     host_keys(800, BTN_A);   host_keys(900, 0);      /* check the first package */
+#endif
     int end = host_boot();
     CHECK(end == END_HANG, "dry run waits (end %d)", end);
     CHECK(B->flash_ops == 0, "no flash writes (%u)", B->flash_ops);
@@ -19,9 +24,16 @@ static void t_dry_run(void)
     CHECK(!B->usb_up, "no USB in the dry-run build");
     lcd_model_dump_ppm(&B->lcd, "build/frames/dryrun_ok.ppm");
     host_keys_clear();
+#ifdef MENU_UI
+    host_keys(800, BTN_START); host_keys(900, 0);   /* (from the cover to the first game) */
+    host_keys(1600, BTN_START); host_keys(1700, 0); /* check it */
+    host_keys(2600, BTN_A);    host_keys(2700, 0);  /* dismiss */
+    host_keys(3400, BTN_SELECT); host_keys(3500, 0);
+#else
     host_keys(800, BTN_START); host_keys(900, 0);   /* SD clock */
     host_keys(1200, BTN_A);    host_keys(1300, 0);  /* dismiss */
     host_keys(1600, BTN_SELECT); host_keys(1700, 0);
+#endif
     end = host_boot();
     CHECK(end == END_RESET, "SELECT resets (end %d)", end);
     CHECK(B->retained[0] == CHGAME_BOOTREQ_USB && B->retained[1] == ~CHGAME_BOOTREQ_USB, "with the old bootloader's USB request");

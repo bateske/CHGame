@@ -61,7 +61,7 @@ SCREENSHOT_SIZES = (128, 256, 384, 512)
 
 CART_KEYS = ("schemaVersion", "title", "version", "author", "description", "date", "license", "url",
              "sourceUrl", "launch", "menu", "games")
-MENU_KEYS = ("background", "colors", "folders")
+MENU_KEYS = ("background", "colors", "folders", "cover", "about")
 GAME_KEYS = ("id", "title", "folder", "version", "author", "description", "genre", "license",
              "licenseFiles", "url", "sourceUrl", "buttons", "binaries", "sdcard", "cartImage", "screenshots")
 TEXT_FIELDS = ("version", "author", "description", "license", "url", "sourceUrl")
@@ -132,6 +132,9 @@ class Cart:
     background: bytes | None = None                     # PNG for the top of the menu
     colors: dict = field(default_factory=dict)          # UI_COLORS keys -> "#RRGGBB"
     folder_backgrounds: dict = field(default_factory=dict)   # folder path -> PNG
+    cover: bytes | None = None                          # PNG: the cart's cover, the visual menu's splash
+    about: bytes | None = None                          # PNG: the visual menu's about page
+    folder_covers: dict = field(default_factory=dict)   # folder path -> PNG: the folder's cover
 
     def game(self, gid):
         for g in self.games:
@@ -264,6 +267,13 @@ def validate(cart):
         if name not in folders:
             warn("unused-file", f"menu.folders[{name!r}]", "no game is in this folder")
         out += _check_background(png, ui, f"menu.folders[{name!r}].background")
+    for k in ("cover", "about"):
+        if getattr(cart, k) is not None:
+            out += check_picture(getattr(cart, k), f"menu.{k}")
+    for name, png in cart.folder_covers.items():
+        if name not in folders and name not in cart.folder_backgrounds:
+            warn("unused-file", f"menu.folders[{name!r}]", "no game is in this folder")
+        out += check_picture(png, f"menu.folders[{name!r}].cover")
     # a folder of the menu lists FOLDER_ENTRIES entries, games and folders
     count = {}
     for g in cart.games:
@@ -340,6 +350,9 @@ def validate_game(g, where):
         i = image_info(g.cart_image)
         if not i or i[0] != "PNG" or i[1:3] != (128, 128) or i[3] != 1:
             err("bad-image", "cartImage", "a 128x128 PNG")
+        else:                               # (an older cart may break the picture rule: then no picture on the card)
+            for issue in check_picture(g.cart_image, "cartImage"):
+                warn("bad-picture", "cartImage", f"{issue.message}: the card gets no picture of it")
     for k, s in enumerate(g.screenshots):
         i = image_info(s.data)
         if not i or i[0] not in ("PNG", "GIF") or i[1] != i[2] or i[1] not in SCREENSHOT_SIZES:
@@ -348,6 +361,17 @@ def validate_game(g, where):
         if not (isinstance(b, (tuple, list)) and len(b) == 2 and all(isinstance(x, str) and x for x in b)):
             err("bad-field", f"buttons[{k}]", "control and action, both text")
     return out
+
+
+def check_picture(png, where):
+    """The picture rule (spec/card.md): what _check_background() asks, with
+    the menu's colours at their defaults, whatever the cart's."""
+    return [Issue("bad-picture" if i.code == "bad-background" else i.code, i.where, i.message)
+            for i in _check_background(png, UI_COLORS, where)]
+
+
+def picture_ok(png):
+    return png is not None and not check_picture(png, "")
 
 
 def _check_background(png, ui, where):
@@ -382,14 +406,24 @@ def to_manifest(cart):
         menu["background"] = "menu/background.png"
     if cart.colors:
         menu["colors"] = {k: cart.colors[k] for k in UI_COLORS if k in cart.colors}
-    if cart.folder_backgrounds:
+    for k in ("cover", "about"):
+        if getattr(cart, k) is not None:
+            files[f"menu/{k}.png"] = getattr(cart, k)
+            menu[k] = f"menu/{k}.png"
+    if cart.folder_backgrounds or cart.folder_covers:
         menu["folders"] = []
         order = cart.folders()
-        names = sorted(cart.folder_backgrounds, key=lambda n: (order.index(n) if n in order else len(order), n))
+        names = sorted(set(cart.folder_backgrounds) | set(cart.folder_covers),
+                       key=lambda n: (order.index(n) if n in order else len(order), n))
         for k, name in enumerate(names, 1):
-            path = f"menu/folder-{k}.png"
-            files[path] = cart.folder_backgrounds[name]
-            menu["folders"].append({"name": name, "background": path})
+            f = {"name": name}
+            if name in cart.folder_backgrounds:
+                files[f"menu/folder-{k}.png"] = cart.folder_backgrounds[name]
+                f["background"] = f"menu/folder-{k}.png"
+            if name in cart.folder_covers:
+                files[f"menu/folder-{k}-cover.png"] = cart.folder_covers[name]
+                f["cover"] = f"menu/folder-{k}-cover.png"
+            menu["folders"].append(f)
     if menu:
         m["menu"] = menu
     m["games"] = []
@@ -485,6 +519,9 @@ def from_manifest(m, files):
     unknown(menu, MENU_KEYS, "menu.")
     if "background" in menu:
         cart.background = blob(menu["background"], "menu.background")
+    for k in ("cover", "about"):
+        if k in menu:
+            setattr(cart, k, blob(menu[k], f"menu.{k}"))
     colors = menu.get("colors", {})
     if isinstance(colors, dict):
         cart.colors = dict(colors)
@@ -499,11 +536,15 @@ def from_manifest(m, files):
         if not isinstance(f, dict) or not isinstance(f.get("name"), str):
             err("bad-field", w, "needs a name")
             continue
-        unknown(f, ("name", "background"), w + ".")
+        unknown(f, ("name", "background", "cover"), w + ".")
         if "background" in f:
             data = blob(f["background"], w + ".background")
             if data is not None:
                 cart.folder_backgrounds[f["name"]] = data
+        if "cover" in f:
+            data = blob(f["cover"], w + ".cover")
+            if data is not None:
+                cart.folder_covers[f["name"]] = data
     games = m.get("games")
     if not isinstance(games, list):
         err("missing-field" if games is None else "bad-field", "games", "a list of games")

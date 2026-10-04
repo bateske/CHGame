@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build the CHGame bootloader (Linux, macOS, or Git Bash on Windows).
 #
-#   ./build.sh [MODE] [--style=rainbow|static] [--nolto]
+#   ./build.sh [MODE] [--ui=list|visual] [--style=rainbow|static] [--nolto]
 #
 # MODE
 #   release   the SD game menu bootloader, with the developer self-update
@@ -13,30 +13,41 @@
 #   app       the menu as an ordinary program at 0x3000 (dry run, no USB and no
 #             flash writes) for testing the card and the panel under ANY
 #             bootloader
+# --ui        the menu's face: list (the default), the text list over the
+#             card's MENU.BG (src/menu.c); or visual, one picture at a time and
+#             no text (src/visual.c, docs/visual-menu.md)
 # --style     the menu's colour 15 (the selection bar, the boxes, #FF00FF in
-#             the card's picture): rainbow (the default), one colour turning
+#             the card's pictures): rainbow (the default), one colour turning
 #             through the colour wheel; or static
 # --nolto     build without LTO, for a per-object size breakdown
+# --roomy     link against a 16 KB copy of the script, to measure a build that
+#             does not fit (never flash it)
 #
-# Output: build/<MODE>[-static]/chgame_boot.{elf,bin,map,lst} and a size
-# report.
+# Output: build/<MODE>[-visual][-static]/chgame_boot.{elf,bin,map,lst} and a
+# size report.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MODE=release
 LTO=-flto
 STYLE=rainbow
+UI=list
+ROOMY=
 for a in "$@"; do
   case "$a" in
     release|locked|nomenu|app) MODE="$a" ;;
     --nolto) LTO= ;;
+    --roomy) ROOMY=1 ;;
     --style=rainbow|--style=static) STYLE="${a#--style=}" ;;
+    --ui=list|--ui=visual) UI="${a#--ui=}" ;;
     *) echo "unknown argument: $a" >&2; exit 1 ;;
   esac
 done
 OUT="$HERE/build/$MODE"
+[ "$UI" != list ] && OUT="$OUT-$UI"
 [ "$STYLE" != rainbow ] && OUT="$OUT-$STYLE"
 [ -z "$LTO" ] && OUT="$OUT-nolto"
+[ -n "$ROOMY" ] && OUT="$OUT-roomy"
 
 # The toolchain ships with the CHGame board package (arduino-cli core install
 # CHGame:ch32v); it is found in the usual Arduino data folders. Override with
@@ -71,9 +82,14 @@ ARCH="-march=rv32imacxw -mabi=ilp32"
 IMAGE_ID=1; [ "$MODE" = app ] && IMAGE_ID=2   # the fault blink tells whose handler caught it
 DEFS="-DCH32X035 -DSYSCLK_FREQ_48MHz_HSI=48000000 -DF_CPU=48000000 -DCHGAME_IMAGE_ID=$IMAGE_ID"
 DEFS="$DEFS -DCHGAME_ALLOW_SELFUPDATE=$SELFUPDATE -DCHBOOT_MENU=$MENU $APPDEF -DMENU_STYLE=MENU_STYLE_$(echo "$STYLE" | tr a-z A-Z)"
+DEFS="$DEFS -DMENU_UI=MENU_UI_$(echo "$UI" | tr a-z A-Z)"
 INC="-I$SHARED -I$SRC -I$USB -I$SPL -I$SPL/Core -I$SPL/Peripheral/inc"
 WARN="-Wall -Wextra -Wundef -Werror=implicit-function-declaration"
-OPT="-Os $LTO -ffunction-sections -fdata-sections -fno-common -msmall-data-limit=8 -msave-restore -fno-jump-tables ${CHBOOT_EXTRA_CFLAGS:-}"
+# The visual menu fits gate A with three more size flags (SIZES.md, "Visual:
+# sideways slides, faster card reads"): together 84 B, none inside a loop.
+UIOPT=""
+[ "$UI" = visual ] && UIOPT="-fno-guess-branch-probability -fno-shrink-wrap -fno-tree-scev-cprop"
+OPT="-Os $LTO -ffunction-sections -fdata-sections -fno-common -msmall-data-limit=8 -msave-restore -fno-jump-tables $UIOPT ${CHBOOT_EXTRA_CFLAGS:-}"
 CFLAGS="$ARCH $DEFS $INC $WARN $OPT -std=gnu11 -g"
 
 CSRC=(
@@ -86,14 +102,15 @@ if [ "$MODE" != app ]; then
           "$USB/wch_usbcdc_cdc.c" "$USB/wch_usbcdc_descr.c" "$USB/wch_usbcdc_handler.c" )
 fi
 if [ "$MENU" = 1 ]; then
-  CSRC+=( "$SRC/sd.c" "$SRC/fat.c" "$SRC/chg.c" "$SRC/install.c" "$SRC/lcd.c" "$SRC/menu.c" )
+  FACE="$SRC/menu.c"; [ "$UI" = visual ] && FACE="$SRC/visual.c"
+  CSRC+=( "$SRC/sd.c" "$SRC/fat.c" "$SRC/chg.c" "$SRC/install.c" "$SRC/lcd.c" "$SRC/card.c" "$FACE" )
 fi
 ASRC=( "$SRC/startup_chgame_boot.S" )
 
 rm -rf "$OUT"; mkdir -p "$OUT/obj"
-if [ -z "$LTO" ]; then
+if [ -z "$LTO" ] || [ -n "$ROOMY" ]; then
   # Size analysis only: without LTO the image does not fit, so link against a
-  # roomier copy of the script. Never flash a --nolto build.
+  # roomier copy of the script. Never flash a --nolto or --roomy build.
   sed -e 's/LENGTH = 12288/LENGTH = 16384/' -e 's/_etext <= 0x3000/_etext <= 0x4000/' "$LD" > "$OUT/analysis.ld"
   LD="$OUT/analysis.ld"
 fi
@@ -113,7 +130,7 @@ done
 "$OBJCOPY" -O binary "$OUT/chgame_boot.elf" "$OUT/chgame_boot.bin"
 "$OBJDUMP" -d -S "$OUT/chgame_boot.elf" > "$OUT/chgame_boot.lst"
 
-echo "== $MODE$([ -z "$LTO" ] && echo " (no LTO)")"
+echo "== $MODE$([ "$UI" != list ] && echo " $UI")$([ "$STYLE" != rainbow ] && echo " $STYLE")$([ -z "$LTO" ] && echo " (no LTO)")"
 python3 "$HERE/tools/size_report.py" "$OUT/chgame_boot.elf" --size-tool "$SIZE" \
         ${LTO:+} $([ -z "$LTO" ] && echo --objects) \
         $([ "$MODE" = app ] && echo --margin -999999)

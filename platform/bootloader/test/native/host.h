@@ -61,6 +61,8 @@ typedef struct {
     uint32_t bus_conflicts;         /* both chip selects low during a transfer */
     uint8_t  spi_on;                /* hal_spi_speed() called since reset */
     uint32_t spi_off_xfers;         /* transfers while SPI1 is off: a hang on the chip */
+    uint8_t  spi_wide;              /* hal_spi_frames() set 16-bit frames */
+    uint32_t wrong_frames;          /* a byte sent in 16-bit frames, or a pixel in 8-bit ones */
     uint32_t pins_inited;
 
     /* USB (proto) */
