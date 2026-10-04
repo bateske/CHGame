@@ -10,15 +10,24 @@ from `tools/size_report.py`.
 stays at 0x3000 and every game keeps its 50,944 B. The size gate (gate A) is
 a boot image of at most 12,288 B with at least 256 B to spare.
 
-## Current builds (2026-10-03, menu v2)
+## Current builds (2026-10-03, menu v2 and the visual menu)
 
 | Build | `.text` | `.ramfunc` | `.data` | Boot image | Free | `.bss` | RAM in use |
 |---|---|---|---|---|---|---|---|
-| **release** (menu + USB upload + self-update; rainbow) | 11,228 | 596 | 84 | **11,908** | **380** | 17,704 | **20,448** |
+| **release** (list menu + USB upload + self-update; rainbow) | 11,228 | 596 | 84 | **11,908** | **380** | 17,704 | **20,448** |
 | release `--style=static` | 11,004 | 596 | 84 | 11,684 | 604 | 17,564 | 20,308 |
-| locked (menu + USB upload) | 11,012 | 496 | 80 | 11,588 | 700 | 17,704 | 20,344 |
+| **release `--ui=visual`** (the visual menu; rainbow) | 11,372 | 584 | 72 | **12,028** | **260** | 17,544 | **20,264** |
+| release `--ui=visual --style=static` | 11,188 | 584 | 72 | 11,844 | 444 | 17,532 | 20,252 |
+| locked (list menu + USB upload) | 11,012 | 496 | 80 | 11,588 | 700 | 17,704 | 20,344 |
+| locked `--ui=visual` | | | | 11,724 | 564 | | 20,164 |
 | nomenu (USB upload + self-update, for HW2a) | 4,728 | 596 | 76 | 5,400 | 6,888 | 984 | 3,720 |
-| app (the menu as a program at 0x3000, dry run) | 6,392 | 0 | 16 | 6,408 | - | 16,580 | 18,660 |
+| app (the list menu as a program at 0x3000, dry run) | 6,392 | 0 | 16 | 6,408 | - | 16,580 | 18,660 |
+| app `--ui=visual` (the visual menu's dry run) | 6,664 | 0 | 8 | 6,672 | - | 16,544 | 18,616 |
+
+Both faces share the card's code (`src/card.c`); `--ui=` picks `src/menu.c`
+or `src/visual.c`. Splitting `card.c` out of `menu.c` left every list build
+byte-identical to the one before (the release, static, locked, nomenu and
+app binaries all compared equal).
 
 **RAM is full on purpose.** A folder of the menu lists `MENU_MAX_GAMES`
 entries (`src/menu.h`), 32 B each, and 240 take what the framebuffer, the
@@ -66,6 +75,29 @@ Notes:
 | The logo only in the picture; 224 a folder | 11,948 | 340 | No title drawn by the bootloader (the card's picture has the logo; without one the list is on black), so text is never scaled; the game table from 128 entries to 224 (RAM 17,372 to 20,444 B) |
 | A solid rainbow; 240 a folder; the White style | 11,900 | 388 | Colour 15 one turning colour, not a gradient (no 510 B table); the table to 240 entries (RAM 20,448 B). `--style=white`: no animation, 11,684 B |
 | No games: USB mode; an empty folder | 11,908 | 380 | With nothing to list the menu hands over to USB mode again, as the first menu did (LED, B looks at the card again); in an empty folder only B works (it was a trap, and UP/A used stale rows) |
+| `card.c` split out of `menu.c` | 11,908 | 380 | The card's code shared by both faces; every list build byte-identical |
+| Visual menu, first build | 12,664 | -376 | Pictures from the card and the CHG files, rows, the folder ring, the about page, the installed game searched for, built-in 16x16 icons, slides both ways, fades, the install dim, error marks. Over the region |
+| Visual: fades by halving, vertical slides only | 12,372 | -84 | Fades halve the palette in `send()` instead of scaling it; LEFT/RIGHT fade through black (another folder) instead of sliding sideways; one modal for errors and the about page |
+| Visual: 12x12 icons, the launch path in the search | 12,284 | 4 | The launch entry found by the same depth-first walk as the installed game |
+| Visual: `lcd_flush` direct, no dim, no error marks | 12,044 | 244 | SYSTEM.PIC gives each error its own picture, so the built-in error icon has no marks; the install bar draws over the picture as it is |
+| Visual: one cover lookup, `light()` on the USB path | 11,996 | 292 | Gate A passes. Static 11,744 |
+| Visual: pixels as 16-bit frames at 24 MHz | 11,992 | 296 | After the first board run ("pretty damn slow": about 75 ms a screen, 46 instructions a pixel through `px()`, `out()` and the save/restore millicode, each byte awaiting its echo at 12 MHz). `send()` now writes one 16-bit frame a pixel, queued, at 24 MHz, as CHGfx does (`hal_spi_frames()`, `hal_spi_put16()`): about 11 instructions a pixel, some 19 ms a screen, so a slide (4.5 screens) about 90 ms and a folder change (12) about 230 ms. Paid for by dropping the rows-with-colour-15 table (`shows[]`, 128 B of RAM too): each 40 ms rainbow step resends the whole picture. Static 11,808 |
+| Visual: sideways slides, faster card reads | 12,028 | 260 | The owner's Arduboy habit: LEFT/RIGHT slide the folder beside in from that side (`send()` takes a column window too; +116 B), A and B into and out of a folder, and the cover to the installed game at power-on, still fade. Card reads (+72 B): a block's 512 bytes as 16-bit frames at 24 MHz (the clock CHSd streams at on this board), and a block asked for again into the same buffer is not read again, so following a file's clusters reads its FAT block once instead of at every cluster (about 6 reads saved on the way into a game's picture). Paid for by: the SPI clock changes, the panel's byte and the card's byte through one out-of-line function each (`sd_frames()`, `sd_x()`; -68 B), CASET only per send, and three size flags for this build alone (`build.sh`: `-fno-guess-branch-probability -fno-shrink-wrap -fno-tree-scev-cprop`, -84 B; the pixel and card loops compile as before). Static 11,844 |
+
+## Where the visual menu's bytes go
+
+From `./build.sh release --ui=visual --nolto` (the same caveats as below):
+`visual.c` 2,294 B (pictures, rows, the ring, the search, install, the
+built-in screens with their 5 icons of 24 B), `card.c` 1,426 B, `lcd.c`
+951 B (no font, no `lcd_text`; the shaded, offset `send()` and the slide).
+Against the list build's release image the visual one drops the font (320
+B), `lcd_text` (122), `draw_list` (212), `background` (208), `box` and
+`text_c` (136) and the strings, and adds the picture loader (160), `show`
+(156), `icon` (126) and its icons (96), `send` (+72 over the list's flush),
+the search (132), `enter`/`leave` (140) and the fades.
+
+**If bytes are needed in the visual build:** the slide (about 60 B: a cut
+to plain flushes), the installed chip (14 B), the about page (about 40 B).
 
 ## Where the release bytes go
 

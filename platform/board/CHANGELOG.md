@@ -48,11 +48,19 @@ package's maintainer is shown as **bateske**.
   (`CHGame-sdcard-<version>.zip`): built from this package's own examples.
   Each example has a `chgame.json` describing it.
 - **Tools > Bootloader** chooses what *Burn Bootloader* writes: the **SD
-  Game Menu (Rainbow)**, the default, or **(Static)**, the same menu with
+  Text Menu (Rainbow)**, the default, or **(Static)**, the same menu with
   nothing turning: the picture as painted, its magenta parts, the selection
   bar and the boxes magenta; or **USB Only**, the same bootloader
   without the menu. The 0.2.4 bootloader is no longer shipped.
-- **The SD Game Menu takes its look from the card:** the picture behind it
+- **The SD Graphic Menu** (*Tools > Bootloader*, Rainbow or Static): the same
+  card shown one picture at a time and no text, in the manner of the
+  Arduboy FX. The card's cover at power-on, a cover for each folder
+  (LEFT/RIGHT), each game's box art (UP/DOWN), a bar over the picture while
+  a game installs, fades and slides between pictures, an about page on B.
+  Every example game and app comes with its box art (`docs/cart.png`), and
+  the casino card sorts them into genre folders. Switch between the two
+  menus at any time with Burn Bootloader: the card works with both.
+- **The SD Text Menu takes its look from the card:** the picture behind it
   (`GAMES/MENU.BG`; every card the tools prepare has the CHGAME logo, its
   colour turning), the order of the games and folders of up to 240 games
   (`GAMES/MENU.IDX`), and optionally a game started at power-on instead of

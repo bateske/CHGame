@@ -2,6 +2,7 @@
   "title": "BINGO",
   "author": "bateske",
   "genre": "Casino",
+  "cartImage": "docs/cart.png",
   "url": "https://github.com/bateske/CHGame",
   "sourceUrl": "https://github.com/bateske/CHGame/tree/main/platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHBingo"
 }

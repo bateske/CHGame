@@ -50,8 +50,8 @@ import make_tool_archives  # noqa: E402
 BOOTLOADERS = PLATFORM / "bootloaders" / "CHGame"
 SUMS = BOOTLOADER / "release" / "SHA256SUMS"
 # committed name -> the name in release/SHA256SUMS
-BOOT_FILES = {n: n for n in ("chgame_sdboot.bin", "chgame_sdboot_plain.bin", "chgame_sdboot_casino.bin",
-                              "chgame_boot_nomenu.bin")}
+BOOT_FILES = {n: n for n in ("chgame_sdboot.bin", "chgame_sdboot_static.bin", "chgame_sdvisual.bin",
+                              "chgame_sdvisual_static.bin", "chgame_boot_nomenu.bin")}
 
 
 def check_preconditions(version: str, publish: bool) -> str:

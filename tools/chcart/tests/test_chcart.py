@@ -48,13 +48,15 @@ class Format(unittest.TestCase):
                                screenshots=[Screenshot(png(), "title")], cart_image=png(), buttons=[("A", "go")]),
                           game("two", "TWO", folder="F/G")],
                  version="1.0", author="me", launch="two", background=png(), colors={"text": "#FFFFFF"},
-                 folder_backgrounds={"F": png()})
+                 folder_backgrounds={"F": png()}, cover=png(colors=((1, 1, 1),)), about=png(colors=((2, 2, 2),)),
+                 folder_covers={"F/G": png(colors=((3, 3, 3),))})
         a = zipio.to_bytes(c)
         self.assertEqual(a, zipio.to_bytes(c))
         back = zipio.load(a)
         self.assertEqual(zipio.to_bytes(back), a)
         self.assertEqual(back.game("one").sd, {"DATA/X.DAT": b"x"})
         self.assertEqual(back.folders(), ["F", "F/G"])
+        self.assertEqual((back.cover, back.about, back.folder_covers), (c.cover, c.about, c.folder_covers))
         names = zipfile.ZipFile(io.BytesIO(a)).namelist()
         self.assertEqual(names[0], "info.json")
         self.assertIn("one/rev0.bin", names)
@@ -170,6 +172,10 @@ class Sources(unittest.TestCase):
             b = pathlib.Path(d) / "My Game.ino.bin"
             b.write_bytes(image(10))
             self.assertEqual(sources.from_binary(b).title, "MY GAME")
+            self.assertTrue(model.picture_ok(g.cart_image))                  # a picture drawn from its title
+            pic = runtime.menu_picture(png(colors=((10, 60, 200), (255, 0, 255))))
+            p.write_bytes(chgpack.pack(image(4096), "FOUR IN A ROW", picture=pic))
+            self.assertEqual(runtime.menu_picture(sources.from_binary(p).cart_image), pic)   # the CHG's own
 
     def test_merge(self):
         a, b = game("x"), game("x")
@@ -192,6 +198,10 @@ class Sources(unittest.TestCase):
             self.assertEqual(g.description, "A demo with style. More.")
             self.assertEqual(g.sd, {"SUB/A.DAT": b"a"})
             self.assertEqual(list(g.license_files), ["LICENSE"])
+            self.assertTrue(model.picture_ok(g.cart_image))                  # no docs/cart.png: one drawn
+            (s / "docs").mkdir()
+            (s / "docs" / "cart.png").write_bytes(png(colors=((1, 2, 3),)))
+            self.assertEqual(sources.from_sketch(s, image(64)).cart_image, png(colors=((1, 2, 3),)))
             (s / "chgame.json").write_text(json.dumps({"title": "DEMO", "folder": "TOYS", "sdcard": ""}))
             g = sources.from_sketch(s, image(64))
             self.assertEqual((g.title, g.folder, g.sd), ("DEMO", "TOYS", {}))
@@ -211,7 +221,8 @@ class Runtime(unittest.TestCase):
         c = Cart("C", [game("z", "ZULU"), game("a", "ALPHA", folder="ONE"), game("b", "BRAVO", folder="ONE/TWO"),
                        game("m", "MIKE", sd={"M.DAT": b"m"})], launch="b")
         files = runtime.prepare(c)
-        self.assertEqual(list(files), ["GAMES/MENU.IDX", "GAMES/MENU.BG", "GAMES/ZULU.CHG", "GAMES/MIKE.CHG",
+        self.assertEqual(list(files), ["GAMES/MENU.IDX", "GAMES/MENU.BG", "GAMES/COVER.PIC", "GAMES/SYSTEM.PIC",
+                                       "GAMES/ZULU.CHG", "GAMES/MIKE.CHG",
                                        "GAMES/ONE/MENU.IDX", "GAMES/ONE/ALPHA.CHG", "GAMES/ONE/TWO/MENU.IDX",
                                        "GAMES/ONE/TWO/BRAVO.CHG", "M.DAT"])
         idx = files["GAMES/MENU.IDX"]
@@ -228,6 +239,61 @@ class Runtime(unittest.TestCase):
         self.assertEqual(files["GAMES/MENU.BG"], runtime.menu_background(runtime.DEFAULT_BACKGROUND.read_bytes(),
                                                                          c.ui_colors()))
         self.assertEqual(runtime.prepare(c), files)
+
+    def test_visual_files(self):
+        """The visual menu's files: the covers, SYSTEM.PIC, a game's picture in its CHG."""
+        cover, about, one, pic = png(colors=((0, 0, 90),)), png(colors=((90, 0, 0),)), png(colors=((0, 90, 0),)), \
+            png(colors=((9, 9, 9), (255, 0, 255)))
+        c = Cart("C", [game("z", "ZULU", cart_image=pic), game("a", "ALPHA", folder="ONE"),
+                       game("b", "BRAVO", folder="ONE/TWO")], cover=cover, about=about, folder_covers={"ONE": one})
+        files = runtime.prepare(c)
+        self.assertEqual(files["GAMES/COVER.PIC"], runtime.menu_picture(cover))
+        self.assertEqual(files["GAMES/ONE/COVER.PIC"], runtime.menu_picture(one))
+        self.assertNotIn("GAMES/ONE/TWO/COVER.PIC", files)        # no cover of its own: none (no inheritance)
+        self.assertNotIn("GAMES/ONE/SYSTEM.PIC", files)           # SYSTEM.PIC: GAMES/ only
+        sysp = files["GAMES/SYSTEM.PIC"]
+        self.assertEqual(len(sysp), 9 * runtime.BG_BYTES)
+        self.assertEqual(sysp[:runtime.BG_BYTES], runtime.menu_picture(about))      # slot 0: the cart's about page
+        self.assertEqual(sysp, runtime.system_pic(about))
+        self.assertEqual(chgpack.read_picture(files["GAMES/ZULU.CHG"]), runtime.menu_picture(pic))
+        self.assertIsNone(chgpack.read_picture(files["GAMES/ONE/ALPHA.CHG"]))
+        bare = runtime.prepare(Cart("C", [game("z", "ZULU")]))
+        self.assertEqual(bare["GAMES/COVER.PIC"], runtime.menu_picture(runtime.DEFAULT_COVER.read_bytes()))
+        self.assertEqual(bare["GAMES/SYSTEM.PIC"][:runtime.BG_BYTES], runtime.menu_picture(runtime.DEFAULT_ABOUT.read_bytes()))
+
+    def test_picture_rule(self):
+        """Pictures keep the menu's colours at their defaults, whatever the cart's."""
+        many = png(colors=[(k * 20, 0, 0) for k in range(13)])
+        ok = png(colors=[(0, 0, 0), (255, 244, 214), (255, 0, 255)] + [(k * 20, 9, 9) for k in range(11)])
+        self.assertEqual(codes(model.check_picture(ok, "x")), [])
+        self.assertEqual(codes(model.check_picture(many, "x")), ["bad-picture"])
+        self.assertEqual(codes(model.check_picture(png(size=(64, 64)), "x")), ["bad-image"])
+        c = Cart("C", [game("z", "ZULU", cart_image=many)], cover=many, colors={"text": "#FFFFFF"})
+        issues = model.validate(c)
+        self.assertEqual(codes(issues), ["bad-picture"])                         # the cover: an error
+        self.assertEqual(codes(issues, errors=False), ["bad-picture"])           # a cartImage: a warning
+        c.cover = ok
+        files = runtime.prepare(c)                                               # (the menu's text colour ignored)
+        self.assertIsNone(chgpack.read_picture(files["GAMES/ZULU.CHG"]))         # no picture rather than a wrong one
+        pal = struct.unpack_from("<16H", files["GAMES/COVER.PIC"], 8)
+        self.assertEqual(pal[11], runtime.rgb565(255, 244, 214))
+
+    def test_chg_picture(self):
+        pic = runtime.menu_picture(png(colors=((1, 2, 3),)))
+        for n in (4, 508, 1000, 1500):
+            chg = chgpack.pack(image(n), "P", picture=pic)
+            at, size, crc = struct.unpack_from("<III", chg, chgpack.IMAGE_OFF)
+            self.assertEqual((at % 512, at >= 512 + n, size, len(chg)), (0, True, runtime.BG_BYTES, at + size))
+            self.assertEqual(chgpack.read_picture(chg), pic)
+            self.assertEqual(chgpack.parse(chg)["payload_bytes"], len(chgpack.pad_image(image(n))))
+        bad = bytearray(chg)
+        bad[-1] ^= 1
+        with self.assertRaises(chgpack.ChgError) as e:
+            chgpack.read_picture(bytes(bad))
+        self.assertEqual(e.exception.code, 8)
+        chgpack.parse(bytes(bad))                                                # (the game still installs)
+        with self.assertRaises(ValueError):
+            chgpack.pack(image(8), "P", picture=pic[:-1])
 
     def test_chg_fields(self):
         g = game("a", "A", author="A very long author name", version="1.2.3-beta")
@@ -317,6 +383,44 @@ class Background(unittest.TestCase):
             self.assertEqual(c.colors, {"text": "#FFFFFF"})
             self.assertEqual(cli.background_main([str(d / "pic.jpg"), "--card", str(d / "card")]), 0)
             self.assertEqual(len((d / "card" / "GAMES" / "MENU.BG").read_bytes()), runtime.BG_BYTES)
+
+    def test_picture_commands(self):
+        """chgame picture and chgame cart picture / art: any image converted to
+        the picture rule; placeholders for what has none."""
+        from PIL import Image
+        with tempfile.TemporaryDirectory() as d:
+            d = pathlib.Path(d)
+            im = Image.new("RGB", (300, 300))
+            for x in range(300):
+                for y in range(300):
+                    im.putpixel((x, y), (x % 256, y % 256, 120))
+            im.save(d / "photo.png")
+            self.assertEqual(cli.picture_main([str(d / "photo.png"), "--out", str(d / "p.png"),
+                                               "--preview", str(d / "p.gif"), "--card", str(d / "card")]), 0)
+            self.assertTrue(model.picture_ok((d / "p.png").read_bytes()))
+            self.assertEqual((d / "card" / "GAMES" / "COVER.PIC").read_bytes(), runtime.menu_picture((d / "p.png").read_bytes()))
+            self.assertEqual(cli.picture_main(["--template", str(d / "t.png")]), 0)
+            self.assertTrue(model.picture_ok((d / "t.png").read_bytes()))
+            (d / "a.bin").write_bytes(image(100))
+            pkg = str(d / "c.chgame")
+            run = lambda *a: self.assertEqual(cli.main([str(x) for x in a]), 0)
+            run("new", pkg, d / "a.bin")
+            run("add", pkg, d / "a.bin", "--folder", "MORE")
+            gid = zipio.load(pkg).games[0].id
+            run("picture", pkg, d / "photo.png")
+            run("picture", pkg, d / "photo.png", "--about")
+            run("picture", pkg, d / "p.png", "--game", gid)
+            self.assertEqual(cli.main(["picture", pkg, str(d / "p.png"), "--folder", "NOPE"]), 1)
+            c = zipio.load(pkg)
+            self.assertTrue(model.picture_ok(c.cover) and model.picture_ok(c.about))
+            self.assertEqual(c.game(gid).cart_image, (d / "p.png").read_bytes())
+            self.assertEqual(c.folder_covers, {})
+            run("art", pkg)                                  # the folder's cover, drawn from its name
+            c = zipio.load(pkg)
+            self.assertEqual(list(c.folder_covers), ["MORE"])
+            self.assertTrue(model.picture_ok(c.folder_covers["MORE"]))
+            run("picture", pkg, "none", "--folder", "MORE")
+            self.assertEqual(zipio.load(pkg).folder_covers, {})
 
 
 class Deploy(unittest.TestCase):

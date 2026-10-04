@@ -20,6 +20,8 @@
       "type": "object",
       "properties": {
         "background": {"$ref": "#/$defs/path"},
+        "cover": {"$ref": "#/$defs/path"},
+        "about": {"$ref": "#/$defs/path"},
         "colors": {
           "type": "object",
           "properties": {
@@ -36,7 +38,8 @@
             "required": ["name"],
             "properties": {
               "name": {"type": "string"},
-              "background": {"$ref": "#/$defs/path"}
+              "background": {"$ref": "#/$defs/path"},
+              "cover": {"$ref": "#/$defs/path"}
             }
           }
         }

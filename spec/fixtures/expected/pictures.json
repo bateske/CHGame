@@ -1,0 +1,112 @@
+{
+ "warnings": [],
+ "games": [
+  {
+   "id": "one",
+   "title": "ONE",
+   "folder": "",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {}
+  },
+  {
+   "id": "two",
+   "title": "TWO",
+   "folder": "CARDS",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {}
+  },
+  {
+   "id": "three",
+   "title": "THREE",
+   "folder": "CARDS/CLASSIC",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {}
+  },
+  {
+   "id": "four",
+   "title": "FOUR",
+   "folder": "DICE",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {}
+  }
+ ],
+ "launch": "",
+ "card": {
+  "GAMES/MENU.IDX": {
+   "size": 128,
+   "sha256": "aa2eb9a1cc5e2a96f8eb9a5a2720bdfd0b2f30d83709bab927411219d96e49f8"
+  },
+  "GAMES/MENU.BG": {
+   "size": 8704,
+   "sha256": "5c0d5aa0c249749aa45bd6c7c2d16260b6e1fb81bdbf5b57ff436cde0f68d711"
+  },
+  "GAMES/COVER.PIC": {
+   "size": 8704,
+   "sha256": "bbae9b6dcccf21e7778356c9a076c3d8c5cd9c210c372ccef0fa32c796838bc0"
+  },
+  "GAMES/SYSTEM.PIC": {
+   "size": 78336,
+   "sha256": "22355b8c5ce406af132eee8d3b420b39e4b63ccf473a6a2967b45d902cb209dd"
+  },
+  "GAMES/ONE.CHG": {
+   "size": 20480,
+   "sha256": "d174d2a78e9c4edd9eaa23fb0649f583c0e88af9c90c65d22a201576b10a7594"
+  },
+  "GAMES/CARDS/MENU.IDX": {
+   "size": 96,
+   "sha256": "86542482b76bd4cbfff6dbda00c785ffbeec44e6ceeaaf5084b944cb2825d238"
+  },
+  "GAMES/CARDS/MENU.BG": {
+   "size": 8704,
+   "sha256": "c6657cdc65127073a8f46be0b19cdfaba7891be41b92ef731e1823ab09e5fb35"
+  },
+  "GAMES/CARDS/COVER.PIC": {
+   "size": 8704,
+   "sha256": "72a78a9098710edf66289cb7f850293650dedda495129630d104647768acaf71"
+  },
+  "GAMES/CARDS/TWO.CHG": {
+   "size": 20480,
+   "sha256": "2fb85e310f728ae0835c289474f8ff279afe3cdb435f57351d6ba266d581dfbb"
+  },
+  "GAMES/CARDS/CLASSIC/MENU.IDX": {
+   "size": 64,
+   "sha256": "806ac139c692202826efe2f19533df8e7a72784e9db7f8d2d5da0e234c66259b"
+  },
+  "GAMES/CARDS/CLASSIC/COVER.PIC": {
+   "size": 8704,
+   "sha256": "c76bfb42026555668e46ead8eaf71ab4af2fdc755423cd6be37dc163591c38b6"
+  },
+  "GAMES/CARDS/CLASSIC/THREE.CHG": {
+   "size": 11348,
+   "sha256": "d678d5bc0b45e76511afd24853783bbe94e31a8aef52793bfde6379e8686f260"
+  },
+  "GAMES/DICE/MENU.IDX": {
+   "size": 64,
+   "sha256": "93e9ca7ed7ada09069a62e80d198e86e96457c4771fa6628fe5ca8377039f8ad"
+  },
+  "GAMES/DICE/FOUR.CHG": {
+   "size": 11348,
+   "sha256": "f30c93ad9383130043af66a8fe75979fd91bb6222ef6890a14faecad7d0185c9"
+  }
+ }
+}

@@ -133,17 +133,23 @@ rev0.menu.usb.uploadonly=Upload only: no Serial (~0.7 KB smaller)
 rev0.menu.usb.uploadonly.build.usb_flags=-DUSE_CHGAME_USB_BOOTONLY
 
 # Which bootloader Burn Bootloader writes. It changes nothing in a sketch:
-# all three keep the same memory map, USB identity and upload protocol, so a
-# sketch built for one runs under the others. The menu's picture comes from
-# the card (GAMES/MENU.BG, spec/card.md); the two menus differ only in its
-# selection bar, boxes and magenta parts: one colour turning through the
-# rainbow, or as painted (platform/bootloader/build.sh --style=). The sources and
-# what each one does are in platform/bootloader; bootloaders/CHGame/README.md
-# says where each binary comes from.
-rev0.menu.boot.sdmenu=SD Game Menu (Rainbow)
+# all five keep the same memory map, USB identity and upload protocol, so a
+# sketch built for one runs under the others. Two faces read the same card
+# (spec/card.md): the SD Text Menu, a text list over the card's MENU.BG, and
+# the SD Graphic Menu, one picture at a time and no text (the card's covers
+# and the games' pictures; platform/bootloader/build.sh --ui=). Each comes in
+# two styles: the selection, boxes, bar and magenta parts as one colour
+# turning through the rainbow, or as painted (--style=). The sources and what
+# each one does are in platform/bootloader; bootloaders/CHGame/README.md says
+# where each binary comes from.
+rev0.menu.boot.sdmenu=SD Text Menu (Rainbow)
 rev0.menu.boot.sdmenu.bootloader.file=CHGame/chgame_sdboot.bin
-rev0.menu.boot.sdstatic=SD Game Menu (Static)
+rev0.menu.boot.sdstatic=SD Text Menu (Static)
 rev0.menu.boot.sdstatic.bootloader.file=CHGame/chgame_sdboot_static.bin
+rev0.menu.boot.sdvisual=SD Graphic Menu (Rainbow)
+rev0.menu.boot.sdvisual.bootloader.file=CHGame/chgame_sdvisual.bin
+rev0.menu.boot.sdvisualstatic=SD Graphic Menu (Static)
+rev0.menu.boot.sdvisualstatic.bootloader.file=CHGame/chgame_sdvisual_static.bin
 rev0.menu.boot.nomenu=USB Only
 rev0.menu.boot.nomenu.bootloader.file=CHGame/chgame_boot_nomenu.bin
 

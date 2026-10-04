@@ -44,12 +44,16 @@
 #define SPI_BR_6M     2u
 #define SPI_BR_12M    1u
 #define SPI_BR_24M    0u
+#define HAL_SPI_16BIT (1u << 11)   /* CTLR1.DFF: 16-bit frames */
 
 #ifdef CHBOOT_HOST
 
 void     hal_pins_init(void);
 void     hal_spi_speed(uint32_t br);
 uint8_t  hal_spi_xfer(uint8_t b);
+void     hal_spi_frames(uint32_t ctl);
+void     hal_spi_put16(uint32_t v);
+uint32_t hal_spi_xfer16(uint32_t v);
 void     hal_sd_select(int on);
 void     hal_lcd_select(int on);
 void     hal_lcd_dc(int data);
@@ -110,6 +114,37 @@ static inline uint8_t hal_spi_xfer(uint8_t b)
     SPI1->DATAR = b;
     while (!(SPI1->STATR & SPI_STATR_RXNE)) { }
     return (uint8_t)SPI1->DATAR;
+}
+
+/* SPI1's frames and speed, ctl = (BR << 3) | HAL_SPI_16BIT or not: first the
+ * wire runs dry and the unread echo and the overrun are cleared (bytes sent
+ * with hal_spi_put16() are never read), so no stale byte reaches a card read.
+ * The panel's pixels go as 16-bit frames at 24 MHz, as CHGfx sends them; the
+ * card needs 8-bit frames back. */
+static inline void hal_spi_frames(uint32_t ctl)
+{
+    while (!(SPI1->STATR & SPI_STATR_TXE)) { }
+    while (SPI1->STATR & SPI_STATR_BSY) { }
+    (void)SPI1->DATAR;
+    (void)SPI1->STATR;
+    SPI1->CTLR1 = (uint16_t)(SPI_CTLR1_MSTR | SPI_CTLR1_SSI | SPI_CTLR1_SSM | ctl);
+    SPI1->CTLR1 = (uint16_t)(SPI_CTLR1_MSTR | SPI_CTLR1_SSI | SPI_CTLR1_SSM | ctl | SPI_CTLR1_SPE);
+}
+
+/* One 16-bit frame, queued: the next waits in the SPI while this one shifts,
+ * so the wire, not the CPU, sets the pace. Its echo is never read. */
+static inline void hal_spi_put16(uint32_t v)
+{
+    while (!(SPI1->STATR & SPI_STATR_TXE)) { }
+    SPI1->DATAR = (uint16_t)v;
+}
+
+/* One 16-bit frame out and its echo back (the card's data, first byte high). */
+static inline uint32_t hal_spi_xfer16(uint32_t v)
+{
+    SPI1->DATAR = (uint16_t)v;
+    while (!(SPI1->STATR & SPI_STATR_RXNE)) { }
+    return SPI1->DATAR;
 }
 
 static inline void hal_sd_select(int on)  { if (on) GPIOB->BCR = 1u << 11; else GPIOB->BSHR = 1u << 11; }

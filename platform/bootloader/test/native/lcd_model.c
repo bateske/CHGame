@@ -45,7 +45,11 @@ static void command(lcd_model_t *m, uint8_t c, uint64_t now)
         for (int i = 0; i < LCD_W * LCD_H; i++)
             if (!m->touched[i]) { m->garbage_shown++; break; }
         break;
-    case 0x2C: m->x = m->xs; m->y = m->ys; break;                /* RAMWR */
+    case 0x2C:                                                   /* RAMWR */
+        m->x = m->xs; m->y = m->ys;
+        if (m->xe - m->xs + 1 < LCD_W) { if (!m->col_writes++) m->first_col_xs = m->xs; }
+        else if (m->ye - m->ys + 1 < LCD_H) m->row_writes++;
+        break;
     default: break;
     }
 }

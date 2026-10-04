@@ -159,7 +159,8 @@ def run(dist: Path, port: int, build_all: bool, card: Path | None, jobs: int) ->
     say("=== Tools menus ===")
     det = cli("board", "details", "-b", FQBN, json_out=True)
     opts = {o["option"]: [v["value"] for v in o["values"]] for o in det.get("config_options", [])}
-    check(opts.get("boot", []) == ["sdmenu", "sdstatic", "nomenu"], "Tools > Bootloader", ", ".join(opts.get("boot", [])))
+    check(opts.get("boot", []) == ["sdmenu", "sdstatic", "sdvisual", "sdvisualstatic", "nomenu"], "Tools > Bootloader",
+          ", ".join(opts.get("boot", [])))
     progs = {p["id"]: p["name"] for p in det.get("programmers", [])}
     check({"chgameusb", "wchisp"} <= set(progs), "Tools > Programmer", "; ".join(progs.values()))
     boards_txt = (plat / "boards.txt").read_text(encoding="utf-8", errors="replace")
@@ -253,7 +254,7 @@ for 3 seconds in a game goes back to the menu.
 
 The menu is part of the CHGame bootloader. A board that does not show it
 needs the menu bootloader once: in the Arduino IDE, choose Tools > Board >
-CHGame Boards > CHGame Rev0, Tools > Bootloader > SD Game Menu (Rainbow or Static),
+CHGame Boards > CHGame Rev0, Tools > Bootloader > SD Text Menu (Rainbow or Static),
 Tools > Programmer > CHGame USB,
 then Tools > Burn Bootloader.
 

@@ -8,7 +8,8 @@
  *   0x200  payload: the program image exactly as chgame-upload would write it
  *          at CHGAME_APP_START (the sketch .bin padded with 0xFF to a
  *          multiple of 4)
- *   ...    optional extras the bootloader ignores (title image)
+ *   ...    optional: the game's picture, which the visual menu shows and the
+ *          install ignores
  *
  * The package never names a flash address: the destination is always
  * CHGAME_APP_START, and layout_id says which memory map it was built for.
@@ -35,7 +36,9 @@
 #define CHG_OFF_TITLE        0x020u   /* char[32], ASCII, NUL-padded: shown by the menu */
 #define CHG_OFF_AUTHOR       0x040u   /* char[16] */
 #define CHG_OFF_VERSTR       0x050u   /* char[8], e.g. "1.2" */
-#define CHG_OFF_IMAGE        0x060u   /* u32 offset, u32 bytes, u32 crc32: optional 128x128 title image, 0 = none */
+#define CHG_OFF_IMAGE        0x060u   /* u32 offset, u32 bytes, u32 crc32: the game's picture, 0 = none. A picture in
+                                         MENU.BG's encoding (chgame_card.h): bytes 8,704, offset a multiple of 512
+                                         after the payload and under 128 KiB. Readers may ignore the CRC */
 #define CHG_OFF_HCRC         0x1FCu   /* u32 header_crc32: CRC-32/ISO-HDLC of bytes 0x000..0x1FB */
 
 #define CHG_TITLE_LEN        32u

@@ -5,9 +5,15 @@ platform/bootloader/shared/chgame_card.h and src/menu.c).
     GAMES/                 the menu's tree
       MENU.IDX             the folder's entries in the cart's order, folder
                            titles, the launch flag
-      MENU.BG              the background (the cart's, or spec/assets'
-                           default at the top; a folder's own if it has one)
-      <NAME>.CHG           a game (spec/chg.md)
+      MENU.BG              the list menu's background (the cart's, or
+                           spec/assets' default at the top; a folder's own if
+                           it has one)
+      COVER.PIC            the visual menu's cover of the folder (the cart's,
+                           or spec/assets' default at the top; a folder's own
+                           if it has one)
+      SYSTEM.PIC           (top only) the visual menu's screens: the about
+                           page (the cart's or the default), then spec/assets'
+      <NAME>.CHG           a game (spec/chg.md), with its picture if it has one
       <NAME>/              a folder, the same again
     <the games' SD files>  at the paths the games read them from
 
@@ -28,6 +34,11 @@ sys.path.insert(0, str(REPO / "tools"))
 import chgpack  # noqa: E402
 
 DEFAULT_BACKGROUND = REPO / "spec" / "assets" / "menu-default.png"
+DEFAULT_COVER = REPO / "spec" / "assets" / "cover-default.png"
+DEFAULT_ABOUT = REPO / "spec" / "assets" / "about-default.png"
+# SYSTEM.PIC's screens after the about page, in order (shared/chgame_card.h CARD_SYS_*)
+SYSTEM_SCREENS = ["installed", "game", "folder", "error-1", "error-2", "error-3", "error-4", "error-5"]
+SYSTEM_DIR = REPO / "spec" / "assets" / "system"
 IDX_MAGIC, BG_MAGIC = b"CHX1", b"CHB1"
 IDX_RECORD, IDX_LAUNCH = 32, 0x01
 BG_HEADER, BG_BYTES = 512, 512 + 128 * 64
@@ -58,7 +69,7 @@ def rgb565(r, g, b):
     return (r & 0xF8) << 8 | (g & 0xFC) << 3 | b >> 3
 
 
-def menu_background(png, ui):
+def menu_background(png, ui, code="bad-background", where="menu"):
     """MENU.BG from a background PNG (spec/card.md): #FF00FF is colour 15 (the
     rainbow, or as painted: its palette entry is #FF00FF); a colour equal to one of
     the menu's own takes its index (11-14, the lowest if several match); every
@@ -69,7 +80,7 @@ def menu_background(png, ui):
     pal = [0] * 16
     for k, rgb in enumerate(model.background_colors(png, ui)):
         if k > 10:
-            raise CartError([Issue("bad-background", "menu", "more than 11 colours")])
+            raise CartError([Issue(code, where, "more than 11 colours")])
         index[rgb] = k
         pal[k] = rgb565(*rgb)
     for k, i in UI_INDEX.items():
@@ -81,12 +92,49 @@ def menu_background(png, ui):
     return head.ljust(BG_HEADER, b"\0") + body
 
 
+def menu_picture(png, where="picture"):
+    """A picture for the visual menu (a cover, SYSTEM.PIC's screens, a game's
+    picture in its CHG file): MENU.BG's encoding, with the menu's colours at
+    their defaults whatever the cart's (spec/card.md, the picture rule)."""
+    return menu_background(png, model.UI_COLORS, "bad-picture", where)
+
+
+def picture_png(pic):
+    """A picture (menu_picture()'s encoding) back to a PNG that gives the same
+    picture again: its own colours as RGB565 gives them back, the menu's and
+    #FF00FF exactly."""
+    import io
+    from PIL import Image
+    pal = struct.unpack_from("<16H", pic, 8)
+    rgb = [((c >> 11) * 255 // 31, ((c >> 5) & 63) * 255 // 63, (c & 31) * 255 // 31) for c in pal]
+    for k, i in UI_INDEX.items():           # (the menu's colours and #FF00FF exactly: RGB565 cannot hold them all)
+        rgb[i] = model.hex_rgb(model.UI_COLORS[k])
+    rgb[RAINBOW_INDEX] = model.RAINBOW_RGB
+    im = Image.new("P", (128, 128))
+    im.putpalette([v for c in rgb for v in c])
+    px = pic[BG_HEADER:BG_BYTES]
+    im.putdata([b >> 4 if i % 2 == 0 else b & 15 for i, b in enumerate(x for x in px for _ in (0, 1))])
+    b = io.BytesIO()
+    im.save(b, "PNG", optimize=True)
+    return b.getvalue()
+
+
 def chg_file(game, device="rev0"):
     """The game's CHG file (spec/chg.md): its binary for `device` behind the
-    header, with the title, and the author and version where they fit."""
+    header, with the title, and the author and version where they fit; then
+    its picture (cartImage) if it follows the picture rule."""
+    pic = menu_picture(game.cart_image) if model.picture_ok(game.cart_image) else None
     return chgpack.pack(game.binaries[device], game.title,
                         model.chg_text(game.author, model.CHG_AUTHOR_MAX),
-                        model.chg_text(game.version, model.CHG_VERSION_MAX))
+                        model.chg_text(game.version, model.CHG_VERSION_MAX), picture=pic)
+
+
+def system_pic(about=None):
+    """GAMES/SYSTEM.PIC: the about page (the cart's, else the default), then
+    the default screens, in SYSTEM_SCREENS' order."""
+    pngs = [about if about is not None else DEFAULT_ABOUT.read_bytes()]
+    pngs += [(SYSTEM_DIR / f"{n}.png").read_bytes() for n in SYSTEM_SCREENS]
+    return b"".join(menu_picture(p) for p in pngs)
 
 
 def levels(cart):
@@ -145,6 +193,13 @@ def prepare(cart, device="rev0"):
             png = DEFAULT_BACKGROUND.read_bytes()
         if png is not None:
             out[f"{where[path]}/MENU.BG"] = menu_background(png, ui)
+        png = cart.cover if not path else cart.folder_covers.get(path)
+        if not path and png is None:
+            png = DEFAULT_COVER.read_bytes()
+        if png is not None:
+            out[f"{where[path]}/COVER.PIC"] = menu_picture(png)
+        if not path:
+            out["GAMES/SYSTEM.PIC"] = system_pic(cart.about)
         out.update(files)
     sd = {}
     for g in cart.games:

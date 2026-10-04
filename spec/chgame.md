@@ -60,7 +60,9 @@ same when the card's layout changes.
 |---|---|
 | `background` | path of a PNG, 128x128, opaque: the whole picture behind the menu, its title or logo included. The menu draws over rows 20-119 only (card.md). Pixels of exactly `#FF00FF` are drawn in the menu's colour 15: one colour turning through the rainbow, or as painted on a bootloader in the Static style. Besides `#FF00FF` and the four menu colours below, at most 11 colours (card.md says why, and how it is converted). `chgame background` makes any image into one (docs/menu-image.md) |
 | `colors` | the menu's own colours, `#RRGGBB`: `text` (titles, default `#FFF4D6`), `disabled` (a file the menu cannot install, `#808080`), `selectedText` (the title on the selection bar, `#000000`), `mark` (the installed game's chip, `#D62020`) |
-| `folders` | a list of `{"name": "CARD GAMES", "background": "path.png"}`: a folder's own background, the same kind of PNG. Folders without one show their parent's |
+| `folders` | a list of `{"name": "CARD GAMES", "background": "path.png", "cover": "path.png"}`: a folder's own background, the same kind of PNG (folders without one show their parent's); and its cover for the visual menu, a picture (below; folders without one show the menu's no-cover screen) |
+| `cover` | path of a picture (below): the cart's cover, which the visual menu shows at power-on and as the top level's first row |
+| `about` | path of a picture: the visual menu's about page (B at the top level), how the menu works; the default explains the keys |
 
 ### A game
 
@@ -74,7 +76,7 @@ same when the card's layout changes.
 | `buttons` | | `[{"control": "A", "action": "Lay a tile"}]`, as in `.arduboy` |
 | `binaries` | required | `[{"device": "rev0", "filename": "path.bin"}]`: the game built for each board it runs on, at most one per device (below) |
 | `sdcard` | | a folder in the ZIP, ending in `/`: every file under it goes onto the SD card's root at the same relative path (below) |
-| `cartImage` | | path of a 128x128 PNG: the game's own title picture, kept for menus that show one |
+| `cartImage` | | path of a 128x128 PNG: the game's picture, its box art, which the visual menu shows while it is selected. A picture (below); one that breaks the picture rule is a warning (`bad-picture`) and the card gets no picture of it |
 | `screenshots` | | `[{"filename": "path", "title": "..."}]`: PNG or GIF (animated allowed), square, 128, 256, 384 or 512 pixels wide (the screen at 1x to 4x) |
 
 ### Order and folders
@@ -85,7 +87,21 @@ same when the card's layout changes.
   them.
 - **A folder** takes its place in its parent's list where its first game
   is, in that order.
-- **`menu.folders` only adds a background.** It never orders anything.
+- **`menu.folders` only adds a background and a cover.** It never orders anything.
+
+### Pictures
+
+`menu.cover`, `menu.about`, a folder's `cover` and a game's `cartImage` are
+pictures for the visual menu: a 128x128 PNG, opaque, with at most 11 colours
+besides `#FF00FF` and the menu's four at their default values (`#FFF4D6`,
+`#808080`, `#000000`, `#D62020`), whatever `menu.colors` says, so a picture
+means the same in any cart. `#FF00FF` turns through the rainbow on a Rainbow
+bootloader. A `menu` picture that breaks the rule is an error
+(`bad-picture`). `chgame picture` converts any image into one
+(docs/visual-menu.md); card.md, step 7, says how a card stores them.
+`chgame export` and the cart tools draw a picture for a game that has none
+and a cover for a folder that has none (tools/boxart.py), outside this
+format: the cart carries the PNG, so readers never have to draw one.
 
 Example: games `A` (top level), `B` (folder `F`), `C` (top level), `D`
 (folder `F`). The top level lists `A`, `F`, `C`, and `F` lists `B`, `D`.

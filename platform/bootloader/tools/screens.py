@@ -9,6 +9,9 @@ docs/menu_screens.png  the menu with a game installed, and three messages
 docs/menu_cards.png    the menu on the default picture (the casino card), on a
                        picture of a card's own, and on a card with none
 docs/menu_rainbow.gif  the rainbow colour turning on the casino card (4 s)
+docs/visual.png        the visual menu on the casino card: the splash, a folder's cover, games
+docs/visual_screens.png  installing, the about page, an error and USB upload (built-in screens)
+docs/visual_cards.png  every cover and game picture of the casino card, as the visual menu shows them
 """
 import subprocess
 from pathlib import Path
@@ -52,6 +55,27 @@ def main():
         ppm.unlink()
     anim[0].save(DOCS / "menu_rainbow.gif", save_all=True, append_images=anim[1:], duration=120, loop=0)
     print("docs/menu.png, docs/menu_screens.png, docs/menu_cards.png, docs/menu_rainbow.gif")
+    visual()
+
+
+def grid(names, cols, scale=1):
+    s = 128 * scale
+    rows = (len(names) + cols - 1) // cols
+    out = Image.new("RGB", (cols * (s + GAP) - GAP, rows * (s + GAP) - GAP), GAP_RGB)
+    for i, n in enumerate(names):
+        im = Image.open(FRAMES / f"{n}.png").convert("RGB").resize((s, s), Image.NEAREST)
+        out.paste(im, ((i % cols) * (s + GAP), (i // cols) * (s + GAP)))
+    return out
+
+
+def visual():
+    """The visual menu's pictures (test_visual.c, its real-card run)."""
+    strip(["v_real_splash", "v_real_cover_0", "v_real_game_00", "v_real_game_04"]).save(DOCS / "visual.png")
+    strip(["v_real_installing", "v_real_about", "v_error_icon", "v_usb_notice"]).save(DOCS / "visual_screens.png")
+    covers = ["v_real_splash"] + [f"v_real_cover_{k}" for k in range(7)]
+    games = sorted(p.stem for p in FRAMES.glob("v_real_game_*.png"))
+    grid(covers + games, 8).save(DOCS / "visual_cards.png")
+    print("docs/visual.png, docs/visual_screens.png, docs/visual_cards.png")
 
 
 if __name__ == "__main__":

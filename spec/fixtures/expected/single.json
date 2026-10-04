@@ -24,6 +24,14 @@
    "size": 8704,
    "sha256": "5c0d5aa0c249749aa45bd6c7c2d16260b6e1fb81bdbf5b57ff436cde0f68d711"
   },
+  "GAMES/COVER.PIC": {
+   "size": 8704,
+   "sha256": "1bd835708372c15667d4cb6d92ad51f6ab7ee4f963052781b260753f89fe4c83"
+  },
+  "GAMES/SYSTEM.PIC": {
+   "size": 78336,
+   "sha256": "a139390363bb48dfdfe6635d9f914a0e2c58dbfa3171698ca9b585e046b92d64"
+  },
   "GAMES/HELLO.CHG": {
    "size": 11348,
    "sha256": "640903e175cb97c630248c54afcec5c51110346ce517cd1c21b51548896ebf4a"

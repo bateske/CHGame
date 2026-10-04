@@ -59,7 +59,7 @@ installs it from this machine instead.
 | Piece | In this repository | Delivered by the board package (0.3.0) |
 |---|---|---|
 | Core, variant, toolchain, `chgame-upload` | `platform/board/` | yes |
-| Bootloader with the SD game menu | `platform/bootloader/` | yes: *Tools > Bootloader* (SD Game Menu in Rainbow or Static, or USB Only), written by *Burn Bootloader* over USB with the programmer **CHGame USB**: no driver, no buttons |
+| Bootloader with the SD game menu | `platform/bootloader/` | yes: *Tools > Bootloader* (SD Text Menu, the list, or SD Graphic Menu, the pictures, each in Rainbow or Static; or USB Only), written by *Burn Bootloader* over USB with the programmer **CHGame USB**: no driver, no buttons |
 | The CHGame library (`CHGame.h`: buttons, pacing, palette, drawing, sound, saving, debug protocol) | `platform/board/arduino/CHGame/libraries/CHGame/`; every game is built on it | yes, in the package's `libraries/`: nothing to install |
 | CHGfx, the graphics library | `platform/board/arduino/CHGame/libraries/CHGfx/` (1.3.0) | yes, with its examples |
 | CHSd, the SD/FAT reader | `platform/board/arduino/CHGame/libraries/CHSd/` (1.0.0) | yes |
@@ -106,12 +106,21 @@ Examples > CHGame > Games*; set *Tools > USB* to **Upload only** for them
 A new sketch only needs `#include <CHGame.h>`; *Hello* is the smallest one.
 
 **The menu bootloader** is installed over USB, through the bootloader a
-board already has: no driver, no buttons. *Tools > Bootloader* **SD Game
+board already has: no driver, no buttons. *Tools > Bootloader* **SD Text
 Menu (Rainbow)** (or **(Static)**), *Tools > Programmer*
 **CHGame USB**, then *Tools > Burn Bootloader*. Without the 0.3.0 package:
 `chgame uploader selfupdate platform/bootloader/release/chgame_sdboot.bin`
 ([platform/bootloader](platform/bootloader/README.md#installing-it-on-a-board)).
 The WCH driver and the BOOT button are only for recovery.
+
+**The visual menu** is the other face of the same bootloader: one picture at
+a time, no text, like the Arduboy FX. The card's cover at power-on, a cover
+for each folder (LEFT/RIGHT), each game's box art (UP/DOWN), a bar over the
+picture while a game installs. *Tools > Bootloader* **SD Graphic Menu
+(Rainbow)** or **(Static)**; the same card works with both
+([docs/visual-menu.md](docs/visual-menu.md)).
+
+![The visual menu on the casino card: the splash, a folder's cover, two games](platform/bootloader/docs/visual.png)
 
 **The SD card.** Unzip `CHGame-sdcard-<version>.zip` from the release page
 onto a FAT32 card, or deploy `CHGame-Casino-<version>.chgame` to it
@@ -131,6 +140,16 @@ The menu leaves the top 20 rows (the logo) and the bottom 8 (key hints) to
 the picture, and anything painted in pure magenta (#FF00FF) turns through
 the rainbow (or stays as painted, with the Static bootloader). [docs/menu-image.md](docs/menu-image.md) walks through it step
 by step, including putting a picture into a `.chgame` cart.
+
+**Pictures for the visual menu** are the same kind of 128x128 PNG: a game's
+box art (`docs/cart.png` in its sketch, drawn by its `tools/cart.py`), the
+card's cover, a folder's cover, the about page:
+
+```bash
+chgame picture --template my-art.png           # a blank picture with the menu's marks shown
+chgame picture my-art.png --preview p.gif      # as the visual menu shows it
+chgame boxart                                  # in a game's folder: redraw its docs/cart.png
+```
 
 **This repository** is for working on the platform and the games: clone it
 and `pip install -e .[sim]` (see *Quick start* below). `chgame build`
@@ -298,9 +317,10 @@ is GPL-3.0 and stays inside that sketch.
 
 ### The bootloader and the SD game menu: `platform/bootloader/`
 
-The board's permanent bootloader (12 KB at 0x0000), with the game menu:
+The board's permanent bootloader (12 KB at 0x0000), with the game menu in
+two faces, the list and the pictures ([docs/visual-menu.md](docs/visual-menu.md)):
 - the menu appears at every power-on and lists `GAMES/*.CHG` from a
-  FAT16/FAT32 card;
+  FAT16/FAT32 card, in folders;
 - the installed game is preselected, and starting it writes nothing;
 - holding START for 3 s in any game goes back to the menu;
 - another game is checked completely before anything is erased;

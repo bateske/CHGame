@@ -64,6 +64,16 @@ def shot(d, f):
     d.rectangle([8 + 8 * f, 8, 40 + 8 * f, 40], fill=(255, 200, 0))
 
 
+def picture(rgb, square):
+    """A picture for the visual menu: `rgb` behind, a #FF00FF bar, a square of `square`."""
+    def draw(d, f):
+        d.rectangle([0, 0, 127, 127], fill=rgb)
+        d.rectangle([0, 100, 127, 107], fill=(255, 0, 255))
+        d.rectangle([40, 30, 87, 77], fill=square)
+        d.rectangle([2, 2, 5, 5], fill=(214, 32, 32))               # = mark: index 14
+    return draw
+
+
 def good():
     hello = HELLO.read_bytes()
     lic = {"LICENSE": b"Fixture licence text.\n"}
@@ -85,7 +95,17 @@ def good():
                      Game("words-2", "WORDS", {"rev0": hello}, folder="TOYS"),
                      Game("con", "CON", {"rev0": hello}),
                      Game("long", "A TITLE LONGER THAN THE MENU", {"rev0": hello}, author="an author with a long name")])
-    return {"single": single, "single-sd": single_sd, "multi": multi}
+    pictures = Cart("PICTURES", cover=png(picture((20, 20, 80), (255, 200, 0))),
+                    about=png(picture((80, 20, 20), (255, 255, 255))),
+                    folder_covers={"CARDS": png(picture((0, 80, 30), (255, 244, 214))),
+                                   "CARDS/CLASSIC": png(picture((60, 40, 0), (0, 200, 255)))},
+                    folder_backgrounds={"CARDS": png(folder_background)}, games=[
+                        Game("one", "ONE", {"rev0": hello}, cart_image=png(picture((90, 0, 90), (0, 255, 0)))),
+                        Game("two", "TWO", {"rev0": hello}, folder="CARDS",
+                             cart_image=png(picture((0, 60, 90), (255, 120, 0)))),
+                        Game("three", "THREE", {"rev0": hello}, folder="CARDS/CLASSIC"),
+                        Game("four", "FOUR", {"rev0": hello}, folder="DICE")])
+    return {"single": single, "single-sd": single_sd, "multi": multi, "pictures": pictures}
 
 
 def raw(entries):
@@ -142,6 +162,7 @@ def bad():
         "sd-conflict": z(cart([g(sdcard="a/"), g("b", "B", sdcard="b/")]), [("a/X.DAT", b"1"), ("b/X.DAT", b"2")]),
         "bad-image": z(cart([g(cartImage="c.png")]), [("c.png", png(shot, 64))]),
         "bad-background": z(cart([g()], menu={"background": "bg.png"}), [("bg.png", b.getvalue())]),
+        "bad-picture": z(cart([g()], menu={"cover": "c.png"}), [("c.png", b.getvalue())]),
         "bad-launch": z(cart([g()], launch="nobody")),
         "full-folder": z(cart([g(f"g{i}", f"G{i}") for i in range(model.FOLDER_ENTRIES + 1)])),
     }

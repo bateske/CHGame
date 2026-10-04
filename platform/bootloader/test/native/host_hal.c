@@ -254,10 +254,41 @@ uint8_t hal_spi_xfer(uint8_t b)
     if (ns_acc >= 1000) { host_advance_us(ns_acc / 1000); ns_acc %= 1000; }
     if (!B->sd_cs && !B->lcd_cs) B->bus_conflicts++;
     if (!B->spi_on) B->spi_off_xfers++;
+    if (B->spi_wide) B->wrong_frames++;
     r = sd_model_xfer(&B->sd, b, !B->sd_cs, B->spi_br, B->now_us);
     if (B->card_dies_on_flash && B->flash_ops) r = 0xFF;
     if (!B->lcd_cs) lcd_model_byte(&B->lcd, b, B->lcd_dc, B->now_us);
     return B->sd_cs ? 0xFF : r;
+}
+
+/* 16-bit frames: a byte transfer in them would be a 16-bit frame on the
+   board, and a 16-bit one outside them half a pixel; both are counted. */
+void hal_spi_frames(uint32_t ctl)
+{
+    B->spi_br = (ctl >> 3) & 7;
+    B->spi_on = 1;
+    B->spi_wide = (uint8_t)!!(ctl & HAL_SPI_16BIT);
+}
+
+uint32_t hal_spi_xfer16(uint32_t v)
+{
+    uint8_t w = B->spi_wide, h, l;
+    if (!w) B->wrong_frames++;
+    B->spi_wide = 0;                 /* (the byte model, twice) */
+    h = hal_spi_xfer((uint8_t)(v >> 8));
+    l = hal_spi_xfer((uint8_t)v);
+    B->spi_wide = w;
+    return (uint32_t)h << 8 | l;
+}
+
+void hal_spi_put16(uint32_t v)
+{
+    uint8_t w = B->spi_wide;
+    if (!w) B->wrong_frames++;
+    B->spi_wide = 0;                 /* (the byte model, twice) */
+    (void)hal_spi_xfer((uint8_t)(v >> 8));
+    (void)hal_spi_xfer((uint8_t)v);
+    B->spi_wide = w;
 }
 
 void hal_sd_select(int on)  { B->sd_cs = !on; }

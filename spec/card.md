@@ -8,25 +8,33 @@ do all of it.
 
 **The reference** is [tools/chcart/runtime.py](../tools/chcart/runtime.py)
 and [deploy.py](../tools/chcart/deploy.py); the bootloader's side is
-[shared/chgame_card.h](../platform/bootloader/shared/chgame_card.h) and
-[src/menu.c](../platform/bootloader/src/menu.c). Every step below is
+[shared/chgame_card.h](../platform/bootloader/shared/chgame_card.h),
+[src/card.c](../platform/bootloader/src/card.c), the list menu
+[src/menu.c](../platform/bootloader/src/menu.c) and the visual menu
+[src/visual.c](../platform/bootloader/src/visual.c). Every step below is
 deterministic, so two implementations write the same bytes.
 [fixtures/](fixtures) pins the results.
 
 **Which bootloader.** This layout is read by the menu bootloader v2
-(BOOT_VERSION 3). The menu before it (BOOT_VERSION 2, board package 0.3.0)
-lists only the CHG files directly in `GAMES/`: a cart without folders still
-works there, minus its order, launch game and background. A cart with
-folders needs v2.
+(BOOT_VERSION 3) in either of its faces (*Tools > Bootloader*): the **list
+menu**, a text list over `MENU.BG`, and the **visual menu**, one picture at
+a time and no text (the covers, `SYSTEM.PIC` and the games' pictures). Each
+reads its own files and skips the other's, so one card serves both. The
+menu before v2 (BOOT_VERSION 2, board package 0.3.0) lists only the CHG
+files directly in `GAMES/`: a cart without folders still works there, minus
+its order, launch game, background and pictures. A cart with folders needs v2.
 
 ## The card
 
 ```
 GAMES/                    the menu's tree; nothing else may use this folder
   MENU.IDX                this folder's entries in the cart's order, folder titles, launch flags
-  MENU.BG                 the background (always at the top; in a folder only if it has its own)
-  BLACKJAC.CHG            a game: its binary behind a 512-byte header (chg.md)
-  CARDGAME/               a folder: the same again (MENU.IDX, maybe MENU.BG, CHG files, folders)
+  MENU.BG                 the list menu's background (always at the top; in a folder only if it has its own)
+  COVER.PIC               the visual menu's cover of the folder (always at the top: the splash;
+                          in a folder only if it has its own)
+  SYSTEM.PIC              (top only) the visual menu's own screens: the about page, then the others
+  BLACKJAC.CHG            a game: its binary behind a 512-byte header (chg.md), then its picture
+  CARDGAME/               a folder: the same again (MENU.IDX, maybe MENU.BG and COVER.PIC, CHG files, folders)
 WORDS.DIC, CHCW/, ...     the games' SD files, at their paths (chgame.md, sdcard)
 ```
 
@@ -78,7 +86,8 @@ Each game becomes `<folder>/<name>.CHG`: chg.md's format, built as
 | title | the game's `title` |
 | author | the game's `author` if it is printable ASCII, cut to 15 characters; else empty |
 | version | the game's `version` the same way, cut to 7 characters |
-| app_version, flags, image slot | 0 |
+| app_version, flags | 0 |
+| picture (offset 0x060) | the game's `cartImage` made into a picture (step 7) if it follows the picture rule: written at the first multiple of 512 after the payload, the gap 0, and named in the header's field: offset, 8,704, CRC-32 of those bytes. Otherwise 0 and no picture |
 
 ### 4. MENU.IDX
 
@@ -136,19 +145,47 @@ are the menu colours; 15 is `#FF00FF` itself (0xF81F). Each colour is RGB565: re
 
 No colours are reduced or merged: reducing is a choice of taste that two
 implementations would make differently, so the PNG must already have few
-enough. The default background uses three: black (= `selectedText`), grey
-(= `disabled`) and `#FF00FF`.
+enough. The default background uses four: black (= `selectedText`), grey
+(= `disabled`), `#C0C0C0` and `#FF00FF`.
 
 ### 6. SD files
 
 Every game's `sdcard` files, at their paths. Games carrying the same file
 give one copy.
 
+### 7. The visual menu's pictures
+
+Every picture is a 128x128 PNG made into 8,704 bytes exactly as step 5 makes
+MENU.BG (the same header, palette and rows), with one difference: **the menu
+colours are always the defaults** (`text` `#FFF4D6`, `disabled` `#808080`,
+`selectedText` `#000000`, `mark` `#D62020`), whatever the cart's
+`menu.colors`, so a game's picture is the same in every cart. That is the
+**picture rule**: opaque, at most 11 colours besides `#FF00FF` and those
+four (`bad-picture` otherwise).
+
+- **COVER.PIC** at the top: the cart's `menu.cover`, or, without it,
+  [assets/cover-default.png](assets/cover-default.png). In a folder: the
+  `cover` of its `menu.folders` entry, if it has one; else no file.
+- **SYSTEM.PIC** at the top only: nine pictures one after another (78,336
+  bytes), in this order (shared/chgame_card.h `CARD_SYS_*`):
+
+  | | Picture | Shown |
+  |---|---|---|
+  | 0 | the cart's `menu.about`, or [assets/about-default.png](assets/about-default.png) | B at the top: how the menu works |
+  | 1 | [assets/system/installed.png](assets/system/installed.png) | the program in flash, when no game on the card holds it |
+  | 2 | [assets/system/game.png](assets/system/game.png) | a game without a picture |
+  | 3 | [assets/system/folder.png](assets/system/folder.png) | a folder without a cover |
+  | 4-8 | [assets/system/error-1.png](assets/system/error-1.png) ... `error-5.png` | install errors 1-5 |
+
+- **A game's picture** goes in its CHG file (step 3), from `cartImage`. A
+  `cartImage` that breaks the picture rule is only a warning (`bad-picture`:
+  older carts stay valid); the game then gets no picture.
+
 ### The result
 
 | | |
 |---|---|
-| The set of files | for each folder, top level first, then its subfolders as they were created: `MENU.IDX`, `MENU.BG` if any, then its CHG files in list order; then the SD files, paths sorted. The order is only the order chcart writes them in: on the card it means nothing |
+| The set of files | for each folder, top level first, then its subfolders as they were created: `MENU.IDX`, `MENU.BG` if any, `COVER.PIC` if any, at the top `SYSTEM.PIC`, then its CHG files in list order; then the SD files, paths sorted. The order is only the order chcart writes them in: on the card it means nothing |
 | A card image (optional) | `chgame cart prepare --image` writes a FAT32 image with the volume label `CHGAME` (CHSd's `tools/fatimg.py`). An emulator can run the real bootloader binary against it |
 
 ## How the menu reads the card
@@ -202,6 +239,38 @@ What bootloader v2 does with these files (docs/sd-menu.md tells players):
 - **Errors** are shown as a number (docs/sd-menu.md lists them). Nothing
   is erased until a game has passed every check.
 
+## How the visual menu reads the card
+
+What the visual menu (*Tools > Bootloader: SD Graphic Menu*) does with the
+same card; docs/visual-menu.md tells players. It reads the folders, their
+order, the launch flags and the CHG headers exactly as the list menu does
+(above), and draws no text.
+
+- **Pictures:** `COVER.PIC` and each slot of `SYSTEM.PIC` are used when the
+  file holds 8,704 bytes there that start with `CHB1`. A game's picture is
+  used when its header's field at 0x060 names 8,704 bytes at a multiple of
+  512 below 128 KiB that start with `CHB1`; readers may skip the CRC. A
+  picture it cannot read is drawn from the bootloader's built-in screens.
+- **The rows** of a folder are its cover, then its entries in the list
+  menu's order; a sub-folder shows as its cover. `GAMES/` itself lists only
+  its games: its folders are the categories. UP and DOWN go round the rows.
+- **The ring:** LEFT and RIGHT step to the folder beside this one: at the
+  top, `GAMES/` and its folders, round; below, the folders of the same
+  parent. They land on that folder's cover.
+- **Keys:** A or START plays a game (installs it first if need be), opens a
+  sub-folder (on its first row), and on a cover goes to the first row. B
+  goes up a level; at the top it shows the about page (`SYSTEM.PIC` slot 0),
+  which any key closes.
+- **At power-on**, after the launch game (as the list menu, but showing the
+  cover, then the game's picture, before it starts), the cover shows while
+  the menu looks for the installed game: `GAMES/`'s games first, then each
+  folder in order, depth first; the first copy found is the one shown. If no
+  game holds it, `GAMES/` gets a first row for it (`SYSTEM.PIC` slot 1).
+- **What it draws over a picture:** the installed game's chip, colour 14, at
+  x 2-5, y 2-5; while installing, a bar: a frame of colour 15 over rows
+  110-119 (x 8-119), black inside, filling with colour 15. Everything else
+  is the picture's.
+
 ## Deploy rules
 
 How a cart gets onto a CHGame (`chgame cart deploy`). A web uploader
@@ -214,14 +283,16 @@ follows the same rules.
 **One game with SD files:** a mounted card is needed.
 - Its SD files and its CHG file go onto the card, then its binary is
   flashed.
-- The card's own `MENU.IDX` and `MENU.BG` are left alone.
+- The card's own `MENU.IDX`, `MENU.BG`, `COVER.PIC` and `SYSTEM.PIC` are
+  left alone (the game's picture travels in its CHG file).
 - A CHG file in `GAMES/` with the same title is the same game, and is
   replaced under its own name. Otherwise the new file's name follows step 2
   against the names already in `GAMES/`.
 
 **Several games:** a mounted card is needed.
-- The prepared files are written to the card. The cart's `MENU.IDX` and
-  `MENU.BG` replace the card's, and other files stay.
+- The prepared files are written to the card. The cart's `MENU.IDX`,
+  `MENU.BG`, `COVER.PIC` and `SYSTEM.PIC` replace the card's, and other
+  files stay.
 - `--clean` empties `GAMES/` first.
 - If the cart names a `launch` game, that game is flashed.
 

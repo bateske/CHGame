@@ -26,9 +26,10 @@ also writes the CHG file, `<sketch>.ino.chg`, beside the `.bin` (below).
 
 ## The file (format version 1)
 
-The file is the 512-byte header followed by the payload. The payload is the
-`.bin`, padded with 0xFF to a multiple of 4, which is exactly the image
-`chgame-upload` writes. Integers are little-endian.
+The file is the 512-byte header followed by the payload, and optionally the
+game's picture. The payload is the `.bin`, padded with 0xFF to a multiple
+of 4, which is exactly the image `chgame-upload` writes. Integers are
+little-endian.
 
 | Offset | Size | Field | Value |
 |---|---|---|---|
@@ -44,7 +45,7 @@ The file is the 512-byte header followed by the payload. The payload is the
 | 0x020 | 32 | title | ASCII, NUL-padded; the menu shows the first 19 characters |
 | 0x040 | 16 | author | ASCII, optional |
 | 0x050 | 8 | version | ASCII, optional (e.g. "1.2") |
-| 0x060 | 12 | title image | offset, bytes, CRC-32; reserved for per-game title screens, 0 = none |
+| 0x060 | 12 | picture | offset, bytes, CRC-32 of the game's picture for the visual menu (below); 0 = none |
 | 0x06C | ... | reserved | 0 |
 | 0x1FC | 4 | header CRC-32 | CRC-32/ISO-HDLC of bytes 0x000-0x1FB |
 | 0x200 | payload bytes | payload | |
@@ -54,6 +55,18 @@ bootloader stores in the metadata page after a USB upload. So the menu can
 tell that the program in flash is the one in a CHG file (same length and
 CRC), and marks it as installed whichever way it got there. The
 `app_version` field is not used for that.
+
+**The picture.** The visual menu shows it while the game is selected
+(card.md: "How the visual menu reads the card"). It is 8,704 bytes in
+MENU.BG's encoding (card.md, steps 5 and 7: `CHB1`, a 16-colour palette, 128
+rows of 64 bytes), at an offset that is a multiple of 512, after the payload
+and below 128 KiB; the gap before it is 0. The field names its offset, its
+size (8,704) and its CRC-32; a reader may skip the CRC. The install never
+reads it: a file with a damaged or missing picture still installs, and the
+menu shows its no-picture screen instead. `tools/chgpack.py pack --image`
+adds one (any 128x128 PNG that follows the picture rule, or a `.PIC` file),
+`verify` and `info` check and show it, and `chgame cart prepare` writes the
+game's `cartImage` there. Menus before the visual one ignore it.
 
 **Checks.** The bootloader checks, in this order, with nothing erased yet:
 1. magic;
@@ -77,7 +90,7 @@ The usual way is not by hand: `chgame cart prepare` (or `chgame card`, or
 else the menu needs (card.md). By hand:
 
 ```
-python tools/chgpack.py pack build/release/MyGame.ino.bin MYGAME.CHG --title "MY GAME" [--author ME] [--version 1.0]
+python tools/chgpack.py pack build/release/MyGame.ino.bin MYGAME.CHG --title "MY GAME" [--author ME] [--version 1.0] [--image cart.png]
 python tools/chgpack.py verify MYGAME.CHG
 python tools/chgpack.py info E:\        # list the CHG files on a card (or a folder, or a FAT image)
 ```
