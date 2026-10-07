@@ -172,7 +172,8 @@ def chg_file(game, device="rev0"):
                                f"its record is {len(rec)} B (licence files and cart image); {chgpack.RECORD_MAX} at most")])
     return chgpack.pack(game.binaries[device], game.title,
                         model.chg_text(game.author, model.CHG_AUTHOR_MAX),
-                        model.chg_text(game.version, model.CHG_VERSION_MAX), picture=pic, record=rec)
+                        model.chg_text(game.version, model.CHG_VERSION_MAX), picture=pic, record=rec,
+                        target=model.DEVICES[device].chg_target)
 
 
 def system_pic(about=None, images=None):
@@ -206,7 +207,8 @@ def levels(cart):
 def prepare(cart, device="rev0"):
     """{card path: bytes} for the cart: GAMES/ and the games' SD files.
     Raises CartError if the cart breaks a rule or a game has no binary for
-    `device`."""
+    `device`. A card is for one board: its CHG files carry that board's
+    target id, and another board's menu refuses to install them."""
     errors = [i for i in model.validate(cart) if i.error]
     errors += [Issue("bad-device", f"games[{g.id}].binaries", f"no binary for {device}")
                for g in cart.games if device not in g.binaries]

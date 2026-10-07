@@ -18,6 +18,12 @@ itself does not change.
 | RAM | 20 KB, of which the first 16 B (0x20000000) are the retained boot-request block; the board package's linker script reserves them. Stack 2 KB. |
 | Boot region | 0x0000-0x2FFF belongs to the bootloader. Nothing in a CHG file can write there: the destination is always 0x3000, and the flash writer checks every page's address itself. |
 | Layout id | `0x003000F7` (program at 0x3000, metadata at 0xF700) |
+| Target id | `0x35335843` (`CX35`): the board, CHGame Rev0 (below) |
+
+This is rev0, the one board defined so far. Each board, `rev0`, `rev1` and
+so on, has its own target id, and a later one may have another memory map
+too: chgame.md, "Devices and revisions", holds the table and the rules for
+naming them.
 
 Build exactly as for an upload: the board package `CHGame:ch32v` (0.2.4 or
 later); the games use
@@ -36,7 +42,7 @@ little-endian.
 | 0x000 | 4 | magic | `0x31474843` ("CHG1") |
 | 0x004 | 2 | format version | 1 |
 | 0x006 | 2 | header bytes | 512 |
-| 0x008 | 4 | target id | `0x35335843` ("CX35": CHGame, CH32X035G8U6) |
+| 0x008 | 4 | target id | the board the program is built for: `0x35335843` ("CX35") on rev0, `0x31524743` ("CGR1") on rev1 (chgame.md's device table) |
 | 0x00C | 4 | layout id | `0x003000F7` |
 | 0x010 | 4 | payload bytes | 4 to 50,944, a multiple of 4 |
 | 0x014 | 4 | payload CRC-32 | CRC-32/ISO-HDLC (zlib's `crc32`) of the payload |
@@ -73,7 +79,9 @@ game's `cartImage` there. Menus before the visual one ignore it.
 1. magic;
 2. header CRC;
 3. format version and header size;
-4. target and layout ids;
+4. target and layout ids: its own board's, and nothing else, so a card
+   prepared for another board installs nothing (its files show greyed, as
+   ERROR 5, with nothing erased);
 5. payload size against the file size;
 6. that the payload is not a bootloader image (signature `0x4C424843` "CHBL"
    at payload offset 8, where WCH's startup puts a reserved 0);
@@ -125,14 +133,15 @@ The usual way is not by hand: `chgame cart prepare` (or `chgame card`, or
 else the menu needs (card.md). By hand:
 
 ```
-python tools/chgpack.py pack build/release/MyGame.ino.bin MYGAME.CHG --title "MY GAME" [--author ME] [--version 1.0] [--image cart.png]
+python tools/chgpack.py pack build/release/MyGame.ino.bin MYGAME.CHG --title "MY GAME" [--author ME] [--version 1.0] [--image cart.png] [--device rev0]
 python tools/chgpack.py verify MYGAME.CHG
 python tools/chgpack.py info E:\        # list the CHG files on a card (or a folder, or a FAT image)
 ```
 
 `chgpack.py` needs only Python 3. With the board package 0.3.0 or later
 nothing else is needed: every build runs `chgame-upload pack` (the uploader
-the package installs; `-title`, `-author`, `-gameversion`, `-out`) and
+the package installs; `-title`, `-author`, `-gameversion`, `-out`, and
+`-device` for a board other than rev0) and
 *Sketch > Export Compiled Binary* copies `MyGame.ino.chg` into the sketch's
 `build/` folder, titled with the sketch's name in capitals. The two tools
 make the same bytes (the uploader's shared test vectors check it). Copy the

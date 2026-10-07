@@ -221,9 +221,9 @@
             ],
             "properties": {
               "device": {
-                "enum": [
-                  "rev0"
-                ]
+                "description": "The board the binary is for: rev0, rev1 ... (chgame.md, Devices and revisions). A reader uses the ones it knows and ignores the rest (warning unknown-device).",
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]{0,31}$"
               },
               "filename": {
                 "$ref": "#/$defs/path"

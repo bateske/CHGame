@@ -7,6 +7,10 @@
 #include "boot.h"
 #include "bootreq.h"
 #include "chgame_bootreq.h"
+#include "chg_format.h"
+#if CHBOOT_MENU
+#include "chg.h"
+#endif
 #include <setjmp.h>
 
 extern jmp_buf host_jmp;
@@ -82,6 +86,12 @@ static void t_proto_claim(void)
     CHECK(frame_pop(&cmd, pl, &n) && cmd == (CMD_HELLO | 0x80) && pl[0] == ST_OK, "HELLO answered");
     CHECK(pl[2] == MODE_BOOTLOADER, "mode bootloader");
     CHECK((pl[4] | pl[5] << 8) == BOOT_VERSION, "boot version");
+#ifdef CHGAME_BOARD_TARGET
+    CHECK(n == 34 && (pl[30] | pl[31] << 8 | pl[32] << 16 | (uint32_t)pl[33] << 24) == CHGAME_BOARD_TARGET,
+          "a later board's HELLO ends with its board id");
+#else
+    CHECK(n == 30, "a rev0 HELLO is the 30 bytes it always was: no board field");
+#endif
     /* bootloader v2 (BOOT_VERSION 3) dropped the two bench diagnostics */
     CHECK(frame_pop(&cmd, pl, &n) && cmd == (CMD_STATUS | 0x80) && pl[0] == ST_ERR_BADCMD, "STATUS: unknown command");
     CHECK(frame_pop(&cmd, pl, &n) && cmd == (CMD_READ | 0x80) && pl[0] == ST_ERR_BADCMD, "READ: unknown command");
@@ -92,6 +102,32 @@ static void t_proto_claim(void)
     for (int i = 0; i < 40; i++) proto_task();
     CHECK(proto_claimed, "ABORT claims");
 }
+
+#if CHBOOT_MENU
+static void t_chg_board(void)
+{
+    /* A package installs only on the board it was built for: this build's
+       target id (rev0's, CX35, when the build names none), never another's. */
+    static uint32_t h32[CHG_HEADER_BYTES / 4];
+    uint8_t *h = (uint8_t *)h32;
+    uint32_t n = 0, crc;
+    const uint32_t other = CHG_TARGET_ID == CHG_TARGET_REV0 ? CHG_TARGET_REV1 : CHG_TARGET_REV0;
+    for (int k = 0; k < 2; k++) {
+        memset(h, 0, CHG_HEADER_BYTES);
+        put32(h + CHG_OFF_MAGIC, CHG_MAGIC);
+        put32(h + CHG_OFF_VERSION, CHG_FORMAT_VERSION | CHG_HEADER_BYTES << 16);
+        put32(h + CHG_OFF_TARGET, k ? other : CHG_TARGET_ID);
+        put32(h + CHG_OFF_LAYOUT, CHG_LAYOUT_ID);
+        put32(h + CHG_OFF_PAYLOAD, 1024);
+        put32(h + CHG_OFF_HCRC, host_crc32(h, CHG_OFF_HCRC));
+        int r = chg_check(h, CHG_HEADER_BYTES + 1024, &n, &crc);
+        if (k)
+            CHECK(r == CHG_E_BAD, "another board's package is refused");
+        else
+            CHECK(r == CHG_OK && n == 1024, "this board's package is accepted");
+    }
+}
+#endif
 
 static void t_usb_upload_run(void)
 {
@@ -200,6 +236,9 @@ int main(void)
     TEST(t_update_errors);
     TEST(t_signature);
     TEST(t_proto_claim);
+#if CHBOOT_MENU
+    TEST(t_chg_board);
+#endif
     TEST(t_usb_upload_run);
     TEST(t_usb_powercut_sweep);
 #if CHGAME_ALLOW_SELFUPDATE

@@ -18,6 +18,7 @@ Hello example, so an emulator can run any of them.
 | `warnings.chgame` | readable, with every warning: an unknown key, a stray file, a 21-character title, a title the menu cannot show, an image that covers the save pages |
 | `pictures.chgame` | the visual menu's pictures: the cart's cover and about page, two folders' covers (one two levels down), two games' pictures, a folder with neither |
 | `system.chgame` | `menu.systemImages`: three of the menu's own screens replaced (installed, folder, error-4) and an about page; the defaults fill the other slots of `SYSTEM.PIC` |
+| `devices.chgame` | two games, each with its rev0 binary and one for a board this reader does not know: `rev1` (reserved, not defined yet) and `other-board`. Both are `unknown-device` warnings, the binaries are kept, and the card is the rev0 binaries' (chgame.md, "Devices and revisions") |
 | `extension.chgame` | a cart from the web tool before `menu.systemImages` existed, written raw: `x-chgame-web` version 1 names two system screens, `menu.systemImages` names one of them differently (the official field wins, with `extension-conflict`), and an `x-other-tool` key rides along, warned about by nobody |
 
 ## bad/
@@ -28,6 +29,9 @@ One cart per error code, each named after it, each breaking that rule only:
 `bad-title`, `bad-folder`, `bad-device`, `binary-size`, `bootloader-image`,
 `bad-sd-path`, `sd-conflict`, `bad-image`, `bad-background`, `bad-launch`,
 `full-folder` (241 games at the top level, sharing one binary).
+`bad-device` names its device `REV0`, which breaks the name rule. An unknown
+device was this fixture's fault until 2026-10-07; it is a warning now
+(`good/devices`).
 
 ## expected/
 

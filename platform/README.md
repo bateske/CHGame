@@ -212,6 +212,34 @@ list builds stayed byte-identical. Not yet run on a board.
 
 ## Changes since the copies were taken
 
+- 2026-10-07: board revisions, ahead of a rev1 whose pins will differ
+  ([../docs/hardware-revisions.md](../docs/hardware-revisions.md); the rules
+  in [../spec/chgame.md](../spec/chgame.md), "Devices and revisions"). Each
+  board is a device `rev<n>` with a four-character target id: rev0 keeps
+  `CX35`, and rev1 is reserved as `CGR1`. `bootloader/shared/chg_format.h`
+  names the ids (`CHG_TARGET_REV0`, `CHG_TARGET_REV1`), and
+  `CHG_TARGET_ID` is now the board the build is for: rev0 unless
+  `build.sh` gets `CHBOOT_BOARD_TARGET`. A later board's build also sends
+  its id in `HELLO` (offset 30) and writes it at offset 0x14 of its image
+  ([board/docs/protocol.md](board/docs/protocol.md), "Which board").
+  Measured with rev1's id: +16 B (list 11,936, visual 12,076). Every rev0
+  build is byte-identical (all seven of `dist.sh`'s compared). The
+  uploaders (Go and Python) read the board from `HELLO`, refuse a
+  bootloader image for another board, and take `-device` on `flash`
+  (refusing another board) and `pack`. `platform.txt` does not pass
+  `-device` yet (the checklist's step 4 does that, with an uploader version
+  bump). chcart writes each device's id into its CHG files (until now
+  `chgpack.pack` always wrote `CX35`), backs a card up under the board its
+  CHG files name, and takes `--device` on `cart prepare`, `flash` and
+  `deploy`. The format change: a binary for an unknown or reserved device
+  is now the warning `unknown-device` (not used, kept), not the error
+  `bad-device`, so readers made before rev1 still use a cart's rev0
+  binaries. Checked: the bootloader's PC suite (a new `core_rev1` suite and
+  a board test in every menu build), the uploaders' suites and shared
+  vectors (additions only), chcart's tests and the schema test, the
+  fixtures (`bad/bad-device` remade, `good/devices` new, nothing else
+  changed), and the casino card and cart rebuilt byte for byte.
+
 - 2026-10-04: box art for every picture the menus show, painted with the
   new `tools/artkit` ([../docs/cover-art.md](../docs/cover-art.md)): each
   example's `docs/cart.png` and `tools/cart.py`, the casino card's cover and

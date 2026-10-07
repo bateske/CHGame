@@ -4,6 +4,10 @@
 
 _Static_assert(CHG_LAYOUT_ID == (((CHGAME_APP_START >> 8) << 16) | (CHGAME_META_ADDR >> 8)),
                "CHG_LAYOUT_ID must describe chgame_map.h");
+#ifdef CHGAME_BOARD_TARGET
+_Static_assert(CHGAME_BOARD_TARGET != CHG_TARGET_REV0,
+               "a rev0 build leaves CHGAME_BOARD_TARGET undefined (chg_format.h)");
+#endif
 
 static uint32_t w(const uint8_t *h, uint32_t off) { return *(const uint32_t *)(const void *)(h + off); }
 

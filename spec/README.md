@@ -13,7 +13,7 @@ pass.
 
 | File | What it is | Who needs it |
 |---|---|---|
-| [chgame.md](chgame.md) | The `.chgame` format, version 1: the ZIP, `info.json`, devices, the rules and their codes | anyone reading or writing carts |
+| [chgame.md](chgame.md) | The `.chgame` format, version 1: the ZIP, `info.json`, devices (the boards and their revisions, how they are named), the rules and their codes | anyone reading or writing carts |
 | [card.md](card.md) | Runtime preparation and the SD card's layout v2 (`GAMES/`, `MENU.IDX`, `MENU.BG`, the visual menu's `COVER.PIC` and `SYSTEM.PIC`), how both menus read it, the deploy rules, and backing a card up into a cart | card builders, uploaders, emulators |
 | [chg.md](chg.md) | The CHG file the menu installs: a program behind a 512-byte header, then its picture and its record | the same, and anyone writing a CHG file by hand |
 | [info.schema.json](info.schema.json) | JSON Schema for `info.json`: its shape, for editors and quick checks. chgame.md has rules a schema cannot say (files, pictures, SD paths, the cart as a whole) | tools, editors (`"$schema"`) |
@@ -48,6 +48,34 @@ USB reconnection, ordinary connections open at 115200; an older bootloader
 is sent to the board package's upgrade procedure, the website flashes no
 bootloaders. protocol.md's "Host conventions" says what each of these means
 on the device.
+
+**Board revisions** (2026-10-07). The handheld will get revisions whose
+pins differ, so a game built for one does not run on the next. Each is a
+device in chgame.md's table, named `rev<n>`, with a four-character target
+id: `rev0` is `CX35`, as it always was, and `rev1`, reserved until its
+pinout is settled, is `CGR1` (chgame.md, "Devices and revisions": the
+naming rule for every later board). What it means for the web project:
+- **Reading carts.** A binary for a device the reader does not know (a
+  reserved one, or a board registered later) is now the warning
+  `unknown-device`: the reader uses the rest of the cart and keeps that
+  binary when it rewrites it. It used to be the error `bad-device`, which
+  would have made every existing reader refuse a cart carrying rev0 and
+  rev1 builds. `bad-device` is now a malformed device name or two binaries
+  for one device. Fixtures: `bad/bad-device` breaks the name rule (`REV0`),
+  and `good/devices` holds a game with a `rev1` binary and one with an
+  `other-board` binary beside their rev0 ones.
+- **Cards and CHG files.** A card is prepared for one device, and its CHG
+  files carry that device's target id. Nothing changes for rev0: its bytes
+  are those of before.
+- **Uploading.** A bootloader built for a board after rev0 adds a field at
+  offset 30 of `HELLO`: its target id. A reply without it comes from rev0.
+  A host ignores bytes past the fields it knows, so an uploader written
+  before this keeps working. An uploader that knows which device a binary
+  is for refuses a board whose `HELLO` names another (protocol.md, "Which
+  board"). Bootloaders for later boards also carry their id at offset 0x14
+  of their image, for uploads of a bootloader.
+- **The emulator** emulates rev0. When rev1 is defined, an emulator of rev1
+  takes the `rev1` binaries, and never another board's.
 
 **Backing a card up** (2026-10-06, asked for by the web emulator project,
 whose cart builder reads carts back from cards). Each CHG file that runtime

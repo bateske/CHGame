@@ -133,6 +133,23 @@ def extension_cart():
                 ("menu/official-installed.png", other), ("art/installed.png", inst), ("art/missing-folder.png", folder)])
 
 
+def devices_cart():
+    """A cart from a writer that knows boards this reader does not: each game
+    has its rev0 binary and one for another board, rev1 (reserved, not yet
+    defined) or other-board (unknown). Those are unknown-device warnings, not
+    used and kept, and the card is the rev0 binaries' (spec/chgame.md,
+    "Devices and revisions"). Written raw: chcart writes what it is given."""
+    hello = HELLO.read_bytes()
+    m = {"schemaVersion": 1, "title": "TWO BOARDS", "games": [
+        {"id": "one", "title": "ONE", "binaries": [{"device": "rev0", "filename": "one/rev0.bin"},
+                                                   {"device": "rev1", "filename": "one/rev1.bin"}]},
+        {"id": "two", "title": "TWO", "binaries": [{"device": "other-board", "filename": "two/other.bin"},
+                                                   {"device": "rev0", "filename": "two/rev0.bin"}]}]}
+    return raw([("info.json", json.dumps(m, indent=2).encode()), ("one/rev0.bin", hello),
+                ("one/rev1.bin", bytes(range(64))), ("two/other.bin", bytes(range(64, 128))),
+                ("two/rev0.bin", hello)])
+
+
 def raw(entries):
     """A ZIP of exactly these (name, bytes), stored: bad carts are written
     around chcart's checks."""
@@ -180,7 +197,7 @@ def bad():
         "duplicate-id": z(cart([g(), g(title="B")])),
         "bad-title": z(cart([g(title="T" * 32)])),
         "bad-folder": z(cart([g(folder="A/B/C/D/E")])),
-        "bad-device": z(cart([{"id": "a", "title": "A", "binaries": [{"device": "rev7", "filename": "a.bin"}]}])),
+        "bad-device": z(cart([{"id": "a", "title": "A", "binaries": [{"device": "REV0", "filename": "a.bin"}]}])),
         "binary-size": raw([("info.json", json.dumps(cart([g()])).encode()), ("a.bin", bytes(50948))]),
         "bootloader-image": raw([("info.json", json.dumps(cart([g()])).encode()), ("a.bin", bytes(boot))]),
         "bad-sd-path": z(cart([g(sdcard="sd/")]), [("sd/words.dic", b"x")]),
@@ -293,6 +310,7 @@ def everything():
     out = {f"good/{n}.chgame": zipio.to_bytes(c) for n, c in good().items()}
     out["good/warnings.chgame"] = warnings_cart()
     out["good/extension.chgame"] = extension_cart()
+    out["good/devices.chgame"] = devices_cart()
     out.update({f"bad/{code}.chgame": data for code, data in bad().items()})
     return out
 

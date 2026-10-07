@@ -23,13 +23,60 @@ const (
 	chgMagic         = 0x31474843 // "CHG1"
 	chgFormatVersion = 1
 	chgHeaderBytes   = 512
-	chgTargetID      = 0x35335843 // "CX35": CHGame, CH32X035G8U6
 	chgLayoutID      = 0x003000F7 // app at 0x3000, metadata page at 0xF700
 	chgBootSig       = 0x4C424843 // "CHBL" at payload offset 8 marks a bootloader image
 	chgTitleLen      = 32
 	chgAuthorLen     = 16
 	chgVerstrLen     = 8
+
+	// Board target ids (chg_format.h CHG_TARGET_*): which board a program, a
+	// package or a bootloader is for. Rev0's is named after its MCU and keeps
+	// that name; later boards are "CGR<n>" (spec/chgame.md, "Devices and
+	// revisions"). Never reused or reassigned.
+	chgTargetRev0 = 0x35335843 // "CX35": CHGame Rev0 (CH32X035G8U6)
+	chgTargetRev1 = 0x31524743 // "CGR1": reserved for CHGame Rev1, not yet defined
 )
+
+// The boards this tool uploads and packs for, and the names assigned to
+// boards not defined yet (refused, by name).
+var (
+	chgDevices  = map[string]uint32{"rev0": chgTargetRev0}
+	chgReserved = map[string]uint32{"rev1": chgTargetRev1}
+)
+
+// fourcc: a 32-bit id as the four characters it spells (little-endian), or "?".
+func fourcc(v uint32) string {
+	b := []byte{byte(v), byte(v >> 8), byte(v >> 16), byte(v >> 24)}
+	for _, c := range b {
+		if c <= 32 || c >= 127 {
+			return "?"
+		}
+	}
+	return string(b)
+}
+
+// boardName: "rev0 (CX35)", "rev1 (CGR1)" for a reserved one, else the id.
+func boardName(target uint32) string {
+	for _, m := range []map[string]uint32{chgDevices, chgReserved} {
+		for name, t := range m {
+			if t == target {
+				return fmt.Sprintf("%s (%s)", name, fourcc(t))
+			}
+		}
+	}
+	return fmt.Sprintf("unknown board 0x%08X (%s)", target, fourcc(target))
+}
+
+// targetOf: the target id of a device this tool knows ("rev0").
+func targetOf(device string) (uint32, error) {
+	if t, ok := chgDevices[device]; ok {
+		return t, nil
+	}
+	if _, ok := chgReserved[device]; ok {
+		return 0, fmt.Errorf("%s is reserved for a board that is not defined yet", device)
+	}
+	return 0, fmt.Errorf("unknown device %q (known: rev0)", device)
+}
 
 func chgText(dst []byte, s, what string) error {
 	if len(s) >= len(dst) {
@@ -70,7 +117,13 @@ func chgDefaultOutput(path string) string {
 	return path + ".chg"
 }
 
+// chgPack packs an image built for rev0.
 func chgPack(image []byte, title, author, ver string, appVersion uint32) ([]byte, error) {
+	return chgPackFor(image, title, author, ver, appVersion, chgTargetRev0)
+}
+
+// chgPackFor packs an image built for the board with this target id.
+func chgPackFor(image []byte, title, author, ver string, appVersion, target uint32) ([]byte, error) {
 	payload := padToWord(image)
 	if len(payload) == 0 || len(payload) > appMaxSize {
 		return nil, fmt.Errorf("image is %d B; the limit is %d B", len(payload), appMaxSize)
@@ -83,7 +136,7 @@ func chgPack(image []byte, title, author, ver string, appVersion uint32) ([]byte
 	le.PutUint32(h[0x00:], chgMagic)
 	le.PutUint16(h[0x04:], chgFormatVersion)
 	le.PutUint16(h[0x06:], chgHeaderBytes)
-	le.PutUint32(h[0x08:], chgTargetID)
+	le.PutUint32(h[0x08:], target)
 	le.PutUint32(h[0x0C:], chgLayoutID)
 	le.PutUint32(h[0x10:], uint32(len(payload)))
 	le.PutUint32(h[0x14:], crc32.ChecksumIEEE(payload))

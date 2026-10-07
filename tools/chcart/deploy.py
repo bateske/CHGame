@@ -29,14 +29,15 @@ NEED_CARD = ("needs the SD card mounted: pick SD CARD READER in the CHGame's men
 
 
 def flash(game, port=None, device="rev0", log=print):
-    """Uploads the game's binary through the Python uploader and starts it."""
+    """Uploads the game's binary for `device` through the Python uploader and
+    starts it; a board whose bootloader reports another board is refused."""
     import paths  # noqa: F401  (tools/paths.py: puts the uploader on sys.path)
     from chgame_upload.upload import flash_file
     with tempfile.TemporaryDirectory() as d:
         f = pathlib.Path(d) / f"{game.id}.bin"
         f.write_bytes(runtime.flash_image(game, device))
         log(f"flash   : {game.title} ({game.id})")
-        return flash_file(f, port=port, run=True, log=log)
+        return flash_file(f, port=port, run=True, log=log, device=device)
 
 
 def _write(root, rel, data, log):

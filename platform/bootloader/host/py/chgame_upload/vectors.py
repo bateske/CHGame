@@ -76,6 +76,26 @@ def generate() -> dict:
                   "sha256": hashlib.sha256(img).hexdigest()},
         "layout": L.as_dict(),
         "chg": _chg_cases(),
+        "board": _board_cases(),
+    }
+
+
+def _board_cases() -> dict:
+    """Which board: the device table, the names shown, HELLO's board field
+    (absent on rev0; bytes past it ignored) and a bootloader image's board
+    word (0 on rev0)."""
+    hellos = [SAMPLE_HELLO, SAMPLE_HELLO + struct.pack("<I", C.TARGET_REV1),
+              SAMPLE_HELLO + struct.pack("<I", C.TARGET_REV1) + bytes(range(6))]
+    boots = {"rev0": bytes(256), "rev1": bytes(0x14) + struct.pack("<I", C.TARGET_REV1) + bytes(236),
+             "short": bytes(0x10)}
+    return {
+        "devices": C.DEVICES,
+        "reserved": C.RESERVED,
+        "names": [{"target": t, "name": C.board_name(t)} for t in (C.TARGET_REV0, C.TARGET_REV1, 0x12345678)],
+        "hello": [{"payload": p.hex(), "board": P.Hello.parse(p).board, "reported": P.Hello.parse(p).board_reported}
+                  for p in hellos],
+        "boot_image": [{"name": k, "image": v.hex(), "board": I.boot_image_board(v)} for k, v in boots.items()],
+        "packs": [{"device": d, "header": C.pack(bytes(64), "X", device=d)[:C.HEADER_BYTES].hex()} for d in C.DEVICES],
     }
 
 

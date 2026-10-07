@@ -223,6 +223,18 @@ It is ours now:
   with a `NOTICE`). (The working name "CHCasino" left the code and comments
   on 2026-10-02.)
 
+### 7. Board revisions
+
+A Rev1 board with other pins is planned. Done on 2026-10-07, ahead of it:
+the naming rule and the registry (`rev1` reserved as `CGR1`), board ids in
+CHG files, in `HELLO` and in the bootloader image, the uploaders' board
+checks, chcart's `--device`, and readers that use a cart's rev0 binaries
+when it also carries a board they do not know
+([hardware-revisions.md](hardware-revisions.md)). Left until Rev1's pinout
+is settled: that page's checklist, steps 1-9 (the board package's entry and
+variant, `-device` in `platform.txt`, the pins in the libraries and the
+bootloader, the build tools' device option, a run on both boards).
+
 ## Before and at the release
 
 1. **The rest of menu v2 on a board** (optional; the PC suite covers it):

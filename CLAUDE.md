@@ -19,6 +19,9 @@ implementation.
 [docs/chgame-library.md](docs/chgame-library.md) why the library is as it
 is, and [docs/unification.md](docs/unification.md) what changed when the
 games moved onto it.
+[docs/hardware-revisions.md](docs/hardware-revisions.md) covers board
+revisions: the released board is `rev0`, a rev1 with other pins is
+reserved, and the page says how boards are named and how one is added.
 
 Read [README.md](README.md) for the overview. This file is the working
 manual: setup, commands, limits, rules and gotchas. Each game also has a
@@ -120,6 +123,11 @@ changing that game.
    `visual.c` and `shared/chgame_card.h`) together. Then `python tools/chcart/fixtures.py`
    regenerates the fixtures and their expected results; review the diff.
    chcart's tests and the bootloader's PC suite must pass.
+   A new board is a new device in chgame.md's table, with a `rev<n>` name
+   and a target id (`CX35` for rev0, `CGR<n>` after it), never a name in a
+   title. Follow [docs/hardware-revisions.md](docs/hardware-revisions.md)'s
+   checklist: the tables in chcart, chgpack, `chg_format.h` and the two
+   uploaders must agree, and their tests check that they do.
    **So is the upload protocol.** The web emulator project's browser
    uploader is the fourth implementation of
    [platform/board/docs/protocol.md](platform/board/docs/protocol.md)

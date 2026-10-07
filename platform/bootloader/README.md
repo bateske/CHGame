@@ -252,6 +252,35 @@ The menu draws into a framebuffer and takes its look from the card
 - `python3 tools/screens.py` redraws the pictures in `docs/` after
   `test/native/run_tests.py -k boot`.
 
+## Changes of 2026-10-07: board ids
+
+A later board revision will move pins, so a bootloader, and the CHG files
+it installs, must say which board they are for
+([../../docs/hardware-revisions.md](../../docs/hardware-revisions.md)).
+None of this changes a rev0 build: every binary `tools/dist.sh` makes was
+compared and is byte-identical.
+
+- **`shared/chg_format.h`** names each board's target id: `CHG_TARGET_REV0`
+  (`CX35`, as before) and `CHG_TARGET_REV1` (`CGR1`, reserved). The
+  `CHG_TARGET_ID` that `chg_check()` compares is the board the build is for:
+  rev0's unless `CHGAME_BOARD_TARGET` is defined (a static assert refuses
+  rev0's own id there, so a rev0 build always stays the plain one).
+- **`build.sh`** takes `CHBOOT_BOARD_TARGET=0x31524743` from the environment
+  for a later board. It reaches both the C and the startup file, and the
+  output folder gets `-board<id>`. Until rev1's pins are in `hal.h` such a
+  build only measures what the id costs: never flash it on a rev0.
+- **A later board's build reports itself.** `HELLO` grows by the board field
+  (offset 30, `proto.c`), and the image carries the id at offset 0x14, a
+  reserved vector slot (`startup_chgame_boot.S`; 0 on rev0). The uploaders
+  refuse a bootloader image for another board than the one running
+  ([../board/docs/protocol.md](../board/docs/protocol.md), "Which board").
+  Cost: 16 B (list 11,936, visual 12,076), all of it the `HELLO` field.
+- **Tests:** `test_core.c` checks `HELLO`'s length (30 B on rev0, 34 B with
+  the board field) and, in every menu build, that `chg_check()` takes its
+  own board's packages and refuses the other board's. `run_tests.py` adds
+  `core_rev1`, built as rev1 would be. The constant check compares the
+  board ids with `tools/chgpack.py`.
+
 ## Changes of 2026-10-06: power-on, launch, the static colour, the pins
 
 Asked for by the owner after the cover-art work; the PC suite covers each

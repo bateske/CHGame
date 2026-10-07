@@ -7,6 +7,7 @@ import time
 import zlib
 from typing import Callable
 
+from .chg import board_name, target_of
 from .client import Client, ensure_bootloader, resolve_port, wait_for_application
 from .protocol import (
     CMD_ABORT, CMD_BEGIN, CMD_DEV_UNLOCK, CMD_DEV_WRITE_BOOT, CMD_END,
@@ -159,15 +160,19 @@ def selfupdate(c: Client, boot_image: bytes,
 
 def flash_file(image_path, *, port: str | None = None, run: bool = True, verify: bool = False,
                timeout: float = 10.0, progress: Callable[[int, int], None] | None = None,
-               log: Callable[[str], None] | None = print, debug: bool = False) -> dict:
+               log: Callable[[str], None] | None = print, debug: bool = False,
+               device: str | None = None) -> dict:
     """Upload an image file the way the `flash` verb does: find the board, put
     it in the bootloader (the 1200-baud touch), upload, optionally read back,
     optionally RUN and wait for the sketch to come back. Returns upload()'s
-    dict plus "port" (the bootloader's) and, after RUN, "app_port".
+    dict plus "port" (the bootloader's) and, after RUN, "app_port". `device`,
+    the board the image was built for ("rev0"), refuses a board whose
+    bootloader says it is another (HELLO's board field); None checks nothing.
     Raises NoDevice / SeveralDevices / StatusError / TimeoutError / ValueError."""
     say = log or (lambda s: None)
     image_path = pathlib.Path(image_path)
     image = image_path.read_bytes()
+    want = target_of(device) if device is not None else None
     port = resolve_port(port)
     timeout = max(timeout, 10.0)
 
@@ -185,6 +190,9 @@ def flash_file(image_path, *, port: str | None = None, run: bool = True, verify:
         say(f"port    : {boot_port}")
         say(f"image   : {image_path}  ({len(image)} bytes)")
         say(f"region  : 0x{h.app_start:04X} + {h.app_max_size} bytes")
+        if want is not None and h.board != want:
+            raise ValueError(f"the image is built for {board_name(want)}, but this board's bootloader is "
+                             f"{board_name(h.board)}'s: build for that board (Tools > Board)")
         if len(image) > h.app_max_size:
             raise ValueError(f"image does not fit: {len(image)} > {h.app_max_size}")
         r = upload(c, image, progress=progress, verify_readback=verify)

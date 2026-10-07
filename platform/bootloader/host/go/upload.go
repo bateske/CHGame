@@ -198,6 +198,23 @@ func checkBootImage(boot []byte) error {
 	}
 }
 
+// bootBoardWordOffset is a reserved vector slot: the board a bootloader image
+// is for (platform/board/docs/protocol.md).
+const bootBoardWordOffset = 0x14
+
+// bootImageBoard is the board a bootloader image is for: the target id at
+// offset 0x14 of a board after rev0's, and rev0's (CX35) where that word is
+// 0, as on every rev0 bootloader.
+func bootImageBoard(boot []byte) uint32 {
+	if len(boot) < bootBoardWordOffset+4 {
+		return chgTargetRev0
+	}
+	if w := binary.LittleEndian.Uint32(boot[bootBoardWordOffset:]); w != 0 {
+		return w
+	}
+	return chgTargetRev0
+}
+
 // selfUpdate replaces the bootloader through the bootloader that is running.
 //
 // The new image is staged in the application region by the ordinary upload

@@ -23,8 +23,14 @@
 # --roomy     link against a 16 KB copy of the script, to measure a build that
 #             does not fit (never flash it)
 #
-# Output: build/<MODE>[-visual][-static]/chgame_boot.{elf,bin,map,lst} and a
-# size report.
+# CHBOOT_BOARD_TARGET (environment): the board's target id for a board after
+# rev0 (shared/chg_format.h), e.g. 0x31524743 for rev1. Unset is rev0, and
+# gives the binaries rev0 has always had. Until a later board's pins are in
+# the source this only measures what its id costs: never flash such a build
+# on a rev0 (docs/hardware-revisions.md).
+#
+# Output: build/<MODE>[-visual][-static][-board<id>]/chgame_boot.{elf,bin,map,lst}
+# and a size report.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -48,6 +54,8 @@ OUT="$HERE/build/$MODE"
 [ "$STYLE" != rainbow ] && OUT="$OUT-$STYLE"
 [ -z "$LTO" ] && OUT="$OUT-nolto"
 [ -n "$ROOMY" ] && OUT="$OUT-roomy"
+BOARD="${CHBOOT_BOARD_TARGET:-}"
+[ -n "$BOARD" ] && OUT="$OUT-board$BOARD"
 
 # The toolchain ships with the CHGame board package (arduino-cli core install
 # CHGame:ch32v); it is found in the usual Arduino data folders. Override with
@@ -83,6 +91,8 @@ IMAGE_ID=1; [ "$MODE" = app ] && IMAGE_ID=2   # the fault blink tells whose hand
 DEFS="-DCH32X035 -DSYSCLK_FREQ_48MHz_HSI=48000000 -DF_CPU=48000000 -DCHGAME_IMAGE_ID=$IMAGE_ID"
 DEFS="$DEFS -DCHGAME_ALLOW_SELFUPDATE=$SELFUPDATE -DCHBOOT_MENU=$MENU $APPDEF -DMENU_STYLE=MENU_STYLE_$(echo "$STYLE" | tr a-z A-Z)"
 DEFS="$DEFS -DMENU_UI=MENU_UI_$(echo "$UI" | tr a-z A-Z)"
+# Defines reach the startup file too, which puts the board id in the image.
+[ -n "$BOARD" ] && DEFS="$DEFS -DCHGAME_BOARD_TARGET=$BOARD"
 INC="-I$SHARED -I$SRC -I$USB -I$SPL -I$SPL/Core -I$SPL/Peripheral/inc"
 WARN="-Wall -Wextra -Wundef -Werror=implicit-function-declaration"
 # The visual menu fits gate A with five more size flags (SIZES.md, "Visual:

@@ -96,7 +96,10 @@ class Vectors(unittest.TestCase):
         app = bytes.fromhex(VECTORS["chg"]["app"])
         self.assertEqual(C.pack(app, "MY GAME", "ME", "1.2", 7), T.pack(app, "MY GAME", "ME", "1.2", 7))
         hdr = (HERE.parents[1] / "shared" / "chg_format.h").read_text(encoding="utf-8")
-        for name, val in (("CHG_MAGIC", C.MAGIC), ("CHG_TARGET_ID", C.TARGET_ID), ("CHG_LAYOUT_ID", C.LAYOUT_ID),
+        self.assertEqual({T.BOARDS[t][0]: t for t in T.BOARDS}, C.DEVICES, "the boards chgpack and the uploader know")
+        self.assertEqual({v: t for t, v in T.RESERVED.items()}, C.RESERVED, "the reserved boards")
+        for name, val in (("CHG_MAGIC", C.MAGIC), ("CHG_TARGET_REV0", C.TARGET_REV0),
+                          ("CHG_TARGET_REV1", C.TARGET_REV1), ("CHG_LAYOUT_ID", C.LAYOUT_ID),
                           ("CHG_HEADER_BYTES", C.HEADER_BYTES), ("CHG_FORMAT_VERSION", C.FORMAT_VERSION)):
             m = re.search(r"#define\s+" + name + r"\s+(0x[0-9A-Fa-f]+|\d+)u", hdr)
             self.assertIsNotNone(m, name)

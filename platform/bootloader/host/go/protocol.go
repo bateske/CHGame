@@ -127,6 +127,10 @@ type Hello struct {
 	PageSize     uint16
 	MaxPayload   uint16
 	UID          []byte
+	// Board is the board the bootloader is built for (its target id, chg.go).
+	// Boards after rev0 send it at offset 30; a reply without it is rev0's.
+	Board         uint32
+	BoardReported bool
 }
 
 func parseHello(p []byte) (*Hello, error) {
@@ -136,16 +140,23 @@ func parseHello(p []byte) (*Hello, error) {
 	if p[0] != stOK {
 		return nil, &StatusError{Cmd: cmdHello, Status: p[0]}
 	}
+	// Bytes past those known are ignored: later bootloaders may add fields.
+	board, reported := uint32(chgTargetRev0), len(p) >= 34
+	if reported {
+		board = binary.LittleEndian.Uint32(p[30:34])
+	}
 	return &Hello{
-		ProtoVersion: p[1],
-		Mode:         p[2],
-		AppState:     p[3],
-		BootVersion:  binary.LittleEndian.Uint16(p[4:6]),
-		AppStart:     binary.LittleEndian.Uint32(p[6:10]),
-		AppMaxSize:   binary.LittleEndian.Uint32(p[10:14]),
-		PageSize:     binary.LittleEndian.Uint16(p[14:16]),
-		MaxPayload:   binary.LittleEndian.Uint16(p[16:18]),
-		UID:          append([]byte(nil), p[18:30]...),
+		Board:         board,
+		BoardReported: reported,
+		ProtoVersion:  p[1],
+		Mode:          p[2],
+		AppState:      p[3],
+		BootVersion:   binary.LittleEndian.Uint16(p[4:6]),
+		AppStart:      binary.LittleEndian.Uint32(p[6:10]),
+		AppMaxSize:    binary.LittleEndian.Uint32(p[10:14]),
+		PageSize:      binary.LittleEndian.Uint16(p[14:16]),
+		MaxPayload:    binary.LittleEndian.Uint16(p[16:18]),
+		UID:           append([]byte(nil), p[18:30]...),
 	}, nil
 }
 
@@ -168,9 +179,17 @@ func (h *Hello) describe() string {
 			"app region    : 0x%04X .. 0x%04X  (%d bytes)\n"+
 			"flash page    : %d bytes\n"+
 			"max payload   : %d bytes\n"+
-			"chip UID      : %X",
+			"chip UID      : %X\n"+
+			"board         : %s%s",
 		h.modeName(), h.ProtoVersion, h.BootVersion,
 		appStateNames[h.AppState],
 		h.AppStart, h.AppStart+h.AppMaxSize, h.AppMaxSize,
-		h.PageSize, h.MaxPayload, h.UID)
+		h.PageSize, h.MaxPayload, h.UID, boardName(h.Board), notReported(h.BoardReported))
+}
+
+func notReported(reported bool) string {
+	if reported {
+		return ""
+	}
+	return ", not reported (rev0)"
 }

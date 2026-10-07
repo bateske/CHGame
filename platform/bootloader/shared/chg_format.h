@@ -22,8 +22,26 @@
 #define CHG_MAGIC            0x31474843u   /* "CHG1" */
 #define CHG_FORMAT_VERSION   1u
 #define CHG_HEADER_BYTES     512u
-#define CHG_TARGET_ID        0x35335843u   /* "CX35": CHGame, CH32X035G8U6 */
 #define CHG_LAYOUT_ID        0x003000F7u   /* app at 0x3000, metadata page at 0xF700 */
+
+/* Board target ids: which board a package's program was built for, one per
+ * device of spec/chgame.md ("Devices and revisions", the naming rule and the
+ * registry). Rev0's is named after its MCU and keeps that name for good;
+ * every later board is "CGR<n>". A bootloader installs only its own board's.
+ * Ids are never reused or reassigned. */
+#define CHG_TARGET_REV0      0x35335843u   /* "CX35": CHGame Rev0 (CH32X035G8U6) */
+#define CHG_TARGET_REV1      0x31524743u   /* "CGR1": reserved for CHGame Rev1, not yet defined */
+
+/* The board this bootloader is built for. A rev0 build defines nothing, and
+ * its binaries are the ones built before boards had ids. Any other board's
+ * build passes its id, -DCHGAME_BOARD_TARGET=0x31524743 for rev1 (with that
+ * board's pins), and then also reports it: HELLO's board field and the board
+ * word at offset 0x14 of the bootloader image (platform/board/docs/protocol.md). */
+#ifdef CHGAME_BOARD_TARGET
+#define CHG_TARGET_ID        CHGAME_BOARD_TARGET
+#else
+#define CHG_TARGET_ID        CHG_TARGET_REV0
+#endif
 
 /* Field offsets. */
 #define CHG_OFF_MAGIC        0x000u   /* u32 */

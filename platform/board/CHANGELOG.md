@@ -99,6 +99,11 @@ package's maintainer is shown as **bateske**.
 - `chgame-upload` 0.2.0: `selfupdate <boot.bin>`, `burn -method usb|isp`
   and `pack`. It refuses an image that is not a bootloader for this board.
   Its source is in this repository now (`platform/bootloader/host/go`).
+  Ready for board revisions (the repository's docs/hardware-revisions.md):
+  it shows the board a bootloader reports (`probe`, `info`), refuses a
+  bootloader built for another board, and takes `-device rev0` on `flash`
+  (refusing another board) and `pack`. The Upload recipe does not pass it
+  yet; that comes with the first board after Rev0.
 
 ### Fixed
 

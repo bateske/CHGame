@@ -44,9 +44,16 @@ volume, and the order of directory entries, do not matter.
 
 ## Runtime preparation, step by step
 
-Preparation takes one cart and a device (`rev0`) and gives a set of files,
-`{card path: bytes}`. Every game must have a binary for the device (else
-`bad-device`) and the cart must pass every rule of chgame.md.
+Preparation takes one cart and a device (`rev0`, the default) and gives a
+set of files, `{card path: bytes}`. Every game must have a binary for the
+device (else `bad-device`) and the cart must pass every rule of chgame.md.
+
+**A card is for one board.** Its CHG files carry that device's target id
+(chgame.md, "Devices and revisions"), and a bootloader installs only its own
+board's: on another board the menu lists them greyed under their 8.3 names
+and starting one shows ERROR 5, with nothing erased. Someone with two
+boards keeps a card for each. The menu's own files and the SD files do not
+depend on the board.
 
 ### 1. The folders
 
@@ -82,7 +89,8 @@ Each game becomes `<folder>/<name>.CHG`: chg.md's format, built as
 
 | Field | Value |
 |---|---|
-| payload | the game's binary, padded with 0xFF to a multiple of 4 |
+| payload | the game's binary for the device, padded with 0xFF to a multiple of 4 |
+| target id, layout id | the device's (chgame.md's device table): `CX35`, `0x003000F7` for `rev0` |
 | title | the game's `title` |
 | author | the game's `author` if it is printable ASCII, cut to 15 characters; else empty |
 | version | the game's `version` the same way, cut to 7 characters |
@@ -303,7 +311,11 @@ order, the launch flags and the CHG headers exactly as the list menu does
 ## Deploy rules
 
 How a cart gets onto a CHGame (`chgame cart deploy`). A web uploader
-follows the same rules.
+follows the same rules. Everything is for one device, `rev0` unless the
+user says otherwise (`--device`): the card's CHG files and the binary
+flashed. Before flashing, an uploader that knows the device checks it
+against the board's `HELLO` and refuses another board
+(platform/board/docs/protocol.md, "Which board").
 
 **One game without SD files:** flash its binary over USB.
 - With a card given, its CHG file is also added to `GAMES/`, so the menu
@@ -348,7 +360,9 @@ file (chg.md), which runtime preparation writes since 2026-10-06.
 2. **A folder's name** is its title in its parent's `MENU.IDX` when that
    is a valid folder name (chgame.md), else its 8.3 name.
 3. **Each CHG file** is checked as the bootloader checks it (chg.md, checks
-   1-7). One that fails is left out (`bad-chg`).
+   1-7), taking the target id of any board the reader knows. One that fails
+   is left out (`bad-chg`). Its binary goes under the device its target id
+   names, so a card for rev1 backs up as `rev1` binaries.
    - **With a record:** the game is the record's `game`, its folder the one
      the file is in; its binary the payload's first `binaryBytes` bytes
      (the rest must be 0xFF padding, else the record is not used); its

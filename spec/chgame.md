@@ -123,17 +123,86 @@ load address. It is never a `.hex`, an `.elf` or a `.chg`: tools convert
 those on the way in (an `.elf`'s loadable segments at their load addresses,
 as `objcopy -O binary` does), so readers only ever see one format.
 
-| `device` | Board | MCU | Load address | Largest image | Notes |
-|---|---|---|---|---|---|
-| `rev0` | CHGame Rev0 (`CHGame:ch32v:rev0`) | CH32X035G8U6 | 0x3000 | 50,944 B | saving needs the image at 50,432 B or less (above that a game's saves switch off: warning `save-pages`); the menu's CHG target `CX35`, layout `0x003000F7` (chg.md) |
+| `device` | Board | Target id | MCU | Load address | Largest image | Notes |
+|---|---|---|---|---|---|---|
+| `rev0` | CHGame Rev0 (`CHGame:ch32v:rev0`) | `CX35` (`0x35335843`) | CH32X035G8U6 | 0x3000 | 50,944 B | saving needs the image at 50,432 B or less (above that a game's saves switch off: warning `save-pages`); CHG layout `0x003000F7` (chg.md) |
+| `rev1` | CHGame Rev1, **reserved**: not defined yet | `CGR1` (`0x31524743`) | | | | the name and id are taken; until this row is filled in, a `rev1` binary is one no reader knows (`unknown-device`) |
 
 - **The image's length**, padded with 0xFF to a multiple of 4, must not
   exceed the device's largest image.
 - **A bootloader image is refused** (`bootloader-image`): one with the
   signature `0x4C424843` ("CHBL") as a 32-bit little-endian word at offset
   8.
-- **New boards are added to this table.** A game runs on a board only if it
-  has a binary for it.
+- **A game runs on a board only if it has a binary for it.** A game need not
+  have one for every device.
+
+### Devices and revisions
+
+A *device* is a board as a program sees it: its MCU and clock, its memory
+map and bootloader, and the pins its screen, card, buttons, speaker and
+lights are on. A binary is built for one device and runs only on that one:
+nothing ever runs a binary on another device, or falls back to another
+device's binary.
+
+**When a board needs a new device.** A new board gets a new device when a
+binary built for the board before it might not run correctly on it: a pin
+moved, another MCU or clock, another flash or RAM map, another bootloader
+reservation, another screen. A board that every existing binary runs on
+unchanged (another PCB colour, battery or case, a part swapped for an
+equivalent on the same pins) keeps its device. When in doubt it is a new
+device: a needless one costs a rebuild, a missing one games that misbehave.
+
+**Names.**
+- **The CHGame handheld's revisions are `rev<n>`**: `rev`, then the
+  revision number in decimal without leading zeros: `rev0`, `rev1`, ...,
+  `rev10`. The same name is the board's ID in the board package (FQBN
+  `CHGame:ch32v:rev1`), its variant (`CHGame_Rev1`) and its name in the
+  Arduino IDE ("CHGame Rev1").
+- **Numbers go up in release order.** A number is never given twice: a
+  revision abandoned before release keeps its number, unused.
+- **A board that is not a revision of the handheld** (another product, a
+  development board) gets a name of its own, not a `rev` number:
+  lowercase `a-z`, `0-9` and `-`, 1 to 32 characters, starting with a letter.
+- **Every device name** follows that last rule. A name that breaks it is
+  the error `bad-device`.
+
+**Target ids.** Each device has a target id: a 32-bit value, stored
+little-endian, whose four bytes are printable characters. It is how
+everything below the cart says which board it is for: a CHG file's header
+(chg.md), the bootloader's `HELLO` answer and the bootloader image itself
+(platform/board/docs/protocol.md).
+- **`rev0` is `CX35`** (`0x35335843`). It was named after rev0's MCU before
+  there were other boards, and keeps that id for good: every rev0
+  bootloader and CHG file in use carries it.
+- **`rev1` to `rev9` are `CGR1` to `CGR9`** ("CHGame Rev" and the digit);
+  **`rev10` to `rev99` are `CG10` to `CG99`**.
+- **A board with a name of its own** gets four characters of its own when it
+  is registered: letters and digits, not starting `CG` or `CX`, and not one
+  of the formats' magic numbers (`CHG1`, `CHBL`, `CHB1`, `CHGM`, `CHGB`,
+  `CHGD`).
+- **An id is never reused or given to another board**, and is never 0: in a
+  bootloader image's board word, 0 means rev0.
+
+**Registering a device** is a new row in the table above, made with the
+reference tools, the bootloader and the uploaders
+([docs/hardware-revisions.md](../docs/hardware-revisions.md) is the
+checklist). A row can be *reserved* first, naming a board and its id before
+anything else about it is settled, so that nothing else takes them. Readers
+treat a reserved device as one they do not know. A new device is not a new
+`schemaVersion` (below, "Versions").
+
+**What readers and writers do.**
+- **A game has at most one binary per device** (`bad-device` otherwise).
+- **A reader picks a binary by its `device`**, never by its place in the
+  list.
+- **A binary for a device the reader does not know** (one registered after
+  the reader was made, or a reserved one) is the warning `unknown-device`.
+  The reader does not use or check it, and uses the rest of the cart as
+  usual. A writer that edits the cart keeps it as it is. So a cart that
+  carries rev0 and rev1 binaries still works, for rev0, in a reader made
+  before rev1.
+- **Preparing a card or uploading a game is for one device** (card.md): a
+  game without a binary for that device cannot be put on that board.
 
 ### SD card files
 
@@ -166,7 +235,7 @@ Example: `"sdcard": "chwords/sdcard/"` and the ZIP entry
 | `duplicate-id` | error | two games share an `id` |
 | `bad-title` | error | a title is blank, not printable ASCII, or over 31 characters |
 | `bad-folder` | error | a folder name breaks its rule, or folders nest deeper than 4 |
-| `bad-device` | error | an unknown device, or two binaries for one |
+| `bad-device` | error | a device name that breaks its rule, or two binaries for one device |
 | `binary-size` | error | an image empty, or larger than the device takes |
 | `bootloader-image` | error | a bootloader, not a program |
 | `bad-sd-path` | error | an SD path that is not 8.3 capitals, or under `GAMES/` |
@@ -177,6 +246,7 @@ Example: `"sdcard": "chwords/sdcard/"` and the ZIP entry
 | `full-folder` | error | a menu folder (or the top level) holds more than 240 entries, games and folders together: the menu could not list them all |
 | `unknown-key` | warning | a key this version does not define: ignored (a key beginning with `x-` is an extension, not an unknown key) |
 | `unused-file` | warning | a file the manifest does not name; an `sdcard` folder with nothing in it; a folder background for a folder no game is in |
+| `unknown-device` | warning | a binary for a device the reader does not know (a board registered after it, or a reserved one): not used, kept |
 | `extension-conflict` | warning | `x-chgame-web.systemImages` names a screen that `menu.systemImages` also names, with a different picture: the official field is used |
 | `long-title` | warning | a title over 19 characters (the menu shows the first 19) |
 | `title-chars` | warning | a title with characters the menu shows as `?` |
@@ -193,7 +263,10 @@ nothing.
   readers warn (`unknown-key`) and go on. `menu.systemImages` is one: a
   reader from before it shows the default screens and every game still
   plays.
-- **New devices** are additions to the table above, not a new version.
+- **New devices** are additions to the table above, not a new version. A
+  reader from before one warns (`unknown-device`), leaves that device's
+  binaries alone and goes on. Until 2026-10-07 an unknown device was the
+  error `bad-device`; no cart carried one then.
 
 ## Extensions
 
@@ -280,5 +353,5 @@ format:
 | A sketch as a cart | `chgame export` in its folder writes `build/<Name>.chgame`, described by the sketch's `chgame.json` (tools/chcart/sources.py: every key optional) |
 | Carts from games and other carts | `chgame cart new OUT ITEM ...` (`.chgame`, `.bin`, `.hex`, `.elf`, `.chg`, sketch folders), `add`, `remove`, `order`, `set`, `launch`, `background`, `picture` (the cover, a game's, a folder's, the about page, `--system` one of the menu's own screens) |
 | Checking | `chgame cart verify FILE ...` prints every issue and exits 1 on an error; `chgame cart info FILE --json` prints the manifest as chcart reads it |
-| The card | `chgame cart prepare FILE DIR [--image IMG]`, `chgame cart deploy FILE --card E:\` (card.md) |
+| The card | `chgame cart prepare FILE DIR [--image IMG]`, `chgame cart deploy FILE --card E:\` (card.md); `--device` picks the board (default `rev0`), as it does for `chgame cart flash` |
 | Back from a card | `chgame cart backup E:\ OUT [--game ID ...]`: the card's games as a cart, with their SD files, from the record in each CHG file (card.md, "Backing up a card"). A `.chg` given to `new` or `add` is read the same way: with a record, the game comes back as its cart had it |

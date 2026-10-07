@@ -81,9 +81,10 @@ def cmd_info(a):
     if cart.launch:
         print(f"launch: {cart.launch}")
     for g in cart.games:
-        img = g.binary("rev0")
         where = f"[{g.folder}] " if g.folder else ""
-        print(f"  {g.id:20s} {where}{g.title!r}  {len(img) if img else 0} B"
+        sizes = ", ".join(f"{d} {len(b)} B" for d, b in sorted(g.binaries.items()) if d != "rev0")
+        img = g.binary("rev0")
+        print(f"  {g.id:20s} {where}{g.title!r}  {len(img) if img else 0} B" + (f" ({sizes})" if sizes else "")
               + (f", {len(g.sd)} SD file{'s' * (len(g.sd) != 1)} ({sum(map(len, g.sd.values()))} B)" if g.sd else "")
               + (f"  {g.version}" if g.version else ""))
     return 0
@@ -351,7 +352,7 @@ def cmd_art(a):
 
 def cmd_prepare(a):
     cart = _load(a.pkg)
-    files = runtime.prepare(cart)
+    files = runtime.prepare(cart, a.device)
     runtime.write_folder(files, a.outdir)
     print(f"{a.outdir}: {len(files)} files, {sum(map(len, files.values()))} B; copy its contents to the card's root")
     if a.image:
@@ -365,12 +366,12 @@ def cmd_flash(a):
     g = _game(cart, a.game) if a.game else (cart.game(cart.launch) if cart.launch else cart.games[0])
     if not a.game and len(cart.games) > 1:
         print(f"note: flashing {g.id}; --game picks another", file=sys.stderr)
-    deploy.flash(g, a.port)
+    deploy.flash(g, a.port, a.device)
     return 0
 
 
 def cmd_deploy(a):
-    deploy.deploy(_load(a.pkg), a.card, a.port, a.clean, do_flash=not a.no_flash)
+    deploy.deploy(_load(a.pkg), a.card, a.port, a.clean, a.device, do_flash=not a.no_flash)
     return 0
 
 
@@ -470,16 +471,20 @@ def parser():
     p.add_argument("pkg")
     p.add_argument("outdir")
     p.add_argument("--image", help="also a FAT32 card image")
+    device_help = "the board the card or upload is for (default rev0; spec/chgame.md, the device table)"
+    p.add_argument("--device", choices=list(model.DEVICES), default="rev0", help=device_help)
     p = sub.add_parser("flash", help="upload one game")
     p.add_argument("pkg")
     p.add_argument("--game")
     p.add_argument("--port")
+    p.add_argument("--device", choices=list(model.DEVICES), default="rev0", help=device_help)
     p = sub.add_parser("deploy", help="flash and/or write the card, by the deploy rules")
     p.add_argument("pkg")
     p.add_argument("--card", help="the mounted card's folder (drive)")
     p.add_argument("--port")
     p.add_argument("--clean", action="store_true", help="empty the card's GAMES/ first (several games)")
     p.add_argument("--no-flash", action="store_true")
+    p.add_argument("--device", choices=list(model.DEVICES), default="rev0", help=device_help)
     p = sub.add_parser("backup", help="a card's games back into a cart, with their SD files")
     p.add_argument("card", help="the mounted card's folder (drive), a FAT image, or a ZIP of its files")
     p.add_argument("out", help="the .chgame to write")
