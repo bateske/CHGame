@@ -277,7 +277,8 @@ def main(argv=None):
     if rest and a.cmd in {"build", "upload", "sim", "run", "shot"}:
         ap.error(f"unrecognized arguments: {' '.join(rest)}")
     sketch = None
-    if a.cmd in NEEDS_SKETCH or (a.cmd in ("gif", "boxart") and not a.check):
+    if a.cmd in NEEDS_SKETCH or (a.cmd in ("gif", "boxart") and not a.check
+                                 and not (a.cmd == "boxart" and "--sheet" in a.rest)):
         sketch = sketch_of(a)
         print(f"{sketch.name}: {a.cmd}", flush=True)
     fn = globals()[f"cmd_{a.cmd}"]

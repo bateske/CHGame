@@ -3,7 +3,7 @@
 # ../../../../../../../../../tools/readme_gif.py runs this script and joins them:
 #   chgame gif
 rec start 3
-wait 150
+wait 120
 rec stop 01_title
 # The turtle dealt, and a streak of pairs.
 say G 0 2026

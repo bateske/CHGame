@@ -1,0 +1,42 @@
+{
+ "warnings": [
+  "extension-conflict"
+ ],
+ "games": [
+  {
+   "id": "one",
+   "title": "ONE",
+   "folder": "",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {}
+  }
+ ],
+ "launch": "",
+ "card": {
+  "GAMES/MENU.IDX": {
+   "size": 64,
+   "sha256": "4f774aa2d1d70cfb5ef0858d8181ece84180f64efe5516dc8b6f70b756f91f4b"
+  },
+  "GAMES/MENU.BG": {
+   "size": 8704,
+   "sha256": "2b7b773afcfd7ccd84b32dc5381a2deaa20b1ab93caddd79a4e8530b6f704071"
+  },
+  "GAMES/COVER.PIC": {
+   "size": 8704,
+   "sha256": "f2fbf237573a8ac161fb2a38868ff80c71f125c9abf4e01262c3fe5bef813ff4"
+  },
+  "GAMES/SYSTEM.PIC": {
+   "size": 78336,
+   "sha256": "1a6e9b237c1e75fc6bc97f369d38ebacfa27ad6a38e86875544789d31f20f2e1"
+  },
+  "GAMES/ONE.CHG": {
+   "size": 11845,
+   "sha256": "34d70b66c7ed9277c63ad6793bed68e7c37859376dfeaed80025248de28de0ce"
+  }
+ }
+}

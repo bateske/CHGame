@@ -112,41 +112,6 @@ yryyuyyry
 yyyyyyyyy
 bbbbbbbbb
 
-# --- The title's own lettering, after CHBlackjack's (one colour: stored a
-# bit a pixel, and the game gives it its gold, its outline and its shadow).
-# LOGO_SNAKES is drawn here at half its size: tools/assets.py doubles it.
-@LOGO_SNAKES
-...................................yy.........................
-..yyyyy.y........................yyyy.........................
-.yyyyyyyy........................yyyy.........................
-yyy...yyy.........................yyy.........................
-yyy....yy.........................yyy.........................
-yyy.......yyyy.yyyy.....yyyyyy....yyy.yyyyy...yyyyy....yyyyyy.
-yyyyy.....yyyyyyyyyy..yyyyyyyyy...yyy.yyyyy..yyyyyyy..yyyyyyyy
-.yyyyyyy...yyyy..yyyy.yy....yyy...yyy..yyy..yyy...yyy.yyy..yyy
-...yyyyyy..yyy....yyy....yyyyyy...yyy.yy....yyyyyyyyy.yyyy....
-.....yyyy..yyy....yyy..yyyyyyyy...yyyyyyy...yyyyyyyyy..yyyyyy.
-yy....yyy..yyy....yyy.yyyy..yyy...yyyyyyyy..yyy...........yyyy
-yyy..yyyy..yyy....yyy.yyy...yyy...yyy..yyy..yyyy..yyy.yyy..yyy
-yyyyyyyy..yyyy...yyyy.yyyyyyyyyy.yyyy..yyyy..yyyyyyy..yyyyyyyy
-y.yyyyy...yyyy...yyyy..yyyy..yyy.yyyy..yyyy...yyyyy....yyyyyy.
-
-@LOGO_LADDERS
-...........................................yyyyy......yyyyy..............................
-..yyyyy.........yyyyyyy....................yyyyy......yyyyy..............................
-.yyyyyyy........yyyyyyy......................yyy........yyy..............................
-.yyy.yyy..........yyy........................yyy........yyy..............................
-.yyy.yyy..........yyy........................yyy........yyy..............................
-.yyyyyyy..........yyy.........yyyyyy.....yyyyyyy....yyyyyyy....yyyyy...yyyy..yyy..yyyyyy.
-..yyyyy...........yyy.......yyyyyyyyy...yyyyyyyy...yyyyyyyy...yyyyyyy..yyyyyyyyy.yyyyyyyy
-.yyyyy..yyy.......yyy.......yy....yyy..yyyy..yyy..yyyy..yyy..yyy...yyy..yyyyy.yy.yyy..yyy
-yyyy.yy.yyy.......yyy..........yyyyyy..yyy...yyy..yyy...yyy..yyyyyyyyy..yyy......yyyy....
-yyy..yyyyy........yyy....yy..yyyyyyyy..yyy...yyy..yyy...yyy..yyyyyyyyy..yyy.......yyyyyy.
-yyy...yyyy........yyy...yyy.yyyy..yyy..yyy...yyy..yyy...yyy..yyy........yyy..........yyyy
-yyyy..yyyy........yyy...yyy.yyy...yyy..yyyy..yyy..yyyy..yyy..yyyy..yyy..yyy......yyy..yyy
-.yyyyyyyyy......yyyyyyyyyyy.yyyyyyyyyy..yyyyyyyyy..yyyyyyyyy..yyyyyyy..yyyyyy....yyyyyyyy
-..yyyy.yyyy.....yyyyyyyyyyy..yyyy..yyy...yyyy.yyy...yyyy.yyy...yyyyy...yyyyyy.....yyyyyy.
-
 # --- The pointing glove, CHChess's (a CPU's is remapped: cuff GOLD -> RED,
 # WOOD -> WINE): thumb on the left, the index finger pointing down.
 # Fingertip: bottom row, centre column.

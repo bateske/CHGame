@@ -12,7 +12,8 @@ the second and third rows use their machines' palettes. Delete the PNG to go bac
 the recipes.
 
 All of the art is new for this game:
-  * tools/art/logo.txt - the "SLOTS" title lettering (1 bpp).
+  * tools/art/title.txt - the title's lettering: tools/cart.py (the cover)
+    draws it, tools/titleart.py packs it for the title screen likewise.
   * The reel symbols, 22x22 each, drawn by the recipes below (shapes on a
     small canvas, then a one-pixel ink outline) so they stay easy to adjust.
     LUCKY 7's fifteen use the casino's green palette; DRAGON FORTUNE's ten are
@@ -819,10 +820,12 @@ def main():
     o.const("SYM_FORTUNE", len(CLASSIC))
     o.const("SYM_SWEET", len(CLASSIC) + len(FORTUNE))
 
-    logo = load_bits("logo")
-    o.array("LOGO", pack_rows1(logo), comment=f"'SLOTS' title lettering {len(logo[0])}x{len(logo)}, MSB-first rows")
-    o.const("LOGO_W", len(logo[0]))
-    o.const("LOGO_H", len(logo))
+    import cart                                          # the title, as the cover draws it
+    import titleart
+    line, = cart.title_lines()
+    titleart.emit(o, "LOGO", line, "'SLOTS'")
+    PREVIEW.mkdir(parents=True, exist_ok=True)
+    titleart.preview(line).save(PREVIEW / "logo.png")
 
     o.write()
     print(f"wrote {OUT_H.relative_to(ROOT)} and {OUT_C.relative_to(ROOT)}: symbols {len(data)} B")

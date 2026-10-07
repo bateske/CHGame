@@ -1,0 +1,13 @@
+// title: JACKPOT
+// font: Chunky Monkey (zx/Chunky Monkey)
+// author: Damien Guard
+// terms: Free for games, with a credit
+// source: https://damieng.com/typography/zx-origins/chunky-monkey/
+// set at the font's own size by tools/artkit/fontscout.py; pixels may be touched up by hand
+....###..#####...#####..###.###.######...#####..#######
+....###.#######.#######.###.###.#######.#######.#######
+....###.###.###.###.###.######..###.###.###.###...###..
+....###.###.###.###.....#####...#######.###.###...###..
+###.###.#######.###.###.######..######..###.###...###..
+#######.###.###.#######.###.###.###.....#######...###..
+.#####..###.###..#####..###.###.###......#####....###..

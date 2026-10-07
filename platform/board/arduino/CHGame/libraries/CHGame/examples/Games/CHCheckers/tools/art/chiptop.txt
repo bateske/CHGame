@@ -1,9 +1,10 @@
-# The same chip from straight above (the map, the HUD's tally).
+# The same chip from above (the map, the HUD's tally): its face, label and
+# crown, and a sliver of its rim with one insert.
 # Centre: column 4, row 3.
 ..kkkkk..
-.kwuwuwk.
-kuwywywuk
-kwwyyywwk
-kuwwwwwuk
-.kwuwuwk.
+.kcccwwk.
+kccycywwk
+kccyyywwk
+kswwwwwsk
+.ksuuusk.
 ..kkkkk..

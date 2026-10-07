@@ -2,18 +2,22 @@
  * The SD game menu as pictures, and no text at all (docs/visual-menu.md; the
  * card's files: shared/chgame_card.h, spec/card.md; the card's tree: card.c).
  *
- *   power-on -> the cart's cover (GAMES/COVER.PIC) fades in
- *     launch entry in GAMES/MENU.IDX (and START not held) -> its picture,
- *       installed first if it is not the installed one, then it starts
- *     otherwise the installed game, searched for (GAMES/'s games, then its
- *     folders', depth first), fades in once the cover has had its time
+ *   power-on -> launch entry in GAMES/MENU.IDX (and START not held), and it
+ *       is the installed game -> it runs at once, the panel never lit
+ *     otherwise the cart's cover (GAMES/COVER.PIC) fades in and stays; a
+ *       launch entry that is not installed fades in after it, and waits (A
+ *       installs it: a power-on never writes over the game in flash)
+ *     behind the cover the installed game is searched for (GAMES/'s games,
+ *       then its folders', depth first); on no card entry, GAMES/ lists it
+ *       first (SYSTEM.PIC's picture of it)
  *
  * A folder's rows are its cover, then its entries (games, and folders by
  * their cover) in MENU.IDX's order, then by title. GAMES/ itself lists only
  * its games: its folders are the categories.
  *   UP/DOWN      the row before or after, round the folder
  *   LEFT/RIGHT   the folder beside: at the top, GAMES/ and its folders in a
- *                ring; below the top, the folders of the same parent
+ *                ring; below the top, the folders of the same parent;
+ *                nothing when there is no other folder to go to
  *   A            a game: play it (install first if need be); a folder: open
  *                it; a folder's cover: its first row; the cart's cover
  *                (GAMES/'s): the installed program's picture, where A runs
@@ -40,8 +44,7 @@
 #include "chgame_bootreq.h"
 #include "chgame_card.h"
 
-#define SPLASH_MS   1500u       /* the cover at least this long at power-on */
-#define HOLD_MS     1000u       /* the launch game's picture before it starts */
+#define SPLASH_MS   1500u       /* the cover at least this long before the launch game's picture */
 #define ICON_S      8u          /* an icon's pixel on the panel */
 #define ICON_X      ((LCD_W - ICON_W * ICON_S) / 2)
 #define ICON_Y      8u
@@ -131,12 +134,18 @@ static void show(void)
     }
 }
 
+/* The whole framebuffer to the panel (one copy of the call's constants). */
+static __attribute__((noinline)) void flush_all(void)
+{
+    lcd_flush(0, LCD_H);
+}
+
 /* Whole frames toward lcd_dark == to: 0 the picture, LCD_DARK black. */
 static void fade(uint32_t to)
 {
     while (lcd_dark != to) {
         lcd_dark += lcd_dark < to ? 1 : (uint32_t)-1;
-        lcd_flush(0, LCD_H);
+        flush_all();
         sys_delay_ms(LCD_FADE_STEP_MS);
     }
 }
@@ -206,10 +215,11 @@ static uint32_t leave(int app)          /* a level up; the entry of the folder l
 
 /* LEFT (-1) or RIGHT (1): the folder beside this one, on its cover. At the
    top the ring is GAMES/ itself and its folders; below, the folders of the
-   same parent. */
-static void flip(uint32_t d, int app)
+   same parent. 0 when there is none to go to (GAMES/ without folders, a
+   folder with no sibling): the menu stays as it is. */
+static int flip(uint32_t d, int app)
 {
-    uint32_t i, n, k;
+    uint32_t i, n, k, was = here;
     n = depth <= 1;                         /* (GAMES/ itself, at the top: entry ngames) */
     i = depth ? leave(app) : ngames;
     n += ngames;
@@ -221,7 +231,9 @@ static void flip(uint32_t d, int app)
             break;
         }
     }
+    if (here == was) return 0;
     row = 0;
+    return 1;
 }
 
 /* Depth first from GAMES/ to the first game flagged `want`: G_INSTALLED
@@ -267,17 +279,17 @@ static int start(uint32_t i, int app)
     if (!(g->flags & G_INSTALLED) || CHBOOT_APP) {
         lcd_fill(BAR_X - 2, BAR_Y - 2, BAR_W + 4, BAR_H + 4, LCD_RAINBOW);     /* the bar, over the picture */
         lcd_fill(BAR_X - 1, BAR_Y - 1, BAR_W + 2, BAR_H + 2, CARD_C_INK);
-        lcd_flush(0, LCD_H);
+        flush_all();
         rc = install(g->clus, g->size, buf);
         if (rc) return rc;
     }
 #if CHBOOT_APP
     /* Dry run (build.sh app): the package checked, nothing written. */
     icon(ICON_OK);
-    lcd_flush(0, LCD_H);
+    flush_all();
     wait_key();
     show();
-    lcd_flush(0, LCD_H);
+    flush_all();
     return INST_OK;
 #endif
     fade(LCD_DARK);
@@ -305,33 +317,37 @@ void menu_main(int app, int launch)
         light();
         return;
     }
+#if !CHBOOT_APP
+    /* The launch entry, followed down through flagged folders: the installed
+       game starts at once, the panel never lit. Any other waits on its
+       picture after the cover, for A: a power-on never writes over the game
+       that was in flash. */
+    if (launch && seek(G_LAUNCH, app)) {
+        if (games[row - 1].flags & G_INSTALLED) boot_reset(CHGAME_BOOTREQ_RUN);
+        n = 0;                              /* (n: GAMES/'s entries until here, so 0 means launch) */
+        home(app);
+    }
+#endif
     show();                                 /* the cart's cover */
     lcd_dark = LCD_DARK;
     light();
     fade(0);
     t0 = sys_ticks();
 #if !CHBOOT_APP
-    /* The launch entry, followed down through flagged folders: after the
-       cover, its picture, then it starts (an error: the menu, there). Else
-       the installed game, wherever it is on the card. */
-    if (launch && seek(G_LAUNCH, app)) n = 0;     /* (n: GAMES/'s entries until here, so 0 means launch) */
-    else if (app == APP_VALID && !seek(G_INSTALLED, app)) {
-        stray = 1;                          /* the program in flash is on no card entry: first in GAMES/ */
-        scan(app);
-        row = 1;
+    /* Behind the cover: is the program in flash on the card? On no entry,
+       GAMES/ lists it first (stray). Then back to the cover, or on to the
+       launch game's row. */
+    if (app == APP_VALID) {
+        if (!seek(G_INSTALLED, app)) stray = 1;
+        home(app);
     }
+    if (!n) seek(G_LAUNCH, app);
     proto_init();
 #endif
     if (row) {                              /* from the cover, once it has had its time */
         wait_ms(t0, SPLASH_MS);
         crossfade();
     }
-#if !CHBOOT_APP
-    if (!n) {
-        if (games[row - 1].flags & G_INSTALLED) wait_ms(sys_ticks(), HOLD_MS);
-        rc = start(row - 1, app);
-    }
-#endif
 
     for (;;) {
         old = row;
@@ -341,7 +357,7 @@ void menu_main(int app, int launch)
         proto_task();
         if (proto_claimed) {
             icon(ICON_USB);
-            lcd_flush(0, LCD_H);
+            flush_all();
             return;
         }
 #endif
@@ -349,7 +365,7 @@ void menu_main(int app, int launch)
             if (rc == INST_E_LOST)          /* the old program is gone (and its metadata, so no scan marks it again) */
                 for (n = 0; n < ngames; n++) games[n].flags &= (uint8_t)~G_INSTALLED;
             screen(CARD_SYS_ERROR + (uint32_t)rc - 1, ICON_ERROR);
-            lcd_flush(0, LCD_H);
+            flush_all();
             rc = INST_OK;
             modal = 1;
             continue;
@@ -359,7 +375,7 @@ void menu_main(int app, int launch)
             if (k) {
                 modal = 0;
                 show();
-                lcd_flush(0, LCD_H);
+                flush_all();
             }
             continue;
         }
@@ -384,16 +400,17 @@ void menu_main(int app, int launch)
             while (row && !depth && games[row - 1].flags & G_DIR);
         }
         if (k & (BTN_LEFT | BTN_RIGHT)) {  /* the folder beside: it slides in sideways */
-            flip(k & BTN_LEFT ? (uint32_t)-1 : 1u, app);
-            show();
-            lcd_slide(k & BTN_LEFT ? LCD_FROM_LEFT : LCD_FROM_RIGHT);
+            if (flip(k & BTN_LEFT ? (uint32_t)-1 : 1u, app)) {
+                show();
+                lcd_slide(k & BTN_LEFT ? LCD_FROM_LEFT : LCD_FROM_RIGHT);
+            }
             continue;
         }
         if (k & (BTN_B | BTN_SELECT)) {
             if (k & BTN_B && depth > 1) row = leave(app) + 1;  /* B in a folder's folder: up a level */
             else if (depth || (row && k & BTN_B)) home(app);    /* SELECT, or B at the root: the cart's cover */
             else if (!pic(sys.clus, sys.size, CARD_SYS_ABOUT * PIC_SECTORS)) {   /* ...there (SELECT: at the root): about */
-                lcd_flush(0, LCD_H);
+                flush_all();
                 modal = 1;
                 continue;
             } else show();                  /* (no about page: the row's picture back, as on the panel) */

@@ -12,19 +12,19 @@ a boot image of at most 12,288 B with at least 256 B to spare; for the
 visual menu, by the owner's choice (2026-10-03, its key map), 192 B
 (`build.sh` passes `--margin 192` for `--ui=visual`).
 
-## Current builds (2026-10-03, menu v2 and the visual menu)
+## Current builds (2026-10-06: power-on, launch, the static colour, the pins)
 
 | Build | `.text` | `.ramfunc` | `.data` | Boot image | Free | `.bss` | RAM in use |
 |---|---|---|---|---|---|---|---|
-| **release** (list menu + USB upload + self-update; rainbow) | 11,228 | 596 | 84 | **11,908** | **380** | 17,704 | **20,448** |
-| release `--style=static` | 11,004 | 596 | 84 | 11,684 | 604 | 17,564 | 20,308 |
-| **release `--ui=visual`** (the visual menu; rainbow) | 11,424 | 580 | 76 | **12,080** | **208** | 17,536 | **20,256** |
-| release `--ui=visual --style=static` | 11,240 | 580 | 76 | 11,896 | 392 | 17,524 | 20,244 |
-| locked (list menu + USB upload) | 11,012 | 496 | 80 | 11,588 | 700 | 17,704 | 20,344 |
-| locked `--ui=visual` | | | | 11,784 | 504 | | 20,156 |
-| nomenu (USB upload + self-update, for HW2a) | 4,728 | 596 | 76 | 5,400 | 6,888 | 984 | 3,720 |
+| **release** (list menu + USB upload + self-update; rainbow) | 11,240 | 596 | 84 | **11,920** | **368** | 17,704 | **20,448** |
+| release `--style=static` | 11,036 | 596 | 84 | 11,716 | 572 | 17,564 | 20,308 |
+| **release `--ui=visual`** (the visual menu; rainbow) | 11,404 | 580 | 76 | **12,060** | **228** | 17,536 | **20,256** |
+| release `--ui=visual --style=static` | 11,220 | 580 | 76 | 11,876 | 412 | 17,524 | 20,244 |
+| locked (list menu + USB upload) | 11,024 | 496 | 80 | 11,600 | 688 | 17,704 | 20,344 |
+| locked `--ui=visual` | 11,208 | 484 | 76 | 11,768 | 520 | 17,532 | 20,156 |
+| nomenu (the USB-only bootloader: USB upload + self-update; also HW2a) | 4,668 | 596 | 76 | 5,340 | 6,948 | 984 | 3,720 |
 | app (the list menu as a program at 0x3000, dry run) | 6,392 | 0 | 16 | 6,408 | - | 16,580 | 18,660 |
-| app `--ui=visual` (the visual menu's dry run) | 6,828 | 0 | 8 | 6,836 | - | 16,536 | 18,608 |
+| app `--ui=visual` (the visual menu's dry run) | 6,816 | 0 | 8 | 6,824 | - | 16,536 | 18,608 |
 
 Both faces share the card's code (`src/card.c`); `--ui=` picks `src/menu.c`
 or `src/visual.c`. Splitting `card.c` out of `menu.c` left every list build
@@ -89,6 +89,7 @@ Notes:
 | Visual: the installed game's stripe | 12,020 | 268 | The owner found the 4x4 red chip hard to see. A one-pixel border round the picture would cost +56 B (four `lcd_fill()` calls) or +64 B (one loop over the framebuffer); a stripe along the top, rows 0-1 the whole width, is the same one `lcd_fill()` as the chip, so 0 B in the rainbow style: colour 15 there (it turns with the rest), colour 11 (#FFF4D6) in the static style (+4 B: a constant that does not fold). Static 11,844 |
 | Visual: the owner's key map | 12,056 | 232 | START does nothing; SELECT goes to the cart's cover from anywhere and at the root shows the about page; B at the root or in a genre folder goes to the cart's cover, and on it shows the about page; A on the cart's cover shows the installed program's picture, where only A (run) and B (back) count (+104 B; the dry run now leaves on START). Paid for, by the owner's choice: the repeat-read card cache (-40 B) and the 16-bit card reads (-36 B) are gone (card reads as the list menu's: a byte at a time at 12 MHz), and gate A's margin for this build is 192 B instead of 256. Static 11,868 |
 | Visual: the installed game's border | 12,080 | 208 | The owner asked for a one-pixel border round the picture instead of the stripe: four `lcd_fill()` calls, +52 B (a loop of two, or one pixel at a time, came out the same or larger). Paid for by a fifth size flag for this build, `-fno-tree-vrp` (-28 B; the pixel and card loops identical instruction for instruction), and 24 B of the 40 left under the 192 B margin. Static 11,896 |
+| Power-on on the cover; the launch game never installs by itself; LEFT/RIGHT only where there is somewhere to go (2026-10-06) | 12,060 | 228 | The owner, after the cover-art work. The visual menu stays on the cover at power-on (the search for the installed game still runs behind it, for the stray row; A on the cover shows it): the fade to the installed game and the launch game's 1 s hold and `start()` call went. A launch game that is installed starts before the panel is lit (`boot_reset()` straight from the seek); one that is not waits on its picture after the cover (a second `seek()`). `flip()` reports whether it moved, so LEFT/RIGHT at `GAMES/` without folders do nothing (+16 B). Paid for, and 20 B more, by `flush_all()`: one out-of-line copy of `lcd_flush(0, LCD_H)`'s two constants for its six call sites (-36 B). Static 11,876. The list menu's launch loop became `sel = n` and a `start()` only for a folder or the installed game: 11,920 B (+12); its static build draws colour 15 in the text colour (`background()` sets `lcd_pal[15] = lcd_pal[11]` after either palette): 11,716 B (+32). The USB-only build's `hal_pins_init()` sets up the LED alone: 5,340 B (-60). The buzzer pin is left floating in every build (0 B) |
 
 ## Where the visual menu's bytes go
 

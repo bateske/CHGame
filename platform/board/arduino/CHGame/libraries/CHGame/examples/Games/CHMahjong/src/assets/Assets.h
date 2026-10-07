@@ -9,8 +9,13 @@ extern const uint8_t TILE_CELL_CLASSIC[43][24];   // 8x12, 2 bpp: 0 face, 1 embo
 extern const uint8_t TILE_INK_CLASSIC[43];          // a face's inks: low nibble, high nibble
 extern const uint8_t TILE_CELL_BIG[43][96];   // 16x24, 2 bpp: 0 face, 1 emboss, 2 and 3 the inks (tools/art/classic2x.txt)
 extern const uint8_t TILE_INK_BIG[43];          // a face's inks: low nibble, high nibble
-extern const uint8_t LOGO[];                                 // the title, 1 bpp MSB-first rows (tools/art/logo.txt)
-constexpr uint8_t LOGO_W = 91, LOGO_H = 18;
+extern const uint8_t LOGO[255];
+constexpr int LOGO_W = 116;
+constexpr int LOGO_H = 17;
+constexpr int LOGO_BASE = 8;
+extern const uint8_t LOGO_RAMP[17];
+constexpr int LOGO_DEPTH = 1;
+constexpr int LOGO_SIDE = 6;
 // The sparrow's animations (tools/art/bird.txt), facing left: span4 frames.
 struct BirdAnim { const uint8_t *const *frames; uint8_t n, w, h; };
 extern const BirdAnim BIRD[9];

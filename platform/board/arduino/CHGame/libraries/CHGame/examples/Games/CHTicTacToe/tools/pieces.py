@@ -12,7 +12,8 @@ outlined in ink.
 Each piece comes in two sizes: L for the 3x3 tables (40x20 tiles) and S for
 the 5x5 ones (24x12). The PNGs in tools/art/pieces/ are the source of
 truth for tools/assets.py and may be touched up by hand; rerunning this
-overwrites them.
+overwrites the X's and the O's. GOBBLE's chips (chip*.png) are hand-drawn
+and no longer rendered here.
 """
 import argparse
 import math
@@ -128,7 +129,9 @@ SHRINK = {"x": 2, "o": 2}
 # 90 degrees about the vertical (the game mirrors the first for 135; both
 # shapes repeat every half turn).
 SPIN = [45, 90]
-WHICH = {"L":["x", "o", "chip0", "chip1", "chip2"], "S": ["x", "o", "chip0", "chip1", "chip2"]}
+# GOBBLE's chips are drawn by hand now, in the casino chip family (lit label, rim in the
+# body's shade, insert dashes): chip() stays as their ray-traced ancestor but is not rendered.
+WHICH = {"L": ["x", "o"], "S": ["x", "o"]}
 
 
 # ---------------------------------------------------------------------------

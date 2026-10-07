@@ -27,7 +27,7 @@ also writes the CHG file, `<sketch>.ino.chg`, beside the `.bin` (below).
 ## The file (format version 1)
 
 The file is the 512-byte header followed by the payload, and optionally the
-game's picture. The payload is the `.bin`, padded with 0xFF to a multiple
+game's picture and its record. The payload is the `.bin`, padded with 0xFF to a multiple
 of 4, which is exactly the image `chgame-upload` writes. Integers are
 little-endian.
 
@@ -46,7 +46,8 @@ little-endian.
 | 0x040 | 16 | author | ASCII, optional |
 | 0x050 | 8 | version | ASCII, optional (e.g. "1.2") |
 | 0x060 | 12 | picture | offset, bytes, CRC-32 of the game's picture for the visual menu (below); 0 = none |
-| 0x06C | ... | reserved | 0 |
+| 0x06C | 12 | record | offset, bytes, CRC-32 of the game's record, for backups (below); 0 = none |
+| 0x078 | ... | reserved | 0 |
 | 0x1FC | 4 | header CRC-32 | CRC-32/ISO-HDLC of bytes 0x000-0x1FB |
 | 0x200 | payload bytes | payload | |
 
@@ -82,6 +83,40 @@ Only then does it erase anything. Checks 1 to 5 report one code (the menu
 shows a file that fails them greyed out, as ERROR 5);
 [platform/bootloader](../platform/bootloader) has the transaction and its
 tests. `tools/chgpack.py verify` reports which check failed.
+
+**The record** (since 2026-10-06). What a backup needs to make the
+game's cart again from the card alone (card.md, "Backing up a card"): the
+game as its cart describes it, and the files it put on the SD card. No menu
+reads it, and the install ignores it, as it does the picture: a file with a
+damaged record still installs, and every bootloader, older ones included,
+takes a file that has one. Runtime preparation writes one in every CHG
+file; `chgpack.py pack` and `chgame-upload pack` (*Export Compiled Binary*)
+do not, having no cart to describe.
+
+- **Where:** at the first multiple of 512 after the payload, or after the
+  picture if there is one, the gap 0; at most 1 MiB. The field names its
+  offset, its size and its CRC-32. A reader checks all three; a record that
+  fails them makes it a file without a record.
+- **What:** UTF-8 JSON, one object:
+
+  | Key | | Value |
+  |---|---|---|
+  | `chgRecord` | required | `1`. A reader that meets another number treats the file as one without a record |
+  | `game` | required | the game's entry in the cart's `info.json` (chgame.md), with only these keys: `id` and `title` (both required, both following chgame.md's rules), `version`, `author`, `description`, `genre`, `license`, `url`, `sourceUrl`, `buttons`. Not `folder`: where the file sits on the card says that, so a file moved by hand goes with its new folder. Not `binaries`, `cartImage`, `licenseFiles` or `sdcard`, given below; not `screenshots`, left out for their size |
+  | `binaryBytes` | required | the binary's length before padding (the payload is the binary padded with 0xFF to a multiple of 4) |
+  | `cartImage` | | the game's `cartImage` as the cart held it: the PNG's bytes in base64. (The picture above is that PNG converted, and cannot always give it back) |
+  | `licenseFiles` | | `{"LICENSE": base64, ...}`: the game's licence files, each under its file name |
+  | `sdcard` | | the game's SD files, sorted by path: `[{"path": "CHCW/BONUS.CWD", "bytes": 18432, "crc32": "1a2b3c4d"}]`, the CRC-32 as for the payload, in 8 lower-case hex digits |
+
+- **Written** so that two implementations write the same bytes: keys sorted
+  by code point, no spaces, the keys a game lacks left out; in strings
+  `\"`, `\\`, `\b`, `\f`, `\n`, `\r`, `\t`, the other characters below
+  U+0020 as `\u00XX`, and every character above U+007F as `\uXXXX` in
+  lower-case hex (two of them for one beyond U+FFFF), so the record is
+  ASCII. Python's `json.dumps(r, sort_keys=True, separators=(",", ":"))`
+  writes exactly this.
+
+`chgpack.py verify` and `info` check it and show `[record]`.
 
 ## Making one
 

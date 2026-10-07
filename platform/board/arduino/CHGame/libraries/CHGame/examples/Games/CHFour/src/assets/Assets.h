@@ -10,7 +10,7 @@ extern const uint16_t FACE_EDITS[138];                    // the other expressio
 extern const uint16_t FACE_EDIT_AT[7];                     // (y * 24 + x) << 4 | colour; each one's start, and the end
 extern const uint8_t DISC[59];                            // span4, 10 x 10, neutral tones
 extern const uint8_t DISC_REMAP[2][16];                     // ... as RED's, as GOLD's (tools/art/sides.txt)
-extern const uint8_t DISC_BIG[145];                       // the same disc, 20 x 20: the close-ups
+extern const uint8_t DISC_BIG[134];                       // the same disc, 20 x 20: the close-ups
 extern const uint8_t CELL_FRAME[46];                      // a square of the board with its hole: over a falling disc
 extern const uint8_t HAND[111];                            // span4, fingertip on the bottom row
 constexpr uint8_t HAND_TIP = 5;                           // its column

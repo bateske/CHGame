@@ -63,6 +63,13 @@ same when the card's layout changes.
 | `folders` | a list of `{"name": "CARD GAMES", "background": "path.png", "cover": "path.png"}`: a folder's own background, the same kind of PNG (folders without one show their parent's); and its cover for the visual menu, a picture (below; folders without one show the menu's no-cover screen) |
 | `cover` | path of a picture (below): the cart's cover, which the visual menu shows at power-on and as the top level's first row |
 | `about` | path of a picture: the visual menu's about page (B at the top level), how the menu works; the default explains the keys |
+| `systemImages` | the visual menu's own screens, any of them, each the path of a picture: `installed` (the program in flash, when no game on the card holds it), `game` (a game without a picture), `folder` (a folder without a cover), `error-1` to `error-5` (the install errors, numbered as in docs/sd-menu.md). A key that is absent takes the default that comes with the tools ([assets/system/](assets/system)); one that is given must follow the picture rule (`bad-picture`). card.md, step 7, says how they reach the card (`SYSTEM.PIC`). The bootloader keeps its own built-in screens for a card it cannot read: these pictures never remove that |
+
+Everything the bootloader reads from the card is therefore the cart's to
+set: the list menu's `background` (and a folder's), the visual menu's
+`cover` (and a folder's), `about` and `systemImages`, and each game's
+`cartImage`. A cart that sets none of them is complete all the same: the
+tools fill in the defaults when they prepare the card.
 
 ### A game
 
@@ -112,8 +119,9 @@ F/` does that (an item ending in `/` is a folder's games).
 
 A binary is the raw program image (`.bin`), exactly what the board
 package's build writes as `<sketch>.ino.bin`, linked to run at the device's
-load address. It is never a `.hex` or a `.chg`: tools convert those on the
-way in, so readers only ever see one format.
+load address. It is never a `.hex`, an `.elf` or a `.chg`: tools convert
+those on the way in (an `.elf`'s loadable segments at their load addresses,
+as `objcopy -O binary` does), so readers only ever see one format.
 
 | `device` | Board | MCU | Load address | Largest image | Notes |
 |---|---|---|---|---|---|
@@ -167,8 +175,9 @@ Example: `"sdcard": "chwords/sdcard/"` and the ZIP entry
 | `bad-background` | error | a background with too many colours |
 | `bad-launch` | error | `launch` names no game |
 | `full-folder` | error | a menu folder (or the top level) holds more than 240 entries, games and folders together: the menu could not list them all |
-| `unknown-key` | warning | a key this version does not define: ignored |
+| `unknown-key` | warning | a key this version does not define: ignored (a key beginning with `x-` is an extension, not an unknown key) |
 | `unused-file` | warning | a file the manifest does not name; an `sdcard` folder with nothing in it; a folder background for a folder no game is in |
+| `extension-conflict` | warning | `x-chgame-web.systemImages` names a screen that `menu.systemImages` also names, with a different picture: the official field is used |
 | `long-title` | warning | a title over 19 characters (the menu shows the first 19) |
 | `title-chars` | warning | a title with characters the menu shows as `?` |
 | `save-pages` | warning | an image too large to keep the save pages |
@@ -181,8 +190,30 @@ nothing.
 - **`schemaVersion` changes when a reader that ignores the change would
   behave differently.** A reader refuses a version newer than it knows.
 - **New optional keys that may safely be ignored** do not change it. Older
-  readers warn (`unknown-key`) and go on.
+  readers warn (`unknown-key`) and go on. `menu.systemImages` is one: a
+  reader from before it shows the default screens and every game still
+  plays.
 - **New devices** are additions to the table above, not a new version.
+
+## Extensions
+
+A top-level key beginning with `x-` belongs to another tool (`x-chgame-web`
+is the web emulator's). A reader ignores the ones it does not know, without
+a warning, and a writer that edits the cart keeps them as they are (it does
+not carry files they may name: a tool that needs them names them in the
+manifest proper). Two rules for the one extension that overlaps this
+format:
+
+- **`x-chgame-web` with `"version": 1`** may hold `systemImages`, the same
+  eight keys as `menu.systemImages`, from before that field existed. A
+  reader takes them as `menu.systemImages` for every screen the official
+  field leaves unnamed; where both name a screen, the official field is
+  used, and a different picture is the warning `extension-conflict`. A
+  picture named there is checked like the official one (`missing-file`,
+  `bad-picture`). A writer puts them in `menu.systemImages` and keeps the
+  rest of the extension.
+- **Any other version** of `x-chgame-web` is not read as version 1: it is
+  kept as it is, and files only it names are `unused-file`.
 
 ## An example
 
@@ -234,6 +265,8 @@ nothing.
   the device.
 - **SD card files** (`sdcard`) take the place of FX flash data. There are no
   per-game save files yet: every game shares the board's two save pages.
+  Each game's CHG file on the card records which files it brought
+  (chg.md), so a card can be backed up into a cart again.
 - **Pictures are the colour screen's**: 128x128, and backgrounds have a
   palette rule.
 - **The rules are exact, and their codes stable**, with fixtures, so that
@@ -245,6 +278,7 @@ nothing.
 | | |
 |---|---|
 | A sketch as a cart | `chgame export` in its folder writes `build/<Name>.chgame`, described by the sketch's `chgame.json` (tools/chcart/sources.py: every key optional) |
-| Carts from games and other carts | `chgame cart new OUT ITEM ...` (`.chgame`, `.bin`, `.hex`, `.chg`, sketch folders), `add`, `remove`, `order`, `set`, `launch`, `background` |
+| Carts from games and other carts | `chgame cart new OUT ITEM ...` (`.chgame`, `.bin`, `.hex`, `.elf`, `.chg`, sketch folders), `add`, `remove`, `order`, `set`, `launch`, `background`, `picture` (the cover, a game's, a folder's, the about page, `--system` one of the menu's own screens) |
 | Checking | `chgame cart verify FILE ...` prints every issue and exits 1 on an error; `chgame cart info FILE --json` prints the manifest as chcart reads it |
 | The card | `chgame cart prepare FILE DIR [--image IMG]`, `chgame cart deploy FILE --card E:\` (card.md) |
+| Back from a card | `chgame cart backup E:\ OUT [--game ID ...]`: the card's games as a cart, with their SD files, from the record in each CHG file (card.md, "Backing up a card"). A `.chg` given to `new` or `add` is read the same way: with a record, the game comes back as its cart had it |

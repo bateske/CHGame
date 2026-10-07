@@ -1,6 +1,7 @@
 #ifndef CHBOOT_SD_H
 #define CHBOOT_SD_H
 #include <stdint.h>
+#include "lcd.h"                            /* (MENU_UI) */
 
 /* SPI-mode SD card, polled single-block reads (CMD17). The card shares SPI1
  * with the panel; every call selects the card itself and leaves it

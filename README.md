@@ -63,7 +63,7 @@ installs it from this machine instead.
 | The CHGame library (`CHGame.h`: buttons, pacing, palette, drawing, sound, saving, debug protocol) | `platform/board/arduino/CHGame/libraries/CHGame/`; every game is built on it | yes, in the package's `libraries/`: nothing to install |
 | CHGfx, the graphics library | `platform/board/arduino/CHGame/libraries/CHGfx/` (1.3.0) | yes, with its examples |
 | CHSd, the SD/FAT reader | `platform/board/arduino/CHGame/libraries/CHSd/` (1.0.0) | yes |
-| The casino games and two apps (CHStlView, CHSDtoUSB) as examples | `platform/board/arduino/CHGame/libraries/CHGame/examples/Games/`, `apps/` | yes: *File > Examples > CHGame > Games*, *Apps* |
+| The casino games and three apps (CHStlView, CHSDtoUSB, CHSDtoSerial) as examples | `platform/board/arduino/CHGame/libraries/CHGame/examples/Games/`, `apps/` | yes: *File > Examples > CHGame > Games*, *Apps* |
 | `.chgame`, the format games are shared in ([spec/chgame.md](spec/chgame.md)), and the SD menu's card ([spec/card.md](spec/card.md)) | `spec/`, `tools/chcart/` (`chgame export`, `chgame cart ...`) | the release carries every game as one cart, `CHGame-Casino-<version>.chgame`, and its card as a zip. Every build also writes the menu's install file (`.chg`), and *Export Compiled Binary* puts it by the sketch |
 | PC tools | `tools/`, `platform/bootloader/host/` | the ones an Arduino user needs, in `chgame-upload`: upload, burn the bootloader, pack for the SD menu. The developer tools (simulator, scripted runs, screenshots, GIFs, sound preview, `.chgame` carts and cards) are Python and work from a clone (`pip install -e .`) |
 
@@ -142,13 +142,25 @@ the rainbow (or stays as painted, with the Static bootloader). [docs/menu-image.
 by step, including putting a picture into a `.chgame` cart.
 
 **Pictures for the visual menu** are the same kind of 128x128 PNG: a game's
-box art (`docs/cart.png` in its sketch, drawn by its `tools/cart.py`), the
-card's cover, a folder's cover, the about page:
+box art (`docs/cart.png` in its sketch), the card's cover, a folder's
+cover, the about page. Draw yours in any paint program:
 
 ```bash
 chgame picture --template my-art.png           # a blank picture with the menu's marks shown
 chgame picture my-art.png --preview p.gif      # as the visual menu shows it
-chgame boxart                                  # in a game's folder: redraw its docs/cart.png
+chgame picture photo.jpg --out my-art.png      # any image made to fit (scaled, colours reduced)
+```
+
+Or paint it in code, as every picture in this repository is: a Python
+recipe (a game's `tools/cart.py`) using `tools/artkit`, with shapes, light
+and small 3D props in true colour, an ordered dither down to the 16
+colours, and a title set in a pixel font at its own size.
+[docs/cover-art.md](docs/cover-art.md) is the house look and the method:
+
+```bash
+chgame boxart                                  # in a game's folder: run its tools/cart.py, write docs/cart.png
+python -m artkit show tools/cart.py            # previews at 1x and 4x and as the menu shows it, and the house checks
+python tools/artsheet.py                       # from the root: every picture the menus show on one sheet
 ```
 
 **This repository** is for working on the platform and the games: clone it
@@ -164,6 +176,18 @@ load: most are within 1 KB of filling the flash. They all fit on one SD card
 behind the **game menu built into the bootloader**: switch on, pick a game,
 play, with no PC, like an Arduboy FX ([docs/sd-menu.md](docs/sd-menu.md)).
 
+Each one, and each app, has its own box art for the visual menu, painted in
+the manner of early-1990s game boxes, and the casino card has a cover and
+a cover for each of its seven genre folders:
+
+![The casino card's box art: its cover, the seven folders, the twenty games and the two apps](docs/cover-art.png)
+
+The menu's own pictures, which every card falls back on (the default
+cover and text-menu picture, the about page, installed, no picture, a
+folder without a cover, the five errors), are in
+[docs/cover-art-defaults.png](docs/cover-art-defaults.png).
+[docs/cover-art.md](docs/cover-art.md) says how they are all made.
+
 Each game is a standalone sketch in `platform/board/arduino/CHGame/libraries/CHGame/examples/Games/<Name>/<Name>.ino` with its own
 README (rules, controls, design) and NOTES.md (status, design decisions,
 open items). The image column is the release build size with the 0.3.0
@@ -173,26 +197,26 @@ both of its save pages.
 
 | Game | What it is | Image |
 |---|---|---|
-| [CHBackgammon](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHBackgammon) | Backgammon on felt with chip checkers, a trained CPU, optional match play and doubling cube | 50,328 B |
-| [CHBingo](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHBingo) | 75-ball bingo: up to nine cards against a hall of rivals, power-ups and a jackpot | 36,388 B |
-| [CHBlackjack](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHBlackjack) | Press Play On Tape's Arduboy Blackjack rebuilt in colour: the series' first table | 45,668 B |
-| [CHBoardwalk](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHBoardwalk) | BOARDWALK, a property-trading board game on an isometric board, with tap auctions | 49,604 B |
-| [CHCheckers](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHCheckers) | Checkers on CHChess's isometric board, with its own engine and chip pieces | 42,240 B |
+| [CHBackgammon](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHBackgammon) | Backgammon on felt with chip checkers, a trained CPU, optional match play and doubling cube | 49,864 B |
+| [CHBingo](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHBingo) | 75-ball bingo: up to nine cards against a hall of rivals, power-ups and a jackpot | 36,400 B |
+| [CHBlackjack](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHBlackjack) | Press Play On Tape's Arduboy Blackjack rebuilt in colour: the series' first table | 45,596 B |
+| [CHBoardwalk](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHBoardwalk) | BOARDWALK, a property-trading board game on an isometric board, with tap auctions | 49,640 B |
+| [CHCheckers](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHCheckers) | Checkers on CHChess's isometric board, with its own engine and chip pieces | 42,228 B |
 | [CHChess](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHChess) | Isometric chess with a pointing glove, whip-zoom camera and a CPU of three strengths | 48,992 B |
-| [CHCraps](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHCraps) | Casino craps with 3D dice and Blackjack's dealer as the stickman | 49,940 B |
+| [CHCraps](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHCraps) | Casino craps with 3D dice and Blackjack's dealer as the stickman | 50,028 B |
 | [CHCrossword](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHCrossword) | 13x13 crosswords, built in and as packs on the SD card | 50,416 B |
 | [CHDominoes](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHDominoes) | Dominoes (ALL FIVES and DRAW) with bevelled tiles and a close-up camera | 42,888 B |
-| [CHFour](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHFour) | FOUR IN A ROW, against the dealer as a friendly coach | 36,832 B |
+| [CHFour](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHFour) | FOUR IN A ROW, against the dealer as a friendly coach | 36,824 B |
 | [CHMahjong](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHMahjong) | Mahjong solitaire with the 144 traditional tiles and a close-up view | 48,592 B |
-| [CHPoker](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHPoker) | Poker against three CPU players: Hold'em, Five Card Draw, Omaha and Seven Card Stud | 48,540 B |
-| [CHRoulette](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHRoulette) | Roulette with a physically simulated ball and the dealer as croupier | 49,836 B |
+| [CHPoker](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHPoker) | Poker against three CPU players: Hold'em, Five Card Draw, Omaha and Seven Card Stud | 48,500 B |
+| [CHRoulette](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHRoulette) | Roulette with a physically simulated ball and the dealer as croupier | 49,792 B |
 | [CHSlots](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHSlots) | Three slot machines on one purse: LUCKY 7, SWEET and DRAGON FORTUNE | 47,656 B |
 | [CHSnakes](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHSnakes) | SNAKES & LADDERS with procedural snakes, CLASSIC and ARCADE rules | 37,320 B |
-| [CHSolitaire](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHSolitaire) | Klondike, after the Windows original | 30,904 B |
-| [CHTicTacToe](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHTicTacToe) | TIC TAC TOE: ROYALE, sixteen tables on 3x3 and 5x5 boards, for money | 49,712 B |
+| [CHSolitaire](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHSolitaire) | Klondike, after the Windows original | 30,900 B |
+| [CHTicTacToe](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHTicTacToe) | TIC TAC TOE: ROYALE, sixteen tables on 3x3 and 5x5 boards, for money | 49,572 B |
 | [CHWords](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHWords) | A crossword tile game (Scrabble rules) with a flash dictionary and a full one on SD | 50,404 B |
 | [CHWordWheel](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHWordWheel) | WORD WHEEL, a word-puzzle game show: spin, call letters, solve | 50,376 B |
-| [CHYacht](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHYacht) | YACHT DICE (five dice, thirteen boxes) with Craps's 3D dice | 44,104 B |
+| [CHYacht](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHYacht) | YACHT DICE (five dice, thirteen boxes) with Craps's 3D dice | 44,164 B |
 
 [docs/status.md](docs/status.md) lists what each game has been verified on
 (the simulator or the device), its open items and the known issues.
@@ -207,13 +231,14 @@ CHGame/
 │   ├── bootloader/      the bootloader with the SD game menu: sources, PC test suite, binaries,
 │   │                    and the uploader's source (host/go)
 │   │   └── arduino/CHGame/libraries/  CHGame (CHGame.h), CHGfx (graphics), CHSd (SD/FAT), beside SPI, Wire, EEPROM
-│   │       └── CHGame/examples/   Hello, games/ (the 20 casino games), apps/ (CHStlView, CHSDtoUSB)
+│   │       └── CHGame/examples/   Hello, games/ (the 20 casino games), apps/ (CHStlView, CHSDtoUSB, CHSDtoSerial)
 │   └── hardware/        Rev 0 schematic and netlist
 ├── spec/              the .chgame format, the SD card's layout and the CHG file: the contract
 │                      with the emulator and web tools, with conformance fixtures
 ├── tools/             the PC tools shared by every game (device.py, the simulator and script
 │                      driver, sound preview, size report, serial, chcart/ for .chgame carts
-│                      and cards, chgpack.py for CHG files, sdcard/ for the casino cart)
+│                      and cards, chgpack.py for CHG files, sdcard/ for the casino cart,
+│                      artkit/ for the box art)
 └── docs/              platform knowledge: hardware, performance, SD card, how a game is built,
                        status, the roadmap to the first release, the CHGame library's decisions
                        and history, and a getting-started guide for Arduboy developers
@@ -356,6 +381,14 @@ The tools for working with the system outside the Arduino IDE:
   menu's install file, checks them, lists a card;
 - the **casino cart** (`sdcard/mkcard.py`, `chgame card`): builds every game
   into one cart and its card;
+- the **box art** ([docs/cover-art.md](docs/cover-art.md)): `artkit/`, the
+  toolkit every menu picture is painted with (shapes and light, a small 3D
+  ray marcher, the ramp-aware dither, pixel finishing, titles, the house
+  checks), and `artkit.fontscout`, which sets a title in thousands of pixel
+  fonts to choose from. The recipes are each program's `tools/cart.py`
+  (`chgame boxart`), the casino card's `sdcard/art/src/` (`sdcard/covers.py`)
+  and the menu's defaults in `art/menu/` (`menuart.py`); `artsheet.py` puts
+  them all on one sheet;
 - the **uploader**: `chgame upload` and `chgame uploader ...` go through the
   Python one (`platform/bootloader/host/py`, the package `chgame_upload`);
   `platform/bootloader/host/go` is the same tool in Go, `chgame-upload`, the
@@ -390,6 +423,12 @@ Each folder carries its own licence:
 | `platform/board/arduino/CHGame/libraries/CHGame/examples/Apps/CHStlView/` | MIT |
 | `platform/hardware/` | No licence stated yet (schematic and netlist) |
 | `docs/`, root files | Apache-2.0 (`LICENSE`, `NOTICE`) |
+
+The box art's titles are lettered in pixel fonts by other people. Each
+title's text art (`tools/art/title.txt` and the like) names its font, author,
+stated terms and source in its header, and
+[docs/cover-art.md](docs/cover-art.md#credits-fonts-in-the-titles) lists
+them all.
 
 ## History
 

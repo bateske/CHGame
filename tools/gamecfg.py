@@ -53,6 +53,10 @@ Builds (`chgame build`, `upload`, `export`, `card`):
     FQBN = None                     the board and options to build with instead
                                     of the release/debug defaults (device.py):
                                     CHSDtoUSB needs USB Serial and -Os
+    DEFINES = []                    preprocessor defines the sketch always
+                                    builds with, on the board (build.extra_flags)
+                                    and in the simulator (-D): CHSDtoSerial's
+                                    GFX_CHUNK_ROWS=1
 
 `ctx` (check.Ctx / hosttests.Ctx): game, tools (the repository's tools/),
 out (<game>/out), quick, run(argv, env=None), drive(script, outdir,
@@ -75,6 +79,7 @@ DEFAULTS = {
     "SIM_TESTS": [],
     "BUILD_REQUIRE": [],
     "FQBN": None,
+    "DEFINES": [],
 }
 HOOKS = ("before_tests", "after_tests", "before_check", "after_host_tests")
 SPEC_DEFAULTS = {"opt": "-O2", "defines": ["CHTEST"], "includes": [], "cwd": None, "args": "pass",

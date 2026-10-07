@@ -1,0 +1,17 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later
+ * What the scope picks up between its pings: 1-bpp bitmaps, a row a word, the
+ * leftmost pixel in bit 15 (the library's glyph16). Made by
+ * tools/shapes.py; not edited by hand.
+ */
+#pragma once
+#include <stdint.h>
+
+struct Shape { uint8_t w, h; uint16_t rows[10]; };
+#define SHAPE_COUNT 5
+static const Shape SHAPES[SHAPE_COUNT] = {
+    {11, 7, {0x0400, 0x0E00, 0x0400, 0x7FC0, 0xFFE0, 0x0400, 0x0E00}},   // AIRPLANE
+    {12, 9, {0x0400, 0x0600, 0x0700, 0x0780, 0x07C0, 0x0400, 0xFFF0, 0x7FE0, 0x3FC0}},   // BOAT
+    {9, 9, {0x0800, 0x1C00, 0x1C00, 0x3E00, 0x2A00, 0x3E00, 0x7F00, 0x9C80, 0x1400}},   // ROCKET
+    {9, 9, {0x6300, 0x6300, 0x6300, 0x7700, 0xFF80, 0xDD80, 0xFF80, 0x7F00, 0x3E00}},   // RABBIT
+    {12, 9, {0x0020, 0x0060, 0x00E0, 0x01E0, 0x07C0, 0x9F80, 0xFF00, 0x7E00, 0x3800}},   // BANANA
+};

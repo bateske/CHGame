@@ -5,7 +5,7 @@ Everything in this folder serves every game (the CHGame library's examples,
 and the libraries. The one entry point is `chgame`:
 
 ```bash
-pip install -e .[sim]        # once, in the repository root: Pillow, pyserial, zig; the `chgame` command
+pip install -e .[sim]        # once, in the repository root: Pillow, pyserial, numpy, zig; the `chgame` command
 cd platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHFour
 chgame build                 # release build + size
 chgame check                 # everything checkable without a board
@@ -27,7 +27,7 @@ about itself is in its `tools/game.py` (below), its `tools/chsim/chdrive.py`
 
 | Tool | What it does |
 |---|---|
-| `chgame.py` | The entry point. Finds the sketch, puts `tools/` and `tools/chsim/` on the path, and runs one of the modules below in-process: `build`, `upload`, `sim`, `run`, `shot`, `check`, `test`, `redraw`, `gif`, `size`, `audio`, `uploader`, `pack`, `card`. Exit codes: 0 done, 1 the thing failed, 2 usage or configuration. |
+| `chgame.py` | The entry point. Finds the sketch, puts `tools/` and `tools/chsim/` on the path, and runs one of the modules below in-process: `build`, `upload`, `sim`, `run`, `shot`, `check`, `test`, `redraw`, `gif`, `size`, `audio`, `uploader`, `export`, `cart`, `background`, `picture`, `boxart`, `pack`, `card`. Exit codes: 0 done, 1 the thing failed, 2 usage or configuration. |
 | `paths.py` | Where things are: the repository root, the libraries, the games and apps, `games()`, `sketch(name_or_dir)`, `here()` (the sketch the current folder is in). Puts the Python uploader (`platform/bootloader/host/py`) on the path when it is not installed. |
 | `device.py` | Builds, uploads and drives any sketch on the board through arduino-cli, against the libraries in `platform/board/arduino/CHGame/libraries/`: `build(sketch, debug)`, `upload()` (the Python uploader; `--arduino` for arduino-cli and the Go tool), `run()` (debug build, upload, drive a script), `shot()`. A debug build adds `-DCHGAME_DEBUG=1`. |
 | `check.py` | `chgame check`: the game's pre-steps, host tests, every script twice (same frames both times, no `BUG:`), the redraw check, the simulator tests, the device build and its size, then `ALL GOOD` or the sections that failed. `--quick`, `--no-device`, `--compare A B` (two output folders, frame by frame). Reads `tools/game.py`. |
@@ -43,6 +43,11 @@ about itself is in its `tools/game.py` (below), its `tools/chsim/chdrive.py`
 | `check_size.py` | `chgame size`: flash and RAM from the linker map, against the 50,944 B / 18,416 B limits, with the room left for the save pages; `--top N`, `--symbols`. |
 | `audio/preview.py` + `audio/host/` | `chgame audio`: the game's sound effects and songs as WAV, rendered by the real engine through a model of the piezo timer, with a hash per sound. |
 | `artlib.py`, `art/common/` | The art several games share, kept once: `dealer.png`, `hand.png`, `faces.png`, the card ranks, pips and suits, the chips, the slab-serif `font.txt`, the win and broke lettering, `token_banana.png`. A game's `tools/assets.py` asks `artlib.art(tools_dir, name)`, which takes the game's own `tools/art/` file first and the common one otherwise. |
+| `artkit/` | The toolkit every picture the menus show is painted with ([docs/cover-art.md](../docs/cover-art.md): the house look and the method). `canvas.py` and `color.py` (a supersampled true-colour canvas, distance-field shapes, gradients, noise, 2D light), `render3d.py` (a small ray marcher: spheres, rounded boxes, lathes, extrusions; materials, cast shadows), `quant.py` (the picture's palette laid out as the menu's, a ramp-aware ordered dither down to it, PNG in and out), `pixel.py` and `paint.py` (outlines, shadows, levels, clean lines, hand finishing), `title.py` (lettering: outline, extrusion, bevel, shadow, glints), `lint.py` (the house checks: colours, edges, doubled pixels, specks), `craft.py` (`python -m artkit.craft PNG`: orphans and jaggies on a sprite or picture of any size; the rules are [docs/pixel-art.md](../docs/pixel-art.md)). `python -m artkit show RECIPE.py` previews a recipe and runs the checks; `python -m artkit.fontscout` sets a title in thousands of pixel fonts at their own size (from Pixel Logo Lab, a separate tool: `../PixelLogoLab` or `$CHG_LOGOLAB`) and exports the one chosen as text art. Recipes need numpy and nothing outside the repository. |
+| `boxart.py` | `chgame boxart`: runs a program's `tools/cart.py` and writes its `docs/cart.png` (`--check` compares all 22 byte for byte, `--sheet` puts them side by side). Also the writer of every menu picture (`png()`, `save()`: the palette in the menu's order), and the quick placeholders `chgame export` and the cart commands draw for a game or folder without a picture. |
+| `art/menu/`, `menuart.py`, `art/chglogo.py` | The menu's default pictures, every card's (`spec/assets/`): one recipe each in `art/menu/` (the cover, no picture and the folder share `sdscene.py`, the text menu's picture `listbg.py` with the casino's), drawn by `python tools/menuart.py`; `chglogo.py` is the CHGAME logo and its dressings. |
+| `sdcard/covers.py`, `sdcard/art/src/` | The casino card's own pictures: its cover, its seven folders (`folderkit.py`) and its text menu's picture, from the recipes in `sdcard/art/src/` to `sdcard/art/*.png` and `sdcard/menu.png`. |
+| `artsheet.py` | Every picture the menus show on one labelled sheet (`out/art-review.png`); `--compare OUT NAME ...` before (git HEAD) and after; `--gallery` the docs' two galleries, `docs/cover-art.png` and `docs/cover-art-defaults.png`. |
 | `pixkit.py` | A Python rendering of the library's drawing primitives, palette and sprites (checked against `chgame/Draw.cpp`), for mock-ups of screens before they are coded: CHRoulette's and CHWordWheel's `mockup.py` and previews. |
 | `music/composer.py` | The Playtune composer: note names and voices to the bytes the library's `audio::music` plays, and the writer of a game's `src/audio/Music.cpp`. The three `make_music.py` (CHBlackjack, CHRoulette, CHWordWheel) keep only their songs. |
 | `fonts/serif.py`, `fonts/font_preview.py` | The anti-aliased serif rasteriser behind CHCrossword's and CHWords' `tilefont.py` and CHDominoes' `aafont.py`, and the display-font preview sheet behind CHBackgammon's and CHFour's `font_preview.py`. |
@@ -66,6 +71,7 @@ dependency list for a plain `pip install -r`.
 | `tools/chsim/chdrive.py` | The shared driver plus the game's own script commands (CHChess `goto`/`waitturn`/`board`, CHCrossword `type`/`solve`/`--card`, CHMahjong `solve`/`takehint` ...) and its handshake `IDENT`. |
 | `tools/scripts/*.txt` | Driver scripts: the README's GIF (`gameplay`), smoke tests, perf runs, device-only runs (`device_*`), the redraw scripts (`diff/`). |
 | `tools/assets.py` + `tools/art/` | The art pipeline: `tools/art/*` and `tools/art/common/*` to `src/assets/Assets.{h,cpp}`, with previews in `build/assets`. |
+| `tools/cart.py` + `tools/art/title*.txt` | Its box art for the visual menu: a recipe painted with `artkit` (`chgame boxart` writes `docs/cart.png`), its title's lettering as text art whose header credits the font. |
 | `tools/tests/*.cpp` | The host unit tests; `sim_save.py` (CHBingo, CHCraps, CHYacht), `ref_bingo.py`, `ref_roulette.py` and `run_ball_tests.py` (reference models), `cwtests.py` (CHCrossword's card tests). |
 | `tools/chsim/host/` | (optional) the game's own simulator shims; a `.cpp` there with a shared shim's name replaces it. |
 

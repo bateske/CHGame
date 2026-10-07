@@ -1,7 +1,7 @@
 // Chips, the puck and little dice faces.
 //
 // The chips are CHBlackjack's ($1 white, $5 red, $25 green, $100 black) at
-// full size in the bar and in flight, and a small 9x4 cut for stacks on the
+// full size in the bar and in flight, and a small 11 px cut for stacks on the
 // crowded craps layout.
 #pragma once
 #include <stdint.h>
@@ -11,8 +11,8 @@ namespace art {
 const uint8_t DENOMS = 4;
 extern const uint16_t CHIP_VALUE[DENOMS];
 
-void chip(int cx, int y, uint8_t denom, bool top);          // 15x5
-void chipSmall(int cx, int y, uint8_t denom, bool top);     // 9x4
+void chip(int cx, int y, uint8_t denom, bool top);          // 15 px: top rows y-1..y+4
+void chipSmall(int cx, int y, uint8_t denom, bool top);     // 11 px: top rows y-1..y+3
 int  chipDenom(int32_t amount);                             // largest chip that fits
 // A stack of small chips with its base at baseY, at most maxChips tall,
 // coloured largest denomination first.

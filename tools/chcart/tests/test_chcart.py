@@ -162,6 +162,46 @@ class Sources(unittest.TestCase):
         with self.assertRaises(ValueError):
             sources.hex_to_bin(":0100000001FF")          # bad checksum
 
+    @staticmethod
+    def elf(segments, machine=243, kind=2):
+        """A 32-bit little-endian ELF executable with these PT_LOAD segments:
+        [(paddr, bytes, filesz or None for a .bss-like segment)]."""
+        phoff, phsize = 52, 32
+        data_at = phoff + phsize * len(segments)
+        head = bytearray(b"\x7fELF\x01\x01\x01" + bytes(9))
+        head += struct.pack("<HHIIIIIHHHHHH", kind, machine, 1, 0x3000, phoff, 0, 0, 52, phsize, len(segments), 0, 0, 0)
+        ph, body = bytearray(), bytearray()
+        for paddr, blob, filesz in segments:
+            n = len(blob) if filesz is None else filesz
+            ph += struct.pack("<IIIIIIII", 1, data_at + len(body), 0x20000000 if filesz is not None else paddr,
+                              paddr, n, len(blob), 6, 4)
+            body += blob[:n]
+        return bytes(head + ph + body)
+
+    def test_elf(self):
+        text, data = b"\x6f\x00\x00\x01" + bytes(range(60)), b"\x11\x22\x33\x44"
+        e = self.elf([(0x3000, text, None), (0x3000 + 72, data, 4), (0x20000100, bytes(40), 0)])   # text, .data (LMA in flash), .bss
+        self.assertEqual(sources.elf_to_bin(e), text + b"\xff" * 8 + data)
+        self.assertEqual(sources.elf_to_bin(self.elf([(0x08003000, text, None)])), text)         # the flash alias
+        for bad, why in ((self.elf([(0x0, text, None)]), "a bootloader"), (self.elf([(0x3000, text, None)], machine=40), "another board"),
+                         (self.elf([(0x3000, text, None)], kind=1), "not an executable"), (b"MZ" + bytes(60), "not an ELF"),
+                         (self.elf([(0x3000, text, None), (0x3010, data, None)]), "overlap")):
+            with self.subTest(why), self.assertRaises(ValueError):
+                sources.elf_to_bin(bad)
+        with tempfile.TemporaryDirectory() as d:
+            p = pathlib.Path(d) / "My Game.ino.elf"
+            p.write_bytes(e)
+            g = sources.from_binary(p)
+            self.assertEqual((g.title, g.binary()), ("MY GAME", text + b"\xff" * 8 + data))
+            self.assertEqual(sources.load_item(p)[0].binary(), g.binary())
+            self.assertEqual(chgpack.program_image(str(p)), g.binary())
+        # the real thing: any example built here gives its .bin from its .elf
+        built = sorted(TOOLS.parent.glob("platform/board/arduino/CHGame/libraries/CHGame/examples/*/*/build/release/*.ino.elf"))
+        for elf in built[:3]:
+            b = elf.with_suffix(".bin")
+            if b.exists():
+                self.assertEqual(sources.elf_to_bin(elf.read_bytes()), b.read_bytes(), elf.name)
+
     def test_chg_and_bin(self):
         with tempfile.TemporaryDirectory() as d:
             p = pathlib.Path(d) / "FOUR.CHG"
@@ -261,6 +301,59 @@ class Runtime(unittest.TestCase):
         self.assertEqual(bare["GAMES/COVER.PIC"], runtime.menu_picture(runtime.DEFAULT_COVER.read_bytes()))
         self.assertEqual(bare["GAMES/SYSTEM.PIC"][:runtime.BG_BYTES], runtime.menu_picture(runtime.DEFAULT_ABOUT.read_bytes()))
 
+    def test_system_images(self):
+        """menu.systemImages: a cart's own versions of the menu's screens go
+        into SYSTEM.PIC's slots; the defaults fill the rest. The web tool's
+        x-chgame-web (version 1) is read as an alias, the official field
+        winning; other x- keys are kept as they are."""
+        inst, err3 = png(colors=((9, 0, 9), (255, 0, 255))), png(colors=((0, 9, 9),))
+        c = Cart("C", [game("z", "ZULU")], system_images={"installed": inst, "error-3": err3})
+        self.assertEqual(codes(model.validate(c)), [])
+        files = runtime.prepare(c)
+        sysp, n = files["GAMES/SYSTEM.PIC"], runtime.BG_BYTES
+        self.assertEqual(sysp[n:2 * n], runtime.menu_picture(inst))                    # slot 1
+        self.assertEqual(sysp[6 * n:7 * n], runtime.menu_picture(err3))                # slot 6: error-3
+        default = runtime.system_pic()
+        self.assertEqual(sysp[2 * n:6 * n], default[2 * n:6 * n])                       # the rest: the defaults
+        self.assertEqual(sysp[:n], default[:n])
+        data = zipio.to_bytes(c)
+        back = zipio.load(data)
+        self.assertEqual(back.system_images, c.system_images)
+        self.assertEqual(zipio.to_bytes(back), data)
+        m = zipio.read(data)[1]
+        self.assertEqual(m["menu"]["systemImages"], {"installed": "menu/system-installed.png", "error-3": "menu/system-error-3.png"})
+        many = png(colors=[(k * 20, 0, 0) for k in range(13)])
+        bad = Cart("C", [game("z", "ZULU")], system_images={"game": many})
+        self.assertEqual(codes(model.validate(bad)), ["bad-picture"])                   # a supplied picture must follow the rule
+        self.assertEqual(codes(model.validate(Cart("C", [game("z", "ZULU")], system_images={"game": png((64, 64))}))), ["bad-image"])
+        unknown = Cart("C", [game("z", "ZULU")], system_images={"splash": inst})
+        self.assertEqual(codes(model.validate(unknown), False), ["unknown-key"])
+        # the extension: read where the official field says nothing
+        files, m = zipio.read(zipio.to_bytes(Cart("C", [game("z", "ZULU")])))
+        files = dict(files, **{"art/installed.png": inst, "art/folder.png": err3})
+        ext = {"version": 1, "systemImages": {"installed": "art/installed.png", "folder": "art/folder.png"}, "builder": "web 1.2"}
+        cart, issues = model.from_manifest({**m, "x-chgame-web": ext, "x-other": {"k": [1, 2]}}, files)
+        self.assertEqual(codes(issues), [])
+        self.assertEqual(codes(issues, False), [])                                      # no unknown-key for x- keys, nothing unused
+        self.assertEqual(cart.system_images, {"installed": inst, "folder": err3})
+        self.assertEqual(cart.extensions, {"x-chgame-web": {"version": 1, "builder": "web 1.2"}, "x-other": {"k": [1, 2]}})
+        m2 = zipio.read(zipio.to_bytes(cart))[1]                                          # written back: the official field, the rest kept
+        self.assertEqual(m2["menu"]["systemImages"], {"installed": "menu/system-installed.png", "folder": "menu/system-folder.png"})
+        self.assertEqual((m2["x-chgame-web"], m2["x-other"]), ({"version": 1, "builder": "web 1.2"}, {"k": [1, 2]}))
+        # both: the official field wins, a word where they differ; a bad alias picture is an error all the same
+        both = {**m, "menu": {"systemImages": {"installed": "art/folder.png"}}, "x-chgame-web": ext}
+        cart, issues = model.from_manifest(both, files)
+        self.assertEqual(codes(issues, False), ["extension-conflict"])
+        self.assertEqual(cart.system_images["installed"], err3)
+        cart, issues = model.from_manifest({**m, "x-chgame-web": {"version": 1, "systemImages": {"game": "art/game.png"}}},
+                                           dict(files, **{"art/game.png": many}))
+        self.assertEqual(codes(issues), ["bad-picture"])
+        # another version of the extension: not read as version 1 (its files are then unused), kept as it is
+        cart, issues = model.from_manifest({**m, "x-chgame-web": {"version": 2, "systemImages": {"installed": "art/installed.png"}}}, files)
+        self.assertEqual(cart.system_images, {})
+        self.assertEqual(cart.extensions["x-chgame-web"]["version"], 2)
+        self.assertIn("unused-file", codes(issues, False))
+
     def test_picture_rule(self):
         """Pictures keep the menu's colours at their defaults, whatever the cart's."""
         many = png(colors=[(k * 20, 0, 0) for k in range(13)])
@@ -318,7 +411,7 @@ class Runtime(unittest.TestCase):
         self.assertEqual(pal[1], runtime.rgb565(40, 50, 60))
         self.assertEqual(pal[11], runtime.rgb565(255, 244, 214))
         self.assertEqual(pal[13], 0)                     # selectedText: black
-        self.assertEqual(pal[15], 0xF81F)                # colour 15: #FF00FF (the static style shows it)
+        self.assertEqual(pal[15], 0xF81F)                # colour 15: #FF00FF (the static visual menu shows it)
         row = bg[512:512 + 3]
         # magenta 15, (10,20,30) 0, cream 11 (text), (40,50,60) 1, (10,20,30) 0, then black 13 (selectedText)
         self.assertEqual(row, bytes([0xF0, 0xB1, 0x0D]))
@@ -357,7 +450,7 @@ class Background(unittest.TestCase):
         im = background.preview(background.template())
         self.assertEqual(im.size, (384, 384))
         static = background.preview(background.template(), scale=1, style="static")
-        self.assertEqual(static.getpixel((64, 25)), (255, 0, 255))    # the selection bar
+        self.assertEqual(static.getpixel((64, 25)), background.rgb(runtime.rgb565(255, 244, 214)))   # the bar: the text colour
         bars = {background.preview(background.template(), phase=p, scale=1).getpixel((64, 25)) for p in (0, 64, 128)}
         self.assertEqual(len(bars), 3)                                 # one colour, turning
         with tempfile.TemporaryDirectory() as d:
@@ -421,6 +514,14 @@ class Background(unittest.TestCase):
             self.assertTrue(model.picture_ok(c.folder_covers["MORE"]))
             run("picture", pkg, "none", "--folder", "MORE")
             self.assertEqual(zipio.load(pkg).folder_covers, {})
+            run("picture", pkg, d / "photo.png", "--system", "error-2")       # one of the menu's own screens
+            c = zipio.load(pkg)
+            self.assertEqual(list(c.system_images), ["error-2"])
+            self.assertTrue(model.picture_ok(c.system_images["error-2"]))
+            run("picture", pkg, "none", "--system", "error-2")
+            self.assertEqual(zipio.load(pkg).system_images, {})
+            with self.assertRaises(SystemExit):                       # not a screen of the menu: usage
+                cli.main(["picture", pkg, str(d / "p.png"), "--system", "splash"])
 
 
 class Deploy(unittest.TestCase):
@@ -454,6 +555,125 @@ class Deploy(unittest.TestCase):
             deploy.deploy(multi, card, clean=True, do_flash=False, log=quiet)
             self.assertEqual(sorted(p.relative_to(card).as_posix() for p in (card / "GAMES").rglob("*") if p.is_file()),
                              sorted(p for p in runtime.prepare(multi) if p.startswith("GAMES/")))
+
+
+class Backup(unittest.TestCase):
+    """The record in each CHG file, and backing a card up from it (backup.py)."""
+
+    def full_cart(self):
+        pic = lambda c: png(colors=(c, (255, 0, 255)))
+        return Cart("FULL", [
+            game("words", "WORDS", version="1.2.3-beta", author="A very long author name", genre="Word",
+                 description="Words. Café", license="MIT", url="https://example.org", buttons=[("A", "Lay a tile")],
+                 license_files={"LICENSE": b"licence\n", "NOTICE": b"notice\n"}, cart_image=pic((9, 9, 90)),
+                 sd={"WORDS.DIC": b"w" * 999, "DATA/X.DAT": b"x"}, n=1001),
+            game("inner", "INNER", folder="TOYS/BOX", sd={"WORDS.DIC": b"w" * 999}),
+            game("alpha", "Alpha", folder="TOYS", cart_image=png(colors=[(k, 0, 0) for k in range(13)])),  # 13 colours: no picture
+            game("long", "A TITLE LONGER THAN THE MENU")],
+            launch="inner", colors={"mark": "#FF8000", "text": "#FFFFFF"},
+            background=png(colors=((10, 20, 60), (255, 0, 255), (255, 255, 255))),
+            folder_backgrounds={"TOYS": png(colors=((60, 10, 10),))}, cover=pic((20, 20, 80)),
+            about=pic((80, 20, 20)), folder_covers={"TOYS/BOX": pic((0, 80, 30))},
+            system_images={"installed": pic((0, 40, 80)), "error-4": pic((100, 0, 0))})
+
+    def test_record(self):
+        c = self.full_cart()
+        g = c.games[0]
+        chg = runtime.chg_file(g)
+        rec = chgpack.read_record(chg)
+        self.assertEqual(rec, runtime.record(g))
+        at, n, _ = struct.unpack_from("<III", chg, chgpack.RECORD_OFF)
+        pic_at, pic_n, _ = struct.unpack_from("<III", chg, chgpack.IMAGE_OFF)
+        self.assertEqual((at % 512, at >= pic_at + pic_n, len(chg)), (0, True, at + n))
+        r = json.loads(rec)
+        self.assertEqual(r["game"]["author"], "A very long author name")       # all of it: the header holds 15
+        self.assertEqual(r["binaryBytes"], 1001)
+        self.assertEqual(r["sdcard"], [{"bytes": 1, "crc32": "8cdc1683", "path": "DATA/X.DAT"},
+                                       {"bytes": 999, "crc32": f"{__import__('zlib').crc32(b'w' * 999):08x}",
+                                        "path": "WORDS.DIC"}])
+        self.assertIn(b"Caf\\u00e9", rec)                                      # canonical: ASCII only, keys sorted
+        self.assertEqual(rec, json.dumps(r, sort_keys=True, separators=(",", ":")).encode())
+        self.assertIsNone(chgpack.read_record(chgpack.pack(image(8), "P")))      # none: the field is 0
+        bad = bytearray(chg)
+        bad[-1] ^= 1
+        with self.assertRaises(chgpack.ChgError) as e:
+            chgpack.read_record(bytes(bad))
+        self.assertEqual(e.exception.code, 9)
+        chgpack.parse(bytes(bad))                                                # (the game still installs)
+        self.assertEqual(chgpack.read_picture(bytes(bad)), chgpack.read_picture(chg))
+        with self.assertRaises(ValueError):
+            chgpack.pack(image(8), "P", record=bytes(chgpack.RECORD_MAX + 1))
+
+    def test_round_trip(self):
+        """A card prepared from a cart backs up to that cart (less its screenshots
+        and its own title) and prepares the same card again, from any form of card."""
+        from chcart import backup
+        c = self.full_cart()
+        files = runtime.prepare(c)
+        b, issues = backup.backup(files, title="FULL")
+        self.assertEqual(issues, [])
+        self.assertEqual(runtime.prepare(b), files)
+        self.assertEqual(b.launch, "inner")
+        self.assertEqual(b.colors, {"mark": "#FF8100", "text": "#FFFFFF"})        # (as RGB565 gives them back)
+        self.assertEqual(sorted(b.system_images), ["error-4", "installed"])
+        self.assertEqual((sorted(b.folder_backgrounds), sorted(b.folder_covers)), (["TOYS"], ["TOYS/BOX"]))
+        for want in c.games:
+            got = b.game(want.id)
+            self.assertEqual((got.title, got.folder, got.binaries, got.sd, got.license_files, got.cart_image,
+                              got.buttons, got.author, got.version, got.description, got.genre, got.license, got.url),
+                             (want.title, want.folder, want.binaries, want.sd, want.license_files, want.cart_image,
+                              want.buttons, want.author, want.version, want.description, want.genre, want.license,
+                              want.url))
+        with tempfile.TemporaryDirectory() as d:
+            d = pathlib.Path(d)
+            runtime.write_folder(files, d / "card")
+            runtime.write_image(files, d / "card.img")
+            (d / "card.zip").write_bytes(backup.card_zip(files))
+            for where in (d / "card", d / "card.img", d / "card.zip"):
+                with self.subTest(where.name):
+                    self.assertEqual(runtime.prepare(backup.backup(where)[0]), files)
+
+    def test_hand_changes(self):
+        from chcart import backup
+        c = Cart("C", [game("a", "ALPHA", sd={"A.DAT": b"a", "B.DAT": b"b"}), game("z", "ZULU", folder="F")])
+        files = runtime.prepare(c)
+        files["A.DAT"] = b"changed"
+        del files["B.DAT"]
+        files["GAMES/OWN.CHG"] = chgpack.pack(image(40), "OWN", "me")
+        files["MINE.DAT"] = b"mine"
+        b, issues = backup.backup(files, sd={"GAMES/OWN.CHG": ["mine.dat"]})
+        self.assertEqual(sorted(i.code for i in issues), ["no-record", "sd-changed", "sd-missing"])
+        self.assertEqual(b.game("a").sd, {"A.DAT": b"changed"})
+        self.assertEqual((b.game("own").sd, b.game("own").author), ({"MINE.DAT": b"mine"}, "me"))
+        # some games only: no menu, no launch, and only their warnings
+        one, issues = backup.backup(files, games=["zulu"])
+        self.assertEqual(([g.id for g in one.games], one.games[0].folder, issues), (["z"], "F", []))
+        self.assertEqual(backup.backup(files, games=["GAMES/ALPHA.CHG"])[0].games[0].id, "a")
+        for kw in ({"games": ["nobody"]}, {"sd": {"GAMES/OWN.CHG": ["NONE.DAT"]}}, {"sd": {"GAMES/NO.CHG": ["A.DAT"]}}):
+            with self.subTest(kw), self.assertRaises(CartError):
+                backup.backup(files, **kw)
+
+    def test_chg_import(self):
+        """A .chg with a record gives its game as the cart had it."""
+        g = self.full_cart().games[0]
+        with tempfile.TemporaryDirectory() as d:
+            f = pathlib.Path(d) / "WORDS.CHG"
+            f.write_bytes(runtime.chg_file(g))
+            got = sources.from_binary(f)
+            self.assertEqual((got.id, got.author, got.binaries, got.license_files, got.cart_image, got.sd),
+                             (g.id, g.author, g.binaries, g.license_files, g.cart_image, {}))
+            f.write_bytes(chgpack.pack(g.binaries["rev0"], "WORDS", "me"))
+            self.assertEqual(sources.from_binary(f).author, "me")                 # without one: the header
+
+    def test_command(self):
+        with tempfile.TemporaryDirectory() as d:
+            d = pathlib.Path(d)
+            runtime.write_folder(runtime.prepare(self.full_cart()), d / "card")
+            out = d / "b.chgame"
+            self.assertEqual(cli.main(["backup", str(d / "card"), str(out), "--title", "MINE"]), 0)
+            c = zipio.load(out)
+            self.assertEqual((c.title, len(c.games), c.launch), ("MINE", 4, "inner"))
+            self.assertEqual(cli.main(["backup", str(d / "card"), str(out), "--game", "nobody"]), 1)
 
 
 class Fixtures(unittest.TestCase):

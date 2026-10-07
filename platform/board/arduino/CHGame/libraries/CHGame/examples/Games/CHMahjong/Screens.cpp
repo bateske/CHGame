@@ -312,14 +312,11 @@ static void titleRender(uint32_t frame) {
         // The logo on a rail of its own, as the menu: the tiles fall between.
         gfx_fillRect(0, 0, 128, 34, INK);
         gfx_hline(0, 34, 128, GOLD);
-        // The logo, in CHBlackjack's lettering and colours: the top rows are
-        // FX_B, so the palette makes it shimmer with no redraw.
-        Mask m = maskBegin(LOGO_W, LOGO_H);
-        maskBlit1(m, LOGO, LOGO_W, LOGO_H);
-        uint8_t ramp[LOGO_H];
-        for (int i = 0; i < LOGO_H; i++) ramp[i] = i < 3 ? FX_B : (i < 12 ? GOLD : WOOD);
-        maskDraw(m, 64 - LOGO_W / 2, 4, 0, INK, WINE, ramp);
-        centred35(26, "~SOLITAIRE~", CYAN);
+        // The title in the cover's bold Roman (tools/cart.py), in the house
+        // gold with its red lacquer lip; the top rows FX_B, so the palette
+        // makes them shimmer with no redraw.
+        titleArt(LOGO, LOGO_W, LOGO_H, 63 - LOGO_W / 2, 3, LOGO_BASE, LOGO_RAMP, LOGO_DEPTH, LOGO_SIDE);
+        centred35(27, "~SOLITAIRE~", CYAN);
     }
     if (drawBot) {
         // The menu on a rail of its own.

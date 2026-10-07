@@ -478,12 +478,14 @@ def title35(fb, text, y, scale, top, mid, low, shadow, low_from):
 
 
 # ---------------------------------------------------------------------------
-# Chips (CHBlackjack render/CardArt.cpp)
+# Chips (the casino chip family: tools/art/common/chip_*.txt, as the games draw them)
 # ---------------------------------------------------------------------------
 CHIP_BODY = [WHITE, RED, BLUE, FELT_LT, INK]
 CHIP_EDGE = [BLUE, WHITE, WHITE, WHITE, GOLD]
 CHIP_SHADE = [SILVER, WINE, NAVY, FELT_DK, INK]
+CHIP_LABEL = [WHITE, SKIN, CYAN, WHITE, NAVY]
 CHIP_VALUE = [1, 5, 10, 25, 100]
+_CHIP_ART = {}
 
 
 def chip_denom(amount):
@@ -493,22 +495,26 @@ def chip_denom(amount):
     return 0
 
 
+def _chip_art(name):
+    if name not in _CHIP_ART:
+        text = (artlib.COMMON / f"{name}.txt").read_text(encoding="utf-8")
+        _CHIP_ART[name] = [ln.rstrip() for ln in text.splitlines() if ln and not ln.startswith("#")]
+    return _CHIP_ART[name]
+
+
 def chip(fb, cx, y, d, top=True):
-    b, e, sh = CHIP_BODY[d], CHIP_EDGE[d], CHIP_SHADE[d]
-    fb.hline(cx - 6, y + 2, 13, sh)
-    fb.hline(cx - 6, y + 3, 13, sh)
-    for yy in (y + 1, y + 2):
-        fb.pixel(cx - 7, yy, INK)
-        fb.pixel(cx + 7, yy, INK)
-    for i in (-4, 0, 4):
-        fb.vline(cx + i, y + 2, 2, e)
-    fb.hline(cx - 5, y + 4, 11, INK)
-    if not top:
-        return
-    fb.fill_ellipse(cx, y + 1, 6, 2, b)
-    fb.ellipse(cx, y + 1, 7, 2, INK)
-    for px, py in ((cx - 4, y + 1), (cx + 4, y + 1), (cx, y), (cx, y + 2)):
-        fb.pixel(px, py, e)
+    """The 15 px chip: its sprite's placeholder letters (w body, u inserts, s
+    shade, c label, k ink) in denomination d's colours; a stack's lower chips
+    alternate two cuts by row, as in the games."""
+    role = {"w": CHIP_BODY[d], "u": CHIP_EDGE[d], "s": CHIP_SHADE[d], "c": CHIP_LABEL[d], "k": INK}
+    if top:
+        name, x0, y0 = "chip_top", cx - 7, y - 1
+    else:
+        name, x0, y0 = ("chip_side_alt" if (y >> 1) & 1 else "chip_side"), cx - 7, y + 1
+    for j, row in enumerate(_chip_art(name)):
+        for i, ch in enumerate(row):
+            if ch in role:
+                fb.pixel(x0 + i, y0 + j, role[ch])
 
 
 def chip_stack(fb, cx, base_y, amount, max_chips=10):

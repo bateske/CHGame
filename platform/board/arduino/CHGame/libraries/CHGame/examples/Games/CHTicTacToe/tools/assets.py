@@ -9,7 +9,8 @@ starting a comment line):
     dealer, recoloured and retouched) and his seven expressions as 24x18
     face patches side by side: NORMAL ANGRY RAISED BLINK SMILE SURPRISED TALK.
   * hand.png - CHChess's pointing glove.
-  * logo.txt, royale.txt - the title lettering (drafted by tools/make_logo.py).
+  * title.txt, title_royale.txt - the title's lettering: tools/cart.py (the
+    cover) draws it, tools/titleart.py packs it for the title screen likewise.
   * youwon1/2.txt, broke1/2.txt - PPOT's lettering for the end screens.
   * cat1.txt, cat2.txt - the cat that walks across a drawn game.
   * pieces/*.png + .anchor - the iso pieces (rendered by tools/pieces.py):
@@ -258,21 +259,23 @@ def main():
             preview(stem, img, bg=3)
 
     # Lettering.
-    logo = load_bits("logo.txt")
-    o.array("LOGO", pack_rows1(logo), comment=f"'TIC TAC TOE' {len(logo[0])}x{len(logo)}, MSB-first rows")
-    o.const("LOGO_W", len(logo[0]))
-    o.const("LOGO_H", len(logo))
-    mono_preview("logo", logo)
-    royale = load_bits("royale.txt")
-    o.array("ROYALE", pack_rows1(royale), comment=f"'Royale' {len(royale[0])}x{len(royale)}, MSB-first rows")
-    o.const("ROYALE_W", len(royale[0]))
-    o.const("ROYALE_H", len(royale))
-    mono_preview("royale", royale)
+    import cart                                          # the title, as the cover draws it
+    import titleart
+    PREVIEW.mkdir(parents=True, exist_ok=True)
+    for prefix, line, what in zip(("LOGO", "ROYALE"), cart.title_lines(), ("'TIC TAC TOE'", "'ROYALE'")):
+        titleart.emit(o, prefix, line, what)
+        titleart.preview(line).save(PREVIEW / f"{prefix.lower()}.png")
     for nm in ("YOUWON1", "YOUWON2", "BROKE1", "BROKE2"):
         bits = load_bits(nm.lower() + ".txt")
         o.array(nm, pack_rows1(bits), comment=f"PPOT lettering {len(bits[0])}x{len(bits)}, MSB-first rows")
         o.const(nm + "_W", len(bits[0]))
         mono_preview(nm.lower(), bits)
+
+    # The chip as span sprites in placeholder colours, coloured per denomination by a
+    # remap (the casino chip family: tools/art/common/chip_*.txt, chip9_* here).
+    for f in ['chip_top', 'chip_side', 'chip_side_alt']:
+        img = load_art(f + ".txt")
+        o.array(f.upper(), pack_span4(img), comment=f"{f} {len(img[0])}x{len(img)}, row spans")
 
     o.write()
     print(f"wrote {OUT_H.relative_to(ROOT)} and {OUT_C.relative_to(ROOT)}")

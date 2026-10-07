@@ -27,7 +27,7 @@ Made by the owner:
   - The owner dislikes jagged edges and shadows that ignore the contour.
   - Ball shadows are a single shrinking line.
 - Title:
-  - "Bingo" in CHBlackjack-style lettering (`tools/art/logo.txt`: B from Blackjack, o from Roulette).
+  - The title is the cover's BINGO, its bouncing letters (2026-10-06): `tools/cart.py` `title_lines()` gives its lettering as the cover places it, `tools/titleart.py` packs it, the library's `titleArt()` draws it in the house gold as a smooth dithered gradient, with no bevel or glints (docs/cover-art.md, "The same title on the title screen"). "75 BALL CLASSIC" sits at y 40 and the balls' band starts at y 46 to make room. The earlier "Bingo" (`tools/art/logo.txt`, CHBlackjack-style) is no longer read.
   - Rejected: chips on the title, and a spotlight at the top.
   - The menu sits on a FELT_DK dither band at a pitch of 12.
   - The menu glove is CHChess's glove pointing right (`HAND_R`), thumb on top, cuffed in the dauber colour.

@@ -9,6 +9,9 @@ Sources:
   * New art drawn for this port, as palette-letter text in tools/art/.
   * Hand-painted overrides as palette-exact PNGs in tools/art/ (dealer.png:
     the whole 48x42 dealer, replacing the recoloured PPOT bust).
+  * The title screen's title: the cover's (tools/cart.py title_lines(),
+    tools/art/title.txt), packed by tools/titleart.py. PPOT's own logo
+    stays on the splash.
 
 Outputs:
   src/assets/Assets.h / Assets.cpp   - generated, do not edit
@@ -425,6 +428,12 @@ def main():
     logo = [[1 if splash[y][x] else 0 for x in range(14, 118)] for y in range(8, 22)]
     o.array("LOGO", pack_rows1(logo), comment="PPOT 'BlackJack' logo 104x14, MSB-first rows")
     mono_preview("logo", logo)
+    # The title screen's: the cover's title (tools/cart.py), as the cover draws it.
+    import cart
+    import titleart
+    line, = cart.title_lines()
+    titleart.emit(o, "TITLE_LOGO", line, "'BLACKJACK'")
+    titleart.preview(line).save(PREVIEW / "title_logo.png")
 
     # "YOU WON THE BANK" / "YOU ARE BROKE" lettering (PPOT), 16 px tall.
     for f, nm in [("YouWon_01", "YOUWON1"), ("YouWon_02", "YOUWON2"),
@@ -476,6 +485,12 @@ def main():
     starts.append(len(words))
     o.array("FACE_EDITS", words, "uint16_t", comment="expression edits: (y*24+x)<<4 | colour; " + " ".join(order))
     o.array("FACE_EDIT_AT", starts, "uint16_t", comment="start of each expression in FACE_EDITS, plus end")
+
+    # The chip as span sprites in placeholder colours, coloured per denomination by a
+    # remap (the casino chip family: tools/art/common/chip_*.txt, chip9_* here).
+    for f in ['chip_top', 'chip_side', 'chip_side_alt']:
+        img = load_art(f + "")
+        o.array(f.upper(), pack_span4(img), comment=f"{f} {len(img[0])}x{len(img)}, row spans")
 
     o.write()
     print(f"wrote {OUT_H.relative_to(ROOT)} and {OUT_C.relative_to(ROOT)}")

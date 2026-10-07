@@ -24,7 +24,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 - Second pass, which the owner called fantastic:
   - The ARCADE pick shows a marching arc of dots from the token to the target square, red and flashing when a snake waits there.
   - The camera stays close and rides down a snake, zooming out only after the spit.
-  - The title is slab-serif lettering after CHBlackjack's logo. `LOGO_SNAKES` is drawn at half size and doubled by `tools/assets.py`; `LOGO_LADDERS` is 1x.
+  - The title is the cover's (2026-10-06): `tools/cart.py` `title_lines()` gives SNAKES and & LADDERS as the cover places them (lettering and depth), `tools/titleart.py` packs them, the library's `titleArt()` draws them in the house gold as a smooth dithered gradient. Both at 1x: no pixel doubling.
 - Third pass: a ladder climb also stays close with the camera following, zooming out only at the top. The chomp sets off a big blast (two rings of chunks plus the particle bursts).
 - Agent choices reported to the owner but not yet confirmed. Keep them unless the owner says otherwise:
   - 2-4 seats in any mix of humans and CPUs; everyone starts on square 1, which is safe.

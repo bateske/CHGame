@@ -61,7 +61,12 @@ SCREENSHOT_SIZES = (128, 256, 384, 512)
 
 CART_KEYS = ("schemaVersion", "title", "version", "author", "description", "date", "license", "url",
              "sourceUrl", "launch", "menu", "games")
-MENU_KEYS = ("background", "colors", "folders", "cover", "about")
+MENU_KEYS = ("background", "colors", "folders", "cover", "about", "systemImages")
+# The visual menu's own screens a cart may replace (menu.systemImages; the
+# card's SYSTEM.PIC slots 1-8 in this order, after the about page: card.md step 7)
+SYSTEM_IMAGES = ("installed", "game", "folder", "error-1", "error-2", "error-3", "error-4", "error-5")
+EXTENSION_PREFIX = "x-"                        # top-level keys of other tools: kept, never warned about
+WEB_EXTENSION = "x-chgame-web"                 # the web tool's; its version 1 systemImages are read as menu's
 GAME_KEYS = ("id", "title", "folder", "version", "author", "description", "genre", "license",
              "licenseFiles", "url", "sourceUrl", "buttons", "binaries", "sdcard", "cartImage", "screenshots")
 TEXT_FIELDS = ("version", "author", "description", "license", "url", "sourceUrl")
@@ -135,6 +140,8 @@ class Cart:
     cover: bytes | None = None                          # PNG: the cart's cover, the visual menu's splash
     about: bytes | None = None                          # PNG: the visual menu's about page
     folder_covers: dict = field(default_factory=dict)   # folder path -> PNG: the folder's cover
+    system_images: dict = field(default_factory=dict)   # SYSTEM_IMAGES key -> PNG: the menu's own screens
+    extensions: dict = field(default_factory=dict)      # "x-..." top-level keys, as read (JSON values)
 
     def game(self, gid):
         for g in self.games:
@@ -270,6 +277,11 @@ def validate(cart):
     for k in ("cover", "about"):
         if getattr(cart, k) is not None:
             out += check_picture(getattr(cart, k), f"menu.{k}")
+    for k, png in cart.system_images.items():
+        if k not in SYSTEM_IMAGES:
+            warn("unknown-key", f"menu.systemImages.{k}", f"not a screen of the menu (they are {', '.join(SYSTEM_IMAGES)})")
+        else:
+            out += check_picture(png, f"menu.systemImages.{k}")
     for name, png in cart.folder_covers.items():
         if name not in folders and name not in cart.folder_backgrounds:
             warn("unused-file", f"menu.folders[{name!r}]", "no game is in this folder")
@@ -410,6 +422,12 @@ def to_manifest(cart):
         if getattr(cart, k) is not None:
             files[f"menu/{k}.png"] = getattr(cart, k)
             menu[k] = f"menu/{k}.png"
+    if cart.system_images:
+        menu["systemImages"] = {}
+        for k in SYSTEM_IMAGES:
+            if k in cart.system_images:
+                files[f"menu/system-{k}.png"] = cart.system_images[k]
+                menu["systemImages"][k] = f"menu/system-{k}.png"
     if cart.folder_backgrounds or cart.folder_covers:
         menu["folders"] = []
         order = cart.folders()
@@ -460,6 +478,9 @@ def to_manifest(cart):
                 files[path] = s.data
                 e["screenshots"].append({"filename": path, **({"title": s.title} if s.title else {})})
         m["games"].append(e)
+    for k, v in cart.extensions.items():               # other tools' keys, as they were read
+        if k.startswith(EXTENSION_PREFIX) and k not in m:
+            m[k] = v
     return m, files
 
 
@@ -497,7 +518,7 @@ def from_manifest(m, files):
 
     def unknown(d, keys, where):
         for k in d:
-            if k not in keys:
+            if k not in keys and not k.startswith(EXTENSION_PREFIX):
                 warn("unknown-key", where + k, "not part of schema version 1: ignored")
 
     if not isinstance(m, dict):
@@ -522,6 +543,39 @@ def from_manifest(m, files):
     for k in ("cover", "about"):
         if k in menu:
             setattr(cart, k, blob(menu[k], f"menu.{k}"))
+    system = menu.get("systemImages", {})
+    if not isinstance(system, dict):
+        err("bad-field", "menu.systemImages", "must be an object: screen name -> path")
+        system = {}
+    for k, path in system.items():
+        if k not in SYSTEM_IMAGES:
+            warn("unknown-key", f"menu.systemImages.{k}", f"not a screen of the menu (they are {', '.join(SYSTEM_IMAGES)})")
+            continue
+        data = blob(path, f"menu.systemImages.{k}")
+        if data is not None:
+            cart.system_images[k] = data
+    # Extensions: "x-" keys are other tools', kept as they are. The web
+    # tool's version 1 names the same screens under x-chgame-web.systemImages:
+    # read as menu.systemImages where that says nothing; the official field
+    # wins where both speak, with a word when they differ.
+    cart.extensions = {k: v for k, v in m.items() if k.startswith(EXTENSION_PREFIX)}
+    ext = m.get(WEB_EXTENSION)
+    if isinstance(ext, dict) and ext.get("version") == 1 and isinstance(ext.get("systemImages"), dict):
+        for k, path in ext["systemImages"].items():
+            w = f"{WEB_EXTENSION}.systemImages.{k}"
+            if k not in SYSTEM_IMAGES:
+                warn("unknown-key", w, f"not a screen of the menu (they are {', '.join(SYSTEM_IMAGES)})")
+                continue
+            data = blob(path, w)
+            if data is None:
+                continue
+            if k in cart.system_images:
+                if cart.system_images[k] != data:
+                    warn("extension-conflict", w, f"differs from menu.systemImages.{k}, which is used")
+            else:
+                cart.system_images[k] = data
+        kept = {k: v for k, v in ext.items() if k != "systemImages"}       # (moved to menu.systemImages)
+        cart.extensions[WEB_EXTENSION] = kept
     colors = menu.get("colors", {})
     if isinstance(colors, dict):
         cart.colors = dict(colors)

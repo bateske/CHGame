@@ -27,6 +27,19 @@ package's maintainer is shown as **bateske**.
 
 ### Added
 
+- **Box art for every game.** Each example has a painted cover for the SD
+  Graphic Menu (`docs/cart.png`, from its `tools/cart.py`). The menu's own
+  pictures, which every card falls back on (the cover, the text menu's
+  picture, the about page, installed, no picture, no cover, the errors),
+  are painted to match, and so are the casino card's cover and folders;
+  the graphic menu's built-in icons are new.
+- **One casino chip.** The betting chips (Blackjack, Roulette, Craps, Yacht,
+  Poker, Tic Tac Toe), the rail racks and the chip-styled pieces (Checkers'
+  men, Backgammon's checkers, Four in a Row's discs, the GOBBLE chips,
+  Boardwalk's carpet stacks, Solitaire's chip card back, Poker's seat
+  avatars) are redrawn as one family: a lit label, edge inserts as dashes,
+  rims in the chip's shade, stacks whose inserts alternate so they can be
+  counted. The shared sprites are `tools/art/common/chip_*.txt`.
 - **The libraries come with the package.** `#include <CHGame.h>` (buttons,
   frame pacing, palette, drawing, sound, saving, the debug protocol), CHGfx
   (graphics) and CHSd (SD card / FAT) are in the package's `libraries/`,
@@ -34,8 +47,9 @@ package's maintainer is shown as **bateske**.
 - **Twenty casino games and two apps as examples:** *File > Examples >
   CHGame > Games* (CHBlackjack, CHChess, CHPoker ...) and *Apps*:
   **CHStlView**, a 3D wireframe viewer for the `.STL` files on the SD card,
-  and **CHSDtoUSB**, the SD card reader; with *Hello*, the smallest complete
-  sketch.
+  **CHSDtoUSB**, the SD card reader, and **CHSDtoSerial**, the SD card helper
+  the CHGame website uploads (a framed serial protocol); with *Hello*, the
+  smallest complete sketch.
 - **SD menu packages from the IDE.** Every build also writes
   `<sketch>.ino.chg`, the package the bootloader's game menu installs from
   the card's `GAMES` folder; *Sketch > Export Compiled Binary* puts it in the
@@ -49,9 +63,18 @@ package's maintainer is shown as **bateske**.
   Each example has a `chgame.json` describing it.
 - **Tools > Bootloader** chooses what *Burn Bootloader* writes: the **SD
   Text Menu (Rainbow)**, the default, or **(Static)**, the same menu with
-  nothing turning: the picture as painted, its magenta parts, the selection
-  bar and the boxes magenta; or **USB Only**, the same bootloader
-  without the menu. The 0.2.4 bootloader is no longer shipped.
+  nothing turning: the selection bar, the boxes and the picture's magenta
+  parts in the menu's text colour; or **USB Only**, the same bootloader
+  without the menu, for a board built without an SD card: it drives the
+  LED and USB and leaves every other pin alone (high-Z), so the card's and
+  the panel's pins are free for other circuits. Every bootloader leaves the
+  pins it does not use high-Z. The 0.2.4 bootloader is no longer shipped.
+- **A card's launch game never installs by itself.** If it is the game in
+  flash it starts at once, with the panel dark; otherwise the menu opens on
+  it and A installs it, so switching on never writes over the game you
+  were playing. The SD Graphic Menu stays on the card's cover at power-on
+  (A there shows the installed game), and LEFT/RIGHT do nothing on a card
+  without folders.
 - **The SD Graphic Menu** (*Tools > Bootloader*, Rainbow or Static): the same
   card shown one picture at a time and no text, in the manner of the
   Arduboy FX. The card's cover at power-on, a cover for each folder

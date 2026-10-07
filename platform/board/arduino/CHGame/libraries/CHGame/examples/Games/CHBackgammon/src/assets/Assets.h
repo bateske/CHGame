@@ -2,9 +2,9 @@
 #pragma once
 #include <stdint.h>
 
-extern const uint8_t CHECKER[39];                         // span4, 8 x 8, neutral tones
+extern const uint8_t CHECKER[41];                         // span4, 8 x 8, neutral tones
 extern const uint8_t CHECKER_REMAP[2][16];                  // ... as White's, as Red's (tools/art/sides.txt)
-extern const uint8_t CHECKER_BIG[121];                    // the same checker, 16 x 16: the close-ups
+extern const uint8_t CHECKER_BIG[101];                    // the same checker, 16 x 16: the close-ups
 extern const uint8_t DICE[402];                          // span4 faces 1..6, 12 x 12: DICE + DIE_AT[face - 1]
 extern const uint16_t DIE_AT[6];
 extern const uint8_t DIE_REMAP[2][16], DIE_USED[2][16];     // each side's dice; and once played

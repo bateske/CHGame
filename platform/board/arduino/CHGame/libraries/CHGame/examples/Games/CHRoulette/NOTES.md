@@ -30,6 +30,7 @@ The design specs are in `docs/design/*.md` (written before the game; their paths
 - Chosen: a new musette waltz as the title tune (over reusing CHBlackjack's). It was cut to 8 bars, about 304 B, to save flash; `tools/make_music.py` (the songs; the composer is the repository's `tools/music/composer.py`) writes `src/audio/Music.cpp`.
 - Chosen: about 4 s of wheel time on FUN (shorter than the spec's 5 s). The tuning is the `PACE` table in `Ball.cpp`.
 - Chosen: logo A, the chunky 1 bpp "Roulette" in `tools/art/logo.txt`, over the spec's recommended `title35` lettering.
+- Replaced (2026-10-06, the owner asked for the covers' titles in the games): the title is the cover's ROULETTE: `tools/cart.py` `title_lines()` gives its lettering as the cover places it, `tools/titleart.py` packs it, the library's `titleArt()` draws it in the house gold as a smooth dithered gradient, with no bevel or glints (docs/cover-art.md, "The same title on the title screen"). The credits page prints the same lettering on the felt. `tools/art/logo.txt` is no longer read.
 - Plan defaults, never contested:
   - limits of $100 inside, $250 outside and $1,000 on the table;
   - no American 0/2 or 00/2 splits (their spots would sit 2.5 px apart).

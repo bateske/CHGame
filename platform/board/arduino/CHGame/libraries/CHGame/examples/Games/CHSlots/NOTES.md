@@ -17,6 +17,7 @@ Agent-facing notes for continuing work here; the rules and controls are in READM
 
 - Chosen: three machines in one image sharing one purse: LUCKY 7, SWEET and DRAGON FORTUNE. The skeleton came from CHCraps (prefix `CHSL_`).
 - Chosen: LUCKY 7 is the classic: 3 reels, one line, 15 old-school symbols and a bonus wheel.
+- Chosen (2026-10-06): the title screen draws the cover's SLOTS: `tools/cart.py` `title_lines()` gives its lettering as the cover places it, `tools/titleart.py` packs it, the library's `titleArt()` draws it in the house gold as a smooth dithered gradient, with no bevel or glints (docs/cover-art.md, "The same title on the title screen"). The tagline and the little machine moved down 5-8 px. `tools/art/logo.txt` is no longer read.
   - Arm: hold A to pull, release to spin.
   - The bonus wheel was added at the owner's request.
 - Chosen: DRAGON FORTUNE has 5x3 reels and 25 lines.

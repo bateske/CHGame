@@ -52,13 +52,27 @@ changing that game.
    - Nothing of CHSd is copied any more: the three SD games include
      `<Fat.h>` / `<SdSpi.h>` from the library. After changing CHSd, run its
      `tests/run_tests.py` and `chgame check` in the three games.
-   - Each program's `docs/cart.png` (its picture in the visual menu) comes
-     from its `tools/cart.py` (`chgame boxart`; the house style is
-     `tools/boxart.py`); the casino's covers in `tools/sdcard/art/` from
-     `tools/sdcard/covers.py`; the bootloader's `src/icons.h` from
-     `platform/bootloader/art/icons/*.png` (`tools/icons.py`). The menu's
-     default pictures in `spec/assets/` are sources: `tools/menuart.py` only
-     draws missing ones.
+   - Every picture the visual menu shows is painted by a Python recipe
+     with `tools/artkit` (the house look and the method:
+     [docs/cover-art.md](docs/cover-art.md); its title lettering is text art
+     in `tools/art/title.txt`, set from Pixel Logo Lab's fonts by
+     `python -m artkit.fontscout`). A program's `docs/cart.png` comes from
+     its `tools/cart.py` (`chgame boxart`), and so does its title screen's
+     lettering: `title_lines()` there, packed into `src/assets/` by
+     `tools/titleart.py` and drawn in the house gold by the library's
+     `titleArt()` (13 games;
+     docs/cover-art.md, "The same title on the title screen"). After
+     changing a recipe's title, run `chgame boxart` and `tools/assets.py`;
+     the casino's covers in
+     `tools/sdcard/art/` and its `menu.png` from `tools/sdcard/art/src/*.py`
+     (`tools/sdcard/covers.py`); the menu's defaults in `spec/assets/` from
+     `tools/art/menu/*.py` (`tools/menuart.py`); the bootloader's
+     `src/icons.h` from `platform/bootloader/art/icons/*.png`
+     (`tools/icons.py`). Any sprite or picture follows the pixel-art rules in
+     [docs/pixel-art.md](docs/pixel-art.md) (`python -m artkit.craft PNG`
+     lists orphans and jaggies). Look at them all with `python tools/artsheet.py`;
+     the README's galleries (`docs/cover-art.png`, `cover-art-defaults.png`)
+     come from `python tools/artsheet.py --gallery`.
 5. **The shared `tools/` serve all 20 games.** After changing anything in
    `tools/chsim` or `tools/*.py`, run `chgame check` in several games and
    compare sim frames against a run from before the change.
@@ -83,16 +97,19 @@ changing that game.
      compare sizes and frames, as for the rest of the library.
    - `platform/bootloader/src/sd.c` and `src/fat.c` are a C fork of CHSd: a
      fix to one belongs in the other too.
-   - The bootloader is full: flash 11,908 of 12,288 B (gate A keeps 256 B
+   - The bootloader is full: flash 11,920 of 12,288 B (gate A keeps 256 B
      spare), and RAM 20,448 of 20,480 B, since a menu folder lists as many
      entries (240, `MENU_MAX_GAMES`) as RAM allows. Every byte added must be
      paid for (`platform/bootloader/SIZES.md` lists where). Measure with
      `platform/bootloader/build.sh release`.
    - It has two faces from one source: the list menu (`src/menu.c`) and the
-     visual menu (`src/visual.c`, `build.sh --ui=visual`: 12,080 B; its gate keeps
-     192 B spare, by the owner's choice, so 16 B are left). Both read the card through `src/card.c`: a change
+     visual menu (`src/visual.c`, `build.sh --ui=visual`: 12,060 B; its gate keeps
+     192 B spare, by the owner's choice, so 36 B are left). Both read the card through `src/card.c`: a change
      there needs both built and both suites passed, and the list build's
      binaries should stay byte-identical unless the change is meant for it.
+   - A third build, `nomenu` (*USB Only*), is the bootloader for a board
+     without an SD card: it drives only the LED and USB. Every build leaves
+     the pins it does not use high-Z (`src/hal.h`).
 7. **Every game needs its own save magic, debug handshake id and
    `config.h` prefix.** All games share the same two flash save pages. The
    last collisions were fixed on 2026-10-01 (docs/status.md); check a new
@@ -103,6 +120,21 @@ changing that game.
    `visual.c` and `shared/chgame_card.h`) together. Then `python tools/chcart/fixtures.py`
    regenerates the fixtures and their expected results; review the diff.
    chcart's tests and the bootloader's PC suite must pass.
+   **So is the upload protocol.** The web emulator project's browser
+   uploader is the fourth implementation of
+   [platform/board/docs/protocol.md](platform/board/docs/protocol.md)
+   (beside `proto.c`, the Go and the Python hosts) and changes nothing in
+   the bootloader: it uses the `CG` frames, `HELLO` (upload mode, bootloader
+   version 3 or later, application base 0x3000, the sizes from the answer),
+   `BEGIN`/`WRITE`/`END`/`RUN` with `ABORT` on failure, the 1200-baud/DTR
+   touch and the USB reconnection, 115200 for ordinary connections, and it
+   never flashes bootloaders (older ones get the board package's upgrade
+   procedure). Its SD-over-serial sketch is capped at 50,432 B so the save
+   pages survive it. A change to the frame, the command set, `HELLO`'s
+   payload, `BOOT_VERSION`'s meaning, `shared/chgame_usb_identity.h` or the
+   core's 1200-baud touch is a change to that contract: make it in
+   protocol.md ("Host conventions") and the vectors
+   (`python -m chgame_upload.vectors --write`) too, and tell the other side.
 
 ## Setup
 
@@ -113,7 +145,7 @@ curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.
 arduino-cli config init --overwrite
 arduino-cli config add board_manager.additional_urls https://github.com/bateske/CHGame/releases/latest/download/package_chgame_index.json
 arduino-cli core update-index && arduino-cli core install CHGame:ch32v
-pip install -e .[sim]      # the tools (Pillow, pyserial) and the `chgame` command; zig is the simulator's compiler
+pip install -e .[sim]      # the tools (Pillow, pyserial, numpy) and the `chgame` command; zig is the simulator's compiler
 ```
 
 **Windows:** the same `arduino-cli` commands (or the Arduino IDE's Boards
@@ -150,7 +182,8 @@ Manager), then `pip install -e .[sim]` in the repository root.
 
 The games are the CHGame library's examples:
 `platform/board/arduino/CHGame/libraries/CHGame/examples/Games/<Name>/`
-(apps, CHStlView and CHSDtoUSB, are beside them in `examples/Apps/`). Run these
+(apps, CHStlView, CHSDtoUSB and CHSDtoSerial, are beside them in
+`examples/Apps/`). Run these
 from a game's folder (or any folder below it): `chgame` finds the sketch by
 itself. From anywhere else it takes a game or app by name or folder
 (`chgame --sketch CHFour build`). `pip install -e .[sim]` in the repository
@@ -187,14 +220,16 @@ it, `python tools/chgame.py` is the same thing. The shared tools under
 | Refresh the committed binaries | `platform/bootloader/tools/dist.sh` |
 | The casino cart, `out/CHGame-Casino.chgame` (`tools/sdcard/casino.json`), and its card in `out/sdcard/` (+ FAT32 image) | `chgame card [--no-build] [--image out/sdcard.img]` |
 | A sketch as a `.chgame` (`build/<Name>.chgame`, from its `chgame.json`) | `chgame export` (in its folder) |
-| Carts: inspect, check, combine, edit, prepare a card, flash, deploy | `chgame cart info\|verify\|new\|add\|remove\|order\|set\|launch\|background\|prepare\|flash\|deploy` |
+| Carts: inspect, check, combine, edit, prepare a card, flash, deploy, back a card up (its games and their SD files, from the record in each CHG file: spec/card.md) | `chgame cart info\|verify\|new\|add\|remove\|order\|set\|launch\|background\|prepare\|flash\|deploy\|backup` |
 | The menu's picture (logo included): the default to edit, any image converted, a preview of the menu on it, onto a card (docs/menu-image.md) | `chgame background --template F`, `chgame background IMAGE [--preview F.gif] [--out F] [--card DRIVE]` |
 | chcart's tests (the conformance fixtures included) / remake the fixtures | `python -m unittest discover -s tools/chcart/tests` / `python tools/chcart/fixtures.py` |
 | CHG files (the menu's install files): make one, check them, list a card | `chgame pack pack\|verify\|info` |
 | Install the menu bootloader on a board | `platform/bootloader/HARDWARE.md` (self-update over USB) |
 | The visual menu's pictures: convert any image, preview it, a template, onto a card; into a cart; placeholders for what has none (docs/visual-menu.md) | `chgame picture IMAGE [--preview F.gif] [--out F] [--card DRIVE]`, `chgame picture --template F`; `chgame cart picture\|art` |
-| A game's box art, `docs/cart.png`, from its `tools/cart.py` (the house style: `tools/boxart.py`) | `chgame boxart` (in its folder; `--check` from the root checks all 22, `--sheet F` shows them) |
-| The casino card's covers (`tools/sdcard/art/`) / the menu's default pictures (`spec/assets/`, never overwritten) / its built-in icons (`art/icons/` -> `src/icons.h`) | `python tools/sdcard/covers.py` / `python tools/menuart.py` / `python platform/bootloader/tools/icons.py` |
+| A game's box art, `docs/cart.png`, from its `tools/cart.py` (painted with `tools/artkit`: [docs/cover-art.md](docs/cover-art.md)) | `chgame boxart` (in its folder; `--check` from the root checks all 22, `--sheet F` shows them) |
+| A picture's previews and the house checks, while painting it / a title's lettering from thousands of pixel fonts (needs Pixel Logo Lab beside the repository, or `$CHG_LOGOLAB`) | `python -m artkit show RECIPE.py` / `python -m artkit.fontscout scout "TITLE" OUT` |
+| The casino card's covers (`tools/sdcard/art/`, from `art/src/*.py`) / the menu's default pictures (`spec/assets/`, from `tools/art/menu/*.py`) / its built-in icons (`art/icons/` -> `src/icons.h`) | `python tools/sdcard/covers.py` / `python tools/menuart.py` / `python platform/bootloader/tools/icons.py` |
+| Every picture the menus show on one sheet (or before/after for some; or the README's galleries, `docs/cover-art*.png`, after a picture changes) | `python tools/artsheet.py [OUT]` / `python tools/artsheet.py --compare OUT NAME ...` / `python tools/artsheet.py --gallery` |
 | Build the uploader, `chgame-upload` (Go, five hosts, into `out/chgame-upload/`) | `python tools/release/build_uploader.py` |
 | The uploaders' parity tests (Python and Go against one vector file) | `python -m unittest discover -s platform/bootloader/test/protocol`; `go test ./...` in `host/go` |
 | Stage a release locally and test it as a new user (fresh arduino-cli in `out/newuser/`, every example compiled from the installed package, the casino cart and the SD card zip) | `python tools/release/stage.py [--quick] [--serve]` |
@@ -214,7 +249,7 @@ override `compiler.cpp.extra_flags`.
 
 | | |
 |---|---|
-| Flash for the image | **50,944 B** (0x3000-0xF6FF). The bootloader takes 12 KB (the menu builds use up to 12,080 B of it, `platform/bootloader/SIZES.md`), and one page of metadata sits at 0xF700. |
+| Flash for the image | **50,944 B** (0x3000-0xF6FF). The bootloader takes 12 KB (the menu builds use up to 12,060 B of it, `platform/bootloader/SIZES.md`), and one page of metadata sits at 0xF700. |
 | Save pages | Two 256 B pages at the top of the app region. Keep the image ≤ **50,432 B** for both (A/B with CRC), ≤ 50,688 B for one. Past that, saving switches itself off. |
 | Static RAM | **18,416 B**: 20 KB less the 16 B boot block and the 2 KB stack. Under ~900 B free, Arduino warns. |
 | Stack | 2 KB (games report the high-water mark with the debug `P` command) |

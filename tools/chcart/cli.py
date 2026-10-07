@@ -4,7 +4,7 @@
     chgame cart info PKG [--json]                 the games, their files, the warnings
     chgame cart verify PKG ...                    every rule of spec/chgame.md (exit 1 on an error)
     chgame cart extract PKG DIR                   the files, as laid out inside
-    chgame cart new OUT ITEM ... [--title T ...]  a cart from .chgame/.bin/.hex/.chg files and sketches
+    chgame cart new OUT ITEM ... [--title T ...]  a cart from .chgame/.bin/.hex/.elf/.chg files and sketches
     chgame cart build RECIPE.json [OUT]           a cart from a recipe (games named by sketch)
     chgame cart add PKG ITEM ... [--folder F] [--at N]
     chgame cart remove PKG ID ...
@@ -14,14 +14,20 @@
     chgame cart launch PKG ID|none                the game started at power-on
     chgame cart background PKG IMAGE|none [--folder F] [--color KEY=#RRGGBB]
                                                   the list menu's picture (any image: converted, chcart/background.py)
-    chgame cart picture PKG IMAGE|none [--game ID | --folder F | --about]
+    chgame cart picture PKG IMAGE|none [--game ID | --folder F | --about | --system SCREEN]
                                                   the visual menu's pictures: the cart's cover (the
-                                                  splash), a game's, a folder's cover, the about page
+                                                  splash), a game's, a folder's cover, the about page,
+                                                  one of the menu's own screens (installed, game, folder,
+                                                  error-1 .. error-5; the defaults stand in for the rest)
     chgame cart art PKG [--redo]                  a picture for every game and folder cover missing
                                                   one, drawn from its title (tools/boxart.py)
     chgame cart prepare PKG OUTDIR [--image IMG]  the card's files (spec/card.md), and a FAT32 image
     chgame cart flash PKG [--game ID] [--port P]  upload one game
     chgame cart deploy PKG [--card DIR] [--port P] [--clean] [--no-flash]
+    chgame cart backup CARD OUT [--game PATH|ID ...] [--sd CHG=PATH ...] [--title T]
+                                                  the card's games (CARD: a drive, a FAT image or a
+                                                  ZIP of its files) back into a cart, with their SD
+                                                  files (chcart/backup.py); all of them: the menu too
 
 A recipe is a manifest whose games may be {"sketch": "CHFour", "folder": ...,
 other game keys to override}: chgame cart build compiles each sketch (unless
@@ -38,7 +44,7 @@ import json
 import pathlib
 import sys
 
-from . import background, deploy, model, runtime, sources, zipio
+from . import background, backup, deploy, model, runtime, sources, zipio
 from .model import CartError
 
 GAME_SET = ("title", "folder", "version", "author", "description", "genre", "license", "url", "sourceUrl", "id")
@@ -120,7 +126,8 @@ def cmd_new(a):
     cart = model.Cart(title=a.title or (first.title if first else games[0].title if len(games) == 1 else "CART"),
                       games=games)
     if first:                               # the first cart's menu and details carry over
-        for k in CART_SET[1:] + ("background", "colors", "folder_backgrounds", "cover", "about", "folder_covers"):
+        for k in CART_SET[1:] + ("background", "colors", "folder_backgrounds", "cover", "about", "folder_covers",
+                                 "system_images", "extensions"):
             setattr(cart, k, getattr(first, k))
     _apply_cart_args(cart, a)
     _save(cart, a.out)
@@ -168,6 +175,11 @@ def build_recipe(recipe_path, build=True, platform_dir=None, binary=None, only=N
     for k in ("cover", "about"):
         if menu.get(k):
             setattr(cart, k, _picture(base / menu[k], model.UI_COLORS))
+    for k, path in menu.get("systemImages", {}).items():
+        if k not in model.SYSTEM_IMAGES:
+            raise CartError([model.Issue("bad-field", f"{recipe_path}: menu.systemImages.{k}",
+                                         f"not a screen of the menu (they are {', '.join(model.SYSTEM_IMAGES)})")])
+        cart.system_images[k] = _picture(base / path, model.UI_COLORS)
     for f in menu.get("folders", []):
         if f.get("background"):
             cart.folder_backgrounds[f["name"]] = _picture(base / f["background"], ui)
@@ -317,6 +329,11 @@ def cmd_picture(a):
             cart.folder_covers[a.folder] = png
     elif a.about:
         cart.about = png
+    elif a.system:
+        if png is None:
+            cart.system_images.pop(a.system, None)
+        else:
+            cart.system_images[a.system] = png
     else:
         cart.cover = png
     _save(cart, a.pkg)
@@ -354,6 +371,23 @@ def cmd_flash(a):
 
 def cmd_deploy(a):
     deploy.deploy(_load(a.pkg), a.card, a.port, a.clean, do_flash=not a.no_flash)
+    return 0
+
+
+def cmd_backup(a):
+    sd = {}
+    for pair in a.sd or []:
+        chg, sep, path = pair.partition("=")
+        if not sep:
+            raise CartError([model.Issue("bad-field", pair, "--sd takes GAMES/<NAME>.CHG=<path on the card>")])
+        sd.setdefault(chg.replace("\\", "/"), []).append(path)
+    cart, issues = backup.backup(a.card, a.game, a.title or "CARD BACKUP", sd)
+    for i in issues:
+        print(i, file=sys.stderr)
+    _save(cart, a.out)
+    for g in cart.games:
+        print(f"  {(g.folder + '/' if g.folder else '') + g.title:32s} {g.id:20s} "
+              f"{len(g.sd)} SD file{'s' * (len(g.sd) != 1)}" + ("  (launch)" if g.id == cart.launch else ""))
     return 0
 
 
@@ -424,6 +458,9 @@ def parser():
     w.add_argument("--game", help="a game's picture (its cartImage)")
     w.add_argument("--folder", help="a folder's cover")
     w.add_argument("--about", action="store_true", help="the about page (B at the top)")
+    w.add_argument("--system", choices=model.SYSTEM_IMAGES, metavar="SCREEN",
+                   help="one of the menu's own screens: " + ", ".join(model.SYSTEM_IMAGES)
+                        + " (none: the default again)")
     p.add_argument("--fit", choices=["cover", "contain"], default="cover")
     p.add_argument("--dither", action="store_true")
     p = sub.add_parser("art", help="pictures drawn for the games and folders that have none")
@@ -443,6 +480,15 @@ def parser():
     p.add_argument("--port")
     p.add_argument("--clean", action="store_true", help="empty the card's GAMES/ first (several games)")
     p.add_argument("--no-flash", action="store_true")
+    p = sub.add_parser("backup", help="a card's games back into a cart, with their SD files")
+    p.add_argument("card", help="the mounted card's folder (drive), a FAT image, or a ZIP of its files")
+    p.add_argument("out", help="the .chgame to write")
+    p.add_argument("--game", action="append", metavar="PATH|ID",
+                   help="only this game (its CHG file's path on the card, its id or its title); again for more. "
+                        "Without it: every game, with the card's folders, menu and launch game")
+    p.add_argument("--sd", action="append", metavar="CHG=PATH",
+                   help="an SD file of a game whose CHG file has no record, e.g. GAMES/WORDS.CHG=WORDS.DIC")
+    p.add_argument("--title", help="the cart's title (the card does not hold one)")
     return ap
 
 
@@ -474,15 +520,8 @@ def background_main(argv):
                     help="the menu's text, disabled, selectedText or mark colour, for --preview and --card")
     ap.add_argument("--style", choices=["rainbow", "static"], default="rainbow",
                     help="--preview as the rainbow bootloader (default) or the static one draws it")
-    ap.add_argument("--redraw-default", metavar="TTF", help=argparse.SUPPRESS)
     a = ap.parse_args(argv)
     try:
-        if a.redraw_default is not None:
-            from fonts.serif import find_ttf
-            background.draw_default(find_ttf("DejaVuSans-Bold.ttf", a.redraw_default or None)).save(
-                runtime.DEFAULT_BACKGROUND, optimize=True)
-            print(runtime.DEFAULT_BACKGROUND)
-            return 0
         if a.template:
             pathlib.Path(a.template).write_bytes(background.template())
             print(f"{a.template}: the default picture, 128x128. Edit it, then: chgame background {a.template} --preview preview.gif")

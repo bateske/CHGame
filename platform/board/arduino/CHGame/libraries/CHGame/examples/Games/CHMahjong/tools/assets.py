@@ -195,14 +195,6 @@ def pack_span4(img, trans=TRANSPARENT):
     return out
 
 
-def load_logo():
-    """tools/art/logo.txt -> rows of 0/1 ('#' set). Comment lines are '# ' and text
-    (a row of the picture never has a space in it)."""
-    rows = [ln.rstrip() for ln in (artlib.art(HERE, "logo.txt")).read_text().splitlines() if ln.strip() and " " not in ln.strip()]
-    w = max(len(r) for r in rows)
-    return [[1 if ch == "#" else 0 for ch in r.ljust(w, ".")] for r in rows]
-
-
 def load_bird():
     """tools/art/bird.txt -> [(name, w, h, [frames])], frames as rows of palette indices."""
     anims, cur, img = [], None, []
@@ -321,13 +313,12 @@ def main():
     decls.insert(0, f"constexpr uint8_t TILE_BACK = {FACES};                         // the back of a tile, after the faces")
 
     # The title's lettering (1 bpp).
-    logo = load_logo()
-    data = pack_rows1(logo)
-    defs.append(c_array("LOGO", data))
-    decls.append("extern const uint8_t LOGO[];                                 // the title, 1 bpp MSB-first rows (tools/art/logo.txt)\n"
-                 f"constexpr uint8_t LOGO_W = {len(logo[0])}, LOGO_H = {len(logo)};")
-    total += len(data)
-    preview("logo", [[1 if v else TRANSPARENT for v in r] for r in logo], 4)
+    import cart                                          # the title, as the cover draws it
+    import titleart
+    line, = cart.title_lines()
+    w, h = titleart.emit(titleart.Into(decls, defs), "LOGO", line, "'MAHJONG'")
+    total += (w + 7) // 8 * h + h
+    titleart.preview(line, bg=0).save(PREVIEW / "logo.png")
 
     # The sparrow (span4), its animations from tools/art/bird.txt.
     anims = load_bird()

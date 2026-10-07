@@ -40,23 +40,23 @@
   },
   "GAMES/MENU.BG": {
    "size": 8704,
-   "sha256": "5c0d5aa0c249749aa45bd6c7c2d16260b6e1fb81bdbf5b57ff436cde0f68d711"
+   "sha256": "2b7b773afcfd7ccd84b32dc5381a2deaa20b1ab93caddd79a4e8530b6f704071"
   },
   "GAMES/COVER.PIC": {
    "size": 8704,
-   "sha256": "1bd835708372c15667d4cb6d92ad51f6ab7ee4f963052781b260753f89fe4c83"
+   "sha256": "f2fbf237573a8ac161fb2a38868ff80c71f125c9abf4e01262c3fe5bef813ff4"
   },
   "GAMES/SYSTEM.PIC": {
    "size": 78336,
-   "sha256": "f20da67d3ab3d665d290d6faad5389d1e965ebaeda54abaeffce4b0008e2d20c"
+   "sha256": "f2cda801f3c9f71d0c9b558fb08bc36eaeeb4fd9b182641fafc663dc2af1fe34"
   },
   "GAMES/ATITLEOF.CHG": {
-   "size": 11348,
-   "sha256": "04312ac1428f1aad646db1780cfa1840e38bd8b7f1c214d5b3106649863f861b"
+   "size": 11861,
+   "sha256": "34520e7b9a74539130a50518f2f280679ac28ad01cc702743cc39c179905a9ce"
   },
   "GAMES/B.CHG": {
-   "size": 50952,
-   "sha256": "c0ca51defd0e7967e81928e680f3752fd3d3a4a955efafc71708240deaef4a74"
+   "size": 51267,
+   "sha256": "6988a69a801e7b01a32bb5b7301f38da5b6bce9536a6d71165a2ca09ee722083"
   }
  }
 }

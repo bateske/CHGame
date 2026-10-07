@@ -41,6 +41,9 @@ TRANSPARENT = 16
 SPRITES = ["chip", "chiptop"]
 CHIP_ANCHOR = (6, 6)                 # the base centre of the chip
 CROWN = 8                            # the art colour of the crown (GOLD)
+INSERTS = (10, 11)                   # the art colours of the rim's inserts (BLUE, NAVY): the
+                                     # chip that tops a king swaps them, so a king's two chips
+                                     # alternate (BLUE: a man's inserts, NAVY: the upper chip's)
 NAMES = ["INK", "WHITE", "FELT_DK", "FELT", "FELT_LT", "SILVER", "RED", "WINE",
          "GOLD", "WOOD", "BLUE", "NAVY", "SKIN", "CYAN", "FX_A", "FX_B"]
 SIDES = artlib.art(HERE, "sides.txt")
@@ -49,8 +52,10 @@ SIDES_HEADER = """# The palette swap that dresses the one chip as each side. The
 # own tones - the MASTER row of tools/sheet.py's sheet - with an INK outline.
 # One line per art colour the swap changes: the art colour, then White's
 # colour, then Black's (names as in the CHGame library's chgame/Palette.h).
-# Colours not listed stay as drawn. GOLD is the crown: it takes the face's
-# colour here, and stays gold on the chip that tops a king.
+# Colours not listed stay as drawn. GOLD is the crown: it takes the label's
+# colour here, and stays gold on the chip that tops a king. BLUE and NAVY are
+# the rim's two insert patterns (a man shows BLUE's; the chip that tops a
+# king swaps them, tools/assets.py's king_maps): give NAVY the rim's colour.
 #
 # tools/sheet.py import rewrites this from an edited sheet.
 """
@@ -75,10 +80,13 @@ def save_sides(maps):
 
 
 def king_maps(maps):
-    """The swap for the chip that tops a king: the crown stays as drawn."""
+    """The swap for the chip that tops a king: the crown stays as drawn, and
+    its inserts take the other pattern."""
     out = [list(m) for m in maps]
+    a, b = INSERTS
     for m in out:
         m[CROWN] = CROWN
+        m[a], m[b] = m[b], m[a]
     return out
 
 

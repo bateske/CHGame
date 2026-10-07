@@ -16,9 +16,10 @@ key hints at the foot. Messages (INSTALLING, errors) are boxes over rows
 36-87.
 
 The colours. Pure magenta, #FF00FF, is drawn in the menu's colour 15: one
-colour turning through the rainbow, or as painted on a bootloader built in
-the static style (Tools > Bootloader: SD Text Menu (Static); --style static
-here previews that). Besides
+colour turning through the rainbow, or, on a bootloader built in the static
+style (Tools > Bootloader: SD Text Menu (Static); --style static here
+previews that), in the menu's text colour, so the bar, the boxes and the
+logo match the titles. Besides
 it the picture may use 11 colours, plus the menu's own four (text #FFF4D6,
 greyed #808080, selected text #000000, chip #D62020, or the cart's
 `menu.colors`). convert() makes any image fit: it scales it to 128x128
@@ -100,7 +101,8 @@ def convert(src, ui=None, fit="cover", dither=False):
 
 
 def template():
-    """The default picture (spec/assets/menu-default.png): the starting point."""
+    """The default picture (spec/assets/menu-default.png, painted by
+    tools/art/menu/menu.py): the starting point."""
     return runtime.DEFAULT_BACKGROUND.read_bytes()
 
 
@@ -144,7 +146,8 @@ def preview(png, ui=None, phase=0, titles=None, scale=3, installed=(2,), folders
     """A PIL image of the menu over the picture, as the panel shows it
     (RGB565): a list of titles, the first selected, a chip on the rows in
     `installed`, a folder's `>` on those in `folders`. Colour 15 is the
-    rainbow's colour at `phase`, or the palette's own, #FF00FF (style "static")."""
+    rainbow's colour at `phase`, or the menu's text colour (style "static",
+    as src/menu.c draws it: never the hot pink the palette holds)."""
     from PIL import Image
     ui = ui or dict(model.UI_COLORS)
     bg = runtime.menu_background(png, ui)
@@ -175,8 +178,7 @@ def preview(png, ui=None, phase=0, titles=None, scale=3, installed=(2,), folders
         if i in folders:
             text(put, 122, y + 1, ">", c, g)
     im = Image.new("RGB", (128, 128))
-    if style == "rainbow":
-        pal[15] = rgb(hue(phase))
+    pal[15] = rgb(hue(phase)) if style == "rainbow" else pal[11]
     im.putdata([pal[idx[y][x]] for y in range(128) for x in range(128)])
     return im.resize((128 * scale, 128 * scale), Image.NEAREST)
 
@@ -197,27 +199,6 @@ def write_to_card(png, card, ui=None):
     f.parent.mkdir(parents=True, exist_ok=True)
     f.write_bytes(runtime.menu_background(png, ui or dict(model.UI_COLORS)))
     return f
-
-
-# ---- the default picture, as it was first drawn ---------------------------------------
-
-def draw_default(ttf):
-    """The original spec/assets/menu-default.png: black; CHGAME, a one-bit
-    rendering of DejaVu Sans Bold (freely redistributable), in #FF00FF over a
-    rainbow rule; the keys in the menu's grey at the foot. The PNG is the
-    source now: edit it rather than this."""
-    from PIL import Image, ImageDraw, ImageFont
-    im = Image.new("RGB", (128, 128), (0, 0, 0))
-    d = ImageDraw.Draw(im)
-    logo = Image.new("1", (128, 24), 0)
-    ld = ImageDraw.Draw(logo)
-    ld.fontmode = "1"
-    ld.text((0, 0), "CHGAME", font=ImageFont.truetype(ttf, 21), fill=1)
-    logo = logo.crop(logo.getbbox())
-    im.paste(model.RAINBOW_RGB, ((128 - logo.size[0]) // 2, (17 - logo.size[1]) // 2), logo)
-    d.line([(0, 17), (127, 17)], fill=model.RAINBOW_RGB)
-    text(lambda x, y, c: d.point((x, y), fill=c), 2, 120, "A:PLAY B:BACK", (128, 128, 128))
-    return im
 
 
 def colors_arg(pairs):

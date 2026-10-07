@@ -1,0 +1,24 @@
+// title: DICE
+// font: timB14 (u8g2/timB14)
+// author: not stated
+// terms: See u8g2's font licence list
+// source: https://github.com/olikraus/u8g2/wiki/fntlistall
+// set at the font's own size by tools/artkit/fontscout.py; pixels may be touched up by hand
+// set with --gap 2 (letter-spaced, under YACHT)
+// licence: u8g2's timB fonts come from the X11 bitmap fonts (Adobe's Times Bold, xorg font-adobe-*dpi),
+//   whose notice permits use, copying, modification and distribution with the copyright notices kept;
+//   the scout marks the face '?', so it belongs in docs/cover-art.md's credits table
+// E kerned 1 px left
+########........#####........#####..#....##########
+.###...###.......###.......###...####.....###....##
+.###....###......###......###.....###.....###.....#
+.###.....##......###......###......##.....###......
+.###.....###.....###.....###..............###......
+.###.....###.....###.....###..............###...#..
+.###.....###.....###.....###..............#######..
+.###.....###.....###.....###..............###...#..
+.###.....###.....###.....###..............###......
+.###.....##......###......###.............###......
+.###....###......###......###......##.....###.....#
+.###...###.......###.......####..###......###....##
+########........#####........#####.......##########

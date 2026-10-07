@@ -28,7 +28,8 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 
 - The owner's verdict on the iso look and on the extra tables.
 - Device run: iso frame times (full and band redraws), dealer time on the big felts (12 cells a frame), every sound. Device debug builds are `CHTT_LEAN` (no saving, plain end-screen lettering, no particles: `SIZZLE_NO_PARTICLES` in `Fx.h`; their Stats page says SAVING UNAVAILABLE: it asks `!CHTT_LEAN && save::available()`). With board package 0.3.0 they were 340 B over the flash until the particles went (2026-10-02); now 49,964 B. `-DCHTT_FULL` does not fit either (52,512 B then). Put the release build back afterwards.
-- Logo touch-up: tools/art/logo.txt and royale.txt (drafted by tools/make_logo.py from Arial Black and Georgia; the .txt files are the source).
+- The title is the cover's TIC TAC TOE / ROYALE (2026-10-06): `tools/cart.py` `title_lines()` gives its lettering as the cover places it, `tools/titleart.py` packs it, the library's `titleArt()` draws it in the house gold as a smooth dithered gradient, with no bevel or glints (docs/cover-art.md, "The same title on the title screen"). The earlier tools/art/logo.txt and royale.txt (drafted by tools/make_logo.py) are no longer read.
+- The title screen's middle (2026-10-07, the owner's ask): X and O pieces fall between the title and the menu, turning about their uprights (`iso::spin`, the hand's turn) and swaying, after CHMahjong's and CHSolitaire's fallers; they replace the little demo board. Only that strip is drawn each frame (`titleStrip()`), clipped, so the pieces come from under the title and go into the menu's band. No meteor: 317 B of flash left.
 - Optional music: impossible without cuts elsewhere.
 
 ## Gotchas
@@ -54,7 +55,7 @@ Everything can be checked on a PC (Python 3 with Pillow, and a C++ compiler for 
     chgame gif          # tools/scripts/gameplay.txt -> docs/gameplay.gif (the README's one GIF, <= 1 MB)
     chgame redraw tools/scripts/diff/diff_iso.txt out/diff 1   # band redraws against full ones: 0 stale frames
     python tools/assets.py                    # tools/art -> src/assets
-    python tools/make_logo.py                 # redrafts the title lettering
+    python tools/make_logo.py                 # redrafts the earlier lettering (no longer read)
     python tools/pieces.py                    # re-renders the iso pieces (overwrites the PNGs)
     chgame build|upload [--debug]
     chgame size

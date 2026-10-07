@@ -9,7 +9,8 @@ Sources:
     and his expressions. Monochrome PNGs are recoloured here.
   * CHBlackjack's hand-painted dealer, tools/art/dealer.png (palette-exact,
     the whole 48x42 dealer, replacing the recoloured PPOT bust).
-  * New art drawn for this game: tools/art/logo.txt (the "Yacht Dice" title).
+  * The title: the cover's (tools/cart.py title_lines(), tools/art/title.txt),
+    packed by tools/titleart.py.
   * The chips as palette-letter text (tools/art/chip_*.txt).
 
 Outputs:
@@ -395,17 +396,18 @@ def main():
 
     # Chips as span sprites, coloured per use by a remap (the shapes are
     # CHBlackjack's chip, captured; Chips.cpp).
-    for f in ["chip_top", "chip_side", "chip_small_top", "chip_small_side"]:
+    for f in ["chip_top", "chip_side", "chip_side_alt", "chip_small_top", "chip_small_side", "chip_small_side_alt"]:
         img = load_art(f)
         o.array(f.upper(), pack_span4(img), comment=f"{f} {len(img[0])}x{len(img)}, row spans")
         preview(f, img, bg=3)
 
     # The "Yacht Dice" title lettering (new for this game).
-    logo = load_bits("logo")
-    o.array("LOGO", pack_rows1(logo), comment=f"'Yacht Dice' title lettering {len(logo[0])}x{len(logo)}, MSB-first rows")
-    o.const("LOGO_W", len(logo[0]))
-    o.const("LOGO_H", len(logo))
-    mono_preview("logo", logo)
+    import cart                                          # the title, as the cover draws it
+    import titleart
+    line, = cart.title_lines()
+    titleart.emit(o, "LOGO", line, "'YACHT'")
+    PREVIEW.mkdir(parents=True, exist_ok=True)
+    titleart.preview(line).save(PREVIEW / "logo.png")
 
     # Expressions drawn for CHBlackjack, edited from the normal face patch.
     base = normal

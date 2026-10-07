@@ -1,0 +1,47 @@
+{
+ "warnings": [],
+ "games": [
+  {
+   "id": "one",
+   "title": "ONE",
+   "folder": "",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {},
+   "licenseFiles": {},
+   "picture": null
+  },
+  {
+   "id": "two",
+   "title": "TWO",
+   "folder": "MORE",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {},
+   "licenseFiles": {},
+   "picture": null
+  }
+ ],
+ "launch": "",
+ "menu": {
+  "colors": {},
+  "background": null,
+  "cover": null,
+  "about": "b9285ec37718e81c76fbc68832398734a044b085dde38cd51404d4ea7661bef7",
+  "systemImages": {
+   "error-4": "5f599094583269be9e23936bff760afba50a5b4a0647e022b2d44810745364fe",
+   "folder": "e5c927c3359cb46ecd58b5eab76b371eddee0b90887230172486e58279643f2b",
+   "installed": "7340544b1045117c5f18582c0ece5c24d43bb28bf3014aa8b943abb38a9ebfda"
+  },
+  "folders": {}
+ },
+ "sameCard": true
+}

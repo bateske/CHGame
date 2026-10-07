@@ -202,23 +202,16 @@ static void titleUpdate() {
     if (phase() == P_OVER && stage::overShown()) startDemo();
 }
 
-// The game's own lettering (tools/art: LOGO_*), after CHBlackjack's: gold
-// over wood, outlined, with a shadow. Its top rows are FX_B, so the palette
-// makes it shimmer.
-static void logo(const uint8_t *bits, uint8_t w, uint8_t h, int y) {
-    Mask m = maskBegin(w, h);
-    maskBlit1(m, bits, w, h);
-    uint8_t ramp[LOGO_SNAKES_H];
-    for (int i = 0; i < h; i++) ramp[i] = i * 14 < 3 * h ? FX_B : (i * 14 < 10 * h ? GOLD : WOOD);
-    maskDraw(m, 64 - w / 2, y, 0, INK, WINE, ramp);
-}
-
 static void titleRender(uint32_t frame) {
     uint8_t items[4], n = titleItems(items);
     stage::render(frame, frame);
     dither(0, 0, 128, 50, INK, 0);
-    logo(LOGO_SNAKES, LOGO_SNAKES_W, LOGO_SNAKES_H, 2);
-    logo(LOGO_LADDERS, LOGO_LADDERS_W, LOGO_LADDERS_H, 33);
+    // The title in the cover's lettering (tools/cart.py), in the house gold;
+    // the top rows FX_B, so the palette makes them shimmer.
+    titleArt(LOGO_SNAKES, LOGO_SNAKES_W, LOGO_SNAKES_H, 62 - LOGO_SNAKES_W / 2, 3, LOGO_SNAKES_BASE, LOGO_SNAKES_RAMP,
+             LOGO_SNAKES_DEPTH, LOGO_SNAKES_SIDE);
+    titleArt(LOGO_LADDERS, LOGO_LADDERS_W, LOGO_LADDERS_H, 63 - LOGO_LADDERS_W / 2, 31, LOGO_LADDERS_BASE, LOGO_LADDERS_RAMP,
+             LOGO_LADDERS_DEPTH, LOGO_LADDERS_SIDE);
     int y0 = 128 - n * 13 - 1;
     dither(0, y0 - 5, 128, 128 - y0 + 5, INK, 1);
     for (uint8_t i = 0; i < n; i++) menuItem(y0 + i * 13, ITEM[items[i]], i == sel, frame);

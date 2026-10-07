@@ -16,24 +16,32 @@ extern const uint8_t CAT1[57];  // the cat 18x10, row spans
 extern const uint8_t CAT2[57];  // the cat 18x10, row spans
 extern const uint8_t X_L[214];  // x_l 27x25, row spans, then the base centre x, y
 extern const uint8_t O_L[168];  // o_l 23x21, row spans, then the base centre x, y
-extern const uint8_t CHIP0_L[71];  // chip0_l 15x11, row spans, then the base centre x, y
-extern const uint8_t CHIP1_L[126];  // chip1_l 21x16, row spans, then the base centre x, y
-extern const uint8_t CHIP2_L[149];  // chip2_l 27x19, row spans, then the base centre x, y
+extern const uint8_t CHIP0_L[66];  // chip0_l 15x11, row spans, then the base centre x, y
+extern const uint8_t CHIP1_L[90];  // chip1_l 21x15, row spans, then the base centre x, y
+extern const uint8_t CHIP2_L[134];  // chip2_l 27x19, row spans, then the base centre x, y
 extern const uint8_t X_L1[232];  // x_l1 23x31, row spans, then the base centre x, y
 extern const uint8_t X_L2[189];  // x_l2 9x33, row spans, then the base centre x, y
 extern const uint8_t O_L1[181];  // o_l1 19x22, row spans, then the base centre x, y
 extern const uint8_t O_L2[122];  // o_l2 9x22, row spans, then the base centre x, y
 extern const uint8_t X_S[115];  // x_s 17x15, row spans, then the base centre x, y
 extern const uint8_t O_S[99];  // o_s 15x13, row spans, then the base centre x, y
-extern const uint8_t CHIP0_S[46];  // chip0_s 11x8, row spans, then the base centre x, y
-extern const uint8_t CHIP1_S[59];  // chip1_s 13x11, row spans, then the base centre x, y
-extern const uint8_t CHIP2_S[88];  // chip2_s 17x13, row spans, then the base centre x, y
-extern const uint8_t LOGO[180];  // 'TIC TAC TOE' 120x12, MSB-first rows
-constexpr int LOGO_W = 120;
+extern const uint8_t CHIP0_S[44];  // chip0_s 11x8, row spans, then the base centre x, y
+extern const uint8_t CHIP1_S[56];  // chip1_s 13x10, row spans, then the base centre x, y
+extern const uint8_t CHIP2_S[80];  // chip2_s 17x13, row spans, then the base centre x, y
+extern const uint8_t LOGO[180];  // 'TIC TAC TOE': the cover's lettering, 118x12, 1 bpp MSB-first rows
+constexpr int LOGO_W = 118;
 constexpr int LOGO_H = 12;
-extern const uint8_t ROYALE[242];  // 'Royale' 88x22, MSB-first rows
-constexpr int ROYALE_W = 88;
-constexpr int ROYALE_H = 22;
+constexpr int LOGO_BASE = 8;
+extern const uint8_t LOGO_RAMP[12];  // its face's gradient: per row, a colour (high nibble) over the base where its dither (low) has bits
+constexpr int LOGO_DEPTH = 1;
+constexpr int LOGO_SIDE = 7;
+extern const uint8_t ROYALE[252];  // 'ROYALE': the cover's lettering, 111x18, 1 bpp MSB-first rows
+constexpr int ROYALE_W = 111;
+constexpr int ROYALE_H = 18;
+constexpr int ROYALE_BASE = 8;
+extern const uint8_t ROYALE_RAMP[18];  // its face's gradient: per row, a colour (high nibble) over the base where its dither (low) has bits
+constexpr int ROYALE_DEPTH = 2;
+constexpr int ROYALE_SIDE = 7;
 extern const uint8_t YOUWON1[240];  // PPOT lettering 119x16, MSB-first rows
 constexpr int YOUWON1_W = 119;
 extern const uint8_t YOUWON2[224];  // PPOT lettering 107x16, MSB-first rows
@@ -42,3 +50,6 @@ extern const uint8_t BROKE1[192];  // PPOT lettering 91x16, MSB-first rows
 constexpr int BROKE1_W = 91;
 extern const uint8_t BROKE2[160];  // PPOT lettering 73x16, MSB-first rows
 constexpr int BROKE2_W = 73;
+extern const uint8_t CHIP_TOP[37];  // chip_top 15x6, row spans
+extern const uint8_t CHIP_SIDE[25];  // chip_side 15x4, row spans
+extern const uint8_t CHIP_SIDE_ALT[25];  // chip_side_alt 15x4, row spans

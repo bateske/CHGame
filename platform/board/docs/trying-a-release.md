@@ -77,6 +77,8 @@ IDE keeps showing an old version.
   do not fit. Each game's README is in its folder (*Sketch > Show Sketch
   Folder*).
 - *CHGame > Apps > CHSDtoUSB*: the board as a USB card reader.
+- *CHGame > Apps > CHSDtoSerial*: the SD card helper the website uploads
+  (*Tools > USB* **Serial**).
 - *CHGfx* has its own examples (*HelloGraphics*, *Demoscene* ...).
 
 Nothing needs to be copied into the sketchbook's `libraries/`:

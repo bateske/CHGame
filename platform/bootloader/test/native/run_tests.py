@@ -157,7 +157,8 @@ def check_constants():
     c = defines(SHARED / "chgame_card.h")
     pairs = [("CHG_MAGIC", chgpack.MAGIC), ("CHG_FORMAT_VERSION", chgpack.FORMAT_VERSION),
              ("CHG_HEADER_BYTES", chgpack.HEADER_BYTES), ("CHG_TARGET_ID", chgpack.TARGET_ID),
-             ("CHG_LAYOUT_ID", chgpack.LAYOUT_ID), ("CHG_OFF_IMAGE", chgpack.IMAGE_OFF)]
+             ("CHG_LAYOUT_ID", chgpack.LAYOUT_ID), ("CHG_OFF_IMAGE", chgpack.IMAGE_OFF),
+             ("CHG_OFF_RECORD", chgpack.RECORD_OFF)]
     bad = [n for n, v in pairs if f[n] != v]
     card = [("CARD_BG_MAGIC", int.from_bytes(runtime.BG_MAGIC, "little")), ("CARD_IDX_MAGIC", int.from_bytes(runtime.IDX_MAGIC, "little")),
             ("CARD_IDX_RECORD", runtime.IDX_RECORD), ("CARD_IDX_LAUNCH", runtime.IDX_LAUNCH),

@@ -1,15 +1,18 @@
 # A man: a casino chip seen from the table's edge, in the art's own tones
-# (tools/art/sides.txt dresses it as each side). The gold crown on its face
-# only shows on the chip that tops a king; on a man it takes the face's
-# colour. Base centre (the anchor): column 6, row 6.
-# k ink, w face, s edge, u inserts, y crown.
+# (tools/art/sides.txt dresses it as each side). The lit label (c) sits
+# toward the top-left light; the gold crown on it only shows on the chip
+# that tops a king (on a man it takes the label's colour). The rim is the
+# body's shade (s) with inserts: u on a man (and a king's lower chip), n on
+# the chip that tops a king, so a king's two chips alternate.
+# Base centre (the anchor): column 6, row 6.
+# k ink, w face, c label, s rim, u/n inserts, y crown.
 ...kkkkkkk...
-..kwwuuuwwk..
-.kwwywywywwk.
-kuuwyyyyywuuk
-kswwwwwwwwwsk
-ksswwuuuwwssk
-kssusssssussk
-.ksusssssusk.
-..kusssssuk..
+.kkcccccwwkk.
+kwccycycywwwk
+kwccyyyyywwwk
+ksswwwwwwwssk
+ksssssssssssk
+kuusssssssuuk
+kssnnuuunnssk
+.kkssssssskk.
 ...kkkkkkk...

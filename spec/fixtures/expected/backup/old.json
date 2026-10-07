@@ -1,0 +1,31 @@
+{
+ "warnings": [
+  "no-record"
+ ],
+ "games": [
+  {
+   "id": "hello-with-data",
+   "title": "HELLO WITH DATA",
+   "folder": "",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {},
+   "licenseFiles": {},
+   "picture": "c9765f48f6542148c76e2b100c88f494b0d3e30a6ad28ae43fbf5b885a81db61"
+  }
+ ],
+ "launch": "",
+ "menu": {
+  "colors": {},
+  "background": null,
+  "cover": null,
+  "about": null,
+  "systemImages": {},
+  "folders": {}
+ },
+ "sameCard": false
+}

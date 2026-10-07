@@ -11,29 +11,31 @@ const uint16_t CHIP_VALUE[DENOMS] = {1, 5, 25, 100};
 static const uint8_t CHIP_BODY[DENOMS] = {WHITE, RED, FELT_LT, INK};
 static const uint8_t CHIP_EDGE[DENOMS] = {BLUE, WHITE, WHITE, GOLD};
 static const uint8_t CHIP_SHADE[DENOMS] = {SILVER, WINE, FELT_DK, INK};
+static const uint8_t CHIP_LABEL[DENOMS] = {WHITE, SKIN, WHITE, NAVY};
 
 int chipDenom(int32_t amount) {
     for (int i = DENOMS - 1; i >= 0; i--) if (amount >= CHIP_VALUE[i]) return i;
     return 0;
 }
 
-// The chip sprites are drawn in placeholder colours - WHITE body, BLUE
-// edge marks, SILVER shade - which the denomination's remap replaces.
+// The chip sprites (tools/art/common/chip_*.txt) are drawn in placeholder
+// colours - WHITE body, BLUE edge inserts, SILVER shade, CYAN lit label -
+// which the denomination's remap replaces.
 static void chipSprite(const uint8_t *spr, int x, int y, uint8_t d) {
     uint8_t rm[16];
     for (uint8_t i = 0; i < 16; i++) rm[i] = i;
-    rm[WHITE] = CHIP_BODY[d]; rm[BLUE] = CHIP_EDGE[d]; rm[SILVER] = CHIP_SHADE[d];
+    rm[WHITE] = CHIP_BODY[d]; rm[BLUE] = CHIP_EDGE[d]; rm[SILVER] = CHIP_SHADE[d]; rm[CYAN] = CHIP_LABEL[d];
     sprite4(spr, x, y, rm);
 }
 
 void chip(int cx, int y, uint8_t d, bool top) {
     if (top) chipSprite(CHIP_TOP, cx - 7, y - 1, d);
-    else chipSprite(CHIP_SIDE, cx - 7, y + 1, d);
+    else chipSprite((y >> 1) & 1 ? CHIP_SIDE_ALT : CHIP_SIDE, cx - 7, y + 1, d);   // a stack's inserts alternate
 }
 
 void chipSmall(int cx, int y, uint8_t d, bool top) {
     if (top) chipSprite(CHIP_SMALL_TOP, cx - 5, y - 1, d);
-    else chipSprite(CHIP_SMALL_SIDE, cx - 5, y + 2, d);
+    else chipSprite((y >> 1) & 1 ? CHIP_SMALL_SIDE_ALT : CHIP_SMALL_SIDE, cx - 5, y + 2, d);
 }
 
 // Chips for an amount, largest first; the top of a tall stack is shown.

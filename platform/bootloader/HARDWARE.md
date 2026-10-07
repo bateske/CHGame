@@ -108,9 +108,11 @@ installed game stay. `UP` is the uploader as above (`chgame uploader` or
    `UP selfupdate platform/bootloader/build/release-visual/chgame_boot.bin --yes`
    (or `release/chgame_sdvisual.bin`). `UP info` reports bootloader v3.
 4. **What to check and report:**
-   - **Power-on.** The cover fades in (CHGAME CASINO), then, after about
-     1.5 s, the installed game's picture with a one-pixel border round it (rainbow; Static: white). No
-     game installed: the cover stays.
+   - **Power-on.** The cover fades in (CHGAME CASINO) and stays, whatever
+     is installed (until 2026-10-06 the installed game's picture followed
+     by itself). A on it: the installed game's picture with a one-pixel
+     border round it (rainbow; Static: white); A again plays it, B comes
+     back to the cover.
    - **The look.** Every picture as in
      [docs/visual_cards.png](docs/visual_cards.png): colours, no tearing.
      The CHGAME logo on the cover turns through the rainbow.
@@ -130,8 +132,15 @@ installed game stay. `UP` is the uploader as above (`chgame uploader` or
      A on the cart's cover: the installed game's picture; A plays it, B goes
      back to the cover, other keys do nothing.
    - **USB.** `chgame upload` with the menu up: the USB plug screen, then the
-     sketch runs. At the next power-on it is the first picture after the
-     cover (INSTALLED, with the border); A runs it.
+     sketch runs. At the next power-on the cover; A on it (or DOWN) shows
+     the INSTALLED picture with the border; A runs it.
+   - **Launch.** `chgame cart launch out/CHGame-Casino.chgame chfour`,
+     deploy, switch off and on: if FOUR IN A ROW is the installed game it
+     starts at once with the panel dark; otherwise the cover, then its
+     picture without a border, and nothing more until A installs it.
+     Undo with `chgame cart launch ... none` and deploy.
+   - **No folders.** On a card whose `GAMES/` holds only games, LEFT and
+     RIGHT do nothing.
    - **Errors.** A CHG file cut short in `GAMES/APPS/` (through the reader):
      its picture is ERROR 5, and A shows it too.
    - **Launch.** `chgame cart launch out/CHGame-Casino.chgame chfour`,
@@ -293,11 +302,15 @@ UP info                                  # BOOT_VERSION 2
 4. **Leave.** Press SELECT. The board resets into the 0.2.4 bootloader's USB
    mode: the LED blinks and the port is back.
 
-## HW2a: the trimmed bootloader, still without the menu
+## HW2a: the USB-only bootloader (`nomenu`, Tools > Bootloader: USB Only)
 
 This changes the proven USB upload path: page writes now go through the
 shared update code, there is no second erase, and RUN resets instead of
-jumping. It changes nothing else.
+jumping. It changes nothing else. It is also the bootloader for a board
+built without an SD card: it never touches the card's, the panel's or the
+keys' pins (only the LED and USB), so those pins are free for other
+circuits. Without a menu there is no B escape: USB mode is entered by the
+1200-baud touch, or when no valid program is installed.
 
 1. **Install it** (from HW1's USB mode, or from any game: the uploader
    touches the port itself).

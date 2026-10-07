@@ -104,27 +104,27 @@
   },
   "GAMES/COVER.PIC": {
    "size": 8704,
-   "sha256": "1bd835708372c15667d4cb6d92ad51f6ab7ee4f963052781b260753f89fe4c83"
+   "sha256": "f2fbf237573a8ac161fb2a38868ff80c71f125c9abf4e01262c3fe5bef813ff4"
   },
   "GAMES/SYSTEM.PIC": {
    "size": 78336,
-   "sha256": "f20da67d3ab3d665d290d6faad5389d1e965ebaeda54abaeffce4b0008e2d20c"
+   "sha256": "f2cda801f3c9f71d0c9b558fb08bc36eaeeb4fd9b182641fafc663dc2af1fe34"
   },
   "GAMES/ZULU.CHG": {
-   "size": 11348,
-   "sha256": "2378e6c65d9ee905c117ae1177504584259e03e7a2f964b6d963880087891217"
+   "size": 11910,
+   "sha256": "2e0e17b13ee87df19b1941451839b79de3ddbfe37b74c407820d6b69f64ebbb0"
   },
   "GAMES/WORDS.CHG": {
-   "size": 11348,
-   "sha256": "2b55e8e80944dbf0de8fabb3a910a74ebe8c19bb84f7a05dc3341732e635892b"
+   "size": 11849,
+   "sha256": "6eef8c14f031346a3285811090f04950b262ed376e25e963bd6155538ed9cc4b"
   },
   "GAMES/CON2.CHG": {
-   "size": 11348,
-   "sha256": "399fde826abdc6a6773dab4640e747ba3f43c045b0f018070dce0c4ad51f1f51"
+   "size": 11845,
+   "sha256": "08dee7ace501b3bb2f146672738282fc374e775b3967faa8b37c33aad0862fb0"
   },
   "GAMES/ATITLELO.CHG": {
-   "size": 11348,
-   "sha256": "5f4b11887ded48d22deb69682c6f659ea2a4d8603d522f4787c09d0211c004c2"
+   "size": 11909,
+   "sha256": "5e4b176c953f146ca37fde05867aea016d45922f83dcdd0fb976304e29a54577"
   },
   "GAMES/TOYS/MENU.IDX": {
    "size": 128,
@@ -135,20 +135,20 @@
    "sha256": "4be0433007b94ac1fed62b96a520b266f7d61912724956d9037a3816a6b58932"
   },
   "GAMES/TOYS/ALPHAGAM.CHG": {
-   "size": 11348,
-   "sha256": "1c0af87343ce338264cb0444bff2707729aabed0a87f8c0bb9a93c75a628a70f"
+   "size": 11854,
+   "sha256": "f77f1cfff049643663f143b8119107312bc343da104273b6d62fddb1638559c4"
   },
   "GAMES/TOYS/WORDS.CHG": {
-   "size": 11348,
-   "sha256": "2b55e8e80944dbf0de8fabb3a910a74ebe8c19bb84f7a05dc3341732e635892b"
+   "size": 11851,
+   "sha256": "400b1657cc9b05cfb85bdbd94b42951b75a998682557aaa7538e383c8fc41d98"
   },
   "GAMES/TOYS/BOX/MENU.IDX": {
    "size": 64,
    "sha256": "76b6c73f1e102c97c73fcec2d993aed397780e579a3c1bd007de4676e809e5ff"
   },
   "GAMES/TOYS/BOX/INNERGAM.CHG": {
-   "size": 11348,
-   "sha256": "8d8c8d05797073ce186fc8d69bac06443119a5f06a308306b0890f9f40f182bc"
+   "size": 11917,
+   "sha256": "d66d6bfa562f586c1a77d03db265b9b35a60dd1b08f5eb098049c245a90c1671"
   },
   "SHARED.DAT": {
    "size": 20,
