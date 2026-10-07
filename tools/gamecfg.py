@@ -50,6 +50,12 @@ Check (`chgame check`), on top of the above:
 
 Builds (`chgame build`, `upload`, `export`, `card`):
 
+    SAVE_PAGES = 2                  save pages the release image must leave
+                                    free, or the build fails: two keep the A/B
+                                    pair (a save survives a power cut), one
+                                    saves without that, none switches saving
+                                    off (tools/check_size.py)
+
     FQBN = None                     the board and options to build with instead
                                     of the release/debug defaults (device.py):
                                     CHSDtoUSB needs USB Serial and -Os
@@ -78,6 +84,7 @@ DEFAULTS = {
     "REDRAW": {"scripts": "tools/scripts/diff/*.txt", "ticks": (1, 3), "define": "CHSIM_FORCE_FULL"},
     "SIM_TESTS": [],
     "BUILD_REQUIRE": [],
+    "SAVE_PAGES": 2,
     "FQBN": None,
     "DEFINES": [],
 }

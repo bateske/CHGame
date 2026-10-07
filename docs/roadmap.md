@@ -222,6 +222,10 @@ It is ours now:
 - ~~The root `LICENSE` file is missing.~~ Added on 2026-10-02 (Apache-2.0,
   with a `NOTICE`). (The working name "CHCasino" left the code and comments
   on 2026-10-02.)
+- ~~Nothing failed when a game lost a save page.~~ Since 2026-10-07 a
+  release build fails below its `SAVE_PAGES` (two by default). The title
+  art had taken CHCraps past both pages (saving off) and CHTicTacToe past
+  one; CHGfx 1.3.1 brought them back (50,428 and 50,232 B).
 
 ### 7. Board revisions
 
@@ -250,7 +254,12 @@ bootloader, the build tools' device option, a run on both boards).
    game uploaded with the new *Smallest + LTO* default; a `.chg` from
    *Export Compiled Binary* started from the menu; the SD card zip on a
    real card (CHSd has never read a real card on a board). CHSDtoUSB stays
-   on `-Os` on the card until it is tried with LTO.
+   on `-Os` on the card until it is tried with LTO. Also owed since
+   2026-10-07 ([../platform/README.md](../platform/README.md)): CHGfx
+   1.3.1 on the panel, a 12 bpp game and `Benchmark` (16 bpp; the
+   simulator does not run `CHGfx.cpp`), a debug build linked with
+   `-flto-partition=one`, and CHWords started by an upload from CHSDtoUSB
+   without a power cycle (CHSd's CRC fix).
 3. **Date the changelog heading**, then `python tools/release/release.py`
    (it runs the new-user test again and publishes v0.3.0 with the casino
    cart and the SD card zip).

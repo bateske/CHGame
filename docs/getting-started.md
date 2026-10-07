@@ -188,7 +188,7 @@ Copy the game closest to yours. CHFour is small and recent, and has the full too
 2. `gfx_wait()`, then the frame is drawn into the 8 KB framebuffer.
 3. `gfx_flushAsync()` sends it. CHGfx converts each pair of rows through the palette into a small buffer and DMA sends it at 24 MHz SPI, while the CPU is already working on the next frame.
 
-   A full flush costs about 5 ms of CPU for the conversion. The games redraw only what changed, and draw still lettering once.
+   A full flush costs about 2.5-2.9 ms of CPU for the conversion. The games redraw only what changed, and draw still lettering once.
 
 **Code in RAM.** Flash has three wait states and no cache, so code from flash runs at about a third of the speed of code from SRAM. Hot loops are marked `RAMFUNC(name)` to run from SRAM ([performance.md](performance.md)).
 

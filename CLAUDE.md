@@ -258,11 +258,11 @@ override `compiler.cpp.extra_flags`.
 | | |
 |---|---|
 | Flash for the image | **50,944 B** (0x3000-0xF6FF). The bootloader takes 12 KB (the menu builds use up to 12,060 B of it, `platform/bootloader/SIZES.md`), and one page of metadata sits at 0xF700. |
-| Save pages | Two 256 B pages at the top of the app region. Keep the image ≤ **50,432 B** for both (A/B with CRC), ≤ 50,688 B for one. Past that, saving switches itself off. |
+| Save pages | Two 256 B pages at the top of the app region. Keep the image ≤ **50,432 B** for both (A/B with CRC), ≤ 50,688 B for one. Past that, saving switches itself off. A release build fails when it leaves fewer than the game's `SAVE_PAGES` (`tools/game.py`, two by default). |
 | Static RAM | **18,416 B**: 20 KB less the 16 B boot block and the 2 KB stack. Under ~900 B free, Arduino warns. |
 | Stack | 2 KB (games report the high-water mark with the debug `P` command) |
 | CPU | 48 MHz, no PLL. Flash has 3 wait states and no cache: code runs at ~5 cycles per instruction from flash vs ~2 from SRAM. |
-| Display | 128x128 ST7735S on SPI1 at 24 MHz. CHGfx's 4-bit framebuffer is 8 KB. A full async flush costs ~5 ms of CPU. |
+| Display | 128x128 ST7735S on SPI1 at 24 MHz. CHGfx's 4-bit framebuffer is 8 KB. A full async flush costs 2.5-2.9 ms of CPU at 12 bpp (CHGfx's README). |
 
 **Tactics that pay:**
 - `opt=oslto`.

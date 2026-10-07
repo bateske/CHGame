@@ -99,16 +99,20 @@ the option bytes and is untested here. Instead:
   - the controller wants the 0x08000000 alias of the address;
   - mask interrupts through CSR 0x800;
   - call `gfx_wait()` first, so no DMA flush is running.
-- **What every game does** (`src/save/Save.cpp`):
+- **What every game does** (the CHGame library's `chgame/Save.cpp`):
   - It uses two pages, **0xF500 and 0xF600**, in turn. Each record carries a
     magic, a version, a sequence number and a CRC, so a power cut can only
     lose the newest save.
-  - Both pages fit only while the image is ≤ **50,432 B**. A bigger image
-    switches saving off rather than overwrite code. The check uses
-    `_data_lma + (_edata - _data_vma)`.
+  - Both pages fit only while the image is ≤ **50,432 B**. Up to 50,688 B
+    it saves to the one page left, erasing it each time, so a power cut
+    during a save loses everything saved; past that it switches saving off
+    rather than overwrite code. The check uses `_data_lma + (_edata -
+    _data_vma)`. A release build fails when the image leaves fewer pages
+    than the game's `SAVE_PAGES` (`tools/game.py`, two by default).
   - **All games use the same two pages.** Each game must recognise only its
-    own records by magic and version. See [status.md](status.md) for the
-    magics that currently collide.
+    own records by magic and version, and a new game's magic must differ
+    from every other's (the collisions fixed on 2026-10-01 are in
+    [status.md](status.md#save-magics-fixed-2026-10-01)).
 
 ## Speed facts measured on this chip
 
@@ -121,7 +125,8 @@ the option bytes and is untested here. Instead:
   copies.
 - **Frames.** A full-screen redraw of a busy game frame is 6-17 ms. The DMA
   flush itself (8.4 ms at 12 bpp) runs beside the CPU, but an async full
-  flush still costs about 5 ms of CPU for the chunk conversion. Redraw only
+  flush still costs 2.5-2.9 ms of CPU for the chunk conversion (5.1 ms
+  before CHGfx 1.3 put the converters in SRAM). Redraw only
   what changed (band-level dirty tracking), and draw static layers once.
 - **Big outlined lettering** (mask + outline + shadow) costs 5-10 ms a word.
   Draw it once onto still screens, never per frame.

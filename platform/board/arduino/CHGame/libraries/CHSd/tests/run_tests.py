@@ -1,13 +1,17 @@
 """Build and run CHSd's host tests: src/Fat.cpp against FAT images made with
-tools/fatimg.py (whose layout is the ground truth), and host/VCard.h.
+tools/fatimg.py (whose layout is the ground truth), host/VCard.h, and
+src/SdSpi.cpp's init and read against a model of the card (test_spi.cpp).
 
     python tests/run_tests.py [--quick]
 
 --quick leaves out the FAT32 images (34 MB each). Compiler: $CHSIM_CXX, else
 zig on the PATH, else the zig kept beside the workspace (CH32Sound/.work/zig),
-else `python -m ziglang`, clang++ or g++.
+else `python -m ziglang`, clang++ or g++. The SPI test needs a 32-bit
+target (the driver gives the DMA addresses as uint32_t), which zig builds on
+Windows and x86-64 Linux; elsewhere it is skipped.
 """
 import os
+import platform
 import shutil
 import subprocess
 import sys
@@ -37,6 +41,17 @@ def find_cxx():
         if shutil.which(c):
             return [c]
     raise SystemExit("no C++ compiler: set CHSIM_CXX or put zig/clang++/g++ on the PATH")
+
+
+def spi_target(cxx):
+    """The 32-bit target test_spi.cpp is built for, or None."""
+    if not any("zig" in c for c in cxx):
+        return None
+    if platform.system() == "Windows":
+        return "x86-windows-gnu"
+    if platform.system() == "Linux" and platform.machine().lower() in ("x86_64", "amd64"):
+        return "x86-linux-musl"
+    return None
 
 
 def contents(size, seed):
@@ -93,14 +108,33 @@ def main():
     quick = "--quick" in sys.argv
     BUILD.mkdir(exist_ok=True)
     exe = BUILD / "test_fat.exe"
-    cmd = find_cxx() + ["-std=gnu++17", "-O2", "-Wall", "-Wextra", "-Wno-unknown-pragmas",
-                        "-fsanitize=undefined", "-fno-sanitize-recover=undefined", "-DCHTEST",
-                        str(HERE / "test_fat.cpp"), str(ROOT / "src" / "Fat.cpp"), "-o", str(exe)]
+    cxx = find_cxx()
+    flags = ["-std=gnu++17", "-O2", "-Wall", "-Wextra", "-Wno-unknown-pragmas",
+             "-fsanitize=undefined", "-fno-sanitize-recover=undefined"]
+    cmd = cxx + flags + ["-DCHTEST", str(HERE / "test_fat.cpp"), str(ROOT / "src" / "Fat.cpp"), "-o", str(exe)]
     r = subprocess.run(cmd, capture_output=True, text=True)
     if r.returncode:
         sys.stderr.write(r.stdout + r.stderr)
         raise SystemExit("build failed")
     ok = True
+
+    target = spi_target(cxx)
+    if target:
+        spi = BUILD / "test_spi.exe"
+        r = subprocess.run(cxx + flags + ["-target", target, f"-I{HERE / 'spi'}", f"-I{ROOT / 'src'}",
+                                          str(HERE / "test_spi.cpp"), str(ROOT / "src" / "SdSpi.cpp"), "-o", str(spi)],
+                           capture_output=True, text=True)
+        if r.returncode:
+            sys.stderr.write(r.stdout + r.stderr)
+            raise SystemExit("build failed (test_spi)")
+        r = subprocess.run([str(spi)], capture_output=True, text=True)
+        last = (r.stdout.strip().splitlines() or ["(no output)"])[-1]
+        print(f"   {'ok  ' if r.returncode == 0 else 'FAIL'} SPI driver against the card model: {last}")
+        if r.returncode:
+            print(r.stdout[-2000:] + r.stderr[-2000:])
+            ok = False
+    else:
+        print("   skip SPI driver (needs zig for a 32-bit build)")
 
     def run(label, *args):
         nonlocal ok

@@ -1,6 +1,6 @@
 """Flash and RAM report for a CHGame build, from the linker map.
 
-    chgame size [build/release] [--top 30] [--flash-limit N] [--ram-limit N]
+    chgame size [build/release] [--top 30] [--flash-limit N] [--ram-limit N] [--save-pages N]
 
 (or `python tools/check_size.py BUILDDIR ...`). tools/device.py runs it after
 every build.
@@ -9,7 +9,8 @@ The ceiling for statics + heap is 18,416 B (the 2 KB stack is fixed at the
 top of SRAM); this reads _ebss from the map. The image is everything flash
 holds: text, rodata and the .data initialisers (including RAM functions),
 and it decides how many save pages are left. Exits non-zero when a limit is
-exceeded.
+exceeded, or fewer than --save-pages are left (a release build passes its
+game's SAVE_PAGES, tools/gamecfg.py: two unless the game says otherwise).
 
 With LTO (opt=oslto, the release build) the per-file table shows the link's
 partitions (*.ltrans.o), not source files: use --symbols, or build with
@@ -68,6 +69,7 @@ def main(argv=None):
     ap.add_argument("--flash-limit", type=int, default=FLASH_LIMIT)
     ap.add_argument("--ram-limit", type=int, default=RAM_LIMIT)
     ap.add_argument("--symbols", action="store_true")
+    ap.add_argument("--save-pages", type=int, default=0, help="fail when fewer save pages are left")
     a = ap.parse_args(argv)
     maps = list(Path(a.build).glob("*.map"))
     if not maps:
@@ -87,6 +89,11 @@ def main(argv=None):
         pages = 2 if image <= 0xF500 - 0x3000 else (1 if image <= 0xF600 - 0x3000 else 0)
         print(f"image: {image} B of {a.flash_limit} (save pages free: {pages}; two need <= {0xF500 - 0x3000})")
         ok &= image <= a.flash_limit
+        if pages < a.save_pages:
+            top = 0xF500 - 0x3000 if a.save_pages >= 2 else 0xF600 - 0x3000
+            print(f"FAIL: {a.save_pages} save page{'s' if a.save_pages > 1 else ''} needed: "
+                  f"the image is {image - top} B over {top} B")
+            ok = False
     if "_ebss" in sym:
         ram = sym["_ebss"] - 0x20000010
         print(f"static RAM: {ram} B of {a.ram_limit} (stack 2048 B separate)")

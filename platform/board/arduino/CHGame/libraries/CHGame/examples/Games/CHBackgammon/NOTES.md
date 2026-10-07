@@ -56,7 +56,7 @@ Agent-facing notes for continuing work on this game. Rules and controls are in [
   - Avoid 64-bit division: it pulls in `__divdi3` (about 1.2 KB). See the 32-bit maths in `Cube.cpp`.
   - The glove is one `HAND` sprite, turned over with `SPR_FLIP_V` in `sprite4`.
 - Size levers measured earlier:
-  - `-flto-partition=one` would save about 260 B, but it needs link flags in the board package.
+  - `-flto-partition=one` is the board package's since 2026-10-07 (the Optimize option's link flags). It saved nothing here by then; nine other sketches gained 40-376 B.
   - The biggest remaining items are features: match/cube about 2 KB, display font + mask about 1.8 KB, tumbling-dice rotation about 0.7 KB.
 - Arduino's `binary.h` defines `B0`, `B1`, ... as macros. Don't use those names as identifiers.
 - `bg::Board` is `alignas(4)` (the network compares boards a word at a time) and has padding. Compare, hash or copy `.n` only, never the whole struct.

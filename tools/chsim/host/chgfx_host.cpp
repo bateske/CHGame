@@ -219,7 +219,9 @@ void gfx_stream(gfx_streamFn fn, void *user) {
 // ---------------------------------------------------------------------------
 // Configuration and the rest of the API
 // ---------------------------------------------------------------------------
-void gfx_begin(uint8_t spiDiv, uint8_t colorMode) {
+// gfx_begin() is the header's: the two starts differ on the board only in
+// which converters they link.
+void gfx__begin(uint8_t spiDiv, uint8_t colorMode) {
     s_div = spiDiv; s_mode = colorMode;
     static const uint16_t defpal[16] = {           // the board's default palette (CHGfx.cpp)
         0x0000, 0xFFFF, 0xF800, 0x07E0, 0x001F, 0xFFE0, 0x07FF, 0xF81F,
@@ -228,6 +230,7 @@ void gfx_begin(uint8_t spiDiv, uint8_t colorMode) {
     gfx_setPalette(defpal, 16);
     memset(gfx_fb, 0, sizeof gfx_fb);
 }
+void gfx__begin12(uint8_t spiDiv)       { gfx__begin(spiDiv, GFX_12BPP); }
 void gfx_setSpiDiv(uint8_t d)           { gfx_wait(); s_div = d; }
 void gfx_setColorMode(uint8_t m)        { gfx_wait(); s_mode = m; gfx__paletteTouch(); }
 uint8_t gfx_colorMode(void)             { return s_mode; }

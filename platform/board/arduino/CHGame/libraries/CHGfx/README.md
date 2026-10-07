@@ -134,6 +134,10 @@ frame rate is just the byte count:
 Gfx.begin(GFX_DIV2, GFX_12BPP);     // or GFX_16BPP / GFX_18BPP
 ```
 
+A sketch that names `GFX_12BPP` here and never calls `setColorMode()`
+leaves the 16 and 18 bpp converters and tables out of its image: about
+0.4 KB of flash and 176 B of SRAM (1.3.1).
+
 12 bpp costs nothing visually behind a 16-colour palette and is a free
 25%. 18 bpp buys one more bit of red and one of blue for a third of the
 frame rate - worth it for smooth gradients in direct mode, pointless for
@@ -161,12 +165,16 @@ degrades in proportion. Put the inner loop in SRAM - flash is 3 wait
 states here and measures 2.2x slower on this kind of loop:
 
 ```cpp
-#define FX __attribute__((section(".srodata.ramfunc.myeffect"), noinline))
-FX static void myEffect(uint8_t *dst, int y0, int rows, void *user) { ... }
+#define FX(name) __attribute__((section(".gnu.linkonce.r.app." #name), noinline))
+FX(myEffect) static void myEffect(uint8_t *dst, int y0, int rows, void *user) { ... }
 ```
 
 (Give each SRAM function a section name of its own, as above: functions
-sharing one name are kept or dropped by the linker together.)
+sharing one name are kept or dropped by the linker together. The
+`.gnu.linkonce.r.` prefix puts the code at the start of `.data`, as
+[What it costs in SRAM](#what-it-costs-in-sram) explains; a `.srodata.*`
+name, which 1.2's examples used, is copied to SRAM too but lands where it
+pushes your variables out of the global pointer's reach.)
 
 **4. Async present.** `displayAsync()` returns immediately; the transfer
 runs on DMA while the main loop does physics, input, audio, AI.
@@ -511,7 +519,7 @@ Hot loops live in SRAM, and each is in a section of its own, so the
 linker keeps only what your sketch calls. `HelloGraphics` uses 11.9 KB of
 SRAM in all, the core's included (8 KB of it the framebuffer, 1 KB the
 chunk buffers, 1 KB the palette table); `GameKit`, which uses nearly
-everything, 13.9 KB. The board leaves a sketch 18 KB, plus 2 KB of stack.
+everything, 13.8 KB. The board leaves a sketch 18 KB, plus 2 KB of stack.
 
 The SRAM code is placed at the start of `.data`, ahead of the small
 variables the global pointer reaches with one instruction: placed after

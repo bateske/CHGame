@@ -24,6 +24,12 @@ package's maintainer is shown as **bateske**.
   0.2.4 with the copied library renames `arduboy.` to `chgame.`.
 - **The games' code is in their sketch folders**, so the Arduino IDE shows
   it as tabs; `src/` keeps generated art, scores and tables.
+- **Smallest + LTO links as one partition** (`-flto-partition=one`). gcc
+  split the larger sketches in two and could not inline or merge across the
+  split: nine of the examples are 40-376 B smaller, none bigger.
+- **CHGfx 1.3.1: a 12 bpp sketch carries no 16 or 18 bpp code.**
+  `gfx_begin(..., GFX_12BPP)` with no `gfx_setColorMode()` leaves those
+  converters out: 0.2-0.4 KB of flash and 176 B of SRAM back in every game.
 
 ### Added
 
@@ -107,6 +113,11 @@ package's maintainer is shown as **bateske**.
 
 ### Fixed
 
+- **The word games could find no card after CHSDtoUSB.** CHSDtoUSB turns
+  the card's CRC checking on, the card stays powered across a reset, and a
+  game uploaded while it ran started without the menu (which turns it
+  off). CHSd sends fixed CRCs, so a card that kept checking on through the
+  reset refused it. CHSd now turns checking off itself.
 - **Linux builds.** `cores/arduino/ch32/lib/ch32yyxx.h` included
   `core_riscv_cH32yyxx.h` with a capital H; the file is
   `core_riscv_ch32yyxx.h`, so the core only compiled on case-insensitive file

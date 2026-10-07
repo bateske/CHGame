@@ -178,6 +178,14 @@ static uint8_t  s_rowStart = 3;
  *   12 bpp: entry = 3 packed RGB444 bytes in the low 24 bits          */
 static uint32_t s_lut[256];
 
+/* The 16 and 18 bpp converter and LUT builder, reached through these so that
+ * a sketch which only ever runs 12 bpp links neither: gfx__begin12() leaves
+ * them null, and only gfx__begin() and gfx_setColorMode() fill them in
+ * (otherModes()). Neither is called while the mode is 12 bpp. */
+static uint32_t (*s_convOther)(uint8_t *dst, const uint8_t *src, uint32_t srcBytes);
+static void (*s_buildOther)(const uint16_t *pal);
+static void otherModes(void);
+
 /* Ping-pong chunk buffers. GFX_CHUNK_BYTES is sized for the 16 bpp
  * worst case; 12 bpp uses 3/4 of it. */
 static uint8_t s_chunk[2][GFX_CHUNK_BYTES] __attribute__((aligned(4)));
@@ -426,7 +434,7 @@ static void applyColorMode(void) {
     if (s_mode == GFX_12BPP && s_writeLut12) gfx_writeColorLut();
 }
 
-void gfx_begin(uint8_t spiDiv, uint8_t colorMode) {
+static void begin(uint8_t spiDiv, uint8_t colorMode) {
     gpioInit();
     spiInit(spiDiv);
     dmaInit();
@@ -446,6 +454,14 @@ void gfx_begin(uint8_t spiDiv, uint8_t colorMode) {
     s_ready   = -1;
 }
 
+void gfx__begin12(uint8_t spiDiv) { begin(spiDiv, GFX_12BPP); }
+
+void gfx__begin(uint8_t spiDiv, uint8_t colorMode) {
+    s_mode = colorMode;
+    otherModes();
+    begin(spiDiv, colorMode);
+}
+
 void gfx_setSpiDiv(uint8_t div) {
     gfx_wait();
     SPI1->CTLR1 &= ~SPI_SPE;
@@ -458,6 +474,7 @@ void gfx_setColorMode(uint8_t mode) {
     if (mode == s_mode) return;
     gfx_wait();
     s_mode = mode;
+    otherModes();
     applyColorMode();
     gfx__paletteTouch();           /* LUT layout depends on the mode */
 }
@@ -497,7 +514,8 @@ void gfx_setInverted(bool on) {
  * it dirty; the LUT is rebuilt here, at the start of the next flush, once
  * the previous flush has stopped reading it. */
 
-static void buildLut(const uint16_t *pal) {
+/* 16 and 18 bpp (s_buildOther). */
+static void buildLutOther(const uint16_t *pal) {
     if (s_mode == GFX_16BPP) {
         /* Entry holds two RGB565 pixels. A single 32-bit store writes
          * both; on this little-endian core the low halfword lands first,
@@ -507,7 +525,7 @@ static void buildLut(const uint16_t *pal) {
             uint32_t hi = pal[b >> 4];
             s_lut[b] = lo | (hi << 16);
         }
-    } else if (s_mode == GFX_18BPP) {
+    } else {
         /* RGB666 is three bytes per PIXEL, so a 256-entry byte->2px
          * table would need six bytes an entry. Use a 16-entry palette
          * indexed by nibble instead and do two lookups per source byte;
@@ -523,6 +541,12 @@ static void buildLut(const uint16_t *pal) {
             s_lut[i] = ((r << 2) & 0xFF) | (((g << 2) & 0xFF) << 8)
                                          | (((b << 2) & 0xFF) << 16);
         }
+    }
+}
+
+static void buildLut(const uint16_t *pal) {
+    if (s_mode != GFX_12BPP) {
+        s_buildOther(pal);
     } else {
         /* RGB444: two pixels pack into exactly three bytes.
          *   byte0 = R0G0        byte1 = B0R1        byte2 = G1B1
@@ -644,8 +668,20 @@ __attribute__((noinline)) static uint32_t convSpan666(uint8_t *dst, const uint8_
 GFX_RAMFUNC(convspan) uint32_t gfx_convertSpan_ram(uint8_t *dst, const uint8_t *src, uint32_t srcBytes)
 {
     if (s_mode == GFX_12BPP) return conv444(dst, src, srcBytes);
-    if (s_mode == GFX_18BPP) return convSpan666(dst, src, srcBytes);
+    return s_convOther(dst, src, srcBytes);
+}
+
+/* 16 bpp's converter is in SRAM as well, on its own so that a 12 bpp sketch
+ * does not carry it. */
+static GFX_RAMFUNC(conv565) uint32_t convSpan565(uint8_t *dst, const uint8_t *src, uint32_t srcBytes)
+{
     return conv565(dst, src, srcBytes);
+}
+
+static void otherModes(void)
+{
+    s_convOther  = s_mode == GFX_18BPP ? convSpan666 : convSpan565;
+    s_buildOther = buildLutOther;
 }
 
 GFX_RAMFUNC(convrows) uint32_t gfx_convertRows_ram(uint8_t *dst, uint16_t row, uint16_t rows)

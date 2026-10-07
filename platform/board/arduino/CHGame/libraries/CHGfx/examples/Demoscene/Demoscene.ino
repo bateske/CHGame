@@ -50,7 +50,7 @@
 /* Hot loops go in SRAM. Flash on this part is 3 wait states at 48 MHz
  * and measured 2.2x slower on exactly this kind of tight loop, which at
  * a 32-cycle pixel budget is the difference between 90 fps and 40. */
-#define FX __attribute__((section(".srodata.ramfunc"), noinline))
+#define FX(name) __attribute__((section(".gnu.linkonce.r.demo." #name), noinline))
 
 /* ------------------------------------------------------------------ */
 /* Scratch arena                                                       */
@@ -208,7 +208,7 @@ static void setRampPalette(uint16_t lo, uint16_t hi, uint8_t bright)
 static uint8_t plasRowX[GFX_W];
 static uint8_t plasT0, plasT1, plasT2, plasT3;
 
-FX static void plasmaRows(uint8_t *dst, int y0, int rows, void *user)
+FX(plasmaRows) static void plasmaRows(uint8_t *dst, int y0, int rows, void *user)
 {
     (void)user;
     uint16_t *d = (uint16_t *)dst;
@@ -242,7 +242,7 @@ FX static void plasmaRows(uint8_t *dst, int y0, int rows, void *user)
  * on the wire, 61 fps instead of 90. Two thirds of the frame rate for
  * one more bit of red and one more of blue. Judge for yourself.
  */
-FX static void plasmaRows18(uint8_t *dst, int y0, int rows, void *user)
+FX(plasmaRows18) static void plasmaRows18(uint8_t *dst, int y0, int rows, void *user)
 {
     (void)user;
     const int8_t *st = sinTab;
@@ -359,7 +359,7 @@ static inline void tunnelRun(uint16_t *d, int step, const uint8_t *dp,
     }
 }
 
-FX static void tunnelRows(uint8_t *dst, int y0, int rows, void *user)
+FX(tunnelRows) static void tunnelRows(uint8_t *dst, int y0, int rows, void *user)
 {
     (void)user;
     uint16_t *d = (uint16_t *)dst;
@@ -419,7 +419,7 @@ static void rotoSetup(uint8_t ang, int zoom /* 8.8 */)
     rotoV0 = (32 << 8) - (rotoDvX * (GFX_W / 2) + rotoDvY * (GFX_H / 2));
 }
 
-FX static void rotoRows(uint8_t *dst, int y0, int rows, void *user)
+FX(rotoRows) static void rotoRows(uint8_t *dst, int y0, int rows, void *user)
 {
     (void)user;
     uint16_t *d = (uint16_t *)dst;
@@ -471,7 +471,7 @@ static inline uint32_t xorshift(void)
     return fireRnd;
 }
 
-FX static void fireStep(uint8_t cool)
+FX(fireStep) static void fireStep(uint8_t cool)
 {
     /* Bottom row: a moving band of embers rather than uniform noise,
      * so the flames wander instead of sitting still. */
@@ -492,7 +492,7 @@ FX static void fireStep(uint8_t cool)
     }
 }
 
-FX static void fireRows(uint8_t *dst, int y0, int rows, void *user)
+FX(fireRows) static void fireRows(uint8_t *dst, int y0, int rows, void *user)
 {
     (void)user;
     uint16_t *d = (uint16_t *)dst;
@@ -701,7 +701,7 @@ static void scrollPrepare(void)
     }
 }
 
-FX static void copperRows(uint8_t *dst, int y0, int rows, void *user)
+FX(copperRows) static void copperRows(uint8_t *dst, int y0, int rows, void *user)
 {
     (void)user;
     uint16_t *d = (uint16_t *)dst;

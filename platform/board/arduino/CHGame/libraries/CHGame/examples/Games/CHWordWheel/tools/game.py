@@ -28,4 +28,3 @@ def before_check(ctx):
 
 
 CARD = dict(scripts={"card"}, file="sdcard/PHRASES.BNK")
-BUILD_REQUIRE = ["save pages free: 2"]      # the release build must leave both save pages
