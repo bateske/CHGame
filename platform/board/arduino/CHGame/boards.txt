@@ -139,9 +139,12 @@ rev0.menu.usb.uploadonly.build.usb_flags=-DUSE_CHGAME_USB_BOOTONLY
 # the SD Graphic Menu, one picture at a time and no text (the card's covers
 # and the games' pictures; platform/bootloader/build.sh --ui=). Each comes in
 # two styles: the selection, boxes, bar and magenta parts as one colour
-# turning through the rainbow, or as painted (--style=). The sources and what
-# each one does are in platform/bootloader; bootloaders/CHGame/README.md says
-# where each binary comes from.
+# turning through the rainbow, or still (--style=: the text menu draws them
+# in its text colour, the graphic menu as painted). USB Only is the same
+# bootloader without the menu, for a board built without an SD card: it
+# drives the LED and USB and leaves every other pin high-Z. The sources and
+# what each one does are in platform/bootloader; bootloaders/CHGame/README.md
+# says where each binary comes from.
 rev0.menu.boot.sdmenu=SD Text Menu (Rainbow)
 rev0.menu.boot.sdmenu.bootloader.file=CHGame/chgame_sdboot.bin
 rev0.menu.boot.sdstatic=SD Text Menu (Static)

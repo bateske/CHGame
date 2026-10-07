@@ -11,7 +11,9 @@ read (ids, titles, folders, sizes and SHA-256 of their binaries and SD
 files), the warning codes, and every file of the prepared card (size and
 SHA-256); for a bad one, the error codes. Nothing in it depends on where a
 writer put files inside the ZIP, so another implementation can be held to
-it. The test (tools/chcart/tests) runs --check.
+it. backup/<name>.zip are cards (their files in a ZIP), and
+expected/backup/<name>.json what backing each up must give (backup.py). The
+test (tools/chcart/tests) runs --check.
 """
 from __future__ import annotations
 
@@ -25,7 +27,7 @@ import zipfile
 
 HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
-from chcart import model, runtime, zipio  # noqa: E402
+from chcart import backup, model, runtime, zipio  # noqa: E402
 from chcart.model import Cart, Game, Screenshot  # noqa: E402
 
 FIX = HERE.parents[1] / "spec" / "fixtures"
@@ -105,7 +107,30 @@ def good():
                              cart_image=png(picture((0, 60, 90), (255, 120, 0)))),
                         Game("three", "THREE", {"rev0": hello}, folder="CARDS/CLASSIC"),
                         Game("four", "FOUR", {"rev0": hello}, folder="DICE")])
-    return {"single": single, "single-sd": single_sd, "multi": multi, "pictures": pictures}
+    system = Cart("SYSTEM SCREENS", about=png(picture((30, 30, 30), (255, 244, 214))),
+                  system_images={"installed": png(picture((0, 40, 80), (255, 255, 255))),
+                                 "folder": png(picture((80, 60, 0), (255, 0, 255))),
+                                 "error-4": png(picture((100, 0, 0), (255, 200, 0)))},
+                  games=[Game("one", "ONE", {"rev0": hello}), Game("two", "TWO", {"rev0": hello}, folder="MORE")])
+    return {"single": single, "single-sd": single_sd, "multi": multi, "pictures": pictures, "system": system}
+
+
+def extension_cart():
+    """A cart written by the web tool before menu.systemImages existed: its
+    x-chgame-web (version 1) names two system screens, the official field
+    names one of them differently (it wins: extension-conflict), and another
+    x- key rides along. Written raw: chcart itself writes the official field."""
+    hello = HELLO.read_bytes()
+    inst, folder, other = (png(picture((0, 40, 80), (255, 255, 255))), png(picture((80, 60, 0), (255, 0, 255))),
+                           png(picture((10, 10, 60), (0, 255, 0))))
+    m = {"schemaVersion": 1, "title": "WEB CART",
+         "menu": {"systemImages": {"installed": "menu/official-installed.png"}},
+         "games": [{"id": "one", "title": "ONE", "binaries": [{"device": "rev0", "filename": "one.bin"}]}],
+         "x-chgame-web": {"version": 1, "builder": "fixture", "systemImages": {"installed": "art/installed.png",
+                                                                               "folder": "art/missing-folder.png"}},
+         "x-other-tool": {"note": "kept as it is"}}
+    return raw([("info.json", json.dumps(m, indent=2).encode()), ("one.bin", hello),
+                ("menu/official-installed.png", other), ("art/installed.png", inst), ("art/missing-folder.png", folder)])
 
 
 def raw(entries):
@@ -197,9 +222,77 @@ def result(data):
     }
 
 
+def backup_cards():
+    """{name: the card's files}: cards to back up (spec/card.md, "Backing up
+    a card"). Three as preparation wrote them, one changed by hand, one from
+    before records."""
+    carts = good()
+    out = {n: runtime.prepare(carts[n]) for n in ("multi", "pictures", "system")}
+    hello = HELLO.read_bytes()
+    shared = b"shared by two games\n"
+    cart = Cart("EDITED", games=[
+        Game("words", "WORDS", {"rev0": hello}, version="1.0", author="fixtures", license="MIT",
+             license_files={"LICENSE": b"Fixture licence text.\n"}, sd={"WORDS.DIC": b"words\n" * 50}),
+        Game("cross", "CROSS", {"rev0": hello}, folder="PUZZLES",
+             sd={"CHCW/A.CWD": b"puzzle a\n", "CHCW/B.CWD": b"puzzle b\n"}),
+        Game("twin-a", "TWIN A", {"rev0": hello}, sd={"SHARED.DAT": shared}),
+        Game("twin-b", "TWIN B", {"rev0": hello}, folder="PUZZLES", sd={"SHARED.DAT": shared}),
+        Game("solo", "SOLO", {"rev0": hello}, cart_image=png(picture((90, 0, 90), (0, 255, 0)))),
+        Game("dented", "DENTED", {"rev0": hello})])
+    f = runtime.prepare(cart)
+    del f["CHCW/B.CWD"]                                         # gone: sd-missing
+    f["SHARED.DAT"] = b"changed by hand\n"                      # changed: sd-changed, for both twins
+    f["GAMES/PUZZLES/SOLO.CHG"] = f.pop("GAMES/SOLO.CHG")       # moved by hand: in no MENU.IDX
+    f["GAMES/PUZZLES/WORDS.CHG"] = f["GAMES/WORDS.CHG"]         # copied: renamed-id
+    f["GAMES/HANDMADE.CHG"] = runtime.chgpack.pack(hello, "HANDMADE", "me", "0.1")      # no-record
+    broken = bytearray(f["GAMES/WORDS.CHG"])
+    broken[600] ^= 0xFF
+    f["GAMES/BROKEN.CHG"] = bytes(broken)                       # payload damaged: bad-chg
+    dented = bytearray(f["GAMES/DENTED.CHG"])
+    dented[-2] ^= 0xFF
+    f["GAMES/DENTED.CHG"] = bytes(dented)                       # record damaged: bad-record
+    f["README.TXT"] = b"not any game's\n"
+    out["edited"] = f
+    old = runtime.prepare(carts["single-sd"])                   # CHG files from before records
+    for p in [p for p in old if p.endswith(".CHG")]:
+        data = old[p]
+        info = runtime.chgpack.parse(data)
+        old[p] = runtime.chgpack.pack(data[512:512 + info["payload_bytes"]], info["title"], info["author"],
+                                      info["version"], picture=runtime.chgpack.read_picture(data))
+    out["old"] = old
+    return out
+
+
+def backup_result(files):
+    """What expected/backup/ records for backing a card up."""
+    cart, issues = backup.backup(files)
+    ui = cart.ui_colors()
+    pic = lambda png: sha(runtime.menu_picture(png)) if png is not None and model.picture_ok(png) else None
+    return {
+        "warnings": sorted({i.code for i in issues}),
+        "games": [{"id": g.id, "title": g.title, "folder": g.folder,
+                   **{k: getattr(g, k) for k in runtime.RECORD_TEXT if getattr(g, k)},
+                   "binaries": {d: {"size": len(b), "sha256": sha(b)} for d, b in g.binaries.items()},
+                   "sdcard": {p: sha(b) for p, b in sorted(g.sd.items())},
+                   "licenseFiles": {n: sha(b) for n, b in sorted(g.license_files.items())},
+                   "picture": pic(g.cart_image)} for g in cart.games],
+        "launch": cart.launch,
+        "menu": {"colors": dict(sorted(cart.colors.items())),
+                 "background": sha(runtime.menu_background(cart.background, ui)) if cart.background else None,
+                 "cover": pic(cart.cover), "about": pic(cart.about),
+                 "systemImages": {k: pic(v) for k, v in sorted(cart.system_images.items())},
+                 "folders": {n: {"background": sha(runtime.menu_background(cart.folder_backgrounds[n], ui))
+                                 if n in cart.folder_backgrounds else None,
+                                 "cover": pic(cart.folder_covers.get(n))}
+                             for n in sorted(set(cart.folder_backgrounds) | set(cart.folder_covers))}},
+        "sameCard": runtime.prepare(cart) == files,
+    }
+
+
 def everything():
     out = {f"good/{n}.chgame": zipio.to_bytes(c) for n, c in good().items()}
     out["good/warnings.chgame"] = warnings_cart()
+    out["good/extension.chgame"] = extension_cart()
     out.update({f"bad/{code}.chgame": data for code, data in bad().items()})
     return out
 
@@ -213,6 +306,14 @@ def write():
         e.parent.mkdir(parents=True, exist_ok=True)
         e.write_text(json.dumps(result(data), indent=1) + "\n", newline="\n", encoding="utf-8")
         print(rel)
+    for name, files in backup_cards().items():
+        f = FIX / "backup" / f"{name}.zip"
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_bytes(backup.card_zip(files))
+        e = FIX / "expected" / "backup" / f"{name}.json"
+        e.parent.mkdir(parents=True, exist_ok=True)
+        e.write_text(json.dumps(backup_result(files), indent=1) + "\n", newline="\n", encoding="utf-8")
+        print(f"backup/{name}.zip")
 
 
 def check(log=print):
@@ -225,6 +326,10 @@ def check(log=print):
             bad_.append((f.name, f"expected/{f.stem}.json should name exactly the error {f.stem}"))
         if got != want:
             bad_.append((f.name, "differs from expected/" + f.stem + ".json"))
+    for f in sorted((FIX / "backup").glob("*.zip")):
+        want = json.loads((FIX / "expected" / "backup" / (f.stem + ".json")).read_text(encoding="utf-8"))
+        if backup_result(backup.open_card(f).files) != want:
+            bad_.append((f"backup/{f.name}", "differs from expected/backup/" + f.stem + ".json"))
     for name, why in bad_:
         log(f"{name}: {why}")
     return bad_

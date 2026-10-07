@@ -7,9 +7,12 @@ are shared as .chgame files, and `chgame cart prepare` writes their CHG
 files with the rest of the card (spec/card.md). By hand, copy CHG files into
 the card's GAMES folder; the list menu shows the title from the header, the
 visual menu the picture packed after the program (--image: a 128x128 PNG
-that follows the picture rule, spec/card.md, or a .PIC file).
+that follows the picture rule, spec/card.md, or a .PIC file). The ones
+`chgame cart prepare` writes also carry the game's record (spec/chg.md): what
+a backup of the card needs to make the game's cart again.
 
     python tools/chgpack.py pack build/release/CHFour.ino.bin FOURROW.CHG --title "FOUR IN A ROW" [--image cart.png]
+                                                 (or the build's CHFour.ino.elf / .hex)
     python tools/chgpack.py verify FOURROW.CHG [more.CHG ...]
     python tools/chgpack.py info E:\\              # a mounted card (or any folder)
     python tools/chgpack.py info card.img          # a FAT image: also reports fragmentation
@@ -37,10 +40,13 @@ IMAGE_OFF = 0x060           # CHG_OFF_IMAGE: offset, bytes, CRC-32 of the game's
 PICTURE_MAGIC = b"CHB1"     # the picture: MENU.BG's encoding (shared/chgame_card.h)
 PICTURE_BYTES = 512 + 128 * 64
 PICTURE_MAX_OFFSET = 0x20000   # what the visual menu reads: under 128 KiB, a multiple of 512
+RECORD_OFF = 0x06C          # CHG_OFF_RECORD: offset, bytes, CRC-32 of the game's record (JSON; no menu reads it)
+RECORD_MAX = 1 << 20
 
 ERRORS = {1: "not a CHG package", 2: "header damaged", 3: "unknown format version",
           4: "built for another board or layout", 5: "bad payload size", 6: "payload damaged",
-          7: "a bootloader image, not a program", 8: "picture damaged"}
+          7: "a bootloader image, not a program", 8: "picture damaged",
+          9: "record damaged"}
 
 
 class ChgError(Exception):
@@ -62,10 +68,12 @@ def pad_image(image: bytes) -> bytes:
 
 
 def pack(image: bytes, title: str, author: str = "", version: str = "", app_version: int = 0,
-         picture: bytes | None = None) -> bytes:
+         picture: bytes | None = None, record: bytes | None = None) -> bytes:
     """The CHG file: header, payload and, given one (a picture in MENU.BG's
     encoding, as chcart.runtime.menu_picture() makes from a PNG), the game's
-    picture at the next 512-byte boundary after the payload (spec/chg.md)."""
+    picture at the next 512-byte boundary after the payload; then, given one
+    (chcart.backup.record() makes it), the game's record at the next 512-byte
+    boundary after that (spec/chg.md)."""
     payload = pad_image(image)
     if not payload or len(payload) > APP_MAX_SIZE:
         raise ValueError(f"image is {len(payload)} B; the limit is {APP_MAX_SIZE} B")
@@ -77,15 +85,23 @@ def pack(image: bytes, title: str, author: str = "", version: str = "", app_vers
     h[0x20:0x40] = _text(title, TITLE_LEN, "title")
     h[0x40:0x50] = _text(author, AUTHOR_LEN, "author")
     h[0x50:0x58] = _text(version, VERSTR_LEN, "version")
-    tail = b""
+    body = bytearray(payload)
+
+    def section(off, data):
+        at = -(-(HEADER_BYTES + len(body)) // 512) * 512
+        struct.pack_into("<III", h, off, at, len(data), zlib.crc32(data) & 0xFFFFFFFF)
+        body.extend(bytes(at - HEADER_BYTES - len(body)) + data)
+
     if picture is not None:
         if len(picture) != PICTURE_BYTES or picture[:4] != PICTURE_MAGIC:
             raise ValueError(f"the picture must be {PICTURE_BYTES} B starting with CHB1 (MENU.BG's encoding)")
-        at = -(-(HEADER_BYTES + len(payload)) // 512) * 512
-        struct.pack_into("<III", h, IMAGE_OFF, at, len(picture), zlib.crc32(picture) & 0xFFFFFFFF)
-        tail = bytes(at - HEADER_BYTES - len(payload)) + picture
+        section(IMAGE_OFF, picture)
+    if record is not None:
+        if not record or len(record) > RECORD_MAX:
+            raise ValueError(f"the record is {len(record)} B; 1 to {RECORD_MAX} B")
+        section(RECORD_OFF, record)
     struct.pack_into("<I", h, 0x1FC, zlib.crc32(bytes(h[:0x1FC])) & 0xFFFFFFFF)
-    return bytes(h) + payload + tail
+    return bytes(h) + bytes(body)
 
 
 def read_picture(data: bytes) -> bytes | None:
@@ -102,6 +118,25 @@ def read_picture(data: bytes) -> bytes | None:
             or pic[:4] != PICTURE_MAGIC or zlib.crc32(pic) & 0xFFFFFFFF != crc):
         raise ChgError(8, f"{n} B at {at}")
     return pic
+
+
+def read_record(data: bytes) -> bytes | None:
+    """The game's record in a CHG file (checked with parse() first): the
+    JSON's bytes, or None if it has none. ChgError(9) if the field names one
+    that is not there as spec/chg.md says: a backup then treats the file as
+    one without a record."""
+    at, n, crc = struct.unpack_from("<III", data, RECORD_OFF)
+    if not (at or n or crc):
+        return None
+    end = HEADER_BYTES + struct.unpack_from("<I", data, 0x10)[0]
+    pic_at, pic_n, _ = struct.unpack_from("<III", data, IMAGE_OFF)
+    if pic_at or pic_n:
+        end = max(end, pic_at + pic_n)
+    rec = data[at:at + n]
+    if (not n or n > RECORD_MAX or at % 512 or at < end or len(rec) != n
+            or zlib.crc32(rec) & 0xFFFFFFFF != crc):
+        raise ChgError(9, f"{n} B at {at}")
+    return rec
 
 
 def _cstr(b: bytes) -> str:
@@ -137,11 +172,12 @@ def _describe(name: str, data: bytes) -> tuple[bool, str]:
     try:
         i = parse(data)
         pic = read_picture(data)
+        rec = read_record(data)
     except ChgError as e:
         return False, f"{name:14s} BAD  {e}"
     extra = " ".join(x for x in (i["author"], i["version"]) if x)
     return True, (f"{name:14s} ok   {i['payload_bytes']:6d} B  {i['title']}" + (f"  ({extra})" if extra else "")
-                  + ("  [picture]" if pic else ""))
+                  + ("  [picture]" if pic else "") + ("  [record]" if rec else ""))
 
 
 def picture_file(path: str) -> bytes:
@@ -159,8 +195,18 @@ def picture_file(path: str) -> bytes:
         raise ValueError(f"{path}: {e}") from None
 
 
+def program_image(path: str) -> bytes:
+    """The program image in a .bin, or in the .hex or .elf the build writes
+    beside it (chcart converts those: the segments at the load address)."""
+    if pathlib.Path(path).suffix.lower() in (".hex", ".elf"):
+        sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+        from chcart import sources           # (lazily: chcart imports this module)
+        return sources.image_from_file(path)
+    return pathlib.Path(path).read_bytes()
+
+
 def cmd_pack(a) -> int:
-    image = pathlib.Path(a.bin).read_bytes()
+    image = program_image(a.bin)
     out = pack(image, a.title, a.author, a.version, a.app_version, picture_file(a.image) if a.image else None)
     pathlib.Path(a.out).write_bytes(out)
     info = parse(out)
@@ -215,7 +261,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("pack", help="wrap a program image in a package")
-    p.add_argument("bin")
+    p.add_argument("bin", help="the program: a .bin, or the build's .hex or .elf")
     p.add_argument("out")
     p.add_argument("--title", required=True, help="shown in the menu (31 characters at most; 20 fit on screen)")
     p.add_argument("--author", default="")

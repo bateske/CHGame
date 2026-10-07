@@ -1,5 +1,6 @@
 """Where games come from: a sketch folder (built, described by its
-chgame.json), a raw .bin, an Intel .hex, a .chg, or another .chgame.
+chgame.json), a raw .bin, an Intel .hex, the build's .elf, a .chg, or
+another .chgame.
 
 A sketch's chgame.json describes the one game it makes, with paths relative
 to the sketch; every key is optional (an unknown one is an error, so a typo
@@ -20,7 +21,9 @@ where they exist; sdcard `sdcard/` if it exists; screenshots
 docs/gameplay.gif if it exists; cartImage docs/cart.png if it exists, else
 one drawn from the title over the first screenshot (tools/boxart.py: the
 visual menu shows it), as for a game from a .bin, .hex or .chg file without
-a picture.
+a picture. A .chg file with a record (spec/chg.md: every one runtime
+preparation writes) gives the game as its cart had it, less its SD files
+(`chgame cart backup` reads those from the card).
 """
 from __future__ import annotations
 
@@ -76,26 +79,94 @@ def hex_to_bin(text, device="rev0"):
     return bytes(mem.get(a, 0xFF) for a in range(d.load_address, hi))
 
 
+def elf_to_bin(data, device="rev0"):
+    """An ELF executable's loadable segments as the raw image from the
+    device's load address, gaps 0xFF: what `objcopy -O binary` writes from
+    the `.elf` the IDE builds beside the `.bin`. Segments are placed at their
+    load address (p_paddr: initialised data lives in RAM but is loaded from
+    flash), so the image is the one the board package's build gives."""
+    import struct
+    d = model.DEVICES[device]
+    if len(data) < 52 or data[:4] != b"\x7fELF":
+        raise ValueError("not an ELF file")
+    if data[4] != 1 or data[5] != 1:
+        raise ValueError("not a 32-bit little-endian ELF")
+    e_type, e_machine = struct.unpack_from("<HH", data, 16)
+    if e_type != 2:
+        raise ValueError(f"ELF type {e_type}: not an executable")
+    if e_machine != 243:
+        raise ValueError(f"ELF machine {e_machine}: not RISC-V (243); built for another board?")
+    (e_phoff,) = struct.unpack_from("<I", data, 28)
+    e_phentsize, e_phnum = struct.unpack_from("<HH", data, 42)
+    segs = []
+    for i in range(e_phnum):
+        at = e_phoff + i * e_phentsize
+        if at + 32 > len(data):
+            raise ValueError("program headers past the end of the file")
+        p_type, p_offset, _vaddr, p_paddr, p_filesz = struct.unpack_from("<IIIII", data, at)
+        if p_type != 1 or not p_filesz:                # PT_LOAD with bytes in the file
+            continue
+        if p_offset + p_filesz > len(data):
+            raise ValueError(f"segment at 0x{p_paddr:X} past the end of the file")
+        segs.append((p_paddr & 0x07FFFFFF, data[p_offset:p_offset + p_filesz]))   # (flash at 0x0 or 0x08000000)
+    if not segs:
+        raise ValueError("no loadable segment")
+    segs.sort()
+    lo, hi = segs[0][0], max(a + len(b) for a, b in segs)
+    if lo < d.load_address:
+        raise ValueError(f"data at 0x{lo:X}, below {device}'s load address 0x{d.load_address:X}: "
+                         "is this a bootloader, or built for another board?")
+    if hi - d.load_address > d.max_image:
+        raise ValueError(f"data up to 0x{hi:X}: more than {d.max_image} B from 0x{d.load_address:X}")
+    img = bytearray(b"\xff" * (hi - d.load_address))
+    end = 0
+    for a, b in segs:
+        if a < end:
+            raise ValueError(f"segments overlap at 0x{a:X}")
+        img[a - d.load_address:a - d.load_address + len(b)] = b
+        end = a + len(b)
+    return bytes(img)
+
+
 def placeholder(title, shot=None):
     """The picture a game without one gets (tools/boxart.py)."""
     import boxart                           # (tools/ is on the path: runtime.py)
     return boxart.placeholder(title, shot)
 
 
+BINARY_SUFFIXES = (".bin", ".hex", ".elf", ".chg")
+
+
+def image_from_file(path, device="rev0"):
+    """The raw program image in a .bin, .hex or .elf file."""
+    p = pathlib.Path(path)
+    data = p.read_bytes()
+    if p.suffix.lower() == ".hex":
+        return hex_to_bin(data.decode("ascii", "replace"), device)
+    if p.suffix.lower() == ".elf":
+        return elf_to_bin(data, device)
+    return data
+
+
 def from_binary(path, title=None, gid=None, device="rev0"):
-    """A Game from a .bin, .hex or .chg file (the .chg header gives its title,
-    author and version, and its picture if it has one)."""
+    """A Game from a .bin, .hex, .elf or .chg file (the .chg header gives its
+    title, author and version, and its picture if it has one)."""
     p = pathlib.Path(path)
     data = p.read_bytes()
     meta = {}
-    if p.suffix.lower() == ".hex":
-        img = hex_to_bin(data.decode("ascii", "replace"), device)
+    if p.suffix.lower() in (".hex", ".elf"):
+        img = image_from_file(p, device)
     elif p.suffix.lower() == ".chg":
         import chgpack                      # (tools/ is on the path: runtime.py)
         try:
             info = chgpack.parse(data)
         except chgpack.ChgError as e:
             raise CartError([Issue("bad-field", str(p), str(e))])
+        from . import backup
+        game, sd, _ = backup.game_from_chg(data, device, str(p))
+        if sd is not None:                  # its record: the game as its cart had it (not its SD files)
+            game.id, game.title = gid or game.id, title or game.title
+            return game
         img = data[chgpack.HEADER_BYTES:chgpack.HEADER_BYTES + info["payload_bytes"]]
         meta = {k: info[k] for k in ("author", "version") if info[k]}
         title = title or info["title"]
@@ -223,9 +294,9 @@ def build_sketch(d, device="rev0"):
 # ---- anything -----------------------------------------------------------------------
 
 def load_item(item, build=True, title=None):
-    """[Game] from a path: a .chgame (all its games), a .bin/.hex/.chg, or a
-    sketch folder (built unless build=False, then its build/release .bin);
-    or the name of a game or app in this repository (CHFour)."""
+    """[Game] from a path: a .chgame (all its games), a .bin/.hex/.elf/.chg,
+    or a sketch folder (built unless build=False, then its build/release
+    .bin); or the name of a game or app in this repository (CHFour)."""
     p = pathlib.Path(item)
     if not p.exists() and p.name == str(item) and not p.suffix:
         import paths                        # tools/paths.py
@@ -239,9 +310,9 @@ def load_item(item, build=True, title=None):
         return [from_sketch(p, b.read_bytes())]
     if p.suffix.lower() == ".chgame":
         return zipio.load(p).games
-    if p.suffix.lower() in (".bin", ".hex", ".chg"):
+    if p.suffix.lower() in BINARY_SUFFIXES:
         return [from_binary(p, title)]
-    raise CartError([Issue("bad-field", str(p), "not a .chgame, .bin, .hex, .chg or sketch folder")])
+    raise CartError([Issue("bad-field", str(p), "not a .chgame, .bin, .hex, .elf, .chg or sketch folder")])
 
 
 def merge(games, new, log=print):

@@ -20,6 +20,7 @@ Agent-facing notes for continuing work on this game. Rules and controls are in [
 ## Design decisions
 
 - Chosen: a faithful port of Press Play On Tape's game flow and screens. `Round.cpp` keeps PPOT's ViewState flow; the additions are presentation.
+- Chosen (2026-10-06): the title screen draws the cover's BLACKJACK (`TITLE_LOGO`): `tools/cart.py` `title_lines()` gives its lettering as the cover places it, `tools/titleart.py` packs it, the library's `titleArt()` draws it in the house gold as a smooth dithered gradient, with no bevel or glints (docs/cover-art.md, "The same title on the title screen"). PPOT's own logo (`LOGO`) stays on the splash, their credit.
   - Casino rules are the default; the Classic preset keeps PPOT's rules.
   - PPOT's money bugs are fixed in both presets (listed in `NOTICE`).
 - Chosen: the credits are a cozy casino "back room" page, reached with A from Stats. The dealer tells the credits in his speech bubble, under a neon sign and cigarette smoke. Rejected: a demoscene-style credits screen.

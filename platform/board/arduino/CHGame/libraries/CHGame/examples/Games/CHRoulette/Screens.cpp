@@ -158,15 +158,16 @@ static void lettering(const uint8_t *bits, int w, int h, int x, int y, const uin
     maskDraw(m, x, y, GOLD, outline, shadow, ramp);
 }
 
-// "Roulette" in the title colours: the top rows in FX_B, so the palette
-// makes it shimmer with no redraw.
+// The title in the cover's lettering (tools/cart.py), in the house gold; the
+// top rows FX_B, so the palette makes them shimmer. Or printed on the felt.
 static void logo(int y, bool printed = false) {
+    if (!printed) {
+        titleArt(LOGO, LOGO_W, LOGO_H, 62 - LOGO_W / 2, y, LOGO_BASE, LOGO_RAMP, LOGO_DEPTH, LOGO_SIDE);
+        return;
+    }
     Mask m = maskBegin(LOGO_W, LOGO_H);
     maskBlit1(m, LOGO, LOGO_W, LOGO_H);
-    if (printed) { maskDraw(m, 64 - LOGO_W / 2, y, FELT_LT); return; }
-    uint8_t ramp[LOGO_H + 2];
-    for (int i = 0; i < LOGO_H + 2; i++) ramp[i] = i < 3 ? FX_B : (i < 12 ? GOLD : WOOD);
-    maskDraw(m, 64 - LOGO_W / 2, y, GOLD, INK, WINE, ramp);
+    maskDraw(m, 64 - LOGO_W / 2, y, FELT_LT);
 }
 
 // Big lettering in PPOT's font, scale 3, with a gradient, outline and shadow:
@@ -261,7 +262,7 @@ static void titleRender(uint32_t frame) {
     if (!titleReady) {
         titleReady = true;
         feltBackdrop();
-        logo(6);
+        logo(4);
         art::chipStack(15, 116, 25 * 3 + 10 * 2, 6);
         art::chipStack(113, 116, 100 + 25 * 2 + 5, 6);
         static const char *const LABEL[5] = {"PLAY", "CONTINUE", "NEW GAME", "OPTIONS", "STATS"};

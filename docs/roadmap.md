@@ -35,13 +35,13 @@ This page records what is in place and what each step involved.
 |---|---|---|
 | Arduino core, variant, linker scripts, Tools menus | `platform/board/arduino/CHGame` | 0.3.0, built and tested, not yet published (0.2.4 is the published one) |
 | Bootloader with the SD game menu | `platform/bootloader` | menu v2 (2026-10-03), Rainbow and Static (White until that evening, when colour 15 became the picture's magenta as painted; that build has not run on a board): the PC suite, and installed and checked on a board the same day (`test/hil/RESULTS-2026-10-03.md`; the first menu on 2026-10-01) |
-| The visual menu: the same bootloader, one picture at a time, no text ([visual-menu.md](visual-menu.md)) | `platform/bootloader` (`--ui=visual`), `tools/boxart.py`, each example's `tools/cart.py` | 2026-10-03: Rainbow and Static, in Burn Bootloader; the PC suite passes on test cards and the real casino card (which is now in genre folders, with box art for all 22 programs). Not yet run on a board (`platform/bootloader/HARDWARE.md`, "The visual menu") |
+| The visual menu: the same bootloader, one picture at a time, no text ([visual-menu.md](visual-menu.md)) | `platform/bootloader` (`--ui=visual`), `tools/artkit`, each example's `tools/cart.py` | 2026-10-03: Rainbow and Static, in Burn Bootloader; the PC suite passes on test cards and the real casino card (which is now in genre folders, with box art for all 22 programs, repainted on 2026-10-04 with the menu's own pictures: [cover-art.md](cover-art.md)). Not yet run on a board (`platform/bootloader/HARDWARE.md`, "The visual menu") |
 | The `.chgame` format and the SD card's layout | `spec/`, `tools/chcart` | version 1 and layout 2 (with the visual menu's pictures: `menu.cover`, `menu.about`, folder covers, `cartImage` in each CHG file); reference implementation, 24 unit tests, 27 conformance fixtures; the repository's games and release use it |
 | Uploader: `chgame-upload` in Go (the executable the board package installs; Windows, Linux, macOS) and the same tool in Python (`chgame_upload`, what the repository's tools use) | `platform/bootloader/host/go`, `host/py` | 0.2.0 here, with the bootloader update over USB and `burn`; the installed package has 0.1.0. Shared test vectors (`test/protocol/`) hold the two together |
 | Graphics | `platform/board/arduino/CHGame/libraries/CHGfx` | 1.3.0 |
 | SD card / FAT | `platform/board/arduino/CHGame/libraries/CHSd` | 1.0.0; never yet run against a real card on a board |
 | The `CHGame` library: buttons and pacing, palette, drawing, the 3x5 font, lettering, effects maths, sound, saving, the debug protocol, `RAMFUNC` | `platform/board/arduino/CHGame/libraries/CHGame` | every game is built on it ([its README](../platform/board/arduino/CHGame/libraries/CHGame/README.md)); in the board package's `libraries/` folder with CHGfx and CHSd |
-| Twenty games, two apps | the CHGame library's examples: `platform/board/arduino/CHGame/libraries/CHGame/examples/Games/`, `apps/CHStlView`, `apps/CHSDtoUSB` | building; verification per game in [status.md](status.md) |
+| Twenty games, three apps | the CHGame library's examples: `platform/board/arduino/CHGame/libraries/CHGame/examples/Games/`, `apps/CHStlView`, `apps/CHSDtoUSB`, `apps/CHSDtoSerial` | building; verification per game in [status.md](status.md) |
 | PC tools | `tools/` (one entry point, `chgame`; `pip install -e .`), per game a `tools/game.py`, a `chdrive.py` and scripts | in use; one simulator for the games, CHGfx's examples and its tests |
 
 ## What the first release needs
@@ -147,7 +147,7 @@ in it. The CHGame library's examples are:
 |---|---|---|
 | `examples/Hello` | the smallest complete sketch | *CHGame > Hello* |
 | `examples/Games/<Name>` | the twenty casino games | *CHGame > Games > CHFour* ... |
-| `examples/Apps/<Name>` | sketches that are not games: CHStlView, CHSDtoUSB | *CHGame > Apps > CHStlView*, *CHSDtoUSB* |
+| `examples/Apps/<Name>` | sketches that are not games: CHStlView, CHSDtoUSB, CHSDtoSerial | *CHGame > Apps > CHStlView*, *CHSDtoUSB*, *CHSDtoSerial* |
 
 Each game keeps its whole folder there: sketch, `src/`, `tools/`, `docs/`,
 `NOTES.md`. The shared tools stay in the repository's `tools/`; a game
@@ -175,8 +175,8 @@ reaches them through the `chgame` command, and they take a game by name
 - CHBlackjack's `tools/probes/FlashProbe` is left out of the package: *File
   > Examples* showed it nested inside the game. The packager now refuses
   any sketch nested in another example.
-- CHSDtoUSB is GPL-3.0 and keeps its own `LICENSE` in its folder, apart
-  from the Apache-2.0 library it is an example of.
+- CHSDtoUSB and CHSDtoSerial are GPL-3.0 and keep their own `LICENSE` in
+  their folders, apart from the Apache-2.0 library they are examples of.
 
 ### 5. The PC tools
 
@@ -203,6 +203,11 @@ done to use them without reading the source:
   the font tools. `sheet.py` is the one left.
 - one simulator: `tools/chsim` runs the games, CHGfx's examples and
   CHGfx's tests (2026-10-02); CHGfx's `extras/sim` is gone.
+- the web project's suggestions of 2026-10-06: its system screens are
+  `menu.systemImages` (`x-chgame-web` version 1 read as an alias); in place
+  of its SD resource sidecar, each CHG file carries the game's record and
+  `chgame cart backup` makes a card into a cart again, SD files included
+  ([spec/README.md](../spec/README.md) says why).
 
 ### 6. Known problems to fix on the way
 
@@ -241,3 +246,11 @@ It is ours now:
    this one. A last release there that points here is one way.
 5. **Third-party archives.** The toolchain and wchisp are referenced at
    their upstream URLs, not mirrored (`platform/board/THIRD-PARTY.md`).
+6. **The box art's fonts.** Fifteen of the fonts the titles are lettered
+   in (most of the games' titles, the casino cover and folders, the error
+   title) come from the bmf archive and old systems, whose authors stated
+   no terms. Check each one, or redraw that title in a clear-terms face,
+   before the release ([cover-art.md](cover-art.md#credits-fonts-in-the-titles)
+   marks them). The scout that finds a face, `artkit.fontscout`, reads
+   Pixel Logo Lab, which is not public: the pictures rebuild without it,
+   but a new title needs it.

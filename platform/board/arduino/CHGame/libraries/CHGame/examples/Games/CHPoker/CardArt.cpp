@@ -120,6 +120,7 @@ void dim(int x, int y, int w, int h) {
 static const uint8_t CHIP_BODY[7] = {WHITE, RED, BLUE, FELT_LT, INK, WINE, GOLD};
 static const uint8_t CHIP_EDGE[7] = {BLUE, WHITE, WHITE, WHITE, GOLD, GOLD, INK};
 static const uint8_t CHIP_SHADE[7] = {SILVER, WINE, NAVY, FELT_DK, INK, INK, WOOD};
+static const uint8_t CHIP_LABEL[7] = {WHITE, SKIN, CYAN, WHITE, NAVY, RED, WHITE};
 static const int32_t CHIP_VALUE[7] = {1, 5, 10, 25, 100, 500, 1000};
 
 int chipDenom(int32_t amount) {
@@ -127,23 +128,17 @@ int chipDenom(int32_t amount) {
     return 0;
 }
 
-// A 9x5 chip in perspective: its face (body colour, edge-colour inserts)
-// over the rim, outlined in ink. Stacked 2 px apart, each face covers the
-// rim of the one below.
+// A 9 px chip in perspective (the casino chip family: tools/art/chip9_*.txt):
+// sprites in placeholder colours - WHITE body, BLUE edge inserts, SILVER
+// shade, CYAN lit label - that the denomination's remap replaces. Stacked
+// 2 px apart, each face covers the rim of the one below; the lower chips
+// alternate two cuts, so their inserts make a countable pattern.
 void chip(int cx, int y, uint8_t d, bool top) {
-    uint8_t b = CHIP_BODY[d], e = CHIP_EDGE[d], sh = CHIP_SHADE[d];
-    gfx_pixel(cx - 4, y + 2, INK); gfx_pixel(cx + 4, y + 2, INK);
-    gfx_hline(cx - 3, y + 3, 7, sh);                    // the rim, striped
-    gfx_pixel(cx - 4, y + 3, INK); gfx_pixel(cx + 4, y + 3, INK);
-    gfx_pixel(cx - 2, y + 3, e); gfx_pixel(cx + 2, y + 3, e);
-    gfx_hline(cx - 3, y + 4, 7, INK);
-    if (!top) { gfx_hline(cx - 3, y + 2, 7, sh); return; }
-    gfx_hline(cx - 2, y, 5, INK);
-    gfx_pixel(cx - 3, y + 1, INK); gfx_pixel(cx + 3, y + 1, INK);
-    gfx_hline(cx - 2, y + 1, 5, b);
-    gfx_hline(cx - 3, y + 2, 7, b);
-    gfx_pixel(cx - 2, y + 1, e); gfx_pixel(cx + 2, y + 1, e);   // inserts
-    gfx_pixel(cx, y + 2, e);
+    uint8_t rm[16];
+    for (uint8_t i = 0; i < 16; i++) rm[i] = i;
+    rm[WHITE] = CHIP_BODY[d]; rm[BLUE] = CHIP_EDGE[d]; rm[SILVER] = CHIP_SHADE[d]; rm[CYAN] = CHIP_LABEL[d];
+    if (top) sprite4(CHIP9_TOP, cx - 4, y, rm);
+    else sprite4((y >> 1) & 1 ? CHIP9_SIDE_ALT : CHIP9_SIDE, cx - 4, y + 2, rm);
 }
 
 void chipStack(int cx, int baseY, int32_t amount, uint8_t maxChips) {
@@ -156,16 +151,35 @@ void chipStack(int cx, int baseY, int32_t amount, uint8_t maxChips) {
         chip(cx, baseY - 2 * (i - first), chips[i], i == n - 1);
 }
 
-// Round chips from the rounded-rect corner table: at r = w / 2 it draws a
-// pixel-art circle, so CHGfx's circle code needn't be linked.
+// A seat's chip, 9x9, in the casino chips' look (a lit label, insert dashes,
+// the rim's shade at the lower right): two pixels a byte, low nibble first;
+// 0 clear, 1 ink, 2 the seat's colour, 3 its shade, 4 its lit label, 5 its inserts.
+//   ..kkkkk..
+//   .kbeeebk.
+//   kbbbbbbbk
+//   kebhhhbek
+//   kebhhhbek
+//   kebhhhbek
+//   kbbbbbbsk
+//   .kbeeesk.
+//   ..kkkkk..
+static const uint8_t AVATAR[41] = {0x00, 0x11, 0x11, 0x01, 0x00, 0x21, 0x55, 0x25, 0x01, 0x21, 0x22, 0x22, 0x22, 0x11, 0x25, 0x44, 0x24, 0x15, 0x51, 0x42, 0x44, 0x52, 0x11, 0x25, 0x44, 0x24, 0x15, 0x21, 0x22, 0x22, 0x32, 0x01, 0x21, 0x55, 0x35, 0x01, 0x00, 0x11, 0x11, 0x01, 0x00};
+// Per seat (SEAT_COLOUR's order): shade, label, inserts.
+static const uint8_t SEAT_ROLE[6][3] = {{WINE, SKIN, WHITE}, {NAVY, CYAN, WHITE}, {WOOD, WHITE, INK},
+                                        {BLUE, WHITE, NAVY}, {NAVY, WHITE, NAVY}, {WOOD, WHITE, WOOD}};
+
 void avatar(int cx, int cy, uint8_t colour) {
-    uint8_t c = SEAT_COLOUR[colour % 6];
-    panel(cx - 4, cy - 4, 9, 9, 4, c, INK);
-    roundRect(cx - 2, cy - 2, 5, 5, 2, colour % 6 == 4 ? WHITE : SILVER);
-    gfx_pixel(cx, cy - 3, WHITE); gfx_pixel(cx, cy + 3, WHITE);
-    gfx_pixel(cx - 3, cy, WHITE); gfx_pixel(cx + 3, cy, WHITE);
+    uint8_t s = colour % 6;
+    const uint8_t col[6] = {0, INK, SEAT_COLOUR[s], SEAT_ROLE[s][0], SEAT_ROLE[s][1], SEAT_ROLE[s][2]};
+    for (int j = 0, n = 0; j < 9; j++)
+        for (int i = 0; i < 9; i++, n++) {
+            uint8_t v = (AVATAR[n >> 1] >> ((n & 1) << 2)) & 15;
+            if (v) gfx_pixel(cx - 4 + i, cy - 4 + j, col[v]);
+        }
 }
 
+// The dealer button, round from the rounded-rect corner table: at r = w / 2
+// it draws a pixel-art circle, so CHGfx's circle code needn't be linked.
 void button(int cx, int cy) {
     panel(cx - 3, cy - 3, 7, 7, 3, WHITE, INK);
     // A tiny D.

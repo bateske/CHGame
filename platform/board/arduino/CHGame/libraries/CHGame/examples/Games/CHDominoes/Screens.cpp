@@ -182,7 +182,7 @@ static void newGame(uint8_t mode) {
 // of the art a pixel of the screen), each swaying and tumbling slowly end
 // over end as it falls; now and then a
 // meteor: one streaks across, spinning hard, trailing rainbow sparks.
-enum { RAIL = 30, FALLERS = 8 };
+enum { RAIL = 46, FALLERS = 8 };
 struct Faller {
     int16_t x16, y16;                // its middle, Q4
     int8_t vx, vy, spin;             // Q4 a frame; spin in 1/16ths of 1/256 turn
@@ -281,13 +281,10 @@ static void titleRender(uint32_t frame) {
     if (!railKept) {
         gfx_fillRect(0, 0, 128, RAIL, INK);
         gfx_hline(0, RAIL, 128, GOLD);
-        // The name, drawn at this size (tools/art/logo.txt), straight onto
-        // the black: the top rows FX_B, so the palette makes them shimmer.
-        Mask m = maskBegin(LOGO_W, LOGO_H);
-        maskBlit1(m, LOGO, LOGO_W, LOGO_H);
-        uint8_t r[LOGO_H];
-        for (int i = 0; i < LOGO_H; i++) r[i] = i < 7 ? FX_B : (i < 12 ? GOLD : WOOD);
-        maskDraw(m, 64 - LOGO_W / 2, 7, 0, INK, -1, r);
+        // The title in the cover's lettering (tools/cart.py), in the house
+        // gold with wine depth; the top rows FX_B, so the palette makes them
+        // shimmer.
+        titleArt(LOGO, LOGO_W, LOGO_H, 62 - LOGO_W / 2, 3, LOGO_BASE, LOGO_RAMP, LOGO_DEPTH, LOGO_SIDE);
         railKept = true;
     }
     gfx_setClip(0, RAIL + 1, 128, 127 - RAIL);

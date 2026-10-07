@@ -13,7 +13,8 @@ platform/bootloader/shared/chgame_card.h and src/menu.c).
                            if it has one)
       SYSTEM.PIC           (top only) the visual menu's screens: the about
                            page (the cart's or the default), then spec/assets'
-      <NAME>.CHG           a game (spec/chg.md), with its picture if it has one
+      <NAME>.CHG           a game (spec/chg.md), with its picture if it has one,
+                           and its record (what a backup needs: backup.py)
       <NAME>/              a folder, the same again
     <the games' SD files>  at the paths the games read them from
 
@@ -22,9 +23,12 @@ write the same bytes: the conformance fixtures in spec/fixtures check it.
 """
 from __future__ import annotations
 
+import base64
+import json
 import pathlib
 import struct
 import sys
+import zlib
 
 from . import model
 from .model import CartError, Issue
@@ -36,8 +40,9 @@ import chgpack  # noqa: E402
 DEFAULT_BACKGROUND = REPO / "spec" / "assets" / "menu-default.png"
 DEFAULT_COVER = REPO / "spec" / "assets" / "cover-default.png"
 DEFAULT_ABOUT = REPO / "spec" / "assets" / "about-default.png"
-# SYSTEM.PIC's screens after the about page, in order (shared/chgame_card.h CARD_SYS_*)
-SYSTEM_SCREENS = ["installed", "game", "folder", "error-1", "error-2", "error-3", "error-4", "error-5"]
+# SYSTEM.PIC's screens after the about page, in order (shared/chgame_card.h
+# CARD_SYS_*); a cart replaces any of them through menu.systemImages
+SYSTEM_SCREENS = list(model.SYSTEM_IMAGES)
 SYSTEM_DIR = REPO / "spec" / "assets" / "system"
 IDX_MAGIC, BG_MAGIC = b"CHX1", b"CHB1"
 IDX_RECORD, IDX_LAUNCH = 32, 0x01
@@ -99,16 +104,21 @@ def menu_picture(png, where="picture"):
     return menu_background(png, model.UI_COLORS, "bad-picture", where)
 
 
-def picture_png(pic):
-    """A picture (menu_picture()'s encoding) back to a PNG that gives the same
-    picture again: its own colours as RGB565 gives them back, the menu's and
-    #FF00FF exactly."""
+def rgb888(c):
+    """An RGB565 colour as the 8-bit colour that gives it back."""
+    return (c >> 11) * 255 // 31, ((c >> 5) & 63) * 255 // 63, (c & 31) * 255 // 31
+
+
+def picture_png(pic, ui=None):
+    """A picture (menu_picture()'s encoding), or a MENU.BG made with the menu
+    colours `ui`, back to a PNG that gives the same bytes again: its own
+    colours as RGB565 gives them back, the menu's and #FF00FF exactly."""
     import io
     from PIL import Image
     pal = struct.unpack_from("<16H", pic, 8)
-    rgb = [((c >> 11) * 255 // 31, ((c >> 5) & 63) * 255 // 63, (c & 31) * 255 // 31) for c in pal]
+    rgb = [rgb888(c) for c in pal]
     for k, i in UI_INDEX.items():           # (the menu's colours and #FF00FF exactly: RGB565 cannot hold them all)
-        rgb[i] = model.hex_rgb(model.UI_COLORS[k])
+        rgb[i] = model.hex_rgb((ui or model.UI_COLORS)[k])
     rgb[RAINBOW_INDEX] = model.RAINBOW_RGB
     im = Image.new("P", (128, 128))
     im.putpalette([v for c in rgb for v in c])
@@ -119,22 +129,61 @@ def picture_png(pic):
     return b.getvalue()
 
 
+RECORD_VERSION = 1
+RECORD_TEXT = ("version", "author", "description", "genre", "license", "url", "sourceUrl")
+
+
+def canonical_json(obj):
+    """JSON as the record is written (spec/chg.md): keys sorted, no spaces,
+    everything above U+007F escaped (Python's ensure_ascii)."""
+    return json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("ascii")
+
+
+def record(game, device="rev0"):
+    """The game's record (spec/chg.md): what its cart says of it that the
+    CHG file and the card do not hold otherwise, and the SD files it puts on
+    the card with their sizes and CRCs, so that a backup of the card can make
+    its cart again (backup.py)."""
+    g = {"id": game.id, "title": game.title}
+    for k in RECORD_TEXT:
+        if getattr(game, k):
+            g[k] = getattr(game, k)
+    if game.buttons:
+        g["buttons"] = [{"control": c, "action": a} for c, a in game.buttons]
+    r = {"chgRecord": RECORD_VERSION, "game": g, "binaryBytes": len(game.binaries[device])}
+    if game.cart_image is not None:
+        r["cartImage"] = base64.b64encode(game.cart_image).decode("ascii")
+    if game.license_files:
+        r["licenseFiles"] = {n: base64.b64encode(d).decode("ascii") for n, d in game.license_files.items()}
+    if game.sd:
+        r["sdcard"] = [{"path": p, "bytes": len(game.sd[p]), "crc32": f"{zlib.crc32(game.sd[p]) & 0xFFFFFFFF:08x}"}
+                       for p in sorted(game.sd)]
+    return canonical_json(r)
+
+
 def chg_file(game, device="rev0"):
     """The game's CHG file (spec/chg.md): its binary for `device` behind the
     header, with the title, and the author and version where they fit; then
-    its picture (cartImage) if it follows the picture rule."""
+    its picture (cartImage) if it follows the picture rule; then its record."""
     pic = menu_picture(game.cart_image) if model.picture_ok(game.cart_image) else None
+    rec = record(game, device)
+    if len(rec) > chgpack.RECORD_MAX:
+        raise CartError([Issue("record-size", f"games[{game.id}]",
+                               f"its record is {len(rec)} B (licence files and cart image); {chgpack.RECORD_MAX} at most")])
     return chgpack.pack(game.binaries[device], game.title,
                         model.chg_text(game.author, model.CHG_AUTHOR_MAX),
-                        model.chg_text(game.version, model.CHG_VERSION_MAX), picture=pic)
+                        model.chg_text(game.version, model.CHG_VERSION_MAX), picture=pic, record=rec)
 
 
-def system_pic(about=None):
+def system_pic(about=None, images=None):
     """GAMES/SYSTEM.PIC: the about page (the cart's, else the default), then
-    the default screens, in SYSTEM_SCREENS' order."""
+    the menu's screens in SYSTEM_SCREENS' order: the cart's where it gives
+    one (menu.systemImages), else spec/assets' default."""
+    images = images or {}
     pngs = [about if about is not None else DEFAULT_ABOUT.read_bytes()]
-    pngs += [(SYSTEM_DIR / f"{n}.png").read_bytes() for n in SYSTEM_SCREENS]
-    return b"".join(menu_picture(p) for p in pngs)
+    pngs += [images.get(n) if images.get(n) is not None else (SYSTEM_DIR / f"{n}.png").read_bytes()
+             for n in SYSTEM_SCREENS]
+    return b"".join(menu_picture(p, f"menu.systemImages.{n}") for p, n in zip(pngs, ["about"] + SYSTEM_SCREENS))
 
 
 def levels(cart):
@@ -199,7 +248,7 @@ def prepare(cart, device="rev0"):
         if png is not None:
             out[f"{where[path]}/COVER.PIC"] = menu_picture(png)
         if not path:
-            out["GAMES/SYSTEM.PIC"] = system_pic(cart.about)
+            out["GAMES/SYSTEM.PIC"] = system_pic(cart.about, cart.system_images)
         out.update(files)
     sd = {}
     for g in cart.games:

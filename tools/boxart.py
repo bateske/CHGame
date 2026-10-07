@@ -1,23 +1,26 @@
-"""boxart: the house style of the visual menu's pictures (docs/visual-menu.md).
+"""boxart: the visual menu's pictures as PNGs, and the quick plain ones.
 
 Every picture the visual menu shows (a game's box art, a folder's cover, the
 cart's cover, the menu's own screens) is a 128x128 PNG that follows the
 picture rule (spec/card.md): at most 11 colours besides #FF00FF and the
-menu's four (#FFF4D6, #808080, #000000, #D62020). This module draws them as
-the games draw their title screens, on a pixkit.FB of HOUSE palette indices:
+menu's four (#FFF4D6, #808080, #000000, #D62020). The included pictures are
+painted with tools/artkit (docs/cover-art.md). This module:
 
-    import boxart as bx
-    fb = bx.game()                              # a game: green felt, gold frame
-                                                # (bx.folder(): blue felt; bx.cart(): black)
-    bx.logo(fb, bx.load_logo(path), 8)          # a game's logo.txt in the titles' gold
-    bx.title(fb, "CHESS", 8, scale=2)           # or its name in the display font
-    ...                                         # charms: fb.sprite(), bx.card(), bx.die(), pixkit.chip()
-    bx.save(fb, "docs/cart.png")                # checks the rule; an indexed PNG
+    png(picture), save(picture, path)   the PNG laid out as the card holds it
+                                        (an artkit Picture, a PIL image or a
+                                        pixkit.FB), checked against the rule
+    cli()                               `chgame boxart`: a sketch's docs/cart.png
+                                        from its tools/cart.py; --check, --sheet
+    placeholder(title, shot)            the plain pictures the tools draw for a
+    folder_cover(name)                  game or a folder that has none: the
+                                        title in the display font over the
+                                        game's first frame, a folder and its name
+    card_art(), RANKS, SUITS            the games' card ranks, suits and pips
+                                        (tools/art/common), for a recipe
 
-Colours are pixkit's HOUSE palette, plus CREAM and GREY (the menu's text and
-disabled colours). RED is drawn as the menu's red, #D62020, and INK as its
-black, so neither takes one of the 11. FX_A is #FF00FF: colour 15, which
-turns through the rainbow on a Rainbow bootloader, so use it on purpose.
+The plain pictures are drawn on a pixkit.FB of HOUSE palette indices, plus
+CREAM and GREY (the menu's text and disabled colours). RED is drawn as the
+menu's red, #D62020, and INK as its black, so neither takes one of the 11.
 
     python tools/boxart.py sheet OUT.png A.png B.png ...   # side by side, 2x, for a look
 """
@@ -49,11 +52,9 @@ def canvas(fill=INK):
 
 
 # ---- backgrounds ------------------------------------------------------------------
-# The pictures made here keep to one rule, so a folder never passes for a game:
+# The plain pictures keep to one rule, so a folder never passes for a game:
 # a folder is the navy gradient with its art in blues, folder() then blues();
-# the cart's own cover (the splash) is black, cart(); every game is on the
-# dark green felt, game(). (The apps' secret-agent screens show a style of
-# their own, as a user's art may.)
+# a game is on the dark green felt, game().
 
 def game():
     """A game's picture, ready for its charm: green felt, gold frame."""
@@ -89,13 +90,6 @@ def blues(fb, box=(0, 0, 128, 128)):
             fb.p[i] = BLUES.get(fb.p[i], fb.p[i])
 
 
-def cart():
-    """The cart's cover (the splash): black, gold frame."""
-    fb = canvas(INK)
-    fb.rect(2, 2, 124, 124, GOLD)
-    return fb
-
-
 def felt(fb, base=FELT, dark=FELT_DK, frame=GOLD):
     """The games' title backdrop (CHBlackjack's feltBackdrop): `base`, its
     edges dithered with `dark`, a frame two pixels in."""
@@ -109,19 +103,6 @@ def felt(fb, base=FELT, dark=FELT_DK, frame=GOLD):
 
 
 # ---- lettering ----------------------------------------------------------------------
-
-def load_logo(path):
-    """A game's logo.txt (1 bpp text art, '#' set) as rows, comment lines
-    ('# ', '; ' or none) skipped and the rows padded to one width."""
-    rows = []
-    for ln in pathlib.Path(path).read_text(encoding="utf-8").splitlines():
-        s = ln.rstrip()
-        if not s or s.startswith(("# ", "; ")) or set(s) - set("#."):
-            continue
-        rows.append(s)
-    w = max(len(r) for r in rows)
-    return [r.ljust(w, ".") for r in rows]
-
 
 def ramp(h, top=FX_B, mid=GOLD, low=WOOD):
     """The titles' gradient: `top` for the first rows, `mid`, then `low` for
@@ -139,36 +120,6 @@ def lettering(fb, rows, x, y, fill=None, outline=INK, shadow=WINE, colours=(FX_B
     m.draw(fb, x, y, fill if fill is not None else colours[1], outline, shadow,
            None if fill is not None else ramp(h, *colours))
     return x, y, w, h
-
-
-def logo_from_assets(game, name="LOGO", w=None):
-    """A 1 bpp logo from a game's generated src/assets/Assets.cpp (MSB-first
-    rows; w: its width, else <name>_W from Assets.h), as rows."""
-    import re
-    game = pathlib.Path(game)
-    text = (game / "src" / "assets" / "Assets.cpp").read_text(encoding="utf-8")
-    body = text[text.index(f"const uint8_t {name}["):]
-    body = re.sub(r"//[^\n]*|/\*.*?\*/", "", body[body.index("{") + 1:body.index("};")], flags=re.S)
-    data = [int(v, 0) for v in re.findall(r"0x[0-9A-Fa-f]+|\d+", body)]       # (hex or decimal)
-    if w is None:
-        h_text = (game / "src" / "assets" / "Assets.h").read_text(encoding="utf-8")
-        w = int(re.search(rf"{name}_W\s*=\s*(\d+)", h_text).group(1))
-    stride = (w + 7) // 8
-    return ["".join("#" if data[y * stride + x // 8] & (0x80 >> (x & 7)) else "." for x in range(w))
-            for y in range(len(data) // stride)]
-
-
-def ink_span(rows):
-    cols = [i for r in rows for i, ch in enumerate(r) if ch == "#"]
-    return (min(cols), max(cols)) if cols else (0, 0)
-
-
-def logo(fb, rows, y, x=None, **kw):
-    """A logo.txt's rows, its inked columns centred unless x is given."""
-    if x is None:
-        a, b = ink_span(rows)
-        x = 64 - (a + b + 1) // 2
-    return lettering(fb, rows, x, y, **kw)
 
 
 _FONT = None
@@ -230,46 +181,7 @@ def title(fb, s, y, scale=None, max_w=118, **kw):
     return lettering(fb, rows, 64 - len(rows[0]) // 2, y, **kw)
 
 
-def small(fb, s, y, c=CREAM, x=None):
-    """The 5x7 font, centred unless x is given (one line)."""
-    if x is None:
-        x = 64 - pk.text57_width(s) // 2
-    fb.text57(x, y, s, c)
-
-
-def tiny(fb, s, y, c=CREAM, x=None):
-    """The 3x5 font, centred unless x is given."""
-    if x is None:
-        x = 64 - pk.text35_width(s) // 2
-    fb.text35(x, y, s, c)
-
-
-# ---- charms -------------------------------------------------------------------------
-
-KEY = 255                                              # a layer's transparent index
-
-# The letters of the text art (tools/art/common/*.txt): one per HOUSE colour
-LETTER = {"k": INK, "w": WHITE, "d": FELT_DK, "f": FELT, "g": FELT_LT, "s": SILVER, "r": RED, "m": WINE,
-          "y": GOLD, "b": WOOD, "u": BLUE, "n": NAVY, "p": SKIN, "c": CYAN, "x": FX_A, "z": FX_B}
-
-
-def layer(w=128, h=128):
-    """A canvas that is transparent until drawn on: draw at 1x, then blit()."""
-    fb = pk.FB(KEY)
-    fb.lw, fb.lh = w, h
-    return fb
-
-
-def blit(dst, src, x, y, scale=1, box=None):
-    """src's drawn pixels (box: x, y, w, h within it) onto dst at x, y, each
-    one scale x scale."""
-    bx0, by0, bw, bh = box or (0, 0, getattr(src, "lw", 128), getattr(src, "lh", 128))
-    for j in range(bh):
-        for i in range(bw):
-            c = src.p[(by0 + j) * 128 + bx0 + i]
-            if c != KEY:
-                dst.fill_rect(x + i * scale, y + j * scale, scale, scale, c)
-
+# ---- the card art -------------------------------------------------------------------
 
 def glyph_sheet(path):
     """A text-art file of glyphs side by side, a blank column between (comment
@@ -278,17 +190,6 @@ def glyph_sheet(path):
             if ln.strip() and not ln.startswith("#")]
     parts = [r.split(" ") for r in rows]
     return [[p[k] for p in parts] for k in range(len(parts[0]))]
-
-
-def letters(fb, rows, x, y, remap=None, solid=None):
-    """Text art onto fb: each letter its colour (remap: letter -> colour), or
-    every set pixel `solid`; '.' is transparent."""
-    for j, r in enumerate(rows):
-        for i, ch in enumerate(r):
-            if ch == ".":
-                continue
-            c = solid if solid is not None else (remap or {}).get(ch, LETTER.get(ch, INK))
-            fb.pixel(x + i, y + j, c)
 
 
 _CARD_ART = {}
@@ -305,149 +206,6 @@ def card_art():
 
 RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
 SUITS = "cdhs"                                         # suits.txt's order; the pips' is h d s c
-CARD_W, CARD_H = 22, 28
-
-
-def card(fb, x, y, rank, suit, shadow=FELT_DK, edge=INK):
-    """A playing card as the games draw it (CHPoker's CardArt.cpp card()):
-    22x28, white, the rank over a small suit in the corner, a big pip or a
-    court portrait. rank: "A", "2".."10", "J", "Q", "K"; suit: c d h s."""
-    a = card_art()
-    col = RED if suit in "dh" else INK
-    r, s = RANKS.index(rank), SUITS.index(suit)
-    pip = "hdsc".index(suit)
-    if shadow is not None:
-        fb.vline(x + CARD_W, y + 2, CARD_H - 1, shadow)
-        fb.hline(x + 2, y + CARD_H, CARD_W - 1, shadow)
-    fb.panel(x, y, CARD_W, CARD_H, 2, WHITE, edge)
-    letters(fb, a["ranks"][r], x + 2, y + 3, solid=col)
-    letters(fb, a["suits"][s], x + 2, y + 12, solid=col)
-    if rank == "A":
-        letters(fb, a["pip13"][pip], x + 7, y + 9, solid=col)
-    elif rank in "JQK":
-        letters(fb, a["court"]["JQK".index(rank)], x + 7, y + 5, {"r": col if col != INK else BLUE})
-        letters(fb, a["suits"][s], x + 16, y + 20, solid=col)
-    else:
-        letters(fb, a["pip9"][pip], x + 9, y + 11, solid=col)
-
-
-def piece(path):
-    """A palette-exact sprite PNG (a game's tools/art) as rows of indices."""
-    return pk.load_png(path)
-
-
-def rgb_sprite(path, box=None):
-    """A sprite from any PNG (a box of it: x, y, w, h), its colours taken as
-    they are: rows of indices, new colours registered after the HOUSE ones
-    (the picture rule still counts them). Transparent pixels: None."""
-    from PIL import Image
-    im = Image.open(path).convert("RGBA")
-    if box:
-        im = im.crop((box[0], box[1], box[0] + box[2], box[1] + box[3]))
-    back = {v: k for k, v in RGB.items()}
-    rows = []
-    for y in range(im.height):
-        row = []
-        for x in range(im.width):
-            r, g, b_, a = im.getpixel((x, y))
-            if a < 128:
-                row.append(None)
-                continue
-            c = (r, g, b_)
-            if c not in back:
-                back[c] = max(max(RGB), 63) + 1
-                RGB[back[c]] = c
-            row.append(back[c])
-        rows.append(row)
-    return rows
-
-
-def sprites(path):
-    """A sprite sheet of palette letters (CHBoardwalk's, CHSnakes' sprites.txt;
-    '@NAME' starts a sprite, '#' lines are comments): {name: rows}."""
-    out, cur = {}, None
-    for ln in pathlib.Path(path).read_text(encoding="utf-8").splitlines():
-        if ln.startswith("@"):
-            cur = out.setdefault(ln[1:].split()[0], [])
-        elif cur is not None and ln.strip() and not ln.startswith("#"):
-            cur.append(ln.rstrip())
-        elif not ln.strip():
-            cur = None
-    return out
-
-
-def mask(rows):
-    """Letter art as 1 bpp rows: every letter set."""
-    return ["".join("." if ch == "." else "#" for ch in r) for r in rows]
-
-
-def big(fb, draw, w, h, x, y, scale=2):
-    """Something drawn by draw(layer) in a w x h box at 1x, put on fb scaled."""
-    lay = layer()
-    draw(lay)
-    blit(fb, lay, x, y, scale, (0, 0, w, h))
-
-
-_TILE_FONT = {}
-
-
-def tile_font(path):
-    """A word game's tile letters (tools/art/tilefont.txt: '= X', then rows of
-    '#' ink, '+' half ink)."""
-    if path not in _TILE_FONT:
-        f, cur = {}, None
-        for ln in pathlib.Path(path).read_text(encoding="utf-8").splitlines():
-            if ln.startswith("= "):
-                cur = f.setdefault(ln[2:].strip(), [])
-            elif cur is not None and ln.strip() and not ln.startswith("#"):
-                cur.append(ln.rstrip())
-        _TILE_FONT[path] = f
-    return _TILE_FONT[path]
-
-
-def chips(fb, cx, base_y, amount, n=8, scale=2):
-    """A stack of chips (pixkit.chip_stack: the games' chips) at scale, its
-    bottom chip's foot at base_y, centred on cx."""
-    lay = layer()
-    pk.chip_stack(lay, 16, 60, amount, n)
-    blit(fb, lay, cx - 16 * scale, base_y - 64 * scale, scale, (0, 0, 32, 66))
-
-
-def tile(fb, x, y, ch, font_path=None, w=14, h=14, face=CREAM, edge=WOOD, ink=INK, half=INK, score=None):
-    """A letter tile: a raised face with its letter centred, in the display
-    font (bold capitals) or a word game's tile font (font_path; '+', its half
-    ink, drawn in `half`), and its score."""
-    fb.fill_round(x, y + 1, w, h, 2, edge)
-    fb.fill_round(x, y, w, h - 1, 2, face)
-    if font_path is None:
-        g = [r for r in text_rows(ch) if "#" in r] or ["."]
-    else:
-        g = tile_font(font_path).get(ch, ["."])
-    gw = max(len(r) for r in g)
-    gx, gy = x + (w - gw) // 2 - (1 if score is not None else 0), y + (h - 1 - len(g)) // 2
-    for j, r in enumerate(g):
-        for i, c in enumerate(r):
-            if c == "#":
-                fb.pixel(gx + i, gy + j, ink)
-            elif c == "+":
-                fb.pixel(gx + i, gy + j, half)
-    if score is not None:
-        fb.text35(x + w - 4, y + h - 7, str(score), ink)
-
-
-def die(fb, x, y, n, size=14, body=WHITE, pip=INK, edge=INK, shade=SILVER):
-    """A die showing n, size pixels square, with a shaded lower edge."""
-    fb.fill_round(x, y, size, size, 3, edge)
-    fb.fill_round(x + 1, y + 1, size - 2, size - 2, 2, shade)
-    fb.fill_round(x + 1, y + 1, size - 2, size - 3, 2, body)
-    c, q = size // 2, size // 4 + 1
-    spots = {1: [(0, 0)], 2: [(-1, -1), (1, 1)], 3: [(-1, -1), (0, 0), (1, 1)],
-             4: [(-1, -1), (1, -1), (-1, 1), (1, 1)], 5: [(-1, -1), (1, -1), (0, 0), (-1, 1), (1, 1)],
-             6: [(-1, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (1, 1)]}[n]
-    r = 1 if size < 16 else 2
-    for dx, dy in spots:
-        px, py = x + c + dx * q - r // 2, y + c + dy * q - r // 2 - 1
-        fb.fill_rect(px, py, r + 1, r + 1, pip)
 
 
 # ---- defaults for what has no picture ---------------------------------------------------
@@ -531,6 +289,8 @@ def png(fb_or_image) -> bytes:
     """An indexed PNG laid out as the card holds it: the picture's own colours
     at 0-10 in order of first appearance, the menu's four at 11-14, #FF00FF at
     15, so a paint program shows the same palette the menu gets."""
+    if hasattr(fb_or_image, "image") and not isinstance(fb_or_image, (Image.Image, pk.FB)):
+        fb_or_image = fb_or_image.image()                # an artkit Picture
     im = image(fb_or_image) if isinstance(fb_or_image, pk.FB) else fb_or_image.convert("RGB")
     px = list(im.get_flattened_data() if hasattr(im, "get_flattened_data") else im.getdata())
     own = []
@@ -592,7 +352,8 @@ def recipes():
 
 
 def render(sketch):
-    """The PNG a sketch's tools/cart.py draws (its draw() returns a pixkit FB)."""
+    """The PNG a sketch's tools/cart.py draws (its draw() returns a PIL image,
+    an artkit Picture or a pixkit FB)."""
     import importlib.util
     f = pathlib.Path(sketch) / "tools" / "cart.py"
     spec = importlib.util.spec_from_file_location(f"cart_{pathlib.Path(sketch).name}", f)
@@ -616,7 +377,7 @@ def cli(argv, sketch=None):
         return 1 if stale else 0
     d = pathlib.Path(sketch)
     if not (d / "tools" / "cart.py").is_file():
-        print(f"{d.name}: no tools/cart.py (copy one from another game; tools/boxart.py has the house style)")
+        print(f"{d.name}: no tools/cart.py (copy one from another game; docs/cover-art.md has the method)")
         return 2
     data = render(d)
     from chcart import model

@@ -7,6 +7,9 @@ Sources:
   * tools/art/<name>.png (lower case), if present, replaces the sprite of
     that name: palette-exact art, as tools/sheet.py import writes from an
     edited sheet.
+  * The title screen's title (TITLE_LOGO): the cover's (tools/cart.py
+    title_lines(), tools/art/title.txt), packed by tools/titleart.py. LOGO,
+    the board's plaque, stays in sprites.txt.
 
 Outputs:
   src/assets/Assets.h / Assets.cpp   - generated, do not edit
@@ -173,6 +176,12 @@ def main():
     defs.append("const uint8_t *const TOKEN[4] = {" + ", ".join(TOKENS) + "};")
     decls.append("extern const uint8_t *const TOKEN[4];        // by seat")
     total += 16
+
+    import cart                                          # the title screen's: the cover's title
+    import titleart
+    line, = cart.title_lines()
+    titleart.emit(titleart.Into(decls, defs), "TITLE_LOGO", line, "'BOARDWALK'")
+    titleart.preview(line).save(PREVIEW / "title_logo.png")
 
     hand = sprites["HAND"]
     tip = [x for x, v in enumerate(hand[-1]) if v != TRANSPARENT]

@@ -68,4 +68,4 @@ Apache License 2.0; see `LICENSE` and `NOTICE`.
 - From [CHBlackjack](../CHBlackjack) (Apache-2.0), by way of CHRoulette: the input and frame pacing, palette, drawing, outlined lettering, effects, sound sequencer, flash saving, debug protocol, the PC simulator and tools, the table's wall and rail, the chips, the croupier with his expressions and the end-screen lettering.
 - CHBlackjack is a derivative of "Blackjack" for the Arduboy by Press Play On Tape - Simon Holmes (filmote), code, and Stephane C (vampirics), art ([Press-Play-On-Tape/Blackjack](https://github.com/Press-Play-On-Tape/Blackjack), Apache-2.0). The croupier is Press Play On Tape's dealer, recoloured and retouched by hand; the "YOU WON THE BANK" and "YOU ARE BROKE" lettering and the 3x5 pixel font are theirs.
 - From [CHChess](../CHChess) (Apache-2.0): the pointing glove, the soft clock ticks and the shake routine.
-- Everything else is new; the title lettering was drafted from the Arial Black and Georgia typefaces by `tools/make_logo.py`.
+- Everything else is new; the title is the cover's lettering (`tools/art/title.txt`, `title_royale.txt`).

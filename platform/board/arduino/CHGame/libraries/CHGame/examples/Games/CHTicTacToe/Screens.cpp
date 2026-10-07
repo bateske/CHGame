@@ -12,6 +12,7 @@
 #include "Fx.h"
 #include "ChipArt.h"
 #include "Stage.h"
+#include "Iso.h"
 #include "Table.h"
 #include "Sounds.h"
 #include "Save.h"
@@ -52,6 +53,9 @@ static void persist(bool keepGame) {
 // Two players can't share a table that keeps secrets or a clock.
 static bool offered(uint8_t mode) { return !two || !(MODES[mode].flags & (F_BLITZ | F_DARK | F_AUCTION)); }
 
+static void titleFallers();                  // the title's falling pieces (below)
+static void moveFallers(int bottom);
+
 static void enter(Scr s) {
     cur = s; t = 0; fadeIn = 8;
     staticSig = 0;
@@ -61,6 +65,7 @@ static void enter(Scr s) {
     switch (s) {
         case Scr::Title:
             menuSel = 0;
+            titleFallers();
             audio::sfx(Sfx::Title);
             break;
         case Scr::Tables:
@@ -216,6 +221,7 @@ static uint8_t menu(uint8_t *items) {
 
 static void titleUpdate() {
     uint8_t items[6], n = menu(items);
+    moveFallers(128 - n * 9 - 7);
     if (menuSel >= n) menuSel = 0;
     if (chgame.repeat(UP_BUTTON) && menuSel > 0) { menuSel--; audio::sfx(Sfx::Cursor); }
     if (chgame.repeat(DOWN_BUTTON) && menuSel + 1 < n) { menuSel++; audio::sfx(Sfx::Cursor); }
@@ -237,39 +243,72 @@ static void titleUpdate() {
     }
 }
 
-// The title's little board plays the same game over and over: X takes the
-// left column, and the line is struck through.
-static const uint8_t DEMO[7] = {4, 1, 0, 8, 6, 2, 3};
+// The title's pieces: X and O fall past between the title and the menu,
+// turning about their uprights as they do in the hand and swaying a little
+// (CHMahjong's and CHSolitaire's falling tiles and cards). The lettering
+// above is the costly part of the screen and never changes: only the strip
+// between it and the menu is drawn each frame.
+static const int FALL_Y = 41;               // under the title's shadow
 
-static uint8_t titleStep = 0xFF;            // the little board's move, as last drawn
+struct Faller {
+    int16_t x16, y16;                       // the base centre, Q4
+    uint8_t vy, sym, turn, rate, sway, swaySpd, amp;
+};
+static Faller fallers[6];
 
-// The little board alone: the lettering above it is the costly part of the
-// title, and never changes.
-static void titleBoard(uint32_t frame, int y0) {
-    uint8_t step = titleStep = (uint8_t)((frame / 20) % 11);
-    const int cw = 11, bx = 64 - 16, by = 42 + (y0 - 79) / 2;
-    gfx_fillRect(bx - 1, by - 2, 3 * cw + 1, 3 * cw + 3, FELT);
-    for (int i = 1; i < 3; i++) {
-        gfx_vline(bx + i * cw - 1, by, 3 * cw - 1, GOLD);
-        gfx_hline(bx, by + i * cw - 1, 3 * cw - 1, GOLD);
+// Above the strip, so it comes in from under the title.
+static void dropFaller(Faller &f, int y) {
+    f.x16 = (int16_t)(fx::rndRange(18, 111) << 4);
+    f.y16 = (int16_t)(y << 4);
+    f.vy = (uint8_t)fx::rndRange(5, 11);                       // 0.3 - 0.7 px a frame
+    f.sym = (uint8_t)(1 + (fx::rnd() & 1));
+    f.turn = (uint8_t)fx::rnd();
+    f.rate = (uint8_t)fx::rndRange(3, 7);                      // a quarter turn every 10-20 frames
+    f.sway = (uint8_t)fx::rnd();
+    f.swaySpd = (uint8_t)fx::rndRange(1, 3);
+    f.amp = (uint8_t)fx::rndRange(2, 7);
+}
+
+static void titleFallers() {
+    for (uint8_t i = 0; i < 6; i++) dropFaller(fallers[i], FALL_Y + 8 + i * 15);   // spread down the strip
+}
+
+static void moveFallers(int bottom) {
+    for (auto &f : fallers) {
+        f.y16 = (int16_t)(f.y16 + f.vy);
+        f.turn = (uint8_t)(f.turn + f.rate);
+        f.sway = (uint8_t)(f.sway + f.swaySpd);
+        if ((f.y16 >> 4) > bottom + 34) dropFaller(f, FALL_Y - fx::rndRange(0, 20));
     }
-    for (uint8_t i = 0; i < 7 && i < step; i++)
-        stage::mark(bx + DEMO[i] % 3 * cw + 5, by + DEMO[i] / 3 * cw + 5, 3, (uint8_t)(1 + (i & 1)));
-    if (step > 7) gfx_fillRect(bx + 4, by - 2, 3, 3 * cw + 3, FX_A);
+}
+
+// The strip: the felt as feltBackdrop() lays it, and the pieces on it.
+static void titleStrip(int y0) {
+    int bottom = y0 - 3;                                       // the menu's band
+    gfx_setClip(0, FALL_Y, 128, bottom - FALL_Y);
+    gfx_fillRect(0, FALL_Y, 128, bottom - FALL_Y, FELT);
+    dither(0, 0, 6, 128, FELT_DK, 0);
+    dither(122, 0, 6, 128, FELT_DK, 1);
+    gfx_rect(2, 2, 124, 124, GOLD);
+    for (auto &f : fallers) {
+        bool mirror;
+        const uint8_t *a = iso::spin(f.sym == 1 ? X_L : O_L, (uint8_t)((f.turn >> 4) & 3), mirror);
+        int x = (f.x16 >> 4) + ((fx::isin(f.sway) * f.amp) >> 8);
+        iso::stand(a, x, f.y16 >> 4, 0, nullptr, false, mirror);
+    }
+    gfx_resetClip();
 }
 
 static void titleRender(uint32_t frame) {
     uint8_t items[6], n = menu(items);
     int y0 = 128 - n * 9 - 4;                                    // the menu, pitch 9
     feltBackdrop();
-    uint8_t ramp[ROYALE_H + 2];
-    for (int i = 0; i < LOGO_H + 2; i++) ramp[i] = i < 3 ? FX_B : (i < 9 ? GOLD : WOOD);
-    lettering(LOGO, LOGO_W, LOGO_H, 64 - LOGO_W / 2, 6, ramp, INK, WINE);
-    for (int i = 0; i < ROYALE_H + 2; i++) ramp[i] = i < 6 ? WHITE : (i < 14 ? RED : WINE);
-    lettering(ROYALE, ROYALE_W, ROYALE_H, 64 - ROYALE_W / 2 + 2, 17, ramp, INK, INK);
+    // The title in the cover's lettering (tools/cart.py), in the house gold
+    // with wine depth; the top rows FX_B, so the palette makes them shimmer.
+    titleArt(LOGO, LOGO_W, LOGO_H, 63 - LOGO_W / 2, 3, LOGO_BASE, LOGO_RAMP, LOGO_DEPTH, LOGO_SIDE);
+    titleArt(ROYALE, ROYALE_W, ROYALE_H, 63 - ROYALE_W / 2, 18, ROYALE_BASE, ROYALE_RAMP, ROYALE_DEPTH, ROYALE_SIDE);
 
-    const int by = 42 + (y0 - 79) / 2;
-    titleBoard(frame, y0);
+    titleStrip(y0);
 
     static const char *const LABEL[6] = {"PLAY", "CONTINUE", "NEW GAME", "2 PLAYERS", "OPTIONS", "STATS"};
     dither(6, y0 - 3, 116, 125 - y0, INK, 1);
@@ -698,9 +737,9 @@ void render(uint32_t frame) {
         for (uint8_t i = 0; i < 8; i++) sig = sig * 31u + ((uint8_t *)&casino.opt)[i];
         sig |= 1;    // never 0: staticSig == 0 means "not drawn yet"
         if (sig == staticSig) {
-            if (cur == Scr::Title && titleStep != (frame / 20) % 11) {
+            if (cur == Scr::Title) {
                 uint8_t items[6];
-                titleBoard(frame, 128 - menu(items) * 9 - 4);
+                titleStrip(128 - menu(items) * 9 - 4);
             }
             return;
         }

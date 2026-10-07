@@ -182,12 +182,10 @@ static void lettering(const uint8_t *bits, int w, int h, int x, int y, const uin
     maskDraw(m, x, y, GOLD, outline, shadow, ramp);
 }
 
-// "Bingo" in CHBlackjack's title lettering and colours: the top rows in
-// FX_B, so the palette makes it shimmer with no redraw.
+// BINGO in the cover's bouncing letters (tools/cart.py), in the house gold
+// with wine depth; the top rows FX_B, so the palette makes them shimmer.
 static void logo(int y) {
-    uint8_t ramp[LOGO_H + 2];
-    for (int i = 0; i < LOGO_H + 2; i++) ramp[i] = i < 3 ? FX_B : (i < 12 ? GOLD : WOOD);
-    lettering(LOGO, LOGO_W, LOGO_H, 64 - LOGO_W / 2, y, ramp, INK, WINE);
+    titleArt(LOGO, LOGO_W, LOGO_H, 62 - LOGO_W / 2, y, LOGO_BASE, LOGO_RAMP, LOGO_DEPTH, LOGO_SIDE);
 }
 
 // Big lettering in PPOT's font, scale 3, with a gradient, outline and shadow:
@@ -243,7 +241,7 @@ static void titleUpdate() {
 
 // The felt and the logo are drawn once; each frame redraws the band the
 // balls bounce through and the menu, where the glove moves.
-static const int TITLE_BAND_Y = 35;
+static const int TITLE_BAND_Y = 46;
 
 // One bingo ball, lit from the top left, its letter on a white spot.
 static void ball(int cx, int cy, int letter) {
@@ -299,8 +297,8 @@ static void titleRender(uint32_t frame) {
     if (!titleReady) {
         titleReady = true;
         feltBackdrop();
-        logo(7);
-        centred35(28, "~75~BALL~CLASSIC~", CYAN);
+        logo(4);
+        centred35(40, "~75~BALL~CLASSIC~", CYAN);
     }
     titleBalls(frame, top);
     // The menu on its darker band, and the glove pointing at the choice.

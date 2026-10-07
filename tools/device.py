@@ -48,12 +48,19 @@ def fqbn(sketch, debug=False):
     return gamecfg.load(sketch).FQBN or (FQBN_DEBUG if debug else FQBN_RELEASE)
 
 
+def defines(sketch):
+    """The -D flags a sketch always builds with (its tools/game.py's DEFINES),
+    as one build.extra_flags string; "" for most."""
+    import gamecfg
+    return " ".join(f"-D{d}" for d in gamecfg.load(sketch).DEFINES)
+
+
 def build(sketch, debug=False, flags=""):
     """Compile; returns the build folder (build/release or build/debug)."""
     sketch = paths.sketch(sketch)
     out = sketch / "build" / ("debug" if debug else "release")
     cmd = ["arduino-cli", "compile", "-b", fqbn(sketch, debug), "--build-path", str(out)]
-    extra = ("-DCHGAME_DEBUG=1 " if debug else "") + flags
+    extra = " ".join(f for f in (("-DCHGAME_DEBUG=1" if debug else ""), defines(sketch), flags) if f)
     if extra.strip():
         cmd += ["--build-property", "build.extra_flags=" + extra.strip()]
     # All three every time: Arduino links only the ones a sketch includes.

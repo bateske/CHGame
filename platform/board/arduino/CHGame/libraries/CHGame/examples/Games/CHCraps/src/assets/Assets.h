@@ -7,15 +7,21 @@
 
 extern const uint8_t DEALER[487];
 extern const uint8_t FACE_NORMAL[119];
-extern const uint8_t CHIP_TOP[35];
-extern const uint8_t CHIP_SIDE[28];
+extern const uint8_t CHIP_TOP[37];
+extern const uint8_t CHIP_SIDE[25];
+extern const uint8_t CHIP_SIDE_ALT[25];
 extern const uint8_t CHIP_SMALL_TOP[31];
-extern const uint8_t CHIP_SMALL_SIDE[13];
+extern const uint8_t CHIP_SMALL_SIDE[15];
+extern const uint8_t CHIP_SMALL_SIDE_ALT[15];
 extern const uint8_t FIELD_PRINT[259];
 extern const uint8_t PUCK_ON[60];
 extern const uint8_t PUCK_OFF[71];
-extern const uint8_t LOGO[220];
-constexpr int LOGO_W = 74;
-constexpr int LOGO_H = 22;
+extern const uint8_t LOGO[375];
+constexpr int LOGO_W = 118;
+constexpr int LOGO_H = 25;
+constexpr int LOGO_BASE = 8;
+extern const uint8_t LOGO_RAMP[25];
+constexpr int LOGO_DEPTH = 3;
+constexpr int LOGO_SIDE = 7;
 extern const uint16_t FACE_EDITS[138];
 extern const uint16_t FACE_EDIT_AT[7];

@@ -52,7 +52,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
   - Rerun `chgame test` after any change.
 - CPU thinking runs a fixed number of play-outs, only on a frame's first logic tick. Keep it that way: it keeps the table animating and lockstep scripts deterministic.
 - The royal flush and the four sevens in `tools/scripts/gameplay.txt` and `showcase.txt` come from stacked decks. Everything else in them is the CPUs playing, so a CPU tuning change alters the README GIF: record it again.
-- Art: `tools/assets.py` packs `logo.txt` from `tools/art/` ("Poker" in the letters of PPOT's BlackJack logo) and CHBlackjack's card art and CHChess's glove from the shared `tools/art/common/` at the repository root; it does not read the sibling games. Credit Press Play On Tape as NOTICE does.
+- Art: `tools/assets.py` packs the title from `tools/cart.py` (the cover's arched POKER) and CHBlackjack's card art and CHChess's glove from the shared `tools/art/common/` at the repository root; it does not read the sibling games. Credit Press Play On Tape as NOTICE does.
 - Compiler: the simulator and tests need `CHSIM_CXX` set, or zig/clang++/g++ on PATH (see the root CLAUDE.md).
 
 ## How it fits
@@ -78,7 +78,7 @@ Everything can be checked on a PC (Python 3 with Pillow, and a C++ compiler for 
 - The tests cover: the evaluator (exhaustive), betting spots (no-limit minimum raises, short all-ins, pot-limit maximums, fixed-limit caps, the stud bring-in and order), side pots, odd chips, uncalled bets, the draw heuristic, CPU equity and honesty, statistics, and a fuzz of thousands of hands of every game at every table with random input, checking that no chip or card is ever lost or doubled and that every pot is paid.
 - Scripts: `say G <game> <table> <buy-in> <seed>` sits down, `say D <cards>` stacks the deck (card = rank*4 + suit), `waitturn` runs until the table waits for you, `playto P` checks or calls until the table reaches phase P, `snap` and `rec` take pictures. The same scripts run on the device with a debug build (`chgame run --device SCRIPT OUTDIR`).
 - `tools/scripts/gameplay.txt` records the README's clips: the title, a Hold'em royal flush and Five Card Draw's four sevens from stacked decks, and a Seven Card Stud hand that is the CPUs playing, so a CPU tuning change alters that clip. `showcase.txt` is the longer tour (lobby, Omaha, all in and busted, breaking the bank), kept as a test.
-- Art: `tools/art/logo.txt` is the title's lettering as `#` and `.`; the cards and the glove are the shared ones in the repository's `tools/art/common/`.
+- Art: the title is the cover's (2026-10-06): `tools/cart.py` `title_lines()` gives its lettering as the cover places it, `tools/titleart.py` packs it, the library's `titleArt()` draws it in the house gold as a smooth dithered gradient, with no bevel or glints (docs/cover-art.md, "The same title on the title screen"). The earlier `tools/art/logo.txt` ("Poker" in PPOT's BlackJack letters, drawn at 2x) is no longer read. The cards and the glove are the shared ones in the repository's `tools/art/common/`.
 - With plain `arduino-cli`: `arduino-cli compile -b CHGame:ch32v:rev0:opt=oslto,rtlib=nano,periph=game,usb=uploadonly .` (board package 0.3.0 brings CHGfx and the CHGame library; `chgame build` does the same with the repository's copies).
 
 ## Files

@@ -2,6 +2,7 @@
 #include <CHGfx.h>
 #include "Mask.h"
 #include "Draw.h"
+#include "Palette.h"
 #include "RamFunc.h"
 
 Mask maskBegin(int w, int h) {
@@ -144,4 +145,69 @@ void maskDraw(const Mask &m, int x, int y, uint8_t fill, int outline, int shadow
 
 void maskPaint(const Mask &m, int x, int y, uint8_t c) {
     for (int r = 1; r <= m.h; r++) runs(m.bits + r * m.stride, m.stride, x - 1, y + r - 1, c);
+}
+
+// Mask row j, or the blank top margin outside it.
+static const uint8_t *maskRow(const Mask &m, int j) {
+    return (unsigned)j < (unsigned)(m.h + 2) ? m.bits + j * m.stride : m.bits;
+}
+
+// dst |= src moved k < 8 px right (n bytes, the last carry into dst[n]).
+CHGAME_RAMFUNC(maskorright) static void orRight(const uint8_t *src, uint8_t *dst, int n, uint8_t k) {
+    uint8_t carry = 0;
+    for (int i = 0; i < n; i++) {
+        dst[i] |= (uint8_t)((src[i] >> k) | carry);
+        carry = (uint8_t)(src[i] << (8 - k));
+    }
+    dst[n] |= carry;
+}
+
+// Row by row. V(j), the union of the copies moved 0 .. depth + 1 px down
+// and right, grown a pixel left and right, rolls through three rows; their
+// OR, less the rest, is the outline and the shadow (INK). Copies 1 .. depth
+// are the extrusion (`side`), copy 0 the face: the base, and over it a row's
+// colour where the row's dither pattern (a nibble, repeated) has bits. A one-pixel
+// gap between two face pixels on a row stays INK, so letters set close
+// stay apart instead of running together down a stripe of extrusion. These
+// rows are a pixel right of the mask's (room to grow on the left) and
+// stride + 1 bytes long (the copies run past its right edge): depth <= 4.
+void maskTitle(const Mask &m, int x, int y, uint8_t base, const uint8_t *ramp, uint8_t depth, uint8_t side) {
+    const int W = m.stride + 1, ox = x - 2, oy = y - 1;
+    uint8_t v[3][34], abf[102], *a = abf, *b = abf + 34, *f = abf + 68;
+    uint8_t *v0 = v[0], *v1 = v[1], *v2 = v[2];
+    memset(v, 0, sizeof v);
+    for (int r = 0; r <= m.h + depth + 2; r++) {
+        uint8_t *t = v0; v0 = v1; v1 = v2; v2 = t;      // V(r - 1), V(r); V(r + 1) goes in v2
+        memset(abf, 0, sizeof abf);
+        for (int k = 0; k <= depth + 1; k++) {
+            orRight(maskRow(m, r + 1 - k), a, m.stride, (uint8_t)(k + 1));
+            if (k && k <= depth) orRight(maskRow(m, r - k), b, m.stride, (uint8_t)(k + 1));
+        }
+        orRight(maskRow(m, r), f, m.stride, 1);          // the face (the margins outside 1 .. h)
+        unsigned carry = 0, fc = 0;
+        for (int i = 0; i < W; i++) {
+            unsigned c = a[i], fi = f[i];
+            v2[i] = (uint8_t)(c | (c >> 1) | carry | (c << 1) | (a[i + 1] >> 7));   // grown left and right
+            carry = c << 7;
+            unsigned gap = ~fi & ((fi >> 1) | fc) & ((fi << 1) | (f[i + 1] >> 7));
+            fc = fi << 7;
+            b[i] = (uint8_t)(b[i] & ~fi & ~gap);
+            a[i] = (uint8_t)((v0[i] | v1[i] | v2[i]) & ~b[i] & ~fi);
+        }
+        runs(a, (uint8_t)W, ox, oy + r, INK);
+        runs(b, (uint8_t)W, ox, oy + r, side);
+        if (r < 1 || r > m.h) continue;
+        uint8_t c = ramp[r - 1], pat = (uint8_t)((c & 15) * 0x11);   // its 4-pixel pattern, twice to the byte
+        if (pat != 0xFF) runs(f, (uint8_t)W, ox, oy + r, base);
+        if (!pat) continue;
+        for (int i = 0; i < W; i++) f[i] &= pat;
+        runs(f, (uint8_t)W, ox, oy + r, c >> 4);
+    }
+}
+
+void titleArt(const uint8_t *bits, uint8_t w, uint8_t h, int x, int y, uint8_t base, const uint8_t *ramp,
+              uint8_t depth, uint8_t side) {
+    Mask m = maskBegin(w, h);
+    maskBlit1(m, bits, w, h);
+    maskTitle(m, x, y, base, ramp, depth, side);
 }

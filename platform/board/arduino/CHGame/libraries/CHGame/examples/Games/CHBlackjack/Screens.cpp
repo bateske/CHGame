@@ -250,13 +250,11 @@ static void titleRender(uint32_t frame) {
     feltBackdrop();
     // Spotlight.
     dither(24, 30, 80, 44, FELT_LT, 0);
-    // Logo: the top rows use FX_B, so the palette makes it shimmer with no redraw.
-    Mask m = maskBegin(104, 14);
-    maskBlit1(m, LOGO, 104, 14);
-    uint8_t ramp[16];
-    for (int i = 0; i < 16; i++) ramp[i] = i < 3 ? FX_B : (i < 12 ? GOLD : WOOD);
-    maskDraw(m, 12, 8, GOLD, INK, WINE, ramp);
-    centred35(25, "~COLOUR~EDITION~", CYAN);
+    // The title in the cover's lettering (tools/cart.py), in the house gold;
+    // the top rows FX_B, so the palette makes them shimmer with no redraw.
+    titleArt(TITLE_LOGO, TITLE_LOGO_W, TITLE_LOGO_H, 62 - TITLE_LOGO_W / 2, 4, TITLE_LOGO_BASE, TITLE_LOGO_RAMP,
+             TITLE_LOGO_DEPTH, TITLE_LOGO_SIDE);
+    centred35(31, "~COLOUR~EDITION~", CYAN);
 
     // A fanned blackjack hand dealt in from above, gently bobbing.
     static const uint8_t HAND[5] = {0 + 26, 12, 11 + 13, 10 + 39, 9 + 26};   // A-spade K-heart Q-diamond J-club 10-spade

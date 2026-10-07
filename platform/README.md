@@ -89,7 +89,8 @@ staged package, sizes unchanged):
   now build with `-flto`; with plain `-Os` the larger games do not fit.
   The release FQBN names `oslto` already, so the games are unchanged.
   CHSDtoUSB's `tools/game.py` pins it to `opt=osstd` (`FQBN`), what it was
-  tested with.
+  tested with; CHSDtoSerial's pins `usb=serial` (its port is the website's
+  protocol) with `GFX_CHUNK_ROWS=1` (`DEFINES`).
 - **Tools > Bootloader** offers the SD Text Menu (Rainbow or Static) and
   USB Only (2026-10-03: the Plain and Casino colour themes went with menu
   v2, whose look comes from the card; the two styles differ only in colour
@@ -180,7 +181,7 @@ background (`GAMES/MENU.IDX`, `MENU.BG`: [../spec/card.md](../spec/card.md)),
 a game started at power-on (START held: the menu), the turning rainbow as a
 colour of the picture. Errors are shown as numbers; `fault.c`, the STATUS
 and READ commands, the colour themes and the code-drawn title went for
-flash (11,908 B, 380 B free; a folder lists 240 entries, which fills the RAM: [bootloader/SIZES.md](bootloader/SIZES.md)).
+flash (11,920 B, 368 B free; a folder lists 240 entries, which fills the RAM: [bootloader/SIZES.md](bootloader/SIZES.md)).
 Two styles: Rainbow (the default) and Static. It passes the PC suite, which
 boots it on cards made by `tools/chcart`, and it ran on the board on
 2026-10-03 ([bootloader/test/hil/RESULTS-2026-10-03.md](bootloader/test/hil/RESULTS-2026-10-03.md)):
@@ -192,8 +193,8 @@ shown one picture at a time, no text, as the Arduboy FX does
 ([../docs/visual-menu.md](../docs/visual-menu.md)). The card's cover at
 power-on, the folders' covers (LEFT/RIGHT), the games' pictures (UP/DOWN;
 each in its CHG file), an about page, its own screens from the card
-(`SYSTEM.PIC`) and built-in icons when the card cannot give one. 12,080 B
-(208 B free), Rainbow and Static; Burn Bootloader offers both beside the
+(`SYSTEM.PIC`) and built-in icons when the card cannot give one. 12,060 B
+(228 B free), Rainbow and Static; Burn Bootloader offers both beside the
 list menu. The list and visual menus share `bootloader/src/card.c`; the
 list builds stayed byte-identical. Not yet run on a board.
 
@@ -210,6 +211,65 @@ list builds stayed byte-identical. Not yet run on a board.
    root README.
 
 ## Changes since the copies were taken
+
+- 2026-10-04: box art for every picture the menus show, painted with the
+  new `tools/artkit` ([../docs/cover-art.md](../docs/cover-art.md)): each
+  example's `docs/cart.png` and `tools/cart.py`, the casino card's cover and
+  folders, and the spec's default pictures (`spec/assets/`; the fixtures
+  regenerated: only COVER.PIC's and SYSTEM.PIC's hashes changed). The
+  visual menu's four built-in icons (`bootloader/art/icons/`) are redrawn as
+  solid silhouettes, same 12x12 bitmaps, 0 B: `chgame_sdvisual*.bin` and
+  the dry run rebuilt (12,080 and 11,896 B, as before), every list build
+  byte-identical. Checked: no library change; the bootloader's PC suite
+  (45 frames re-pinned: the icon screens and the real card's pictures),
+  chcart's tests, the fixtures and `chgame boxart --check` pass.
+
+- 2026-10-06: the bootloader after the owner's review of the menus
+  (`bootloader/README.md`, "Changes of 2026-10-06"): the visual menu stays
+  on the cover at power-on (A there shows the installed game); a launch
+  game starts straight in if installed, else the menu opens on it and A
+  installs it, so a power-on never writes flash; the Static text menu
+  draws colour 15 in the text colour; LEFT/RIGHT do nothing without
+  folders; the USB-only bootloader touches only the LED and USB, and every
+  build leaves its unused pins high-Z (the buzzer included). Sizes: list
+  11,920 B, static 11,716, visual 12,060 (36 B under its margin), USB-only
+  5,340. With it the `.chgame` format gains `menu.systemImages` (a cart's
+  own versions of the visual menu's screens, the web tool's `x-chgame-web`
+  read as an alias; [../spec/chgame.md](../spec/chgame.md)) and `.elf`
+  input for carts and CHG files. Checked: the bootloader's PC suite (112
+  frames re-pinned), chcart's tests, the fixtures (two new).
+  Later that day, CHG files gained the game's record (`spec/chg.md`, field
+  0x06C; `shared/chg_format.h` names it, no bootloader code reads it, no
+  binary changed) and `chgame cart backup` makes a card into a cart again
+  from it, SD files included (`spec/card.md`, "Backing up a card"). Every
+  prepared CHG file is about 21 KB longer. Checked: the bootloader's PC suite
+  (no frame changed), chcart's tests, the fixtures (prepared CHG bytes
+  re-pinned; five backup cards new), the casino card backed up into its own
+  cart and prepared again byte for byte.
+  Later still, the title screens' titles: thirteen games (Bingo, Blackjack,
+  Boardwalk, Craps, Dominoes, Mahjong, Poker, Roulette, Slots, Snakes,
+  Solitaire, Tic Tac Toe, Yacht) draw their cover's lettering, extruded and
+  outlined as there, in the house gold as a smooth gradient: a hint of
+  white at the top, a wide GOLD middle, a WOOD foot, the steps blended by an
+  ordered dither baked into each row of the title's data (no bevel, no
+  glints: the owner's choices after seeing the cover's chrome bands, which
+  looked washed out and busy) ([../docs/cover-art.md](../docs/cover-art.md),
+  "The same title on the title screen"). The seven font-drawn titles are
+  untouched. The CHGame library gains `maskTitle()` and `titleArt()` in
+  `chgame/Mask` (about 400 B of code in a game that calls them, 0 B in one
+  that doesn't, 56 B of RAM for the row shifter it runs from SRAM);
+  `tools/titleart.py` packs a recipe's `title_lines()`. Sizes (B): Bingo
+  36,935 (+881), Blackjack 45,896 (+654), Boardwalk 50,051 (+790), Craps
+  50,387 (+725, 45 B left), Dominoes 43,485 (+942), Mahjong 48,626 (+487),
+  Poker 49,000 (+844), Roulette 49,974 (+566), Slots 48,116 (+831), Snakes
+  37,342 (+386), Solitaire 31,357 (+764), Tic Tac Toe 50,115 (+934, with its title screen's falling X and O pieces in place of the demo board), Yacht
+  44,783 (+983); the other seven unchanged to the byte. Boardwalk's and
+  Snakes' title screens draw the title every frame over a moving scene:
+  about 50 and 40 fps there (simulator estimates). Checked: every cover
+  byte-identical (`docs/cart.png`), the seven untouched games' images
+  unchanged, `chgame check --quick --no-device` in the thirteen, their
+  README GIFs re-recorded (Mahjong's title clip half a second shorter to
+  stay under 1 MB), `chgame boxart --check`.
 
 - 2026-10-03: the visual menu (above): `bootloader/src/card.c` split out of
   `menu.c` (every list build byte-identical), `visual.c`, `icons.h` from

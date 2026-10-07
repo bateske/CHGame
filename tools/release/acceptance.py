@@ -98,8 +98,10 @@ class Checks:
         return [r for r in self.rows if not r[0]]
 
 
-def compile_sketch(cli: Cli, sketch: Path, fqbn: str, build: Path, export: bool = False):
+def compile_sketch(cli: Cli, sketch: Path, fqbn: str, build: Path, export: bool = False, flags: str = ""):
     args = ["compile", "-b", fqbn, "--build-path", str(build), "--warnings", "none"]
+    if flags:
+        args += ["--build-property", "build.extra_flags=" + flags]
     if export:
         args.append("--export-binaries")
     r = cli(*args, str(sketch), check=False)
@@ -151,7 +153,7 @@ def run(dist: Path, port: int, build_all: bool, card: Path | None, jobs: int) ->
     apps = [r for r in rel if r.startswith("Apps/")]
     check("Hello" in rel, "CHGame > Hello")
     check(len(games) == 20, "CHGame > Games", f"{len(games)}: " + " ".join(g.split("/")[1] for g in games))
-    check("Apps/CHSDtoUSB" in apps and "Apps/CHStlView" in apps, "CHGame > Apps", " ".join(apps))
+    check({"Apps/CHSDtoUSB", "Apps/CHSDtoSerial", "Apps/CHStlView"} <= set(apps), "CHGame > Apps", " ".join(apps))
     gfx = cli("lib", "examples", "CHGfx", "-b", FQBN, json_out=True).get("examples", [])
     check(sum(len(e.get("examples", [])) for e in gfx) > 0, "CHGfx's examples",
           str(sum(len(e.get("examples", [])) for e in gfx)))
@@ -207,7 +209,7 @@ def run(dist: Path, port: int, build_all: bool, card: Path | None, jobs: int) ->
         def build_one(name):
             d = mkcard.folder(name, plat)
             out = NEWUSER / "build" / "all" / d.name
-            ok, log = compile_sketch(cli, d, gamecfg.load(d).FQBN or RELEASE_FQBN, out)
+            ok, log = compile_sketch(cli, d, gamecfg.load(d).FQBN or RELEASE_FQBN, out, flags=device.defines(d))
             return name, d, out / f"{d.name}.ino.bin", ok, log
 
         results = [build_one(progs_[0])]          # one first: it fills the core cache the rest share

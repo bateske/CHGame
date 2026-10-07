@@ -416,14 +416,22 @@ static void t_cart_order(void)
     CHECK(host_boot() == END_RESET && installed_is("ALPHA.CHG"), "FOLDER ONE's first row: ALPHA GAME");
 }
 
+/* The launch game, not installed: the menu opens on it, inside its folder,
+   and waits (A installs it). A power-on never writes flash by itself. */
 static void t_cart_launch(void)
 {
     card(img_cartlaunch);
-    B->limit_us = 8000000;
-    CHECK(host_boot() == END_RESET && B->retained[0] == CHGAME_BOOTREQ_RUN, "launch card: ALPHA installed, RUN");
-    CHECK(installed_is("ALPHA.CHG"), "the launch game, found inside FOLDER ONE");
-    CHECK(B->lcd.on, "installing it showed the progress");
+    B->limit_us = 2000000;
+    CHECK(host_boot() == END_HANG, "launch card, ALPHA GAME not installed: the menu, on it");
+    CHECK(B->flash_ops == 0 && B->lcd.on, "nothing written; the list shown (%u ops)", B->flash_ops);
     lcd_sane("launch");
+    snap("cart_launch");                     /* FOLDER ONE's list, ALPHA GAME selected */
+    host_init();
+    card(img_cartlaunch);
+    press(800, BTN_A);
+    B->limit_us = 8000000;
+    CHECK(host_boot() == END_RESET && B->retained[0] == CHGAME_BOOTREQ_RUN, "A: ALPHA installed, RUN");
+    CHECK(installed_is("ALPHA.CHG"), "the launch game, found inside FOLDER ONE");
     CHECK(host_boot() == END_JUMP, "and it starts");
 }
 

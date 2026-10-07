@@ -10,6 +10,8 @@
  *          multiple of 4)
  *   ...    optional: the game's picture, which the visual menu shows and the
  *          install ignores
+ *   ...    optional: the game's record (JSON), which only the PC and web tools
+ *          read, to back the game up from a card
  *
  * The package never names a flash address: the destination is always
  * CHGAME_APP_START, and layout_id says which memory map it was built for.
@@ -39,6 +41,9 @@
 #define CHG_OFF_IMAGE        0x060u   /* u32 offset, u32 bytes, u32 crc32: the game's picture, 0 = none. A picture in
                                          MENU.BG's encoding (chgame_card.h): bytes 8,704, offset a multiple of 512
                                          after the payload and under 128 KiB. Readers may ignore the CRC */
+#define CHG_OFF_RECORD       0x06Cu   /* u32 offset, u32 bytes, u32 crc32: the game's record, 0 = none. JSON for the
+                                         tools that back a card up (spec/chg.md); no menu reads it. Offset a multiple
+                                         of 512 after the payload and the picture, bytes at most 1 MiB */
 #define CHG_OFF_HCRC         0x1FCu   /* u32 header_crc32: CRC-32/ISO-HDLC of bytes 0x000..0x1FB */
 
 #define CHG_TITLE_LEN        32u

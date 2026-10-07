@@ -37,10 +37,6 @@ TRANSPARENT = 16
 
 # The table the game indexes: tokens by seat (see Stage.cpp).
 TOKENS = ["TOKEN_CHERRIES", "TOKEN_BANANA", "TOKEN_APPLE", "TOKEN_STRAWBERRY"]
-# Stored a bit a pixel (rows, MSB first), not as a colour sprite.
-MONO = ["LOGO_SNAKES", "LOGO_LADDERS"]
-# ... and of those, drawn at half size: each pixel becomes four.
-DOUBLED = ["LOGO_SNAKES"]
 
 
 def rgb(i):
@@ -163,19 +159,22 @@ def main():
     decls, defs = [], []
     total = 0
     for name, img in sprites.items():
-        if name in DOUBLED:
-            img = [[v for v in row for _ in (0, 1)] for row in img for _ in (0, 1)]
-        data = pack_rows1(img) if name in MONO else pack_span4(img)
+        data = pack_span4(img)
         defs.append(c_array(name, data))
         decls.append(f"extern const uint8_t {name}[{len(data)}];")
-        if name in MONO:
-            decls.append(f"constexpr uint8_t {name}_W = {len(img[0])}, {name}_H = {len(img)};")
         total += len(data)
         preview(name.lower(), img)
 
     defs.append("const uint8_t *const TOKEN[4] = {" + ", ".join(TOKENS) + "};")
     decls.append("extern const uint8_t *const TOKEN[4];        // by seat")
     total += 16
+
+    import cart                                          # the title, as the cover draws it
+    import titleart
+    for prefix, line, what in zip(("LOGO_SNAKES", "LOGO_LADDERS"), cart.title_lines(), ("'SNAKES'", "'& LADDERS'")):
+        w, h = titleart.emit(titleart.Into(decls, defs), prefix, line, what)
+        total += (w + 7) // 8 * h + h
+        titleart.preview(line, bg=0).save(PREVIEW / f"{prefix.lower()}.png")
 
     hand = sprites["HAND"]
     tip = [x for x, v in enumerate(hand[-1]) if v != TRANSPARENT]

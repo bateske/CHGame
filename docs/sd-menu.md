@@ -46,10 +46,13 @@ is marked with a red chip. (A card can name a game to start instead:
   away, as it did before the menu existed.
 
 **Starting a game at power-on.** A card can name one game to start by itself
-whenever the CHGame is switched on, as a cartridge would: no menu. If it is
-not the installed game, it is installed first. To reach the menu anyway,
-**hold START while switching on**. Holding START for 3 seconds in the game
-also brings up the menu, never the game again.
+whenever the CHGame is switched on, as a cartridge would: if it is the
+installed game, it starts at once and the menu never appears. If another
+game is installed (you were playing it when you switched off), the menu
+opens on the named game instead, and A installs and starts it: switching
+on never writes over the game you had. To reach the menu anyway, **hold
+START while switching on**. Holding START for 3 seconds in the game also
+brings up the menu, never the game again.
 
 **Saved games.** Every game keeps its save in the same small area of
 flash. When you switch games, the old game's save stays there until the new
@@ -67,9 +70,9 @@ Everything behind the list is one picture on the card, the CHGAME logo
 included, so every card can look its own way. Anything the picture paints
 in pure magenta (`#FF00FF`) turns through the colours, as the default
 logo and the selection bar do; on the bootloader's Static style (*Tools >
-Bootloader > SD Text Menu (Static)*) nothing turns and the picture shows
-as painted, magenta included. A folder can
-have a picture of its own.
+Bootloader > SD Text Menu (Static)*) nothing turns, and those parts, the
+selection bar and the boxes are drawn in the menu's text colour instead,
+so they match the titles. A folder can have a picture of its own.
 
 ![The menu on the default picture, on a picture of a card's own, and on a card with none](../platform/bootloader/docs/menu_cards.png)
 
@@ -95,6 +98,19 @@ on a card: [menu-image.md](menu-image.md) has the steps.
   instead). `chgame cart prepare MyCart.chgame out/card` writes the same
   files into a folder, to copy over yourself. The format is
   [spec/chgame.md](../spec/chgame.md).
+- **Back to a .chgame file.** Every game the tools put on a card carries
+  what it came with (its details, picture, licence and the list of its SD
+  files), so the card alone gives it back:
+
+  ```
+  chgame cart backup E:\ MyBackup.chgame                 every game, with the card's folders and menu
+  chgame cart backup E:\ Words.chgame --game chwords     one game, with its SD files
+  ```
+
+  A file that changed or went missing since the game was put there is
+  named. A CHG file copied by hand (*Export Compiled Binary*'s) comes back
+  from its title and picture; name its SD files with
+  `--sd GAMES/MYGAME.CHG=MYGAME.DAT`.
 - **All the casino games.** Each release has them as one cart
   (`CHGame-Casino-<version>.chgame`) and as the card's contents in a zip
   (`CHGame-sdcard-<version>.zip`): unzip it onto the card. From a clone,

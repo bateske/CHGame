@@ -9,7 +9,8 @@ Sources, all palette-letter text or palette-exact PNGs in tools/art/:
                   (ranks A..K, pips hearts/diamonds/spades/clubs; reordered
                   here into poker order: ranks 2..A, suits c d h s).
   * hand.png (or hand.txt) - CHChess's pointing glove.
-  * logo.txt    - the title, in PPOT's BlackJack logo lettering.
+  * title.txt   - the title's lettering, the cover's (tools/cart.py) and the
+                  title screen's.
 
 Outputs:
   src/assets/Assets.h / Assets.cpp   - generated, do not edit
@@ -218,14 +219,13 @@ def main():
         o.array(f"COURT_{nm}", pack_span4(img), comment=f"{nm.title()} portrait 14x18, span4")
         preview(f"court_{nm.lower()}", img, bg=1)
 
-    # The title lettering (tools/art/logo.txt), 1 bpp rows.
-    rows = [ln.rstrip() for ln in (artlib.art(HERE, "logo.txt")).read_text().splitlines() if ln and not ln.startswith("# ")]
-    w = max(len(r) for r in rows)
-    bits = [[1 if ch == "#" else 0 for ch in r.ljust(w)] for r in rows]
-    o.array("LOGO", pack_rows1(bits), comment=f"'Poker' in PPOT's BlackJack lettering, {w}x{len(bits)}, MSB-first rows")
-    o.const("LOGO_W", w)
-    o.const("LOGO_H", len(bits))
-    preview("logo", [[1 if b else TRANSPARENT for b in r] for r in bits], 6, bg=0)
+    # The title, as the cover (tools/cart.py) draws it.
+    import cart
+    import titleart
+    line, = cart.title_lines()
+    titleart.emit(o, "LOGO", line, "'POKER'")
+    PREVIEW.mkdir(parents=True, exist_ok=True)
+    titleart.preview(line).save(PREVIEW / "logo.png")
 
     png = artlib.art(HERE, "hand.png")
     hand = load_png(png) if png.exists() else load_art("hand")
@@ -233,6 +233,12 @@ def main():
     tip = [x for x, v in enumerate(hand[-1]) if v != TRANSPARENT]
     o.const("HAND_TIP", (tip[0] + tip[-1]) // 2)
     preview("hand", hand, 8)
+
+    # The chip as span sprites in placeholder colours, coloured per denomination by a
+    # remap (the casino chip family: tools/art/common/chip_*.txt, chip9_* here).
+    for f in ['chip9_top', 'chip9_side', 'chip9_side_alt']:
+        img = load_art(f + "")
+        o.array(f.upper(), pack_span4(img), comment=f"{f} {len(img[0])}x{len(img)}, row spans")
 
     o.write()
     print(f"wrote {OUT_H.relative_to(ROOT)} and {OUT_C.relative_to(ROOT)}")

@@ -3,12 +3,15 @@
 # own tones - the MASTER row of tools/sheet.py's sheet - with an INK outline.
 # One line per art colour the swap changes: the art colour, then White's
 # colour, then Black's (names as in the CHGame library's chgame/Palette.h).
-# Colours not listed stay as drawn. GOLD is the crown: it takes the face's
-# colour here, and stays gold on the chip that tops a king.
+# Colours not listed stay as drawn. GOLD is the crown: it takes the label's
+# colour here, and stays gold on the chip that tops a king. BLUE and NAVY are
+# the rim's two insert patterns (a man shows BLUE's; the chip that tops a
+# king swaps them, tools/assets.py's king_maps): give NAVY the rim's colour.
 #
 # tools/sheet.py import rewrites this from an edited sheet.
-WHITE    WHITE    SILVER
-SILVER   SILVER   BLUE
-BLUE     BLUE     NAVY
-CYAN     WHITE    WHITE
-GOLD     WHITE    SILVER
+WHITE    WHITE    BLUE
+SILVER   SILVER   NAVY
+BLUE     BLUE     WHITE
+NAVY     SILVER   NAVY
+CYAN     WHITE    CYAN
+GOLD     WHITE    CYAN

@@ -10,7 +10,7 @@ extern const uint8_t TOKEN_STRAWBERRY[70];
 extern const uint8_t HOUSE[24];
 extern const uint8_t HOTEL[40];
 extern const uint8_t CARD_DECK[54];
-extern const uint8_t CHIPS[56];
+extern const uint8_t CHIPS[59];
 extern const uint8_t DIE[62];
 extern const uint8_t ICON_GO[44];
 extern const uint8_t ICON_CHANCE[19];
@@ -25,4 +25,11 @@ extern const uint8_t LOGO[182];
 constexpr uint8_t LOGO_W = 101, LOGO_H = 14;
 extern const uint8_t HAND[111];
 extern const uint8_t *const TOKEN[4];        // by seat
+extern const uint8_t TITLE_LOGO[240];
+constexpr int TITLE_LOGO_W = 117;
+constexpr int TITLE_LOGO_H = 16;
+constexpr int TITLE_LOGO_BASE = 8;
+extern const uint8_t TITLE_LOGO_RAMP[16];
+constexpr int TITLE_LOGO_DEPTH = 3;
+constexpr int TITLE_LOGO_SIDE = 11;
 constexpr uint8_t HAND_TIP = 5;          // the fingertip's column (bottom row)

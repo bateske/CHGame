@@ -190,15 +190,9 @@ static void titleUpdate() {
 
 static void titleRender(uint32_t frame) {
     feltBackdrop();
-    // "Poker" in the BlackJack logo's lettering, at twice its size; the top
-    // rows are FX_B, so the palette makes it shimmer.
-    {
-        Mask m = maskBegin(LOGO_W * 2, LOGO_H * 2);
-        maskBlit1(m, LOGO, LOGO_W, LOGO_H, 2);
-        uint8_t ramp[LOGO_H * 2];
-        for (int i = 0; i < LOGO_H * 2; i++) ramp[i] = i < 4 ? FX_B : (i < 23 ? GOLD : WOOD);
-        maskDraw(m, 64 - LOGO_W, 8, 0, INK, WINE, ramp);
-    }
+    // POKER in the cover's arched lettering (tools/cart.py), in the house gold
+    // with wine depth; the top rows FX_B, so the palette makes them shimmer.
+    titleArt(LOGO, LOGO_W, LOGO_H, 62 - LOGO_W / 2, 5, LOGO_BASE, LOGO_RAMP, LOGO_DEPTH, LOGO_SIDE);
     centred35(41, "HOLD'EM - DRAW - OMAHA - STUD", CYAN);
     // A royal flush in spades, dropped in one card at a time, each turning
     // over as it lands. They overlap by 2 px: the court portraits leave

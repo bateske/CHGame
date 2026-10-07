@@ -25,10 +25,6 @@ What the game expects of each:
   CROWN     on square 100.
   HAND      the glove; a CPU's has GOLD and WOOD (the cuff) turned RED and
             WINE. The fingertip is the middle of the bottom row.
-  LOGO_*    the title's lettering, in any one colour (only its shape is
-            kept): the game adds the gold-to-wood fill, outline and shadow.
-            LOGO_SNAKES is drawn at half size (the game doubles it): up to
-            62 x 14.
 
 Palette: the swatch lists the 16 colours. FX_A and FX_B are animated in the
 game (placeholders here; FX_B cannot be used in sprites at all - it is the

@@ -10,7 +10,8 @@ Sources:
     lettering. Monochrome PNGs are recoloured here.
   * CHBlackjack's hand-painted dealer, tools/art/dealer.png (palette-exact,
     the whole 48x42 dealer, replacing the recoloured PPOT bust).
-  * New art drawn for this game: tools/art/logo.txt (the "Craps" title), and
+  * The title: the cover's (tools/cart.py title_lines(), tools/art/title.txt),
+    packed by tools/titleart.py. New art drawn for this game:
     the chips and puck as palette-letter text (tools/art/chip_*.txt, puck.txt).
 
 Outputs:
@@ -416,9 +417,9 @@ def main():
                   ("Dealer_FaceEyesClosed", "BLINK")]:
         faces[nm] = rebase(face_patch(f))
 
-    # Chips and the puck as span sprites, coloured per use by a remap (the
-    # shapes are CHBlackjack's chip, captured; render/Chips.cpp).
-    for f in ["chip_top", "chip_side", "chip_small_top", "chip_small_side"]:
+    # Chips as span sprites, coloured per denomination by a remap (the casino
+    # chip family in tools/art/common/chip_*.txt; Chips.cpp).
+    for f in ["chip_top", "chip_side", "chip_side_alt", "chip_small_top", "chip_small_side", "chip_small_side_alt"]:
         img = load_art(f)
         o.array(f.upper(), pack_span4(img), comment=f"{f} {len(img[0])}x{len(img)}, row spans")
         preview(f, img, bg=3)
@@ -439,12 +440,13 @@ def main():
         o.array(nm, pack_span4(img), comment=f"{nm.lower()} disc r{R}, centre ({c},{c}), row spans")
         preview(nm.lower(), img, bg=3)
 
-    # The "Craps" title lettering (new for this game).
-    logo = load_bits("logo")
-    o.array("LOGO", pack_rows1(logo), comment=f"'Craps' title lettering {len(logo[0])}x{len(logo)}, MSB-first rows")
-    o.const("LOGO_W", len(logo[0]))
-    o.const("LOGO_H", len(logo))
-    mono_preview("logo", logo)
+    # The title, as the cover (tools/cart.py) draws it.
+    import cart
+    import titleart
+    line, = cart.title_lines()
+    titleart.emit(o, "LOGO", line, "'CRAPS'")
+    PREVIEW.mkdir(parents=True, exist_ok=True)
+    titleart.preview(line).save(PREVIEW / "logo.png")
 
     # Expressions drawn for CHBlackjack, edited from the normal face patch.
     base = normal

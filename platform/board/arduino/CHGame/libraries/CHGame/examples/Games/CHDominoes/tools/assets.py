@@ -5,7 +5,8 @@
 Sources, all in tools/art/:
   * hand.png, else hand.txt: the pointing glove (CHChess's).
   * aafont.txt: the serif lettering, anti-aliased (from tools/aafont.py).
-  * logo.txt: the title's name at its full size, letter by letter.
+  * The title: the cover's (tools/cart.py title_lines(), tools/art/title.txt),
+    packed by tools/titleart.py.
 
 The tiles themselves are drawn by the game (Table.cpp): there is
 no art for them here.
@@ -102,31 +103,6 @@ def source(name):
     """tools/art/<name>.png if someone has drawn one, else the letters in <name>.txt."""
     png = artlib.art(HERE, f"{name}.png")
     return load_png(png) if png.exists() else load_art(name)[0]
-
-
-def load_logo(word="Dominoes", gap=2):
-    """tools/art/logo.txt -> rows of 0/1: the word's letters side by side."""
-    glyphs, cur = {}, None
-    for ln in (artlib.art(HERE, "logo.txt")).read_text().splitlines():
-        if not ln.strip() or ln.startswith("# ") or ln == "#":     # (rows start with '#' too)
-            continue
-        if ln.startswith("= "):
-            parts = ln[2:].split()
-            cur = {"top": int(parts[1]) if len(parts) > 1 else 0, "rows": []}
-            glyphs[parts[0]] = cur
-            continue
-        cur["rows"].append([1 if ch == "#" else 0 for ch in ln.rstrip()])
-    h = max(g["top"] + len(g["rows"]) for g in glyphs.values())
-    w = sum(len(glyphs[c]["rows"][0]) for c in word) + gap * (len(word) - 1)
-    img = [[0] * w for _ in range(h)]
-    x = 0
-    for c in word:
-        g = glyphs[c]
-        for j, row in enumerate(g["rows"]):
-            for i, v in enumerate(row):
-                img[g["top"] + j][x + i] |= v
-        x += len(g["rows"][0]) + gap
-    return img
 
 
 def pack_1bpp(img):
@@ -227,14 +203,14 @@ def main():
                  f"constexpr uint8_t AAFONT_H = {height};")
     total += 2 * len(words)
 
-    # The title's name.
-    logo = load_logo()
-    data = pack_1bpp(logo)
-    defs.append(c_array("LOGO", data))
-    decls.append(f"extern const uint8_t LOGO[{len(data)}];                         // the title's name (tools/art/logo.txt), 1 bpp rows\n"
-                 f"constexpr uint8_t LOGO_W = {len(logo[0])}, LOGO_H = {len(logo)};")
-    total += len(data)
-    preview("logo", [[[1 if v else TRANSPARENT for v in row] for row in logo]], scale=6, bg=0)
+    # The title, as the cover (tools/cart.py) draws it.
+    import cart
+    import titleart
+    line, = cart.title_lines()
+    w, h = titleart.emit(titleart.Into(decls, defs), "LOGO", line, "'DOMINOES'")
+    total += (w + 7) // 8 * h + h
+    PREVIEW.mkdir(parents=True, exist_ok=True)
+    titleart.preview(line, bg=0).save(PREVIEW / "logo.png")
 
     # The palette, for whoever edits the art.
     sw = Image.new("RGB", (16 * 24, 24))

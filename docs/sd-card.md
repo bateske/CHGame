@@ -11,6 +11,7 @@ it, and one utility exposes it over USB.
 | CHWordWheel | CHSd | `PHRASES.BNK` in the root: the phrase bank (39 KB) | MIT |
 | CHCrossword | CHSd | `CHCW/*.CWD`: puzzle packs | MIT |
 | CHSDtoUSB | its own read-write driver (from sdfatlib, CRC-checked, DMA) | the whole card, block by block, for the PC | GPL-3.0 |
+| CHSDtoSerial | the same read-write driver, with FatFs on top | files, for the CHGame website over the serial port | GPL-3.0 |
 
 The **bootloader** reads the card too: its game menu lists and installs
 the CHG files in `GAMES/` and its folders, in the order and over the

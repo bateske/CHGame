@@ -11,10 +11,20 @@ extern const uint8_t DIE[62];
 extern const uint8_t SNAKE_HEAD[58];
 extern const uint8_t SNAKE_HEAD_OPEN[61];
 extern const uint8_t CROWN[28];
-extern const uint8_t LOGO_SNAKES[448];
-constexpr uint8_t LOGO_SNAKES_W = 124, LOGO_SNAKES_H = 28;
-extern const uint8_t LOGO_LADDERS[168];
-constexpr uint8_t LOGO_LADDERS_W = 89, LOGO_LADDERS_H = 14;
 extern const uint8_t HAND[111];
 extern const uint8_t *const TOKEN[4];        // by seat
+extern const uint8_t LOGO_SNAKES[264];
+constexpr int LOGO_SNAKES_W = 95;
+constexpr int LOGO_SNAKES_H = 22;
+constexpr int LOGO_SNAKES_BASE = 8;
+extern const uint8_t LOGO_SNAKES_RAMP[22];
+constexpr int LOGO_SNAKES_DEPTH = 3;
+constexpr int LOGO_SNAKES_SIDE = 7;
+extern const uint8_t LOGO_LADDERS[144];
+constexpr int LOGO_LADDERS_W = 90;
+constexpr int LOGO_LADDERS_H = 12;
+constexpr int LOGO_LADDERS_BASE = 8;
+extern const uint8_t LOGO_LADDERS_RAMP[12];
+constexpr int LOGO_LADDERS_DEPTH = 2;
+constexpr int LOGO_LADDERS_SIDE = 7;
 constexpr uint8_t HAND_TIP = 5;          // the fingertip's column (bottom row)

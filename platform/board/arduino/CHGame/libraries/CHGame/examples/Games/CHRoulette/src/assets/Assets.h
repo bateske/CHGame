@@ -13,9 +13,13 @@ extern const uint16_t FACE_EDIT_AT[7];  // start of each expression in FACE_EDIT
 extern const uint8_t HAND[111];  // the glove 13x16, row spans; fingertip on the bottom row
 constexpr int HAND_TIP = 5;  // the fingertip's column
 extern const uint8_t DOLLY[43];  // the dolly 5x9, row spans; foot centred on the bottom row
-extern const uint8_t LOGO[168];  // 'Roulette' 92x14, MSB-first rows
-constexpr int LOGO_W = 92;
-constexpr int LOGO_H = 14;
+extern const uint8_t LOGO[255];  // 'ROULETTE': the cover's lettering, 115x17, 1 bpp MSB-first rows
+constexpr int LOGO_W = 115;
+constexpr int LOGO_H = 17;
+constexpr int LOGO_BASE = 8;
+extern const uint8_t LOGO_RAMP[17];  // its face's gradient: per row, a colour (high nibble) over the base where its dither (low) has bits
+constexpr int LOGO_DEPTH = 3;
+constexpr int LOGO_SIDE = 7;
 extern const uint8_t YOUWON1[240];  // PPOT lettering 119x16, MSB-first rows
 constexpr int YOUWON1_W = 119;
 extern const uint8_t YOUWON2[224];  // PPOT lettering 107x16, MSB-first rows
@@ -24,3 +28,6 @@ extern const uint8_t BROKE1[192];  // PPOT lettering 91x16, MSB-first rows
 constexpr int BROKE1_W = 91;
 extern const uint8_t BROKE2[160];  // PPOT lettering 73x16, MSB-first rows
 constexpr int BROKE2_W = 73;
+extern const uint8_t CHIP_TOP[37];  // chip_top 15x6, row spans
+extern const uint8_t CHIP_SIDE[25];  // chip_side 15x4, row spans
+extern const uint8_t CHIP_SIDE_ALT[25];  // chip_side_alt 15x4, row spans

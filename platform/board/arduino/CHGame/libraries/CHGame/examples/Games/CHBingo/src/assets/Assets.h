@@ -14,9 +14,13 @@ extern const uint8_t HAND[111];  // the glove 13x16, row spans; fingertip on the
 constexpr int HAND_TIP = 5;  // the fingertip's column
 extern const uint8_t HAND_R[89];  // the glove pointing right 16x13, row spans
 constexpr int HAND_R_TIP = 5;  // the fingertip's row
-extern const uint8_t LOGO[144];  // 'Bingo' 61x18, MSB-first rows
-constexpr int LOGO_W = 61;
-constexpr int LOGO_H = 18;
+extern const uint8_t LOGO[406];  // 'BINGO': the cover's lettering, 111x29, 1 bpp MSB-first rows
+constexpr int LOGO_W = 111;
+constexpr int LOGO_H = 29;
+constexpr int LOGO_BASE = 8;
+extern const uint8_t LOGO_RAMP[29];  // its face's gradient: per row, a colour (high nibble) over the base where its dither (low) has bits
+constexpr int LOGO_DEPTH = 3;
+constexpr int LOGO_SIDE = 7;
 extern const uint8_t BROKE1[192];  // PPOT lettering 91x16, MSB-first rows
 constexpr int BROKE1_W = 91;
 extern const uint8_t BROKE2[160];  // PPOT lettering 73x16, MSB-first rows

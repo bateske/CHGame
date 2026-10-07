@@ -1,0 +1,156 @@
+{
+ "warnings": [
+  "bad-chg",
+  "bad-record",
+  "no-record",
+  "renamed-id",
+  "sd-changed",
+  "sd-missing"
+ ],
+ "games": [
+  {
+   "id": "words",
+   "title": "WORDS",
+   "folder": "",
+   "version": "1.0",
+   "author": "fixtures",
+   "license": "MIT",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {
+    "WORDS.DIC": "319e4844f7971d5da7325d039b936d2390782332cf6551ed6150f3894b7d0ca0"
+   },
+   "licenseFiles": {
+    "LICENSE": "ec6bda6ef459cff4b63f56fdfdba9e303df5ab112b930f471d14120239d4537a"
+   },
+   "picture": null
+  },
+  {
+   "id": "cross",
+   "title": "CROSS",
+   "folder": "PUZZLES",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {
+    "CHCW/A.CWD": "ff6a70c12fa942706911cb34b3c99b2dc180e1b3a0c6b8f1208eeddc4bc94598"
+   },
+   "licenseFiles": {},
+   "picture": null
+  },
+  {
+   "id": "twin-b",
+   "title": "TWIN B",
+   "folder": "PUZZLES",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {
+    "SHARED.DAT": "8b1fe4acbee7d967e7d593909a3d51d1c11de1d41b87a2b6f2e06a898dfe364d"
+   },
+   "licenseFiles": {},
+   "picture": null
+  },
+  {
+   "id": "solo",
+   "title": "SOLO",
+   "folder": "PUZZLES",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {},
+   "licenseFiles": {},
+   "picture": "7c844524ce81318e079d533f357e3f2779d897b3d7d95be9743b58a348f70390"
+  },
+  {
+   "id": "words-2",
+   "title": "WORDS",
+   "folder": "PUZZLES",
+   "version": "1.0",
+   "author": "fixtures",
+   "license": "MIT",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {
+    "WORDS.DIC": "319e4844f7971d5da7325d039b936d2390782332cf6551ed6150f3894b7d0ca0"
+   },
+   "licenseFiles": {
+    "LICENSE": "ec6bda6ef459cff4b63f56fdfdba9e303df5ab112b930f471d14120239d4537a"
+   },
+   "picture": null
+  },
+  {
+   "id": "twin-a",
+   "title": "TWIN A",
+   "folder": "",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {
+    "SHARED.DAT": "8b1fe4acbee7d967e7d593909a3d51d1c11de1d41b87a2b6f2e06a898dfe364d"
+   },
+   "licenseFiles": {},
+   "picture": null
+  },
+  {
+   "id": "dented",
+   "title": "DENTED",
+   "folder": "",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {},
+   "licenseFiles": {},
+   "picture": null
+  },
+  {
+   "id": "handmade",
+   "title": "HANDMADE",
+   "folder": "",
+   "version": "0.1",
+   "author": "me",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {},
+   "licenseFiles": {},
+   "picture": null
+  }
+ ],
+ "launch": "",
+ "menu": {
+  "colors": {},
+  "background": null,
+  "cover": null,
+  "about": null,
+  "systemImages": {},
+  "folders": {}
+ },
+ "sameCard": false
+}

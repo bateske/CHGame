@@ -46,3 +46,19 @@ void maskDraw(const Mask &m, int x, int y, uint8_t fill, int outline = -1, int s
               const uint8_t *ramp = nullptr);
 // Just the shape in one colour (no outline, no shadow).
 void maskPaint(const Mask &m, int x, int y, uint8_t c);
+
+// A title as the covers set it (docs/cover-art.md, "the stack"), in the
+// house gold: the shape extruded `depth` px (<= 4) down and right in
+// `side`, an INK outline round letters and extrusion together, thickened a
+// pixel down and right (the drop shadow), the face a smooth gradient: a
+// byte a mask row, a colour (high nibble) laid over `base` where the row's
+// dither pattern (low nibble, MSB the first of every 4 pixels from the
+// lettering's left; 0 none, 15 all) has bits - tools/titleart.py works the
+// patterns out of a 4x4 ordered dither. A one-pixel gap between letters
+// stays INK. About twice a
+// maskDraw: draw it onto still screens where the game can.
+void maskTitle(const Mask &m, int x, int y, uint8_t base, const uint8_t *ramp, uint8_t depth, uint8_t side);
+// A game's title from the arrays tools/titleart.py writes from its cover
+// recipe: the 1 bpp lettering, its gradient, the extrusion.
+void titleArt(const uint8_t *bits, uint8_t w, uint8_t h, int x, int y, uint8_t base, const uint8_t *ramp,
+              uint8_t depth, uint8_t side);

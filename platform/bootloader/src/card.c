@@ -29,7 +29,9 @@ uint32_t stray;
 _Static_assert(sizeof(game_t) == 32, "keep game_t at 32 bytes");
 
 /* The menu's own colours when there is no picture (black behind; the rest
-   by shared/chgame_card.h's roles; colour 15 the picture's magenta, for the static style). */
+   by shared/chgame_card.h's roles; colour 15 the picture's magenta, which
+   the static visual menu shows as painted; the static list menu draws
+   colour 15 in the text colour instead: menu.c's background()). */
 const uint16_t pal0[16] = {
     [CARD_C_TEXT] = RGB565(255, 244, 214), [CARD_C_DIM] = RGB565(128, 128, 128),
     [CARD_C_MARK] = RGB565(214, 32, 32), [CARD_C_RAINBOW] = RGB565(255, 0, 255),

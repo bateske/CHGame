@@ -166,7 +166,7 @@ static void titleUpdate() {
         }
     }
     uint16_t k = t % 300;
-    if (k == 186) fx::burst(fx::STAR, 64, 51, 16, 70, FX_A);
+    if (k == 186) fx::burst(fx::STAR, 64, 56, 16, 70, FX_A);       // the machine's middle
 #if CHSL_DEMO
     if (chgame.anyPressed(0xFF)) t = t % 300;          // any touch puts the demo off
     else if (t >= DEMO_AFTER && !fadeOut) {
@@ -182,12 +182,10 @@ static void titleUpdate() {
 
 static void titleStatic(uint32_t frame) {
     feltBackdrop();
-    uint8_t ramp[LOGO_H];
-    for (int i = 0; i < LOGO_H; i++) ramp[i] = i < 3 ? FX_B : (i < 11 ? GOLD : WOOD);
-    Mask m = maskBegin(LOGO_W, LOGO_H);
-    maskBlit1(m, LOGO, (uint8_t)LOGO_W, (uint8_t)LOGO_H);
-    maskDraw(m, 64 - LOGO_W / 2, 8, GOLD, INK, WINE, ramp);
-    centred35(27, "~THE~ONE~ARMED~BANDIT~", CYAN);
+    // The title in the cover's lettering (tools/cart.py), in the house gold;
+    // the top rows FX_B, so the palette makes them shimmer.
+    titleArt(LOGO, LOGO_W, LOGO_H, 62 - LOGO_W / 2, 2, LOGO_BASE, LOGO_RAMP, LOGO_DEPTH, LOGO_SIDE);
+    centred35(35, "~THE~ONE~ARMED~BANDIT~", CYAN);
     uint8_t items[5], n = menu(items);
     if (n == 3) {
         text35(7, 116, "3 MACHINES", FELT_LT);
@@ -211,7 +209,7 @@ static void titleRender(uint32_t frame) {
     uint32_t sig = (uint32_t)menuSel << 1 | (uint32_t)hasGame << 4 | ((frame >> 4) & 1) << 5 | 1;
     if (sig != staticSig) { staticSig = sig; titleStatic(frame); }
     // The little machine: it spins, stops left to right, and it is always sevens.
-    const int X = 22, Y = 36, W = 84, H = 32;
+    const int X = 22, Y = 41, W = 84, H = 32;
     panel(X, Y, W, H, 3, INK, GOLD);
     uint16_t k = t % 300;
     for (uint8_t i = 0; i < 3; i++) {

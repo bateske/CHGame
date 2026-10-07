@@ -211,20 +211,17 @@ static void titleUpdate() {
     iso::cam.y = ay + (by - ay) * k / 48 - 6;
 }
 
-// The game's own lettering (tools/art: LOGO), gold over wood like
-// CHBlackjack's. Its top rows are FX_B, so the palette makes it shimmer.
+// The title in the cover's lettering (tools/cart.py), in the house gold with
+// the cover's navy depth; the top rows FX_B, so the palette makes them shimmer.
 static void logo(int y) {
-    Mask m = maskBegin(LOGO_W, LOGO_H);
-    maskBlit1(m, LOGO, LOGO_W, LOGO_H);
-    uint8_t ramp[LOGO_H];
-    for (int i = 0; i < LOGO_H; i++) ramp[i] = i < 2 ? FX_B : (i < 11 ? GOLD : WOOD);
-    maskDraw(m, 64 - LOGO_W / 2, y, 0, INK, WINE, ramp);
+    titleArt(TITLE_LOGO, TITLE_LOGO_W, TITLE_LOGO_H, 62 - TITLE_LOGO_W / 2, y, TITLE_LOGO_BASE, TITLE_LOGO_RAMP,
+             TITLE_LOGO_DEPTH, TITLE_LOGO_SIDE);
 }
 
 static void titleRender(uint32_t frame) {
     stage::renderScene(frame);
     dither(0, 0, 128, 30, INK, 0);
-    logo(8);
+    logo(5);
     uint8_t items[4], n = titleItems(items);
     int y0 = 128 - n * 14 - 1;
     dither(0, y0 - 5, 128, 128 - y0 + 5, INK, 1);

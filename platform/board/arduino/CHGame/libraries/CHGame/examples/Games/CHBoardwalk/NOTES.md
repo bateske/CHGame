@@ -38,8 +38,9 @@ Agent-facing notes for continuing work on this game. Rules and controls are in [
 - Tokens are all fruit: cherries P1 RED, banana P2 GOLD, apple P3 FELT_LT, strawberry P4 SKIN. Pink stands in for the strawberry so it doesn't match the cherries. Rejected: a die token, which was confusing next to the dice.
 - The glove is CHChess's hand art, with a gold cuff for humans and a red cuff (`RM_CPU`) for CPUs.
 - Lettering:
-  - The title has its own slab-serif `LOGO`, 1 bpp, drawn through Mask like CHBlackjack's logo.
-  - The same `LOGO` is printed on the board's plaque, in plain GOLD with no blink (the owner asked: no FX_B on board lettering). The title's logo still shimmers.
+  - The title screen draws the cover's BOARDWALK (2026-10-06, `TITLE_LOGO`): `tools/cart.py` `title_lines()` gives its lettering as the cover places it, `tools/titleart.py` packs it, the library's `titleArt()` draws it in the house gold as a smooth dithered gradient, with no bevel or glints (docs/cover-art.md, "The same title on the title screen"). Drawn every frame over the moving board: the title screen runs at about 50 fps (estimated) instead of 60.
+  - `LOGO`, the slab-serif 1 bpp lettering, stays for the board's plaque.
+  - `LOGO` is printed on the board's plaque, in plain GOLD with no blink (the owner asked: no FX_B on board lettering). The title shimmers.
 - The ink rule under a colour band is clipped to its own cell.
 - Scaling: art is drawn at whole multiples only, because the owner found the in-between zoom steps "stretched".
   - `iso::zscale()` is 256 below tileH 8 and 512 from there. Use `iso::sized()` for sprite lengths and `iso::zoomed()` for board lengths.

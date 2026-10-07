@@ -10,8 +10,8 @@ starting a comment line):
     as 24x18 face patches side by side: NORMAL ANGRY RAISED BLINK SMILE
     SURPRISED TALK.
   * hand.png - CHChess's pointing glove (also turned to point right).
-  * logo.txt - the "Bingo" title lettering, in CHBlackjack's and CHRoulette's
-    letter style.
+  * title.txt - the title's lettering: tools/cart.py (the cover) places it,
+    tools/titleart.py packs it for the title screen as the cover draws it.
   * broke1/2.txt - PPOT's lettering for the broke screen.
 
 The dealer, faces and lettering come out byte-identical to the arrays in
@@ -249,11 +249,12 @@ def main():
     preview("hand_r", right, bg=3)
 
     # Lettering.
-    logo = load_bits("logo.txt")
-    o.array("LOGO", pack_rows1(logo), comment=f"'Bingo' {len(logo[0])}x{len(logo)}, MSB-first rows")
-    o.const("LOGO_W", len(logo[0]))
-    o.const("LOGO_H", len(logo))
-    mono_preview("logo", logo)
+    import cart                                          # the title as the cover draws it
+    import titleart
+    line, = cart.title_lines()
+    titleart.emit(o, "LOGO", line, "'BINGO'")
+    PREVIEW.mkdir(parents=True, exist_ok=True)
+    titleart.preview(line).save(PREVIEW / "logo.png")
     for nm in ("BROKE1", "BROKE2"):
         bits = load_bits(nm.lower() + ".txt")
         o.array(nm, pack_rows1(bits), comment=f"PPOT lettering {len(bits[0])}x{len(bits)}, MSB-first rows")

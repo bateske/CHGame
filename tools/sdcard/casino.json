@@ -126,6 +126,10 @@
     {
       "sketch": "CHSDtoUSB",
       "folder": "APPS"
+    },
+    {
+      "sketch": "CHSDtoSerial",
+      "folder": "APPS"
     }
   ]
 }

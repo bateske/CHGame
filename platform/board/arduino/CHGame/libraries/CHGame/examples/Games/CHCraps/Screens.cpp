@@ -120,12 +120,6 @@ static void feltBackdrop() {
     gfx_rect(2, 2, 124, 124, GOLD);
 }
 
-static void lettering(const uint8_t *bits, int w, int h, int x, int y, const uint8_t *ramp, int outline, int shadow) {
-    Mask m = maskBegin(w, h);
-    maskBlit1(m, bits, (uint8_t)w, (uint8_t)h);
-    maskDraw(m, x, y, GOLD, outline, shadow, ramp);
-}
-
 // Big lettering in PPOT's font, scale 3, with a gradient, outline and shadow:
 // top colour for 3 rows, mid down to row lowFrom, low below.
 static void title35(const char *text, int y, uint8_t top, uint8_t mid, uint8_t low, uint8_t shadow,
@@ -156,7 +150,7 @@ static uint8_t menu(uint8_t *items) {
 
 static d3::Die titleDice[2];
 static d3::Cam titleCam;
-static const int SPOT_X = 22, SPOT_Y = 38, SPOT_W = 84, SPOT_H = 36;
+static const int SPOT_X = 22, SPOT_Y = 42, SPOT_W = 84, SPOT_H = 32;
 
 static void titleDiceInit() {
     memset(titleDice, 0, sizeof titleDice);
@@ -208,10 +202,10 @@ static void titleUpdate() {
 
 static void titleStatic(uint32_t frame) {
     feltBackdrop();
-    uint8_t ramp[LOGO_H];
-    for (int i = 0; i < LOGO_H; i++) ramp[i] = i < 3 ? FX_B : (i < 13 ? GOLD : WOOD);
-    lettering(LOGO, LOGO_W, LOGO_H, 64 - LOGO_W / 2, 8, ramp, INK, WINE);
-    centred35(33, "~ROLL~THE~BONES~", CYAN);
+    // The title in the cover's lettering (tools/cart.py), in the house gold;
+    // the top rows FX_B, so the palette makes them shimmer.
+    titleArt(LOGO, LOGO_W, LOGO_H, 62 - LOGO_W / 2, 4, LOGO_BASE, LOGO_RAMP, LOGO_DEPTH, LOGO_SIDE);
+    centred35(36, "~ROLL~THE~BONES~", CYAN);
     art::stack(14, 110, 25 * 3 + 5 * 2, 6);
     art::stack(114, 110, 100 + 25 * 2 + 5, 6);
     text35(7, 116, game.opt.table == TABLE_BEGINNER ? "BEGINNER" : "CLASSIC", FELT_LT);

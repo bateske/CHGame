@@ -1,0 +1,80 @@
+{
+ "warnings": [],
+ "games": [
+  {
+   "id": "one",
+   "title": "ONE",
+   "folder": "",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {},
+   "licenseFiles": {},
+   "picture": "7c844524ce81318e079d533f357e3f2779d897b3d7d95be9743b58a348f70390"
+  },
+  {
+   "id": "two",
+   "title": "TWO",
+   "folder": "CARDS",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {},
+   "licenseFiles": {},
+   "picture": "93605758092896e3333e2b60edf4981f087ad862b7313e90bea8f12753aee908"
+  },
+  {
+   "id": "three",
+   "title": "THREE",
+   "folder": "CARDS/CLASSIC",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {},
+   "licenseFiles": {},
+   "picture": null
+  },
+  {
+   "id": "four",
+   "title": "FOUR",
+   "folder": "DICE",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {},
+   "licenseFiles": {},
+   "picture": null
+  }
+ ],
+ "launch": "",
+ "menu": {
+  "colors": {},
+  "background": null,
+  "cover": "bbae9b6dcccf21e7778356c9a076c3d8c5cd9c210c372ccef0fa32c796838bc0",
+  "about": "90629a7a5cbc9fa6d3d11f394a1f37a73a415c366d1a1aa80f5f41adc640a64e",
+  "systemImages": {},
+  "folders": {
+   "CARDS": {
+    "background": "c6657cdc65127073a8f46be0b19cdfaba7891be41b92ef731e1823ab09e5fb35",
+    "cover": "72a78a9098710edf66289cb7f850293650dedda495129630d104647768acaf71"
+   },
+   "CARDS/CLASSIC": {
+    "background": null,
+    "cover": "c76bfb42026555668e46ead8eaf71ab4af2fdc755423cd6be37dc163591c38b6"
+   }
+  }
+ },
+ "sameCard": true
+}

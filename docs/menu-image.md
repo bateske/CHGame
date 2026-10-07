@@ -38,15 +38,15 @@ Messages (INSTALLING, ERROR n, USB UPLOAD) are boxes over rows 36-87.
   draws it in one colour that turns through the rainbow, like the default
   logo and the selection bar. On a bootloader built in the Static style
   (*Tools > Bootloader > SD Text Menu (Static)*) nothing turns: the
-  picture is shown exactly as painted, magenta included, and the selection
-  bar is magenta.
+  magenta parts, the selection bar and the boxes are drawn in the menu's
+  text colour (`#FFF4D6`, or the cart's `text`), matching the titles.
 - **Colours.** Besides magenta, a picture holds 11 colours. More are
   reduced to 11 for you; a picture with few, flat colours looks best.
 - **The palette.** The default picture is an indexed PNG whose 16 colours
-  are laid out as the menu's: 0-10 are the picture's own (a starter set:
-  change them to whatever you like), 11-14 the menu's text, disabled,
-  selected-text and mark colours, 15 the rainbow's magenta. A picture need
-  not be indexed, though: any PNG that follows the rules above is taken.
+  are laid out as the menu's: 0-10 are the picture's own (change them to
+  whatever you like), 11-14 the menu's text, disabled, selected-text and
+  mark colours, 15 the rainbow's magenta. A picture need not be indexed,
+  though: any PNG that follows the rules above is taken.
 - **Readable titles.** Keep rows 20-119 dark and plain behind the text, or
   change the text's colour (step 4).
 
@@ -56,8 +56,9 @@ Messages (INSTALLING, ERROR n, USB UPLOAD) are boxes over rows 36-87.
    ```
    chgame background --template my-menu.png
    ```
-   This writes the default picture: black, the CHGAME logo in magenta at the
-   top, the key hints at the foot.
+   This writes the default picture: the CHGAME logo in magenta (the rainbow
+   colour) over a rainbow rule at the top, a dark quilted panel behind the
+   list, the A and B keys at the foot.
 
 2. **Edit it** in any paint program: Aseprite, GIMP, Photoshop, Paint.
    - Work at 128x128 and zoom in. Change the logo or write your own title in
@@ -102,10 +103,11 @@ Messages (INSTALLING, ERROR n, USB UPLOAD) are boxes over rows 36-87.
      `tools/sdcard/menu.png`, then run `chgame card` (and deploy
      `out/CHGame-Casino.chgame`, or copy `out/sdcard/`).
    - **For every cart that has no picture of its own** (the platform's
-     default): replace `spec/assets/menu-default.png`. This is a change to
-     the card format's shared assets: run `python tools/chcart/fixtures.py`
-     afterwards, since the conformance fixtures record the default
-     picture's bytes.
+     default): `spec/assets/menu-default.png` is painted by
+     `tools/art/menu/menu.py`; change that and run `python tools/menuart.py`
+     ([cover-art.md](cover-art.md)). This is a change to the card format's
+     shared assets: run `python tools/chcart/fixtures.py` afterwards, since
+     the conformance fixtures record the default picture's bytes.
 
 **No picture on the card** (a card made by hand): the list shows on black,
 with no logo.

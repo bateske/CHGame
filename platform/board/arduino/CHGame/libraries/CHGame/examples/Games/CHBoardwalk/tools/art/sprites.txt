@@ -99,14 +99,14 @@ kkwwwwkkkkwwwwkk
 @CHIPS
 ..kkkkkk..
 .krrrrrrk.
-krrwwwwrrk
-krrrrrrrrk
-kkrrrrrrkk
-kwkkkkkkwk
-krrwrrwrrk
-kkrrrrrrkk
-kwrrwwrrwk
-.kkkkkkkk.
+krrpppprrk
+kmrrrrrrmk
+kwmmwwmmwk
+kkmmmmmmkk
+kmwwmmwwmk
+kkmmmmmmkk
+kwmmwwmmwk
+.kmmmmmmk.
 
 # --- A die with no pips (they are drawn on top, turning with it).
 @DIE

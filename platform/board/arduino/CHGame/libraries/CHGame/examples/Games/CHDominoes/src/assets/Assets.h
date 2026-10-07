@@ -7,5 +7,10 @@ constexpr uint8_t HAND_TIP = 5;                           // its column
 extern const uint16_t AAFONT[849];                     // the serif lettering (tools/art/aafont.txt): per glyph
                                                             // char << 8 | width, rows, the rows of ink, the rows of half ink
 constexpr uint8_t AAFONT_H = 11;
-extern const uint8_t LOGO[240];                         // the title's name (tools/art/logo.txt), 1 bpp rows
-constexpr uint8_t LOGO_W = 116, LOGO_H = 16;
+extern const uint8_t LOGO[525];
+constexpr int LOGO_W = 113;
+constexpr int LOGO_H = 35;
+constexpr int LOGO_BASE = 8;
+extern const uint8_t LOGO_RAMP[35];
+constexpr int LOGO_DEPTH = 4;
+constexpr int LOGO_SIDE = 7;

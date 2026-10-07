@@ -9,7 +9,7 @@ description = "PC tools for the CHGame handheld: build, upload, simulate, check,
 readme = "tools/README.md"
 license = {file = "LICENSE"}
 requires-python = ">=3.10"
-dependencies = ["pillow", "pyserial"]
+dependencies = ["pillow", "pyserial", "numpy"]   # numpy: the box art (tools/artkit)
 
 [project.optional-dependencies]
 # The simulator's and the host tests' compiler, when no zig, clang++ or g++ is installed.
@@ -31,4 +31,4 @@ chgame = "chgame:main"
 package-dir = {"" = "tools"}
 py-modules = ["chgame", "device", "paths", "check", "hosttests", "gamecfg", "artlib", "pixkit",
               "readme_gif", "check_size", "chgpack", "libzip", "serialcap"]
-packages = ["chsim", "audio", "sdcard", "music", "fonts", "release", "chcart"]
+packages = ["chsim", "audio", "sdcard", "music", "fonts", "release", "chcart", "artkit"]

@@ -139,7 +139,7 @@ static void panel(int y, int h) {
 // Title: cards drifting down the felt behind the name (CHMahjong's tiles).
 // ---------------------------------------------------------------------------
 static const char *const TITLE_ITEM[4] = {"PLAY", "DECK", "OPTIONS", "STATS"};
-enum { RAIL_TOP = 30, RAIL_BOT = 110 };         // the felt shows between them
+enum { RAIL_TOP = 38, RAIL_BOT = 110 };         // the felt shows between them
 
 // The menu: CHBlackjack's button bar. The button under the cursor grows and
 // takes its colour (PLAY light green, the others gold); the rest shrink
@@ -276,19 +276,16 @@ static void titleRender(uint32_t frame) {
     for (auto &f : fallers) drawFaller(f);
     if (meteorOn) drawFaller(meteor);
     fx::drawParticles();
-    // The outlined lettering is the costliest thing in the game (~5 ms), so
-    // the top rail is drawn once and kept: the cards pass under a copy.
+    // The title is the costliest thing in the game, so the top rail is
+    // drawn once and kept: the cards pass under a copy.
     if (railKept) {
         memcpy(gfx_fb, rail, sizeof rail);
     } else {
         gfx_fillRect(0, 0, 128, RAIL_TOP, INK);
         gfx_hline(0, RAIL_TOP, 128, GOLD);
-        // The top rows are FX_B, so the palette makes it shimmer.
-        Mask m = maskBegin(LOGO_W, LOGO_H);
-        maskBlit1(m, LOGO, LOGO_W, LOGO_H, 1);
-        uint8_t ramp[LOGO_H];
-        for (int i = 0; i < LOGO_H; i++) ramp[i] = i < 5 ? FX_B : (i < 14 ? GOLD : WOOD);
-        maskDraw(m, 64 - LOGO_W / 2, 5, 0, INK, WINE, ramp);
+        // The title in the cover's lettering (tools/cart.py), in the house
+        // gold; the top rows FX_B, so the palette makes them shimmer.
+        titleArt(LOGO, LOGO_W, LOGO_H, 63 - LOGO_W / 2, 3, LOGO_BASE, LOGO_RAMP, LOGO_DEPTH, LOGO_SIDE);
         memcpy(rail, gfx_fb, sizeof rail);
         railKept = true;
     }

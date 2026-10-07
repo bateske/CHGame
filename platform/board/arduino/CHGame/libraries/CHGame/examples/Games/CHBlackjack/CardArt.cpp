@@ -122,6 +122,7 @@ void dimCard(int x, int y, int w, int h) {
 static const uint8_t CHIP_BODY[5] = {WHITE, RED, BLUE, FELT_LT, INK};
 static const uint8_t CHIP_EDGE[5] = {BLUE, WHITE, WHITE, WHITE, GOLD};
 static const uint8_t CHIP_SHADE[5] = {SILVER, WINE, NAVY, FELT_DK, INK};
+static const uint8_t CHIP_LABEL[5] = {WHITE, SKIN, CYAN, WHITE, NAVY};
 static const int32_t CHIP_VALUE[5] = {1, 5, 10, 25, 100};
 
 int chipDenom(int32_t amount) {
@@ -129,20 +130,15 @@ int chipDenom(int32_t amount) {
     return 0;
 }
 
+// The chip sprites (tools/art/common/chip_*.txt) are drawn in placeholder
+// colours - WHITE body, BLUE edge inserts, SILVER shade, CYAN lit label - which
+// the denomination's remap replaces; a stack's lower chips alternate two cuts.
 void chip(int cx, int y, uint8_t d, bool top) {
-    uint8_t b = CHIP_BODY[d], e = CHIP_EDGE[d], sh = CHIP_SHADE[d];
-    // Edge band (2 rows) with the classic stripes.
-    gfx_hline(cx - 6, y + 2, 13, sh);
-    gfx_hline(cx - 6, y + 3, 13, sh);
-    gfx_pixel(cx - 7, y + 2, INK); gfx_pixel(cx + 7, y + 2, INK);
-    gfx_pixel(cx - 7, y + 1, INK); gfx_pixel(cx + 7, y + 1, INK);
-    for (int i = -4; i <= 4; i += 4) gfx_vline(cx + i, y + 2, 2, e);
-    gfx_hline(cx - 5, y + 4, 11, INK);
-    if (!top) return;
-    gfx_fillEllipse(cx, y + 1, 6, 2, b);
-    gfx_ellipse(cx, y + 1, 7, 2, INK);
-    gfx_pixel(cx - 4, y + 1, e); gfx_pixel(cx + 4, y + 1, e);
-    gfx_pixel(cx, y, e); gfx_pixel(cx, y + 2, e);
+    uint8_t rm[16];
+    for (uint8_t i = 0; i < 16; i++) rm[i] = i;
+    rm[WHITE] = CHIP_BODY[d]; rm[BLUE] = CHIP_EDGE[d]; rm[SILVER] = CHIP_SHADE[d]; rm[CYAN] = CHIP_LABEL[d];
+    if (top) sprite4(CHIP_TOP, cx - 7, y - 1, rm);
+    else sprite4((y >> 1) & 1 ? CHIP_SIDE_ALT : CHIP_SIDE, cx - 7, y + 1, rm);
 }
 
 void chipStack(int cx, int baseY, int32_t amount, uint8_t maxChips) {

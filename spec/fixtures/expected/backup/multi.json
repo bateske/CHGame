@@ -1,0 +1,125 @@
+{
+ "warnings": [],
+ "games": [
+  {
+   "id": "zulu",
+   "title": "ZULU",
+   "folder": "",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {
+    "SHARED.DAT": "585fa48f91601b37e77fa5462d06513700fe334c53cb80de6d465d63ee42d682"
+   },
+   "licenseFiles": {},
+   "picture": null
+  },
+  {
+   "id": "alpha",
+   "title": "Alpha game",
+   "folder": "TOYS",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {},
+   "licenseFiles": {},
+   "picture": null
+  },
+  {
+   "id": "inner",
+   "title": "INNER GAME",
+   "folder": "TOYS/BOX",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {
+    "SHARED.DAT": "585fa48f91601b37e77fa5462d06513700fe334c53cb80de6d465d63ee42d682"
+   },
+   "licenseFiles": {},
+   "picture": null
+  },
+  {
+   "id": "words-2",
+   "title": "WORDS",
+   "folder": "TOYS",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {},
+   "licenseFiles": {},
+   "picture": null
+  },
+  {
+   "id": "words",
+   "title": "WORDS",
+   "folder": "",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {},
+   "licenseFiles": {},
+   "picture": null
+  },
+  {
+   "id": "con",
+   "title": "CON",
+   "folder": "",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {},
+   "licenseFiles": {},
+   "picture": null
+  },
+  {
+   "id": "long",
+   "title": "A TITLE LONGER THAN THE MENU",
+   "folder": "",
+   "author": "an author with a long name",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {},
+   "licenseFiles": {},
+   "picture": null
+  }
+ ],
+ "launch": "inner",
+ "menu": {
+  "colors": {
+   "mark": "#FF8100"
+  },
+  "background": "42c53c125862708e14f4b545287e1cbc24ddbc75321cccf4b93aecf52a5ef8c8",
+  "cover": null,
+  "about": null,
+  "systemImages": {},
+  "folders": {
+   "TOYS": {
+    "background": "4be0433007b94ac1fed62b96a520b266f7d61912724956d9037a3816a6b58932",
+    "cover": null
+   }
+  }
+ },
+ "sameCard": true
+}

@@ -119,12 +119,13 @@ void rail() {
     gfx_hline(0, RAIL_Y + 3, 128, INK);
     // Dealer's chip rack: columns of chips seen edge-on.
     static const uint8_t RACK[4] = {WHITE, RED, FELT_LT, INK};
+    static const uint8_t RACK_SH[4] = {SILVER, WINE, FELT_DK, GOLD};   // each column's lower edge (gold under black)
     gfx_fillRect(TRAY_X - 1, RAIL_Y, TRAY_W + 2, 4, INK);
     for (int i = 0; i < 11; i++) {
-        uint8_t c = RACK[i % 4];
+        uint8_t c = RACK[i % 4], sh = RACK_SH[i % 4];
         int x = TRAY_X + i * 4;
-        gfx_fillRect(x, RAIL_Y, 3, 3, c);
-        gfx_pixel(x + 1, RAIL_Y + 1, c == WHITE ? SILVER : (c == INK ? NAVY : WHITE));
+        gfx_fillRect(x, RAIL_Y, 3, 2, c);                 // chips standing edge-on: the body,
+        gfx_hline(x, RAIL_Y + 2, 3, sh);                  // the shaded lower edge
     }
 }
 

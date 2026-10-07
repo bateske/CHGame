@@ -174,7 +174,7 @@ static uint8_t menu(uint8_t *items) {
 
 static d3::Die titleDice[d3::N];
 static d3::Cam titleCam;
-static const int SPOT_X = 8, SPOT_Y = 27, SPOT_W = 112, SPOT_H = 34;
+static const int SPOT_X = 8, SPOT_Y = 39, SPOT_W = 112, SPOT_H = 26;
 
 static void titleDiceInit() {
     memset(titleDice, 0, sizeof titleDice);
@@ -185,7 +185,7 @@ static void titleDiceInit() {
         d3::labelDie(d, 2, 6, i);                        // pips from the first frame
     }
     d3::defaultCam(titleCam);
-    titleCam.focal = 141; titleCam.camY = 30 * 256; titleCam.sy0 = 11;      // level, close in
+    titleCam.focal = 141; titleCam.camY = 30 * 256; titleCam.sy0 = 23;      // level, close in
 }
 
 static void titleUpdate() {
@@ -231,12 +231,20 @@ static void titleUpdate() {
 
 static void titleStatic(uint32_t frame) {
     feltBackdrop();
-    // The lettering: a gradient, an outline and a shadow.
-    uint8_t ramp[LOGO_H];
-    for (int i = 0; i < LOGO_H; i++) ramp[i] = i < 3 ? FX_B : (i < 11 ? GOLD : WOOD);
-    Mask m = maskBegin(LOGO_W, LOGO_H);
-    maskBlit1(m, LOGO, (uint8_t)LOGO_W, (uint8_t)LOGO_H);
-    maskDraw(m, 64 - LOGO_W / 2, 6, GOLD, INK, WINE, ramp);
+    // YACHT in the cover's lettering (tools/cart.py), in the house gold; the
+    // top rows FX_B, so the palette makes them shimmer. DICE under it, small,
+    // between the cover's two rules, each with a diamond inboard.
+    titleArt(LOGO, LOGO_W, LOGO_H, 63 - LOGO_W / 2, 3, LOGO_BASE, LOGO_RAMP, LOGO_DEPTH, LOGO_SIDE);
+    const int dw = gfx_textWidth("D I C E"), dx = 64 - dw / 2;
+    for (int side = 0; side < 2; side++) {
+        int x0 = side ? dx + dw + 4 : 12, x1 = side ? 116 : dx - 5, xd = side ? x0 + 2 : x1 - 2;
+        gfx_hline(x0, 33, x1 - x0, GOLD);
+        gfx_hline(x0, 34, x1 - x0, WOOD);
+        gfx_vline(xd, 31, 6, GOLD);
+        gfx_hline(xd - 1, 33, 3, GOLD);
+        gfx_pixel(xd, 31, WHITE);
+    }
+    gfx_text(dx, 30, "D I C E", GOLD);
     char buf[24];
     fmtMoney(fmtStr(buf, "PURSE "), game.purse);
     text35(7, 116, buf, FELT_LT);
@@ -272,7 +280,7 @@ static void titleRender(uint32_t frame) {
     for (uint8_t i = 0; i < d3::N; i++) d3::shadow(titleDice[i], titleCam, FELT_DK);
     for (uint8_t i = 0; i < d3::N; i++) d3::draw(titleDice[i], titleCam, look);
     gfx_resetClip();
-    if (t == 30) fx::burst(fx::STAR, 64, 44, 14, 60, FX_A);
+    if (t == 30) fx::burst(fx::STAR, 64, 56, 14, 60, FX_A);
     fx::update();
     fx::drawParticles();
 }

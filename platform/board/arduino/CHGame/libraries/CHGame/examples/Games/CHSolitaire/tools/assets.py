@@ -9,7 +9,8 @@ Sources, all palette-letter text or palette-exact PNGs in tools/art/:
                   (ranks A..K, pips hearts/diamonds/spades/clubs; the suits
                   are reordered here into the game's: c d s h).
   * hand.png (or hand.txt) - CHChess's pointing glove.
-  * logo.txt    - the title lettering (first drawn by tools/make_logo.py).
+  * title.txt   - the title's lettering: tools/cart.py (the cover) draws it,
+                  tools/titleart.py packs it for the title screen likewise.
   * backs/*.txt - the card backs, 15x21 (a PNG of the same name overrides).
 
 Outputs:
@@ -230,14 +231,13 @@ def main():
         o.array(f"BACK_{nm.upper()}", pack_span4(img), comment=f"card back '{nm}', 15x21, span4")
         preview(f"back_{nm}", img, 8)
 
-    # The title lettering (tools/art/logo.txt), 1 bpp rows.
-    rows = [ln.rstrip() for ln in (artlib.art(HERE, "logo.txt")).read_text().splitlines() if ln and not ln.startswith("# ")]
-    w = max(len(r) for r in rows)
-    bits = [[1 if ch == "#" else 0 for ch in r.ljust(w)] for r in rows]
-    o.array("LOGO", pack_rows1(bits), comment=f"the title lettering, {w}x{len(bits)}, MSB-first rows")
-    o.const("LOGO_W", w)
-    o.const("LOGO_H", len(bits))
-    preview("logo", [[1 if b else TRANSPARENT for b in r] for r in bits], 6, bg=0)
+    # The title, as the cover (tools/cart.py) draws it.
+    import cart
+    import titleart
+    line, = cart.title_lines()
+    titleart.emit(o, "LOGO", line, "'SOLITAIRE'")
+    PREVIEW.mkdir(parents=True, exist_ok=True)
+    titleart.preview(line, bg=0).save(PREVIEW / "logo.png")
 
     png = artlib.art(HERE, "hand.png")
     hand = load_png(png) if png.exists() else load_art("hand")

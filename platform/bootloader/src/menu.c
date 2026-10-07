@@ -3,8 +3,9 @@
  * shared/chgame_card.h, spec/card.md; the card's tree: card.c).
  *
  *   power-on -> card read during the panel's wake-up waits
- *     launch entry in GAMES/MENU.IDX (and START not held) -> that game runs,
- *       installed first if it is not the installed one
+ *     launch entry in GAMES/MENU.IDX (and START not held) -> if it is the
+ *       installed game it runs at once, the panel never lit; otherwise the
+ *       list opens on it (A installs it: a power-on never writes flash)
  *     otherwise the list of GAMES/: folders and *.CHG titles, in MENU.IDX's
  *     order, then by title, the installed game preselected
  *       A/START on a folder           -> its list (B goes back)
@@ -48,11 +49,12 @@ static struct { uint32_t clus, sel, top; file_t bg; } up[DEPTH];
    there is none (or it is not one). */
 static void background(void)
 {
+    uint32_t k = 0;
     if (bg.clus && bg.size == CARD_BG_BYTES) {
         fat_stream_t s;
-        uint32_t k, lba;
+        uint32_t lba;
         fat_open(&s, bg.clus, bg.size);
-        for (k = 0; k < CARD_BG_BYTES / 512; k++) {
+        for (; k < CARD_BG_BYTES / 512; k++) {
             if (!(lba = fat_next_lba(&s, buf)) || sd_read(lba, k ? lcd_fb + (k - 1) * 512 : buf)) break;
             if (!k) {
                 if (w32(buf) != CARD_BG_MAGIC) break;
@@ -60,11 +62,17 @@ static void background(void)
                     ((uint32_t *)(void *)lcd_pal)[i] = w32(buf + CARD_BG_OFF_PALETTE + 4 * i);
             }
         }
-        if (k == CARD_BG_BYTES / 512) return;
-        bg.clus = 0;                        /* broken: not again */
+        if (k != CARD_BG_BYTES / 512) bg.clus = 0;      /* broken: not again */
     }
-    for (uint32_t i = 0; i < 16; i++) lcd_pal[i] = pal0[i];
-    lcd_fill(0, 0, LCD_W, LCD_H, 0);
+    if (k != CARD_BG_BYTES / 512) {
+        for (uint32_t i = 0; i < 16; i++) lcd_pal[i] = pal0[i];
+        lcd_fill(0, 0, LCD_W, LCD_H, 0);
+    }
+#if !LCD_TURNS
+    /* The static style: colour 15 (the bar, the boxes, the picture's #FF00FF)
+       in the menu's text colour, not the hot pink the palette holds. */
+    lcd_pal[LCD_RAINBOW] = lcd_pal[CARD_C_TEXT];
+#endif
 }
 
 static void draw_list(void)
@@ -160,12 +168,15 @@ void menu_main(int app, int launch)
 #if !CHBOOT_APP
     if (!n && app == APP_VALID)
         boot_reset(CHGAME_BOOTREQ_RUN);     /* nothing on the card: run what is installed */
-    /* The launch entry, followed down through folders; on any error the menu
-       comes up there, saying so. */
-    for (k = 0; launch && !rc && k <= DEPTH; k++) {
+    /* The launch entry, followed down through flagged folders: the installed
+       game starts at once (the panel never lit); any other is only selected,
+       so a power-on never writes over the game that was in flash. */
+    for (k = 0; launch && k <= DEPTH; k++) {
         for (n = 0; n < ngames && !(games[n].flags & G_LAUNCH); n++) { }
         if (n == ngames) break;
-        rc = start(n, app);
+        sel = n;
+        if (!(games[n].flags & (G_DIR | G_INSTALLED))) break;      /* not installed: the list, on it */
+        start(n, app);                      /* a folder: into it; the installed game: RUN (no return) */
     }
 #endif
     if (!ngames && !depth) {                /* nothing to list: USB mode, saying so (B there looks again) */

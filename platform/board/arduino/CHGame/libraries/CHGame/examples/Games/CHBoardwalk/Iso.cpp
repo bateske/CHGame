@@ -168,12 +168,19 @@ const uint8_t *decalOf(uint8_t t, const uint8_t *&remap) {
 // positions, in eighths of a cell).
 void drawTable() {
     static const int8_t AT[6][2] = {{36, 122}, {122, 36}, {74, 124}, {124, 74}, {-18, 40}, {40, -18}};
-    static const uint8_t COLOUR[6] = {RED, BLUE, FELT_LT, INK, GOLD, RED};
+    // Each stack's body, rim shade, label and inserts (the chip art's RED, WINE,
+    // SKIN and WHITE): one sprite, palette swapped, in the casino chips' colours.
+    static const uint8_t COLOUR[6][4] = {{RED, WINE, SKIN, WHITE}, {BLUE, NAVY, CYAN, WHITE},
+                                         {FELT_LT, FELT_DK, WHITE, WHITE}, {INK, INK, SILVER, WHITE},
+                                         {GOLD, WOOD, WHITE, WHITE}, {RED, WINE, SKIN, WHITE}};
     gfx_clear(NAVY);
     uint8_t rm[16];
     memcpy(rm, RM_ID, 16);
     for (int i = 0; i < 6; i++) {
-        rm[RED] = COLOUR[i];
+        rm[RED] = COLOUR[i][0];
+        rm[WINE] = COLOUR[i][1];
+        rm[SKIN] = COLOUR[i][2];
+        rm[WHITE] = COLOUR[i][3];
         centred(CHIPS, (AT[i][0] - AT[i][1]) * hw() / 8, (AT[i][0] + AT[i][1]) * hh() / 8, rm, zscale());
     }
 }

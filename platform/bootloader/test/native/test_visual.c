@@ -14,7 +14,9 @@
  *     TWO/            (no cover) ROMEO
  *   SYSTEM.PIC        nine test pictures, one per screen
  * Every game but EXTRA has a picture. img_vcartlaunch is the same cart
- * launching ALPHA GAME; img_vcartbad breaks pictures (vcartbad below). */
+ * launching ALPHA GAME; img_vcartbad breaks pictures (vcartbad below).
+ * Power-on stays on the cover (A there: the installed game's picture); a
+ * launch game runs at once if it is installed, else waits on its picture. */
 #include "testlib.h"
 #include "hal.h"
 #include "lcd.h"                  /* (LCD_SLIDE_STEPS) */
@@ -149,12 +151,20 @@ static int alpha_keys(const uint32_t *k, int n)
     return host_boot();
 }
 
+#if !LCD_TURNS                               /* (the cover turns in the rainbow: compared in the static style) */
+#define ON_COVER(what) CHECK(!memcmp(cover_ref, B->lcd.fb, sizeof cover_ref), what)
+#else
+#define ON_COVER(what) (void)0
+#endif
+
+/* Power-on stays on the cart's cover, installed game or not; A on the cover
+   shows the installed game's picture, where A runs it and B goes back. */
 static void t_found(void)
 {
-    static const uint32_t b[] = { BTN_B }, bb[] = { BTN_B, BTN_B }, bba[] = { BTN_B, BTN_B, BTN_A };
-    static const uint32_t sel[] = { BTN_SELECT }, selsel[] = { BTN_SELECT, BTN_SELECT }, start[] = { BTN_START };
-    static const uint32_t ba[] = { BTN_B, BTN_A }, baa[] = { BTN_B, BTN_A, BTN_A }, bab[] = { BTN_B, BTN_A, BTN_B };
-    static const uint32_t badown[] = { BTN_B, BTN_A, BTN_DOWN, BTN_LEFT, BTN_SELECT };
+    static const uint32_t a[] = { BTN_A }, b[] = { BTN_B }, sel[] = { BTN_SELECT }, ba[] = { BTN_B, BTN_A };
+    static const uint32_t astart[] = { BTN_A, BTN_START }, aa[] = { BTN_A, BTN_A }, ab[] = { BTN_A, BTN_B };
+    static const uint32_t adown[] = { BTN_A, BTN_DOWN, BTN_LEFT, BTN_SELECT };
+    static const uint32_t inb[] = { BTN_RIGHT, BTN_DOWN, BTN_B }, insel[] = { BTN_RIGHT, BTN_DOWN, BTN_SELECT };
     card(img_vcart);                         /* the cart's cover, nothing installed, for comparing */
     B->limit_us = READY * 1000;
     CHECK(host_boot() == END_HANG, "the cover");
@@ -164,6 +174,9 @@ static void t_found(void)
     card(img_vcart);
     B->limit_us = READY * 1000;
     CHECK(host_boot() == END_HANG, "menu");
+    lcd_sane("found");
+    ON_COVER("power-on with a game installed: the cover stays");
+    CHECK(alpha_keys(a, 1) == END_HANG, "A on the cover: the installed game's picture");
     lcd_sane("found");
     snap("found");                           /* ALPHA GAME, in FOLDER ONE, with the border */
     {                                        /* the installed game's border: the outermost pixels, one colour */
@@ -178,27 +191,21 @@ static void t_found(void)
 #endif
     }
     remember();
-#if !LCD_TURNS                               /* (the cover turns in the rainbow: compared in the static style) */
-#define ON_COVER(what) CHECK(!memcmp(cover_ref, B->lcd.fb, sizeof cover_ref), what)
-#else
-#define ON_COVER(what) (void)0
-#endif
-    CHECK(alpha_keys(start, 1) == END_HANG && same_inside_border(), "START does nothing");
-    CHECK(alpha_keys(b, 1) == END_HANG, "B in a folder of the root");
+    CHECK(alpha_keys(astart, 2) == END_HANG && same_inside_border(), "START does nothing");
+    CHECK(alpha_keys(inb, 3) == END_HANG, "B in a folder of the root");
     ON_COVER("B in a folder of the root: the cart's cover");
-    CHECK(alpha_keys(sel, 1) == END_HANG, "SELECT");
+    CHECK(alpha_keys(insel, 3) == END_HANG, "SELECT");
     ON_COVER("SELECT: the cart's cover");
-    CHECK(alpha_keys(bb, 2) == END_HANG, "B on the cart's cover: the about page");
+    CHECK(alpha_keys(b, 1) == END_HANG, "B on the cart's cover: the about page");
     snap("about");
     remember_about();
-    CHECK(alpha_keys(selsel, 2) == END_HANG && same_as_about(), "SELECT at the root: the about page");
-    CHECK(alpha_keys(bba, 3) == END_HANG, "any key closes it");
+    CHECK(alpha_keys(sel, 1) == END_HANG && same_as_about(), "SELECT at the root: the about page");
+    CHECK(alpha_keys(ba, 2) == END_HANG, "any key closes it");
     ON_COVER("any key closes it: the cover again");
-    CHECK(alpha_keys(ba, 2) == END_HANG && same_inside_border(), "A on the cart's cover: ALPHA GAME's picture");
-    CHECK(alpha_keys(badown, 5) == END_HANG && same_inside_border(), "...where only A and B count");
-    CHECK(alpha_keys(bab, 3) == END_HANG, "...B there");
+    CHECK(alpha_keys(adown, 4) == END_HANG && same_inside_border(), "the installed game's picture: only A and B count");
+    CHECK(alpha_keys(ab, 2) == END_HANG, "...B there");
     ON_COVER("...B there: the cover again");
-    CHECK(alpha_keys(baa, 3) == END_RESET && B->retained[0] == CHGAME_BOOTREQ_RUN, "...A there: RUN");
+    CHECK(alpha_keys(aa, 2) == END_RESET && B->retained[0] == CHGAME_BOOTREQ_RUN, "...A there: RUN");
     CHECK(B->flash_ops == 0, "nothing written");
 }
 
@@ -206,23 +213,30 @@ static void t_found_first_copy(void)
 {
     preinstall("BRAVO.CHG");                 /* ZULU at the top holds the same payload */
     card(img_vcart);
-    B->limit_us = READY * 1000;
+    press(READY, BTN_A);
+    B->limit_us = (READY + 1000) * 1000;
     CHECK(host_boot() == END_HANG, "menu");
-    snap("found_home");                      /* ZULU, the first copy in the search's order */
+    snap("found_home");                      /* A on the cover: ZULU, the first copy in the search's order */
 }
 
 static void t_stray(void)
 {
-    static const uint32_t a[] = { BTN_A };
+    static const uint32_t a[] = { BTN_A }, aa[] = { BTN_A, BTN_A }, down[] = { BTN_DOWN };
     preinstall("STRAY.CHG");                 /* on no card entry */
     card(img_vcart);
-    B->limit_us = READY * 1000;
+    keys(a, 1);
     CHECK(host_boot() == END_HANG, "menu");
-    snap("stray");                           /* GAMES/'s first row: the program in flash */
+    snap("stray");                           /* A on the cover: the program in flash, SYSTEM.PIC's picture of it */
+    remember();
     host_init();
     preinstall("STRAY.CHG");
     card(img_vcart);
-    keys(a, 1);
+    keys(down, 1);
+    CHECK(host_boot() == END_HANG && same_inside_border(), "DOWN from the cover: GAMES/ lists it first");
+    host_init();
+    preinstall("STRAY.CHG");
+    card(img_vcart);
+    keys(aa, 2);
     CHECK(host_boot() == END_RESET && B->retained[0] == CHGAME_BOOTREQ_RUN, "A on it: RUN");
     CHECK(B->flash_ops == 0, "with no flash write");
 }
@@ -264,6 +278,22 @@ static void t_flip(void)
     keys(left, 1);
     CHECK(host_boot() == END_HANG, "LEFT from the cover");
     CHECK(B->lcd.col_writes == LCD_SLIDE_STEPS - 1 && B->lcd.first_col_xs == 2, "LEFT: from the left edge (x %u)", B->lcd.first_col_xs - 2u);
+}
+
+/* The zoo card has no folders: at the top LEFT and RIGHT have nowhere to go,
+   and do nothing. */
+static void t_flip_no_folders(void)
+{
+    static const uint32_t down[] = { BTN_DOWN }, lr[] = { BTN_DOWN, BTN_LEFT, BTN_RIGHT };
+    card(img_fat32sys);
+    keys(down, 1);
+    CHECK(host_boot() == END_HANG, "the first game");
+    remember();
+    host_init();
+    card(img_fat32sys);
+    keys(lr, 3);
+    CHECK(host_boot() == END_HANG && same_as_remembered(), "LEFT and RIGHT with no folders: the same picture stays");
+    CHECK(B->lcd.col_writes == 0, "no sideways slide (%u part steps)", B->lcd.col_writes);
 }
 
 static void t_folders(void)
@@ -324,17 +354,19 @@ static void t_install(void)
     }
     CHECK(B->flash_ops >= total / 2 && B->flash_ops < total, "partway through writing (%u of %u ops)", B->flash_ops, total);
     snap("installing");                      /* the bar over MIKE's picture */
-    /* installed: A runs it, nothing written */
+    /* installed: A on the cover shows it, A again runs it, nothing written */
     host_init();
     preinstall("MIKE.CHG");
     card(img_vcart);
-    B->limit_us = READY * 1000;
+    press(READY, BTN_A);
+    B->limit_us = (READY + 1000) * 1000;
     host_boot();
     snap("mike_installed");
     host_init();
     preinstall("MIKE.CHG");
     card(img_vcart);
     press(READY, BTN_A);
+    press(READY + STEP, BTN_A);
     B->limit_us = 8000000;
     CHECK(host_boot() == END_RESET && B->retained[0] == CHGAME_BOOTREQ_RUN && B->flash_ops == 0,
           "A on the installed game: RUN, no write (%u ops)", B->flash_ops);
@@ -343,18 +375,18 @@ static void t_install(void)
 static void t_errors(void)
 {
     /* img_fat32 (the zoo, by title, no folders) with SYSTEM.PIC added; BRAVO
-       installed, so the search leaves the menu on it */
+       installed (nothing may be written over it). The menu starts on the
+       cover: each row is that many presses of DOWN from it. */
     static const struct { const char *name; const char *tag; } bad[] = {
         { "BADPCRC.CHG", "error_2" }, { "BOOTIMG.CHG", "error_3" }, { "WRONGTGT.CHG", "error_5" },
     };
     for (unsigned i = 0; i < sizeof bad / sizeof bad[0]; i++) {
         uint32_t k[64];
-        int from = menu_index("BRAVO.CHG"), to = menu_index(bad[i].name), n = 0;
+        int to = menu_index(bad[i].name), n = 0;
         host_init();
         preinstall("BRAVO.CHG");
         card(img_fat32sys);
-        for (int j = from; j < to; j++) k[n++] = BTN_DOWN;
-        for (int j = from; j > to; j--) k[n++] = BTN_UP;
+        for (int j = -1; j < to; j++) k[n++] = BTN_DOWN;
         if (i == 2) {                        /* (a header the menu refuses shows its error as its picture) */
             keys(k, n);
             CHECK(host_boot() == END_HANG, "%s's row", bad[i].name);
@@ -380,10 +412,9 @@ static void t_errors(void)
 static void t_card_dies_mid_install(void)
 {
     static const uint32_t mike[] = { BTN_DOWN, BTN_DOWN, BTN_A };
-    preinstall("BRAVO.CHG");                 /* ZULU's payload: the menu starts on ZULU, at the top */
+    preinstall("BRAVO.CHG");                 /* ZULU's payload (the menu starts on the cover all the same) */
     card(img_vcart);
-    press(READY, BTN_DOWN);
-    press(READY + STEP, BTN_A);
+    keys(mike, 3);
     B->card_dies_on_flash = 1;
     B->limit_us = 12000000;
     CHECK(host_boot() == END_HANG, "card dies in pass 2: the error");
@@ -430,18 +461,34 @@ static void t_powercut_sweep(void)
 
 /* ---- launch ----------------------------------------------------------------------- */
 
+/* The launch game, not installed: the cover, then its picture, and the menu
+   waits there (A installs it). A power-on never writes flash by itself. */
 static void t_launch(void)
 {
+    static const uint32_t alpha[] = { BTN_RIGHT, BTN_DOWN };
+    card(img_vcart);                         /* ALPHA GAME's picture, reached by hand, for comparing */
+    keys(alpha, 2);
+    CHECK(host_boot() == END_HANG, "ALPHA GAME by hand");
+    remember();
+    host_init();
     card(img_vcartlaunch);
     B->limit_us = 1000000;
     CHECK(host_boot() == END_HANG, "the cover first");
     snap("launch_cover");
     host_init();
     card(img_vcartlaunch);
-    B->limit_us = 12000000;
-    CHECK(host_boot() == END_RESET && B->retained[0] == CHGAME_BOOTREQ_RUN, "then the launch game: installed, RUN");
-    CHECK(installed_is("ALPHA.CHG"), "ALPHA GAME, inside FOLDER ONE");
+    B->limit_us = READY * 1000;
+    CHECK(host_boot() == END_HANG, "then the launch game's picture, waiting");
+    CHECK(same_as_remembered(), "ALPHA GAME, inside FOLDER ONE, no border");
+    CHECK(B->flash_ops == 0, "nothing written by the power-on (%u ops)", B->flash_ops);
     lcd_sane("launch");
+    snap("launch_game");
+    host_init();
+    card(img_vcartlaunch);
+    press(READY, BTN_A);
+    B->limit_us = 12000000;
+    CHECK(host_boot() == END_RESET && B->retained[0] == CHGAME_BOOTREQ_RUN, "A: it installs, RUN");
+    CHECK(installed_is("ALPHA.CHG"), "ALPHA GAME installed");
     CHECK(host_boot() == END_JUMP, "and it starts");
 }
 
@@ -449,10 +496,11 @@ static void t_launch_installed(void)
 {
     preinstall("ALPHA.CHG");
     card(img_vcartlaunch);
-    B->limit_us = 12000000;
-    CHECK(host_boot() == END_RESET && B->retained[0] == CHGAME_BOOTREQ_RUN, "launch game installed: cover, picture, RUN");
+    B->limit_us = 4000000;
+    CHECK(host_boot() == END_RESET && B->retained[0] == CHGAME_BOOTREQ_RUN, "launch game installed: RUN at once");
     CHECK(B->flash_ops == 0, "nothing written (%u ops)", B->flash_ops);
-    CHECK(B->now_us < 5000000, "power-on to RUN in %llu ms", (unsigned long long)(B->now_us / 1000));
+    CHECK(!B->lcd.on && B->lcd.pixels == 0, "the panel never switched on");
+    CHECK(B->now_us < 1000000, "power-on to RUN in %llu ms", (unsigned long long)(B->now_us / 1000));
     lcd_sane("launch installed");
 }
 
@@ -495,8 +543,9 @@ static void t_upload_at_menu(void)
     CHECK(host_boot() == END_RESET && B->retained[0] == CHGAME_BOOTREQ_RUN, "upload at the menu, then RUN");
     CHECK(app_valid_now() && le32(B->flash + CHGAME_META_ADDR + 8) == sizeof img, "uploaded sketch installed");
     host_power_cycle();
-    B->limit_us = READY * 1000;
-    CHECK(host_boot() == END_HANG, "next power-on: the menu, on the program in flash");
+    press(READY, BTN_A);
+    B->limit_us = (READY + 1000) * 1000;
+    CHECK(host_boot() == END_HANG, "next power-on: the cover; A: the program in flash");
     snap("usb_sketch");
 }
 
@@ -657,6 +706,7 @@ int main(int argc, char **argv)
     TEST(t_stray);
     TEST(t_rows);
     TEST(t_flip);
+    TEST(t_flip_no_folders);
     TEST(t_folders);
     TEST(t_install);
     TEST(t_errors);

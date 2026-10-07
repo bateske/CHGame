@@ -74,27 +74,45 @@ void     hal_reset(void) __attribute__((noreturn));
  *   0x8 input with pull-up/down (OUTDR selects up), 0x4 floating input.
  * GPIOB/GPIOC CFGHR are WRITE-ONLY on this part (reading returns garbage), so
  * they are only ever written whole, from these constants.
- * PB5 shares pin 16 with BTN_A: it stays a floating input, never an output. */
+ * PB5 shares pin 16 with BTN_A: it stays a floating input, never an output.
+ *
+ * Every pin the bootloader does not use is left as reset leaves it, a
+ * floating input (high-Z): the buzzer (PB10), PB2, PB5, PB13-15, PC0-13,
+ * PA0-3 and PA8-15. A board that puts any of them to another use sees
+ * nothing from the bootloader. The USB pins (PC16, PC17) are the USB
+ * stack's own (USB_init). The USB-only bootloader (CHBOOT_MENU 0, build.sh
+ * nomenu) drives the LED and nothing else: the card's, the panel's and the
+ * keys' pins stay high-Z too, for a board without those parts. */
 #define HAL_GPIOA_CFGLR  0xB8B34444u   /* PA7 MOSI, PA6 MISO pu, PA5 SCK, PA4 LCD_CS */
 #define HAL_GPIOB_CFGLR  0x88488483u   /* PB7 SEL, PB6 B, PB5 -, PB4 UP, PB3 LEFT, PB2 -, PB1 A, PB0 DC */
-#define HAL_GPIOB_CFGHR  0x44433338u   /* PB12 LCD_RST, PB11 SD_CS, PB10 buzzer, PB9 LED, PB8 START */
+#define HAL_GPIOB_CFGHR  0x44433438u   /* PB12 LCD_RST, PB11 SD_CS, PB10 -, PB9 LED, PB8 START */
 #define HAL_GPIOC_CFGHR  0x88444444u   /* PC15 RIGHT, PC14 DOWN */
+#define HAL_GPIOB_CFGHR_LED 0x44444434u /* (USB only) PB9 LED; every other pin as reset left it */
+
+#ifndef CHBOOT_MENU
+#define CHBOOT_MENU 1
+#endif
 
 static inline void hal_pins_init(void)
 {
+#if CHBOOT_MENU
     RCC->APB2PCENR |= RCC_APB2Periph_AFIO | RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB
                     | RCC_APB2Periph_GPIOC | RCC_APB2Periph_SPI1;
     /* Levels first, so no pin glitches when it becomes an output: both chip
-     * selects, LCD_RST and DC high, MISO and the key pull-ups up, LED and
-     * buzzer low. */
+     * selects, LCD_RST and DC high, MISO and the key pull-ups up, LED low. */
     GPIOA->BSHR = (1u << 4) | (1u << 6);
     GPIOB->BSHR = (1u << 0) | (1u << 11) | (1u << 12) | BTN_PORTB;
-    GPIOB->BCR  = (1u << 9) | (1u << 10);
+    GPIOB->BCR  = 1u << 9;
     GPIOC->BSHR = BTN_PORTC;
     GPIOA->CFGLR = HAL_GPIOA_CFGLR;
     GPIOB->CFGLR = HAL_GPIOB_CFGLR;
     GPIOB->CFGHR = HAL_GPIOB_CFGHR;
     GPIOC->CFGHR = HAL_GPIOC_CFGHR;
+#else
+    RCC->APB2PCENR |= RCC_APB2Periph_GPIOB;
+    GPIOB->BCR   = 1u << 9;
+    GPIOB->CFGHR = HAL_GPIOB_CFGHR_LED;
+#endif
 }
 
 /* Mode 0, 8-bit, MSB first, master with software NSS. BR changes only with

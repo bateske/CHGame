@@ -35,7 +35,8 @@ reset -> read and clear the boot request (16 B retained at 0x20000000)
       |- no card / no FAT volume / no entries: program valid -> RUN reset (no menu, as before)
       |                                        else          -> "NO GAMES" + USB mode
       |- power-on, START not held, GAMES/MENU.IDX flags a launch entry (followed into folders):
-      |     installed -> RUN reset at once (the panel never woken); else install, RUN reset
+      |     installed -> RUN reset at once (the panel never woken)
+      |     else      -> the menu opens on it (A installs it: a power-on never writes flash)
       '- the menu: GAMES/'s folders and *.CHG in MENU.IDX's order, then by title, over
          the folder's MENU.BG; the installed game marked and preselected
            A on a folder           -> its list; B goes back (4 levels)
@@ -50,11 +51,13 @@ the same rules, and draws pictures instead of the list
 ([spec/card.md](../../spec/card.md), "How the visual menu reads the card"):
 
 ```
-the menu: the cover (GAMES/COVER.PIC) fades in; the installed game is searched
-for (GAMES/'s games, then each folder, depth first) and shown, with its border
+the menu: the cover (GAMES/COVER.PIC) fades in and stays; behind it the installed
+game is searched for (GAMES/'s games, then each folder, depth first), and A on the
+cover shows it, with its border (on no card entry: SYSTEM.PIC 1, first in GAMES/)
   UP/DOWN      the folder's rows: its cover, then its games and sub-folders (round)
   LEFT/RIGHT   the folder beside: at the top GAMES/ and its folders in a ring;
-               below, the folders of the same parent (it slides in from that side)
+               below, the folders of the same parent (it slides in from that side);
+               nothing when there is no other folder
   A            a game: RUN, or install (a bar over its picture) then RUN;
                a folder: open it; a folder's cover: its first row;
                the cart's cover: the installed program's picture (A runs, B back)
@@ -62,7 +65,8 @@ for (GAMES/'s games, then each folder, depth first) and shown, with its border
                on the cart's cover: the about page (SYSTEM.PIC 0)
   SELECT       the cart's cover from anywhere; at the root: the about page
   START        nothing
-the launch game: the cover, then its picture, then it starts (installed first)
+the launch game: installed -> it starts at once, the panel never lit;
+                 else the cover, then its picture, and A installs and starts it
 a picture the card cannot give: SYSTEM.PIC's screen, else a built-in icon
 ```
 
@@ -167,14 +171,22 @@ copy of the script, to see by how much (never flash it).
 
 | Mode | What | Size |
 |---|---|---|
-| `release` | menu + USB upload + developer self-update. **The one to install.** | 11,908 B |
-| `release --style=static` | the same, colour 15 as the card's palette gives it (the picture's magenta) instead of the turning rainbow | 11,684 B |
-| `locked` | `release` without self-update; later bootloader updates then need the factory ISP | 11,588 B |
-| `nomenu` | USB upload + self-update, the old boot decision on the new code (hardware step HW2a) | 5,400 B |
+| `release` | menu + USB upload + developer self-update. **The one to install.** | 11,920 B |
+| `release --style=static` | the same, colour 15 in the menu's text colour instead of the turning rainbow | 11,716 B |
+| `locked` | `release` without self-update; later bootloader updates then need the factory ISP | 11,600 B |
+| `nomenu` | **the USB-only bootloader**: USB upload + self-update, no menu, no card, no panel. The same code and conventions (the shared update path, RUN by reset, the signature, BOOT_VERSION 3), for a board built without an SD card. It drives the LED (PB9) and the USB pins and nothing else: every other pin stays high-Z, free for other circuits. Also hardware step HW2a | 5,340 B |
 | `app` | the menu as a program linked at 0x3000: a dry run of card, panel and keys under any bootloader, with no USB and no flash writes (HW1) | 6,408 B |
-| `release --ui=visual` | the visual menu + USB upload + self-update | 12,080 B |
-| `release --ui=visual --style=static` | the same, colour 15 as painted | 11,896 B |
-| `app --ui=visual` | the visual menu's dry run, as a program | 6,836 B |
+| `release --ui=visual` | the visual menu + USB upload + self-update | 12,060 B |
+| `release --ui=visual --style=static` | the same, colour 15 as painted | 11,876 B |
+| `app --ui=visual` | the visual menu's dry run, as a program | 6,824 B |
+
+**Pins.** Every bootloader leaves the pins it does not use as reset leaves
+them, floating inputs (high-Z): the buzzer (PB10), PB2, PB5, PB13-15,
+PC0-13, PA0-3 and PA8-15 (`src/hal.h`). The menu bootloaders drive the
+panel (PA4, PB0, PB12), the card (PB11), SPI1 (PA5-7), the LED (PB9) and
+the keys' pull-ups; the USB-only one only the LED, so a board that puts the
+card's or the panel's pins to another use sees nothing from it. The USB pins
+(PC16, PC17) are the USB stack's in every build.
 
 `tools/dist.sh` builds them into [release/](release) with `SHA256SUMS`
 (`chgame_sdvisual.bin`, `chgame_sdvisual_static.bin`,
@@ -219,10 +231,12 @@ The menu draws into a framebuffer and takes its look from the card
   The first menu listed 128 games, all in `GAMES/`.
 - **`MENU.IDX`.** It gives each folder's order, folder titles longer than
   8.3, and the launch flag. Entries it does not name follow, by title.
-- **Launch.** At a real power-on with START not held, the flagged entry runs
-  (followed into folders): at once if installed, else after its install.
-  START held, or any software reset (a game's 3 s START exit), shows the
-  menu.
+- **Launch.** At a real power-on with START not held, the flagged entry
+  (followed into folders) runs at once if it is the installed game, with
+  the panel never lit; otherwise the menu opens on it and A installs it
+  (2026-10-06; until then it was installed and started unasked, which
+  wrote over whatever game was in flash at every power-on). START held, or
+  any software reset (a game's 3 s START exit), shows the menu.
 - **Errors are numbers.** Every check is still made; only the text went.
   docs/sd-menu.md lists the codes: 1 card read, 2 damaged, 3 a bootloader
   image, 4 install failed (no game left installed), 5 not a CHG file it can
@@ -237,6 +251,40 @@ The menu draws into a framebuffer and takes its look from the card
   (2026-10-03: [test/hil/RESULTS-2026-10-03.md](test/hil/RESULTS-2026-10-03.md)).
 - `python3 tools/screens.py` redraws the pictures in `docs/` after
   `test/native/run_tests.py -k boot`.
+
+## Changes of 2026-10-06: power-on, launch, the static colour, the pins
+
+Asked for by the owner after the cover-art work; the PC suite covers each
+([SIZES.md](SIZES.md) has the bytes).
+
+- **The visual menu stays on the cover at power-on.** It no longer fades to
+  the installed game by itself: the cover is the menu's first picture, and
+  A on it shows the installed game (B back, A again runs it). The search
+  for the installed game still runs, behind the cover, so that a program
+  on no card entry is listed first in `GAMES/` as before.
+- **The launch game never installs by itself.** In both menus: if the
+  flagged game is the one in flash it starts at once (the panel never lit);
+  otherwise the menu opens on it (the visual menu: the cover, then its
+  picture, no border) and A installs and starts it. So a power-on never
+  writes over the game that was in flash.
+- **The Static text menu draws colour 15 in the text colour** (the bar, the
+  boxes, the picture's `#FF00FF`), not the hot pink the palette holds
+  (`menu.c`'s `background()`; `chgame background --preview --style static`
+  follows). The static visual menu still shows `#FF00FF` as painted.
+- **LEFT and RIGHT do nothing when there is nowhere to go** (the visual
+  menu at `GAMES/` without folders, or a folder with no sibling): `flip()`
+  says whether it moved, and nothing slides when it did not.
+- **The USB-only bootloader (`nomenu`) touches only the LED and USB**; the
+  buzzer pin (PB10) is left floating in every build (it was held low).
+- **Bytes.** The visual menu went from 12,080 to 12,060 B (`flush_all()`,
+  one copy of `lcd_flush(0, LCD_H)`'s constants; the launch's hold and
+  install call gone), the list menu from 11,908 to 11,920, the static list
+  menu from 11,684 to 11,716, the USB-only one from 5,400 to 5,340.
+- **CHG files carry a record** (later that day; `shared/chg_format.h`
+  `CHG_OFF_RECORD`, spec/chg.md): JSON after the picture, for backing a card
+  up. No menu reads it, and `chg_check()` already takes a file longer than
+  its payload, so no code and no binary changed; the PC suite passes on the
+  cards with records.
 
 ## Changes after the first hardware run (2026-10-01)
 
@@ -288,9 +336,9 @@ real reset; flash, the card and the panel persist in shared memory.
 | boot_static | the static style: the same menu's screens, install, folders and launch |
 | boot_real | the real card from `chgame card --image out/sdcard.img`: every program installed from a fresh board through its folder, checked |
 | app / app_visual | the dry runs: no flash writes, a package checked, SELECT (visual: START) leaves |
-| visual / visual_static | the visual menu (`test_visual.c`) on cards from `runtime.prepare()` with pictures: the splash, the search (found, the first copy, not on the card), rows, the ring at the top and below, in and out of folders, the about page, install (and its bar), errors from SYSTEM.PIC and from the built-in icons, the card dying mid-install, a power-cut sweep, launch (installed and not, START held), the USB notice and an upload, broken pictures (offset past the file, cut short, a short COVER.PIC, no SYSTEM.PIC), a folder of 250 |
+| visual / visual_static | the visual menu (`test_visual.c`) on cards from `runtime.prepare()` with pictures: the splash (the cover stays, installed game or not), the search behind it (A on the cover: found, the first copy, not on the card), rows, the ring at the top and below (and LEFT/RIGHT doing nothing without folders), in and out of folders, the about page, install (and its bar), errors from SYSTEM.PIC and from the built-in icons, the card dying mid-install, a power-cut sweep, launch (installed: straight in, the panel dark; not installed: the cover, its picture, A installs; START held), the USB notice and an upload, broken pictures (offset past the file, cut short, a short COVER.PIC, no SYSTEM.PIC), a folder of 250 |
 | visual_real | the real card in the visual menu: the splash, every folder's cover, every game's picture, and every program installed through its folder |
-| frames | 110 screens of both menus pinned by hash in `test/native/frames.json` (the `real_*` ones only when `out/sdcard.img` exists). PNGs are in `test/native/build/frames/` |
+| frames | 112 screens of both menus pinned by hash in `test/native/frames.json` (the `real_*` ones only when `out/sdcard.img` exists). PNGs are in `test/native/build/frames/` |
 | preview | `chgame background --preview` (tools/chcart/background.py) against the bootloader's own frames of a cart card: every pixel but the rainbow's (rainbow), every pixel (static) |
 | pictures | the visual menu's frames against the pictures `tools/chcart` made: every pixel (static), every pixel but colour 15's (rainbow) |
 | constants | `chgpack.py` and `chcart` against `chg_format.h`, `chgame_map.h` and `chgame_card.h`; `src/icons.h` against `art/icons/` |
