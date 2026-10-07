@@ -26,6 +26,13 @@ visual menu, by the owner's choice (2026-10-03, its key map), 192 B
 | app (the list menu as a program at 0x3000, dry run) | 6,392 | 0 | 16 | 6,408 | - | 16,580 | 18,660 |
 | app `--ui=visual` (the visual menu's dry run) | 6,816 | 0 | 8 | 6,824 | - | 16,536 | 18,608 |
 
+**A later board** (2026-10-07: `CHBOOT_BOARD_TARGET`, README "Changes of
+2026-10-07") costs 16 B, all of it `HELLO`'s board field. The board word in
+the image fills a reserved vector slot and costs nothing. Measured with
+rev1's id (`0x31524743`) and rev0's pins: list 11,936 B (352 free), visual
+12,076 B (20 B under its 192 B margin). The rev0 builds above are unchanged
+to the byte.
+
 Both faces share the card's code (`src/card.c`); `--ui=` picks `src/menu.c`
 or `src/visual.c`. Splitting `card.c` out of `menu.c` left every list build
 byte-identical to the one before (the release, static, locked, nomenu and

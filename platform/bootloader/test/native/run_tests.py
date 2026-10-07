@@ -10,7 +10,9 @@ fatimg.py and packages with tools/chgpack.py, and runs:
   core_nomenu   update path, USB protocol, self-update, boot decision and a
                 power cut at every flash operation of a USB upload, built
                 without the menu (the HW2a image)
-  core_menu     the same with the menu built in
+  core_menu     the same with the menu built in (and core_locked, core_visual;
+                core_rev1 as a board after rev0 is built: HELLO's board field,
+                packages for another board refused)
   sd            the SD driver against the card model (SDSC v1/v2, SDHC, no
                 card, slow or stuck cards) and the FAT reader against FAT16/
                 FAT32 images (MBR and superfloppy, fragmented files and
@@ -156,7 +158,8 @@ def check_constants():
     m = defines(SRC / "chgame_map.h")
     c = defines(SHARED / "chgame_card.h")
     pairs = [("CHG_MAGIC", chgpack.MAGIC), ("CHG_FORMAT_VERSION", chgpack.FORMAT_VERSION),
-             ("CHG_HEADER_BYTES", chgpack.HEADER_BYTES), ("CHG_TARGET_ID", chgpack.TARGET_ID),
+             ("CHG_HEADER_BYTES", chgpack.HEADER_BYTES), ("CHG_TARGET_REV0", chgpack.TARGET_REV0),
+             ("CHG_TARGET_REV1", chgpack.TARGET_REV1),
              ("CHG_LAYOUT_ID", chgpack.LAYOUT_ID), ("CHG_OFF_IMAGE", chgpack.IMAGE_OFF),
              ("CHG_OFF_RECORD", chgpack.RECORD_OFF)]
     bad = [n for n, v in pairs if f[n] != v]
@@ -320,6 +323,9 @@ def main():
         suites.append(("core_locked", "test_core.c", ["-DCHBOOT_MENU=1", "-DCHGAME_ALLOW_SELFUPDATE=0"], CORE + MENU))
         suites.append(("core_visual", "test_core.c", ["-DCHBOOT_MENU=1", "-DCHGAME_ALLOW_SELFUPDATE=1",
                                                       "-DMENU_UI=MENU_UI_VISUAL"], CORE + VISUAL))
+        # As build.sh builds a board after rev0 (CHBOOT_BOARD_TARGET): rev1's id
+        suites.append(("core_rev1", "test_core.c", ["-DCHBOOT_MENU=1", "-DCHGAME_ALLOW_SELFUPDATE=1",
+                                                    f"-DCHGAME_BOARD_TARGET=0x{chgpack.TARGET_REV1:08X}"], CORE + MENU))
     sd_srcs = CORE + MENU if menu_built else CORE + ["sd.c", "fat.c", "chg.c"]
     sd_defs = ["-DCHBOOT_MENU=" + ("1" if menu_built else "0")]
     for name, main_c, defs, srcs in suites:

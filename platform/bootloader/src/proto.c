@@ -8,6 +8,7 @@
 #include "boot.h"
 #include "chgame_bootreq.h"
 #include "hal.h"
+#include "chg_format.h"
 #include "spin.h"
 #include "sys.h"
 #include "usb.h"
@@ -253,6 +254,11 @@ static void do_hello(void)
     o = put_u32(p, o, hal_uid(0));
     o = put_u32(p, o, hal_uid(1));
     o = put_u32(p, o, hal_uid(2));
+#ifdef CHGAME_BOARD_TARGET
+    /* The board field, offset 30: only boards after rev0 send it, so a rev0
+       bootloader's HELLO is the 30 bytes it always was (chg_format.h). */
+    o = put_u32(p, o, CHG_TARGET_ID);
+#endif
 
     send_frame(CMD_HELLO, p, o);
 }

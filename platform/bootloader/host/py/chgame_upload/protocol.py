@@ -9,6 +9,8 @@ from __future__ import annotations
 import struct
 from dataclasses import dataclass
 
+from .chg import TARGET_REV0, board_name
+
 SOF = b"CG"
 VERSION = 1
 MAX_PAYLOAD = 512  # mirrors PROTO_MAX_PAYLOAD in proto.h
@@ -100,6 +102,10 @@ class Hello:
     page_size: int
     max_payload: int
     uid: bytes
+    # The board the bootloader is built for (its target id, chg.py). Boards
+    # after rev0 send it at offset 30; a reply without it is rev0's.
+    board: int = TARGET_REV0
+    board_reported: bool = False
 
     @classmethod
     def parse(cls, payload: bytes) -> "Hello":
@@ -112,8 +118,11 @@ class Hello:
             raise ProtocolError(f"HELLO payload is {len(payload)} bytes, expected at least 30")
         (pv, mode, app_state, bootver, app_start, app_max,
          page, maxpl) = struct.unpack_from("<BBBHIIHH", payload, 1)
+        # Bytes past those known are ignored: later bootloaders may add fields.
+        reported = len(payload) >= 34
+        board = struct.unpack_from("<I", payload, 30)[0] if reported else TARGET_REV0
         return cls(pv, mode, app_state, bootver, app_start, app_max,
-                   page, maxpl, payload[18:30])
+                   page, maxpl, payload[18:30], board, reported)
 
     def describe(self) -> str:
         return (
@@ -125,5 +134,6 @@ class Hello:
             f"  ({self.app_max_size} bytes)\n"
             f"flash page    : {self.page_size} bytes\n"
             f"max payload   : {self.max_payload} bytes\n"
-            f"chip UID      : {self.uid.hex().upper()}"
+            f"chip UID      : {self.uid.hex().upper()}\n"
+            f"board         : {board_name(self.board)}" + ("" if self.board_reported else ", not reported (rev0)")
         )

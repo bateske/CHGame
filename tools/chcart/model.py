@@ -39,10 +39,21 @@ class Device:
     fqbn: str
 
 
+# The boards a binary can be for: spec/chgame.md's device table, "Devices and
+# revisions" (its naming rule, and docs/hardware-revisions.md for adding one).
+# chg_target is the board's id in CHG files, HELLO and the bootloader image:
+# rev0's, "CX35", is named after its MCU and stays so; later boards' are
+# "CGR<n>". chgpack.BOARDS lists the same boards (the tests check).
 DEVICES = {
     "rev0": Device("rev0", "CHGame Rev0", "CH32X035G8U6", 0x3000, 50944, 50432,
                    0x35335843, 0x003000F7, "CHGame:ch32v:rev0"),
 }
+# Names and ids assigned to boards not defined yet: a binary for one is not
+# used (warning unknown-device, as for any board this reader does not know)
+# until it joins DEVICES.
+RESERVED_DEVICES = {"rev1": 0x31524743}        # "CGR1"
+# What any device name looks like, known or not; one that breaks it is bad-device.
+DEVICE_RE = re.compile(r"^[a-z][a-z0-9-]{0,31}$")
 BOOT_SIG, BOOT_SIG_OFFSET = 0x4C424843, 8      # "CHBL": a bootloader image, not a program
 
 TITLE_MAX, TITLE_SHOWN, FOLDER_MAX, FOLDER_DEPTH = 31, 19, 19, 4
@@ -340,9 +351,17 @@ def validate_game(g, where):
     if not g.binaries:
         err("missing-field", "binaries", "a game needs a binary")
     for dev, img in g.binaries.items():
+        if not isinstance(dev, str) or not DEVICE_RE.match(dev):
+            err("bad-device", f"binaries[{dev}]", f"{dev!r} is not a device name (spec/chgame.md: rev0, rev1 ...)")
+            continue
         d = DEVICES.get(dev)
         if d is None:
-            err("bad-device", f"binaries[{dev}]", f"unknown device {dev!r} (known: {', '.join(DEVICES)})")
+            # A board added after this reader, or one not defined yet: its
+            # binary is kept but not used, and the rest of the cart still is.
+            warn("unknown-device", f"binaries[{dev}]",
+                 f"{dev} is reserved for a board that is not defined yet: its binary is not used"
+                 if dev in RESERVED_DEVICES else
+                 f"a device this reader does not know (known: {', '.join(DEVICES)}): its binary is not used")
             continue
         n = len(img) + (-len(img) % 4)
         if not img or n > d.max_image:

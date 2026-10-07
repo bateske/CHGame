@@ -182,14 +182,17 @@ def parse_record(data):
     return r
 
 
-def game_from_chg(data, device="rev0", where="CHG"):
+def game_from_chg(data, device=None, where="CHG"):
     """(Game, the record's SD files [{path, bytes, crc32}] or None, [Issue]) from
-    a CHG file; Game is None if the file fails the bootloader's checks."""
+    a CHG file; Game is None if the file fails the bootloader's checks. The
+    game's binary is filed under the board the file names (its target id);
+    given `device`, a file for another board is left out."""
     issues = []
     try:
-        info = chgpack.parse(data)
+        info = chgpack.parse(data, target=None if device is None else model.DEVICES[device].chg_target)
     except chgpack.ChgError as e:
         return None, None, [Issue("bad-chg", where, f"{e}: left out", False)]
+    device = info["device"]
     payload = data[chgpack.HEADER_BYTES:chgpack.HEADER_BYTES + info["payload_bytes"]]
     try:
         raw = chgpack.read_record(data)
@@ -261,9 +264,11 @@ def _same(png, data, ui=None):
     return (runtime.menu_background(png, ui) if ui else runtime.menu_picture(png)) == data
 
 
-def read_card(card, device="rev0"):
+def read_card(card, device=None):
     """Every game on the card, in the menu's order, with what the menu shows of
-    it: ([{"path", "folder", "launch", "game", "sd", "issues"}], [Issue])."""
+    it: ([{"path", "folder", "launch", "game", "sd", "issues"}], [Issue]).
+    Each game's binary is filed under the board its CHG file names; given
+    `device`, only that board's games are read."""
     issues, out = [], []
 
     def level(folder, cart_folder, launch_ok, depth):
@@ -335,7 +340,7 @@ def read_menu(card, cart, folders):
             cart.folder_covers[name] = runtime.picture_png(cover)
 
 
-def backup(where, games=None, title="CARD BACKUP", sd=None, device="rev0"):
+def backup(where, games=None, title="CARD BACKUP", sd=None, device=None):
     """(Cart, [Issue]): the games on the card as a cart (spec/card.md, "Backing
     up a card"). `games`: the ones to keep (card paths, ids or titles; None for
     all, with the card's menu and launch game). `sd`: {card path of a CHG: [SD

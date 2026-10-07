@@ -150,7 +150,8 @@ def image_from_file(path, device="rev0"):
 
 def from_binary(path, title=None, gid=None, device="rev0"):
     """A Game from a .bin, .hex, .elf or .chg file (the .chg header gives its
-    title, author and version, and its picture if it has one)."""
+    title, author and version, and its picture if it has one). `device` is the
+    board a .bin, .hex or .elf was built for; a .chg names its own."""
     p = pathlib.Path(path)
     data = p.read_bytes()
     meta = {}
@@ -162,6 +163,7 @@ def from_binary(path, title=None, gid=None, device="rev0"):
             info = chgpack.parse(data)
         except chgpack.ChgError as e:
             raise CartError([Issue("bad-field", str(p), str(e))])
+        device = info["device"]
         from . import backup
         game, sd, _ = backup.game_from_chg(data, device, str(p))
         if sd is not None:                  # its record: the game as its cart had it (not its SD files)

@@ -1,0 +1,66 @@
+{
+ "warnings": [
+  "unknown-device"
+ ],
+ "games": [
+  {
+   "id": "one",
+   "title": "ONE",
+   "folder": "",
+   "binaries": {
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    },
+    "rev1": {
+     "size": 64,
+     "sha256": "fdeab9acf3710362bd2658cdc9a29e8f9c757fcf9811603a8c447cd1d9151108"
+    }
+   },
+   "sdcard": {}
+  },
+  {
+   "id": "two",
+   "title": "TWO",
+   "folder": "",
+   "binaries": {
+    "other-board": {
+     "size": 64,
+     "sha256": "9afaeef005e286957ee9a18a2481a75c7fc7ba74bae8de50ffa6127b12a62cae"
+    },
+    "rev0": {
+     "size": 10836,
+     "sha256": "d7b65c0ee7f7199808e19923cb8d457d985794ab2263581d456d49ce6b6d636f"
+    }
+   },
+   "sdcard": {}
+  }
+ ],
+ "launch": "",
+ "card": {
+  "GAMES/MENU.IDX": {
+   "size": 96,
+   "sha256": "dea1774319ff2b77c6a254f60ca901f0aec4d66441c37755174295e577089e41"
+  },
+  "GAMES/MENU.BG": {
+   "size": 8704,
+   "sha256": "2b7b773afcfd7ccd84b32dc5381a2deaa20b1ab93caddd79a4e8530b6f704071"
+  },
+  "GAMES/COVER.PIC": {
+   "size": 8704,
+   "sha256": "f2fbf237573a8ac161fb2a38868ff80c71f125c9abf4e01262c3fe5bef813ff4"
+  },
+  "GAMES/SYSTEM.PIC": {
+   "size": 78336,
+   "sha256": "f2cda801f3c9f71d0c9b558fb08bc36eaeeb4fd9b182641fafc663dc2af1fe34"
+  },
+  "GAMES/ONE.CHG": {
+   "size": 11845,
+   "sha256": "34d70b66c7ed9277c63ad6793bed68e7c37859376dfeaed80025248de28de0ce"
+  },
+  "GAMES/TWO.CHG": {
+   "size": 11845,
+   "sha256": "eb5fa4996f30bb5a0481f7d0fd8c3c60356c2c4990b24f390d2b26dc5ac1e04b"
+  }
+ }
+}

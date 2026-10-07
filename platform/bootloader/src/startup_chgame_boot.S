@@ -17,6 +17,14 @@
 #else
 #define CHGAME_BOOT_SIG_WORD 0x4C424843
 #endif
+/* CHGAME: the board this bootloader is for (shared/chg_format.h), in the
+   reserved slot at offset 0x14, so an uploader can refuse to put it on
+   another board. A rev0 build leaves it 0, as it always was. */
+#ifdef CHGAME_BOARD_TARGET
+#define CHGAME_BOARD_WORD CHGAME_BOARD_TARGET
+#else
+#define CHGAME_BOARD_WORD 0
+#endif
 
 	.section	.init,"ax",@progbits
 	.global	_start
@@ -31,7 +39,7 @@ _vector_base:
     .word   CHGAME_BOOT_SIG_WORD       /* reserved slot: "CHBL", marks a bootloader image (chgame_map.h) */
     .word   NMI_Handler                /* NMI */
     .word   HardFault_Handler          /* Hard Fault */
-    .word   0
+    .word   CHGAME_BOARD_WORD          /* reserved slot: the board id, 0 on rev0 (chg_format.h) */
     .word   Ecall_M_Mode_Handler       /* Ecall M Mode */
     .word   0
     .word   0

@@ -12,13 +12,16 @@ that follows the picture rule, spec/card.md, or a .PIC file). The ones
 a backup of the card needs to make the game's cart again.
 
     python tools/chgpack.py pack build/release/CHFour.ino.bin FOURROW.CHG --title "FOUR IN A ROW" [--image cart.png]
-                                                 (or the build's CHFour.ino.elf / .hex)
+                                                 (or the build's CHFour.ino.elf / .hex; --device rev0 is the default)
     python tools/chgpack.py verify FOURROW.CHG [more.CHG ...]
     python tools/chgpack.py info E:\\              # a mounted card (or any folder)
     python tools/chgpack.py info card.img          # a FAT image: also reports fragmentation
 
-Every constant mirrors platform/bootloader/shared/chg_format.h and
-src/chgame_map.h; the bootloader's native tests check that they agree.
+A CHG file names the board its program was built for (its target id:
+BOARDS below, spec/chgame.md "Devices and revisions"), and a bootloader
+installs only its own board's. Every constant mirrors
+platform/bootloader/shared/chg_format.h and src/chgame_map.h; the
+bootloader's native tests check that they agree.
 """
 from __future__ import annotations
 
@@ -31,9 +34,19 @@ import zlib
 MAGIC = 0x31474843          # "CHG1"
 FORMAT_VERSION = 1
 HEADER_BYTES = 512
-TARGET_ID = 0x35335843      # "CX35": CHGame, CH32X035G8U6
 LAYOUT_ID = 0x003000F7      # app at 0x3000, metadata page at 0xF700
 APP_MAX_SIZE = 50944        # CHGAME_APP_MAX_SIZE
+# Board target ids (chg_format.h CHG_TARGET_*): rev0's is named after its MCU
+# and keeps that name; later boards are "CGR<n>". Never reused or reassigned.
+TARGET_REV0 = 0x35335843    # "CX35": CHGame Rev0 (CH32X035G8U6)
+TARGET_REV1 = 0x31524743    # "CGR1": reserved for CHGame Rev1, not yet defined
+TARGET_ID = TARGET_REV0     # the board a package is for when none is named
+# The boards these tools make and read packages for: target id -> (device,
+# layout id, largest payload). A board joins when spec/chgame.md's device
+# table defines it, with chcart.model.DEVICES (chcart's tests check they agree).
+BOARDS = {TARGET_REV0: ("rev0", LAYOUT_ID, APP_MAX_SIZE)}
+# Ids assigned to boards that are not defined yet: refused, but by name.
+RESERVED = {TARGET_REV1: "rev1"}
 BOOT_SIG = 0x4C424843       # "CHBL" at payload offset 8 marks a bootloader image
 TITLE_LEN, AUTHOR_LEN, VERSTR_LEN = 32, 16, 8
 IMAGE_OFF = 0x060           # CHG_OFF_IMAGE: offset, bytes, CRC-32 of the game's picture
@@ -62,25 +75,54 @@ def _text(s: str, n: int, what: str) -> bytes:
     return b.ljust(n, b"\0")
 
 
+def fourcc(v: int) -> str:
+    """A 32-bit id as the four characters it spells (little-endian), or '?'."""
+    b = v.to_bytes(4, "little")
+    return b.decode("ascii") if all(32 < c < 127 for c in b) else "?"
+
+
+def target_of(device: str) -> int:
+    """The target id of a device the tools build for ("rev0"), else ValueError."""
+    for t, (d, _, _) in BOARDS.items():
+        if d == device:
+            return t
+    if device in RESERVED.values():
+        raise ValueError(f"{device} is reserved for a board that is not defined yet (spec/chgame.md)")
+    raise ValueError(f"unknown device {device!r} (known: {', '.join(d for d, _, _ in BOARDS.values())})")
+
+
+def describe_target(target: int) -> str:
+    """'rev0 (CX35)', or what an id this module cannot use is."""
+    if target in BOARDS:
+        return f"{BOARDS[target][0]} ({fourcc(target)})"
+    if target in RESERVED:
+        return f"{RESERVED[target]} ({fourcc(target)}), a board these tools do not support yet"
+    return f"an unknown board, target 0x{target:08X} ({fourcc(target)})"
+
+
 def pad_image(image: bytes) -> bytes:
     """The chgame-upload rule: pad with 0xFF to a multiple of 4."""
     return image + b"\xff" * (-len(image) % 4)
 
 
 def pack(image: bytes, title: str, author: str = "", version: str = "", app_version: int = 0,
-         picture: bytes | None = None, record: bytes | None = None) -> bytes:
+         picture: bytes | None = None, record: bytes | None = None, target: int = TARGET_ID) -> bytes:
     """The CHG file: header, payload and, given one (a picture in MENU.BG's
     encoding, as chcart.runtime.menu_picture() makes from a PNG), the game's
     picture at the next 512-byte boundary after the payload; then, given one
     (chcart.backup.record() makes it), the game's record at the next 512-byte
-    boundary after that (spec/chg.md)."""
+    boundary after that (spec/chg.md). `target` is the board the image was
+    built for (BOARDS; target_of("rev0") gives one)."""
+    if target not in BOARDS:
+        raise ValueError(f"cannot pack for {describe_target(target)}")
+    _, layout, max_size = BOARDS[target]
     payload = pad_image(image)
-    if not payload or len(payload) > APP_MAX_SIZE:
-        raise ValueError(f"image is {len(payload)} B; the limit is {APP_MAX_SIZE} B")
+    if not payload or len(payload) > max_size:
+        raise ValueError(f"image is {len(payload)} B; the limit is {max_size} B")
     if len(payload) >= 12 and struct.unpack_from("<I", payload, 8)[0] == BOOT_SIG:
         raise ValueError("this is a bootloader image, not a program")
     h = bytearray(HEADER_BYTES)
-    struct.pack_into("<IHHIIIIII", h, 0, MAGIC, FORMAT_VERSION, HEADER_BYTES, TARGET_ID, LAYOUT_ID,
+    struct.pack_into("<IHHIIIIII", h, 0, MAGIC, FORMAT_VERSION, HEADER_BYTES, target, layout,
                      len(payload), zlib.crc32(payload) & 0xFFFFFFFF, app_version & 0xFFFFFFFF, 0)
     h[0x20:0x40] = _text(title, TITLE_LEN, "title")
     h[0x40:0x50] = _text(author, AUTHOR_LEN, "author")
@@ -143,21 +185,29 @@ def _cstr(b: bytes) -> str:
     return b.split(b"\0", 1)[0].decode("ascii", "replace")
 
 
-def parse(data: bytes, check_payload: bool = True) -> dict:
-    """Checks a package the way the bootloader does (same order, same codes)."""
+def parse(data: bytes, check_payload: bool = True, target: int | None = None) -> dict:
+    """Checks a package the way the bootloader does (same order, same codes).
+    A bootloader takes only its own board's packages: pass `target` to check
+    as that board's would. None takes any board in BOARDS, and the result's
+    "device" says which."""
     if len(data) < HEADER_BYTES or struct.unpack_from("<I", data, 0)[0] != MAGIC:
         raise ChgError(1)
     h = data[:HEADER_BYTES]
     if zlib.crc32(h[:0x1FC]) & 0xFFFFFFFF != struct.unpack_from("<I", h, 0x1FC)[0]:
         raise ChgError(2)
-    magic, ver, hb, target, layout, n, crc, appver, flags = struct.unpack_from("<IHHIIIIII", h, 0)
+    magic, ver, hb, found, layout, n, crc, appver, flags = struct.unpack_from("<IHHIIIIII", h, 0)
     if ver != FORMAT_VERSION or hb != HEADER_BYTES:
         raise ChgError(3, f"version {ver}, header {hb} B")
-    if target != TARGET_ID or layout != LAYOUT_ID:
-        raise ChgError(4, f"target 0x{target:08X}, layout 0x{layout:08X}")
-    if not n or n > APP_MAX_SIZE or n & 3 or len(data) < HEADER_BYTES + n:
+    if found not in BOARDS or (target is not None and found != target):
+        raise ChgError(4, f"built for {describe_target(found)}"
+                       + (f", not {describe_target(target)}" if target is not None and found in BOARDS else ""))
+    device, board_layout, max_size = BOARDS[found]
+    if layout != board_layout:
+        raise ChgError(4, f"layout 0x{layout:08X}; {device}'s is 0x{board_layout:08X}")
+    if not n or n > max_size or n & 3 or len(data) < HEADER_BYTES + n:
         raise ChgError(5, f"{n} B in a {len(data)} B file")
-    info = {"title": _cstr(h[0x20:0x40]), "author": _cstr(h[0x40:0x50]), "version": _cstr(h[0x50:0x58]),
+    info = {"device": device, "target": found,
+            "title": _cstr(h[0x20:0x40]), "author": _cstr(h[0x40:0x50]), "version": _cstr(h[0x50:0x58]),
             "payload_bytes": n, "payload_crc32": crc, "app_version": appver, "file_bytes": len(data)}
     if check_payload:
         payload = data[HEADER_BYTES:HEADER_BYTES + n]
@@ -176,7 +226,8 @@ def _describe(name: str, data: bytes) -> tuple[bool, str]:
     except ChgError as e:
         return False, f"{name:14s} BAD  {e}"
     extra = " ".join(x for x in (i["author"], i["version"]) if x)
-    return True, (f"{name:14s} ok   {i['payload_bytes']:6d} B  {i['title']}" + (f"  ({extra})" if extra else "")
+    board = f"  [{i['device']}]" if i["target"] != TARGET_REV0 else ""
+    return True, (f"{name:14s} ok   {i['payload_bytes']:6d} B  {i['title']}" + (f"  ({extra})" if extra else "") + board
                   + ("  [picture]" if pic else "") + ("  [record]" if rec else ""))
 
 
@@ -207,7 +258,8 @@ def program_image(path: str) -> bytes:
 
 def cmd_pack(a) -> int:
     image = program_image(a.bin)
-    out = pack(image, a.title, a.author, a.version, a.app_version, picture_file(a.image) if a.image else None)
+    out = pack(image, a.title, a.author, a.version, a.app_version, picture_file(a.image) if a.image else None,
+               target=target_of(a.device))
     pathlib.Path(a.out).write_bytes(out)
     info = parse(out)
     print(f"{a.out}: {a.title!r}, {info['payload_bytes']} B payload, crc 0x{info['payload_crc32']:08X}"
@@ -268,6 +320,7 @@ def main(argv=None) -> int:
     p.add_argument("--version", default="")
     p.add_argument("--app-version", type=lambda s: int(s, 0), default=0)
     p.add_argument("--image", help="the game's picture for the visual menu: a 128x128 PNG or a .PIC file")
+    p.add_argument("--device", default="rev0", help="the board the program was built for (default rev0)")
     p.set_defaults(fn=cmd_pack)
     p = sub.add_parser("verify", help="check packages")
     p.add_argument("files", nargs="+")

@@ -12,6 +12,7 @@ import struct
 import zlib
 
 from . import layout as L
+from .chg import TARGET_REV0
 
 
 def check_boot_image(boot: bytes) -> None:
@@ -29,6 +30,17 @@ def check_boot_image(boot: bytes) -> None:
     if linked == L.APP_START:
         raise ValueError(f"this image is a sketch (linked for 0x{linked:04X}), not a bootloader")
     raise ValueError(f"this image is not a CHGame bootloader (linked for 0x{linked:08X})")
+
+
+BOARD_WORD_OFFSET = 0x14        # a reserved vector slot: the board a bootloader image is for
+
+
+def boot_image_board(boot: bytes) -> int:
+    """The board a bootloader image is for: the target id at offset 0x14 of a
+    board after rev0's, and rev0's (CX35) where that word is 0, as on every
+    rev0 bootloader (platform/board/docs/protocol.md)."""
+    word = struct.unpack_from("<I", boot, BOARD_WORD_OFFSET)[0] if len(boot) >= BOARD_WORD_OFFSET + 4 else 0
+    return word or TARGET_REV0
 
 
 def build_metadata(app: bytes, app_version: int = 0) -> bytes:

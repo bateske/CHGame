@@ -95,11 +95,11 @@ func main() {
   chgame-upload [flags] info
   chgame-upload [flags] touch
   chgame-upload [flags] run
-  chgame-upload [flags] flash <file.bin> [-verify] [-run]
+  chgame-upload [flags] flash <file.bin> [-verify] [-run] [-device rev0]
   chgame-upload [flags] selfupdate <boot.bin>
   chgame-upload [flags] provision -bootloader <boot.bin> [-app <app.bin>] [-wchisp <path>]
   chgame-upload [flags] burn -method usb|isp -bootloader <boot.bin> [-app <app.bin>] [-wchisp <path>]
-  chgame-upload [flags] pack <file.bin> [-out <file.chg>] [-title T] [-author A] [-gameversion V]
+  chgame-upload [flags] pack <file.bin> [-out <file.chg>] [-title T] [-author A] [-gameversion V] [-device rev0]
 
   flash       upload a sketch through the bootloader (what Upload does)
   selfupdate  replace the bootloader over USB, through the one installed
@@ -109,6 +109,11 @@ func main() {
   pack        wrap a sketch image in a .chg package for the SD game menu (every
               build runs it, so Export Compiled Binary leaves one by the sketch)
   chgame-upload [flags] noop
+
+-device names the board the image was built for (rev0; spec/chgame.md's
+device table): pack writes its target id, and flash refuses a board whose
+bootloader reports another. selfupdate and burn -method usb refuse a
+bootloader image built for another board than the one running.
 
 Flags may appear before or after the subcommand.
 `, version)
@@ -139,6 +144,7 @@ Flags may appear before or after the subcommand.
 		packTitle  = sub.String("title", "", "pack: what the menu shows (default: the sketch's name in capitals)")
 		packAuthor = sub.String("author", "", "pack: the author")
 		packVer    = sub.String("gameversion", "", "pack: a short version string, e.g. 1.2")
+		device     = sub.String("device", "", "flash, pack: the board the image is built for (rev0); flash refuses any other board")
 	)
 
 	// Go's flag package stops parsing at the first non-flag argument, so a plain
@@ -172,7 +178,7 @@ Flags may appear before or after the subcommand.
 		if len(positional) < 1 {
 			die("flash needs an image path")
 		}
-		doFlash(o, positional[0], *flagVerify, *flagRun)
+		doFlash(o, positional[0], *flagVerify, *flagRun, *device)
 	case "provision":
 		if *bootFile == "" {
 			die("provision needs -bootloader")
@@ -203,7 +209,7 @@ Flags may appear before or after the subcommand.
 		if len(positional) < 1 {
 			die("pack needs an image path")
 		}
-		doPack(o, positional[0], *packOut, *packTitle, *packAuthor, *packVer)
+		doPack(o, positional[0], *packOut, *packTitle, *packAuthor, *packVer, *device)
 	case "noop":
 		// Arduino runs a separate chip-erase step before Burn Bootloader. The
 		// erase itself is done inside provision(), so that EVERY provisioning
@@ -215,7 +221,14 @@ Flags may appear before or after the subcommand.
 	}
 }
 
-func doPack(o *opts, image, out, title, author, ver string) {
+func doPack(o *opts, image, out, title, author, ver, device string) {
+	if device == "" {
+		device = "rev0"
+	}
+	target, err := targetOf(device)
+	if err != nil {
+		die("%v", err)
+	}
 	data, err := os.ReadFile(image)
 	if err != nil {
 		die("cannot read %s: %v", image, err)
@@ -226,7 +239,7 @@ func doPack(o *opts, image, out, title, author, ver string) {
 	if title == "" {
 		title = chgDefaultTitle(image)
 	}
-	pkg, err := chgPack(data, title, author, ver, 0)
+	pkg, err := chgPackFor(data, title, author, ver, 0, target)
 	if err != nil {
 		die("%s: %v", image, err)
 	}
@@ -258,8 +271,8 @@ func doProbe(o *opts) {
 			fmt.Printf("%s: application (did not answer HELLO)\n", name)
 			continue
 		}
-		fmt.Printf("%s: %s, protocol v%d, bootloader v%d\n",
-			name, h.modeName(), h.ProtoVersion, h.BootVersion)
+		fmt.Printf("%s: %s, protocol v%d, bootloader v%d, board %s\n",
+			name, h.modeName(), h.ProtoVersion, h.BootVersion, boardName(h.Board))
 	}
 }
 
@@ -312,10 +325,18 @@ func doRun(o *opts) {
 	fmt.Println("sent RUN - device should now be running the application")
 }
 
-func doFlash(o *opts, image string, verify, run bool) {
+// doFlash uploads a sketch. device, the board it was built for ("rev0"),
+// refuses a board whose bootloader reports another; "" checks nothing.
+func doFlash(o *opts, image string, verify, run bool, device string) {
 	data, err := os.ReadFile(image)
 	if err != nil {
 		die("cannot read %s: %v", image, err)
+	}
+	var want uint32
+	if device != "" {
+		if want, err = targetOf(device); err != nil {
+			die("%v", err)
+		}
 	}
 	name := resolvePort(o)
 
@@ -346,6 +367,10 @@ func doFlash(o *opts, image string, verify, run bool) {
 		die("no response from %s: %v", bootPort, err)
 	}
 	fmt.Printf("region  : 0x%04X + %d bytes\n", h.AppStart, h.AppMaxSize)
+	if device != "" && h.Board != want {
+		die("the image is built for %s, but this board's bootloader is %s's: "+
+			"build for that board (Tools > Board)", boardName(want), boardName(h.Board))
+	}
 
 	res, err := upload(c, data, progressBar(o.quiet), verify)
 	if err != nil {
@@ -418,6 +443,13 @@ func doSelfUpdate(o *opts, bootPath, appPath string) {
 		die("this board reserves 0x%04X bytes for its bootloader, not 0x%04X: "+
 			"the image does not belong on it", h.AppStart, appStart)
 	}
+	// Another board's bootloader would drive the wrong pins: the panel and
+	// the card stay dark and only the factory ISP brings the board back.
+	if b := bootImageBoard(boot); b != h.Board {
+		c.Close()
+		die("this bootloader is built for %s, but the board runs %s's: "+
+			"pick that board's bootloader", boardName(b), boardName(h.Board))
+	}
 	fmt.Println("note        : the installed sketch is erased by the update. Keep the")
 	fmt.Println("              board powered until it is done (a few seconds).")
 
@@ -448,5 +480,5 @@ func doSelfUpdate(o *opts, bootPath, appPath string) {
 		return
 	}
 	o.port = newPort
-	doFlash(o, appPath, false, true)
+	doFlash(o, appPath, false, true, "")
 }

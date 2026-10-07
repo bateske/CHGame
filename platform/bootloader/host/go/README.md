@@ -19,6 +19,14 @@ chgame-upload burn -method usb|isp -bootloader boot.bin [-app game.bin]
 
 `-port <PORT>` picks a board; without it the tool looks for USB `16C0:27DD`.
 
+**Which board.** `-device rev0` on `flash` refuses a board whose
+bootloader reports another device; on `pack` it writes that device's target
+id (rev0 is the default). `selfupdate` and `burn -method usb` always refuse
+a bootloader built for another board than the one running. `probe` and
+`info` show the board (a rev0 bootloader does not report one, which means
+rev0). See `../../../board/docs/protocol.md`, "Which board", and the
+repository's docs/hardware-revisions.md.
+
 ## Replacing the bootloader over USB
 
 `selfupdate` (and `burn -method usb`) goes through the bootloader that is
