@@ -35,6 +35,12 @@ key; a reader from before it shows the defaults. So is the CHG file's record
 (2026-10-06): no bootloader reads it, and a reader from before it sees a
 longer file.
 
+**`screenshots` left the format** (2026-10-07, before any release carried
+it): a cart is for the device and the tools that prepare a card, and
+gameplay GIFs made a cart of twenty games 18 MB where 2 MB holds what the
+card needs. A reader meets the key in an older cart as an unknown one
+(a warning) and drops it with its files; writers must not write it.
+
 **The uploader's side of the contract** (2026-10-06, confirmed with the web
 emulator project): its browser uploader uses the existing upload protocol
 and changes nothing in the bootloader. It frames with `CG`; `HELLO` must

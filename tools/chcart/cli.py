@@ -191,14 +191,13 @@ def build_recipe(recipe_path, build=True, platform_dir=None, binary=None, only=N
 
 
 def fill_art(cart, redo=False):
-    """A picture for every game without one (its title, over its first
-    screenshot) and a cover for every folder without one (its name):
+    """A picture for every game without one (its title) and a cover for every folder without one (its name):
     tools/boxart.py's placeholders. redo: every game's and folder's, even one
     it has. Returns how many were drawn."""
     n = 0
     for g in cart.games:
         if g.cart_image is None or redo:
-            g.cart_image = sources.placeholder(g.title, g.screenshots[0].data if g.screenshots else None)
+            g.cart_image = sources.placeholder(g.title)
             n += 1
     for f in cart.folders():
         if f not in cart.folder_covers or redo:

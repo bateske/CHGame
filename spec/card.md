@@ -404,5 +404,4 @@ file (chg.md), which runtime preparation writes since 2026-10-06.
 7. **The result** is a cart that follows chgame.md (a backup that breaks a
    rule is refused). A card as runtime preparation wrote it backs up to a
    cart that prepares the same card again, byte for byte: the same games,
-   files, folders, menu and launch game, less the screenshots and the
-   cart's own title, author and the like, which only the cart holds.
+   files, folders, menu and launch game, less the cart's own title, author and the like, which only the cart holds.

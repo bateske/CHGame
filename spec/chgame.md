@@ -37,8 +37,7 @@ same when the card's layout changes.
 - **Writing.** chcart writes the same bytes for the same cart: `info.json`
   first, then the paths in sorted order, every entry dated 1980-01-01 00:00,
   deflate level 9, no extra attributes. Its layout is `<id>/<device>.bin`,
-  `<id>/LICENSE`, `<id>/cart.png`, `<id>/screenshot-<k>.<png|gif>`,
-  `<id>/sdcard/...` and `menu/...`. Readers must not depend on that layout.
+  `<id>/LICENSE`, `<id>/cart.png`, `<id>/sdcard/...` and `menu/...`. Readers must not depend on that layout.
 
 ## info.json
 
@@ -84,7 +83,6 @@ tools fill in the defaults when they prepare the card.
 | `binaries` | required | `[{"device": "rev0", "filename": "path.bin"}]`: the game built for each board it runs on, at most one per device (below) |
 | `sdcard` | | a folder in the ZIP, ending in `/`: every file under it goes onto the SD card's root at the same relative path (below) |
 | `cartImage` | | path of a 128x128 PNG: the game's picture, its box art, which the visual menu shows while it is selected. A picture (below); one that breaks the picture rule is a warning (`bad-picture`) and the card gets no picture of it |
-| `screenshots` | | `[{"filename": "path", "title": "..."}]`: PNG or GIF (animated allowed), square, 128, 256, 384 or 512 pixels wide (the screen at 1x to 4x) |
 
 ### Order and folders
 
@@ -307,8 +305,7 @@ format:
       "license": "Apache-2.0",
       "licenseFiles": ["chwords/LICENSE", "chwords/NOTICE"],
       "binaries": [{"device": "rev0", "filename": "chwords/rev0.bin"}],
-      "sdcard": "chwords/sdcard/",
-      "screenshots": [{"filename": "chwords/screenshot-1.gif"}]
+      "sdcard": "chwords/sdcard/"
     },
     {
       "id": "chcrossword",
@@ -329,9 +326,15 @@ format:
 - the cart's text fields (`title`, `author`, `version`, `description`,
   `date`, `genre`, `url`, `sourceUrl`, `license`);
 - `binaries` as a list of `{device, filename}`, one per board;
-- `buttons`, `screenshots`, a cart image per game.
+- `buttons`, a cart image per game.
 
 **Changed:**
+- **No screenshots.** A cart holds what the device and the tools that
+  prepare a card use: binaries, SD files, licences and the menu's pictures.
+  Gameplay pictures and GIFs stay with the game's own project (a sketch's
+  `docs/gameplay.gif`, its README), not in the cart. A `screenshots` key
+  from an older cart is an unknown key (warning `unknown-key`, its files
+  `unused-file`) and is dropped.
 - **One file holds several games.** `games` is the list, in menu order,
   with folders. A single game is a list of one.
 - **Binaries are raw `.bin`, never `.hex`.** The load address comes from

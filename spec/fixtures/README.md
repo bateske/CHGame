@@ -13,7 +13,7 @@ Hello example, so an emulator can run any of them.
 | Cart | What it covers |
 |---|---|
 | `single.chgame` | one game, its licence file, no SD files: the smallest real cart |
-| `single-sd.chgame` | one game with SD files in a subfolder, a cart image, an animated GIF and a PNG screenshot, a button |
+| `single-sd.chgame` | one game with SD files in a subfolder, a cart image, a button |
 | `multi.chgame` | seven games: a folder and a folder inside it, a launch game two levels down, the cart's background and colours, a folder's background, a file two games share, two games called WORDS (in different folders), one called CON (a Windows device name), a title longer than the menu shows, an author too long for the CHG header |
 | `warnings.chgame` | readable, with every warning: an unknown key, a stray file, a 21-character title, a title the menu cannot show, an image that covers the save pages |
 | `pictures.chgame` | the visual menu's pictures: the cart's cover and about page, two folders' covers (one two levels down), two games' pictures, a folder with neither |

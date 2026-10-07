@@ -110,7 +110,7 @@ do not, having no cart to describe.
   | Key | | Value |
   |---|---|---|
   | `chgRecord` | required | `1`. A reader that meets another number treats the file as one without a record |
-  | `game` | required | the game's entry in the cart's `info.json` (chgame.md), with only these keys: `id` and `title` (both required, both following chgame.md's rules), `version`, `author`, `description`, `genre`, `license`, `url`, `sourceUrl`, `buttons`. Not `folder`: where the file sits on the card says that, so a file moved by hand goes with its new folder. Not `binaries`, `cartImage`, `licenseFiles` or `sdcard`, given below; not `screenshots`, left out for their size |
+  | `game` | required | the game's entry in the cart's `info.json` (chgame.md), with only these keys: `id` and `title` (both required, both following chgame.md's rules), `version`, `author`, `description`, `genre`, `license`, `url`, `sourceUrl`, `buttons`. Not `folder`: where the file sits on the card says that, so a file moved by hand goes with its new folder. Not `binaries`, `cartImage`, `licenseFiles` or `sdcard`, given below |
   | `binaryBytes` | required | the binary's length before padding (the payload is the binary padded with 0xFF to a multiple of 4) |
   | `cartImage` | | the game's `cartImage` as the cart held it: the PNG's bytes in base64. (The picture above is that PNG converted, and cannot always give it back) |
   | `licenseFiles` | | `{"LICENSE": base64, ...}`: the game's licence files, each under its file name |
