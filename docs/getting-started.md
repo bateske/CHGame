@@ -156,7 +156,8 @@ What goes in comes from the sketch's `chgame.json`. Every key is optional:
 - **Defaults** fill in the rest: the folder's name in capitals for the
   title, the version from `config.h`, the README's first paragraph,
   `LICENSE` and `NOTICE`, the `sdcard/` folder (its tree goes onto the
-  card's root), `docs/gameplay.gif` as the screenshot.
+  card's root). `docs/gameplay.gif` stays out of the cart; a game without
+  a `docs/cart.png` gets a picture of its title drawn over its first frame.
 - **On a CHGame:** `chgame cart deploy build/Hello.chgame` flashes it.
   Give it `--card E:\` with the card mounted, and it also lands in the
   menu, with its SD files.

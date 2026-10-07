@@ -10,18 +10,19 @@ cannot drop a field):
      "description": "...", "genre": "...", "license": "Apache-2.0",
      "url": "...", "sourceUrl": "...", "folder": "WORD GAMES",
      "licenseFiles": ["LICENSE", "NOTICE"], "sdcard": "sdcard",
-     "cartImage": "docs/cart.png", "screenshots": ["docs/gameplay.gif"],
+     "cartImage": "docs/cart.png",
      "buttons": [{"control": "A", "action": "Lay a tile"}]}
 
 The defaults: id from the folder's name; title the folder's name in capitals
 (as the IDE's Export Compiled Binary titles a .chg); version from config.h's
 `#define <PFX>_VERSION "x"`; description the README's first paragraph;
 license from the LICENSE file's first line; licenseFiles LICENSE and NOTICE
-where they exist; sdcard `sdcard/` if it exists; screenshots
-docs/gameplay.gif if it exists; cartImage docs/cart.png if it exists, else
-one drawn from the title over the first screenshot (tools/boxart.py: the
-visual menu shows it), as for a game from a .bin, .hex or .chg file without
-a picture. A .chg file with a record (spec/chg.md: every one runtime
+where they exist; sdcard `sdcard/` if it exists; cartImage docs/cart.png
+if it exists, else one drawn from the title (tools/boxart.py: the visual
+menu shows it) over the first frame of docs/gameplay.gif if the sketch has
+one, as for a game from a .bin, .hex or .chg file without a picture. The
+GIF itself never goes into the cart: a .chgame carries no gameplay
+pictures (spec/chgame.md). A .chg file with a record (spec/chg.md: every one runtime
 preparation writes) gives the game as its cart had it, less its SD files
 (`chgame cart backup` reads those from the card).
 """
@@ -32,10 +33,10 @@ import pathlib
 import re
 
 from . import model, zipio
-from .model import CartError, Game, Issue, Screenshot
+from .model import CartError, Game, Issue
 
 SKETCH_KEYS = ("id", "title", "author", "version", "description", "genre", "license", "url", "sourceUrl",
-               "folder", "licenseFiles", "sdcard", "cartImage", "screenshots", "buttons")
+               "folder", "licenseFiles", "sdcard", "cartImage", "buttons")
 LICENSES = (("Apache License", "Apache-2.0"), ("MIT License", "MIT"),
             ("GNU GENERAL PUBLIC LICENSE", "GPL-3.0"), ("GNU LESSER GENERAL PUBLIC LICENSE", "LGPL-3.0"),
             ("BSD 3-Clause", "BSD-3-Clause"), ("BSD 2-Clause", "BSD-2-Clause"))
@@ -274,14 +275,9 @@ def from_sketch(d, image, device="rev0"):
         g.cart_image = (d / meta["cartImage"]).read_bytes()
     elif (d / "docs" / "cart.png").is_file():
         g.cart_image = (d / "docs" / "cart.png").read_bytes()
-    shots = meta.get("screenshots", ["docs/gameplay.gif"] if (d / "docs" / "gameplay.gif").is_file() else [])
-    for s in shots:
-        if isinstance(s, dict):
-            g.screenshots.append(Screenshot((d / s["filename"]).read_bytes(), s.get("title", "")))
-        else:
-            g.screenshots.append(Screenshot((d / s).read_bytes()))
     if g.cart_image is None:
-        g.cart_image = placeholder(g.title, g.screenshots[0].data if g.screenshots else None)
+        gif = d / "docs" / "gameplay.gif"
+        g.cart_image = placeholder(g.title, gif.read_bytes() if gif.is_file() else None)
     g.buttons = [(b["control"], b["action"]) for b in meta.get("buttons", [])]
     return g
 

@@ -17,7 +17,7 @@ sys.path.insert(0, str(TOOLS))
 
 import chgpack  # noqa: E402
 from chcart import cli, model, runtime, sources, zipio  # noqa: E402
-from chcart.model import Cart, CartError, Game, Screenshot  # noqa: E402
+from chcart.model import Cart, CartError, Game  # noqa: E402
 
 
 def image(n, seed=1):
@@ -45,7 +45,7 @@ def codes(issues, errors=True):
 class Format(unittest.TestCase):
     def test_round_trip_and_same_bytes(self):
         c = Cart("CART", [game("one", "ONE", sd={"DATA/X.DAT": b"x"}, license_files={"LICENSE": b"L"},
-                               screenshots=[Screenshot(png(), "title")], cart_image=png(), buttons=[("A", "go")]),
+                               cart_image=png(), buttons=[("A", "go")]),
                           game("two", "TWO", folder="F/G")],
                  version="1.0", author="me", launch="two", background=png(), colors={"text": "#FFFFFF"},
                  folder_backgrounds={"F": png()}, cover=png(colors=((1, 1, 1),)), about=png(colors=((2, 2, 2),)),
@@ -78,7 +78,6 @@ class Format(unittest.TestCase):
             ("binary-size", Cart("C", [game("a", n=50945)])),
             ("bad-launch", Cart("C", [game("a")], launch="b")),
             ("bad-image", Cart("C", [game("a", cart_image=png((64, 64)))])),
-            ("bad-image", Cart("C", [game("a", screenshots=[Screenshot(png((128, 64)))])])),
             ("bad-image", Cart("C", [game("a")], background=png(mode="RGBA", colors=((0, 0, 0, 0),)))),
             ("bad-background", Cart("C", [game("a")], background=png(colors=[(i, i, i) for i in range(1, 14)]))),
             ("missing-field", Cart("C", [])),
@@ -118,6 +117,12 @@ class Format(unittest.TestCase):
         w = issues(dict(m, colour="red"), {"stray.txt": b"x"})
         self.assertEqual(codes(w), [])
         self.assertEqual(codes(w, False), ["unknown-key", "unused-file"])
+        # A cart from before screenshots left the format: read, without them
+        old = {**m, "games": [{**m["games"][0], "screenshots": [{"filename": "a/screenshot-1.gif"}]}]}
+        cart, w = model.from_manifest(old, dict(files, **{"a/screenshot-1.gif": b"GIF89a"}))
+        self.assertEqual(codes(w), [])
+        self.assertEqual(codes(w, False), ["unknown-key", "unused-file"])
+        self.assertEqual(zipio.to_bytes(cart), good)
 
 
 class Zip(unittest.TestCase):
@@ -605,8 +610,7 @@ class Backup(unittest.TestCase):
             chgpack.pack(image(8), "P", record=bytes(chgpack.RECORD_MAX + 1))
 
     def test_round_trip(self):
-        """A card prepared from a cart backs up to that cart (less its screenshots
-        and its own title) and prepares the same card again, from any form of card."""
+        """A card prepared from a cart backs up to that cart (less its own title) and prepares the same card again, from any form of card."""
         from chcart import backup
         c = self.full_cart()
         files = runtime.prepare(c)

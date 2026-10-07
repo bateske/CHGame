@@ -11,7 +11,6 @@ files out the same way:
     <id>/<device>.bin
     <id>/<LICENSE, NOTICE, ...>
     <id>/cart.png
-    <id>/screenshot-<k>.png|gif
     <id>/sdcard/<card path>
 
 Problems are Issues with a stable code (spec/chgame.md lists them all); the
@@ -68,7 +67,6 @@ DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}([T ][0-9:.+\-Z]+)?$")
 RESERVED_SD = "GAMES"                          # the menu's own folder on the card
 UI_COLORS = {"text": "#FFF4D6", "disabled": "#808080", "selectedText": "#000000", "mark": "#D62020"}
 RAINBOW_RGB = (255, 0, 255)
-SCREENSHOT_SIZES = (128, 256, 384, 512)
 
 CART_KEYS = ("schemaVersion", "title", "version", "author", "description", "date", "license", "url",
              "sourceUrl", "launch", "menu", "games")
@@ -79,7 +77,7 @@ SYSTEM_IMAGES = ("installed", "game", "folder", "error-1", "error-2", "error-3",
 EXTENSION_PREFIX = "x-"                        # top-level keys of other tools: kept, never warned about
 WEB_EXTENSION = "x-chgame-web"                 # the web tool's; its version 1 systemImages are read as menu's
 GAME_KEYS = ("id", "title", "folder", "version", "author", "description", "genre", "license",
-             "licenseFiles", "url", "sourceUrl", "buttons", "binaries", "sdcard", "cartImage", "screenshots")
+             "licenseFiles", "url", "sourceUrl", "buttons", "binaries", "sdcard", "cartImage")
 TEXT_FIELDS = ("version", "author", "description", "license", "url", "sourceUrl")
 
 
@@ -105,12 +103,6 @@ class CartError(Exception):
 
 
 @dataclass
-class Screenshot:
-    data: bytes
-    title: str = ""
-
-
-@dataclass
 class Game:
     id: str
     title: str
@@ -127,7 +119,6 @@ class Game:
     buttons: list = field(default_factory=list)         # [(control, action)]
     sd: dict = field(default_factory=dict)              # card path -> bytes
     cart_image: bytes | None = None
-    screenshots: list = field(default_factory=list)     # [Screenshot]
 
     def binary(self, device="rev0"):
         return self.binaries.get(device)
@@ -384,10 +375,6 @@ def validate_game(g, where):
         else:                               # (an older cart may break the picture rule: then no picture on the card)
             for issue in check_picture(g.cart_image, "cartImage"):
                 warn("bad-picture", "cartImage", f"{issue.message}: the card gets no picture of it")
-    for k, s in enumerate(g.screenshots):
-        i = image_info(s.data)
-        if not i or i[0] not in ("PNG", "GIF") or i[1] != i[2] or i[1] not in SCREENSHOT_SIZES:
-            err("bad-image", f"screenshots[{k}]", "a square PNG or GIF, 128, 256, 384 or 512 pixels")
     for k, b in enumerate(g.buttons):
         if not (isinstance(b, (tuple, list)) and len(b) == 2 and all(isinstance(x, str) and x for x in b)):
             err("bad-field", f"buttons[{k}]", "control and action, both text")
@@ -418,11 +405,6 @@ def _check_background(png, ui, where):
 
 
 # ---- info.json --------------------------------------------------------------------
-
-def _ext(data):
-    i = image_info(data)
-    return "gif" if i and i[0] == "GIF" else "png"
-
 
 def to_manifest(cart):
     """(manifest dict, {zip path: bytes}) in the canonical layout."""
@@ -490,12 +472,6 @@ def to_manifest(cart):
         if g.cart_image is not None:
             files[f"{g.id}/cart.png"] = g.cart_image
             e["cartImage"] = f"{g.id}/cart.png"
-        if g.screenshots:
-            e["screenshots"] = []
-            for k, s in enumerate(g.screenshots, 1):
-                path = f"{g.id}/screenshot-{k}.{_ext(s.data)}"
-                files[path] = s.data
-                e["screenshots"].append({"filename": path, **({"title": s.title} if s.title else {})})
         m["games"].append(e)
     for k, v in cart.extensions.items():               # other tools' keys, as they were read
         if k.startswith(EXTENSION_PREFIX) and k not in m:
@@ -666,14 +642,6 @@ def from_manifest(m, files):
                     warn("unused-file", w + "sdcard", f"nothing in {pre}")
         if "cartImage" in e:
             g.cart_image = blob(e["cartImage"], w + "cartImage")
-        for k, s in enumerate(_list(e, "screenshots", w, err)):
-            if not isinstance(s, dict):
-                err("bad-field", f"{w}screenshots[{k}]", "needs a filename")
-                continue
-            data = blob(s.get("filename"), f"{w}screenshots[{k}].filename")
-            title = s.get("title", "")
-            if data is not None:
-                g.screenshots.append(Screenshot(data, title if isinstance(title, str) else ""))
         cart.games.append(g)
     for path in sorted(files):
         if path not in used:

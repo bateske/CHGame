@@ -28,7 +28,7 @@ import zipfile
 HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
 from chcart import backup, model, runtime, zipio  # noqa: E402
-from chcart.model import Cart, Game, Screenshot  # noqa: E402
+from chcart.model import Cart, Game  # noqa: E402
 
 FIX = HERE.parents[1] / "spec" / "fixtures"
 HELLO = FIX / "src" / "hello.bin"
@@ -84,7 +84,7 @@ def good():
     single_sd = Cart("HELLO WITH DATA", [Game(
         "hello-sd", "HELLO WITH DATA", {"rev0": hello}, description="Hello, with files for the SD card.",
         sd={"HELLO.TXT": b"hello, card\n", "DATA/INFO.DAT": bytes(range(256)) * 4},
-        cart_image=png(shot), screenshots=[Screenshot(png(shot, 256, "GIF", 3), "moving"), Screenshot(png(shot))],
+        cart_image=png(shot),
         buttons=[("A", "say hello")])])
     shared = b"shared by two games\n"
     multi = Cart("FIXTURE CART", version="2.0", author="fixtures", date="2026-10-03", launch="inner",

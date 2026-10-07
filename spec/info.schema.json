@@ -237,23 +237,6 @@
         },
         "cartImage": {
           "$ref": "#/$defs/path"
-        },
-        "screenshots": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "required": [
-              "filename"
-            ],
-            "properties": {
-              "filename": {
-                "$ref": "#/$defs/path"
-              },
-              "title": {
-                "type": "string"
-              }
-            }
-          }
         }
       }
     }
