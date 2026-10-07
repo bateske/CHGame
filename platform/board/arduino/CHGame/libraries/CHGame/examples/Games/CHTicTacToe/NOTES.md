@@ -23,6 +23,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 - Removed for flash (the owner allowed it if space was needed): the TOWER table, leaving 16 tables; save `VERSION` 2 in Save.cpp.
 - No music, only a title sting: there is no flash for a score.
 - Sound: the CHGame library's engine (chgame/Audio.h); the effect tables are Sounds.cpp (Tick and Tock `audio::SOFT`). The SOUND option (`opt.sound`: 0 on, 1 off) maps to `audio::begin(SOUNDS, COUNT, !opt.sound)` / `audio::setOn`. `chgame audio out/audio` renders them to WAV. The old engine's 800 ms last step of BROKE is two 400 ms sweeps (a step holds at most 510 ms).
+- Chosen (2026-10-07): the owner's new dealer and faces (`tools/art/common/dealer.png`, `faces.png`), and behind him a spotlight of 25% white dots centred on his head (the library's `spotlight()`), where the wood rectangle was.
 
 ## Open items
 

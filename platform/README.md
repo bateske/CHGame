@@ -212,6 +212,27 @@ list builds stayed byte-identical. Not yet run on a board.
 
 ## Changes since the copies were taken
 
+- 2026-10-07: the dealer redrawn, and a spotlight behind him.
+  `tools/art/common/dealer.png` and `faces.png` are the owner's new dealer
+  and his seven expressions. The eight games with a dealer use them:
+  CHBlackjack, CHCraps and CHYacht now read `faces.png` too, instead of
+  rebuilding Press Play On Tape's expressions, so all eight carry the same
+  arrays (the sibling checks agree). The CHGame library gains
+  `spotlight()` (`chgame/Draw.h`): a disc of 25% dots, the checker on every
+  other row. Seven games draw a white one, radius 24, centred on the
+  dealer's head (x `DEALER_X + 23`, y 17), where the wood rectangle was
+  (CHYacht has no backdrop). The dealer is no longer drawn twice: the games
+  painted `FACE_NORMAL` over `DEALER`, which already has that face
+  (identical frames, about 125 B each). The assets writer of six games
+  could cut a 16-bit value across two lines (CHSlots' output re-wrapped, no
+  value changed). CHCraps drops the angry expression it never shows (62 B).
+  Images (B) with these changes: Bingo 36,964, Blackjack 46,388, Craps
+  50,384, Four 36,736, Roulette 49,892, Tic Tac Toe 50,248, Word Wheel
+  50,112, Yacht 44,652, all with both save pages; the other twelve
+  unchanged. Checked: `chgame check --quick --no-device` in the eight,
+  Blackjack's frames identical without the second face, their README GIFs
+  re-recorded.
+
 - 2026-10-07: board revisions, ahead of a rev1 whose pins will differ
   ([../docs/hardware-revisions.md](../docs/hardware-revisions.md); the rules
   in [../spec/chgame.md](../spec/chgame.md), "Devices and revisions"). Each

@@ -18,6 +18,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 - Ending: whip-zoom on the winning four, then one quiet full-screen scene for both results - gold banner GOOD GAME when the player wins, TRY AGAIN when the player loses - plus his typed line. Rejected as over the top: sunburst, rainbow, confetti.
 - Table: depth plus one interesting ambient element, without going overboard. Kept: marquee bulbs on the rail; a circular green gradient (all the felt shades in rings from the centre). Rejected: a coffee cup, a gold printed circle, any cigarette (CHBlackjack's about-screen smoke was liked, but not with a cigarette).
 - The side stacks are each side's 21 discs and must visibly run down as discs are played.
+- Chosen (2026-10-07): the owner's new dealer and faces (`tools/art/common/dealer.png`, `faces.png`), and behind him a spotlight of 25% white dots centred on his head (the library's `spotlight()`), where the wood rectangle was.
 
 ## Open items
 

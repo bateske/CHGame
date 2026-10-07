@@ -175,9 +175,9 @@ class Out:
     def array(self, name, data, ctype="uint8_t", comment=""):
         if comment:
             self.c.append(f"// {comment}")
-        body = ",".join(f"0x{v:02X}" if ctype == "uint8_t" else str(v) for v in data)
-        lines = [body[i:i + 110] for i in range(0, len(body), 110)]
-        self.c.append(f"const {ctype} {name}[{len(data)}] = {{\n  " + "\n  ".join(lines) + "\n};")
+        vals = [f"0x{v:02X}" if ctype == "uint8_t" else str(v) for v in data]
+        lines = [",".join(vals[i:i + 22]) for i in range(0, len(vals), 22)]     # whole values a line
+        self.c.append(f"const {ctype} {name}[{len(data)}] = {{\n  " + ",\n  ".join(lines) + "\n};")
         self.h.append(f"extern const {ctype} {name}[{len(data)}];")
 
     def const(self, name, value):

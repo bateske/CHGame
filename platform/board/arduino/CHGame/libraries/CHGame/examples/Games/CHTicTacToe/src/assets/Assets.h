@@ -5,10 +5,10 @@
 #pragma once
 #include <stdint.h>
 
-extern const uint8_t DEALER[487];  // the croupier 48x42, row spans
+extern const uint8_t DEALER[463];  // the croupier 48x42, row spans
 extern const uint8_t DEALER_ALT_REMAP[16];  // the NIGHT croupier: remap applied to DEALER
-extern const uint8_t FACE_NORMAL[119];  // face patch 24x18 at (12,14), row spans
-extern const uint16_t FACE_EDITS[138];  // expression edits: (y*24+x)<<4 | colour; ANGRY RAISED BLINK SMILE SURPRISED TALK
+extern const uint8_t FACE_NORMAL[122];  // face patch 24x18 at (12,14), row spans
+extern const uint16_t FACE_EDITS[196];  // expression edits: (y*24+x)<<4 | colour; ANGRY RAISED BLINK SMILE SURPRISED TALK
 extern const uint16_t FACE_EDIT_AT[7];  // start of each expression in FACE_EDITS, plus end
 extern const uint8_t HAND[111];  // the glove 13x16, row spans; fingertip on the bottom row
 constexpr int HAND_TIP = 5;  // the fingertip's column

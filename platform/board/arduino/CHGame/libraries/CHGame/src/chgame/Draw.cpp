@@ -105,6 +105,17 @@ void dither(int x, int y, int w, int h, uint8_t c, uint8_t phase) {
     }
 }
 
+// The checker on every other row (the even ones): 25% of the pixels, an
+// even grid of dots, fixed to the screen like dither()'s.
+void spotlight(int cx, int cy, int r, uint8_t c) {
+    for (int dy = -r; dy <= r; dy++) {
+        int y = cy + dy, w = 0;
+        if (y & 1) continue;
+        while ((w + 1) * (w + 1) + dy * dy <= r * r) w++;
+        dither(cx - w, y, 2 * w + 1, 1, c, 0);
+    }
+}
+
 void dropShadow(int x, int y, int w, int h) {
     dither(x + 2, y + h, w, 2, INK, 0);
     dither(x + w, y + 2, 2, h - 2, INK, 0);

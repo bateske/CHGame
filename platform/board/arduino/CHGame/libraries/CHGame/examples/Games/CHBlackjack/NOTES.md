@@ -28,6 +28,7 @@ Agent-facing notes for continuing work on this game. Rules and controls are in [
 - Rejected: the original's "Mario" dealer (Nintendo fan art). It is not included; don't bring it back.
 - Chosen by the owner: court-card portraits without the grey SILVER frame. CHPoker (`../CHPoker`) made the same change, so keep the two decks' court art in step.
 - The release build is Smallest + LTO with USB "Upload only" (`tools/device.py` has the exact settings).
+- Chosen (2026-10-07): the owner's new dealer and faces (`tools/art/common/dealer.png`, `faces.png`; `faces.png` now replaces the expressions rebuilt from PPOT's), and behind him a spotlight of 25% white dots centred on his head (the library's `spotlight()`), where the wood rectangle was.
 
 ## Open items
 

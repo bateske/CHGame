@@ -21,6 +21,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 - Chosen (owner): engine first with a built-in flash bank, then an SD bank using the shared SD reader (now CHSd).
 - Chosen (owner liked the game, asked for depth): the shading/depth pass, with palette shades and 50% dithers lit from the top left.
 - Cut for flash: screen shake, the win-screen sunburst, the victory/broke songs (only the title tune is left), the PPOT end lettering.
+- Chosen (2026-10-07): the owner's new dealer and faces (`tools/art/common/dealer.png`, `faces.png`), and behind him a spotlight of 25% white dots centred on his head (the library's `spotlight()`), where the wood rectangle was.
 
 ## Open items
 

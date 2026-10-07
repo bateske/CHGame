@@ -21,6 +21,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 - Chosen: music only if flash is left once the game is complete; there is none (`Sounds.h` says so).
 - Chosen (2026-10-06): the title screen draws the cover's CRAPS (the S kerned as there): `tools/cart.py` `title_lines()` gives its lettering as the cover places it, `tools/titleart.py` packs it, the library's `titleArt()` draws it in the house gold as a smooth dithered gradient, with no bevel or glints (docs/cover-art.md, "The same title on the title screen"). The tagline and the dice's spotlight moved down 4 px. `tools/art/logo.txt` is no longer read.
 - Architecture to keep: the rules settle the whole roll in `Craps::throwDice()` (a result per spot); the presenter (`Presenter.cpp`) only replays it - call, losers swept, pays, home, come moves. Money has already moved, so a save mid-show is always consistent.
+- Chosen (2026-10-07): the owner's new dealer and faces, and a white dotted spotlight behind him (the library's `spotlight()`). To fit (both save pages): the angry expression, never shown here, has no edits, and the normal face is no longer drawn over `DEALER`, which has it already.
 
 ## Open items
 

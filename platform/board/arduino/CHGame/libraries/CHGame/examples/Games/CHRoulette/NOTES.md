@@ -36,6 +36,7 @@ The design specs are in `docs/design/*.md` (written before the game; their paths
   - no American 0/2 or 00/2 splits (their spots would sit 2.5 px apart).
 - Cut to fit: the credits back room (`CHRL_CREDITS=0`; the credits are in the Options footer) and the attract demo (`CHRL_DEMO=0`).
 - If more must go, follow `critique.md` §8.9 / `architecture.md` §4.4. Never cut the American wheel or the chip art.
+- Chosen (2026-10-07): the owner's new dealer and faces (`tools/art/common/dealer.png`, `faces.png`), and behind him a spotlight of 25% white dots centred on his head (the library's `spotlight()`), where the wood rectangle was.
 
 ## Open items
 

@@ -25,6 +25,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 - Accepted without comment: pass-and-play is score-only (no purse); tray dice are 2D; one CPU strength (strong: mean ~238); kept dice wait on a plate in the cam's corner; each seat throws its own dice colour (Chips.cpp `dieColours`).
 - Chosen: paytable 260/300/350/400/500 pays 1/2/3/5/10 antes; a YACHT pays the ante again, the upper bonus a fifth of it. Rejected: the plan's 5x / 1x bonuses (the return would have been far over 100%); it is now ~98.4% against the house player (tools/tests/test_yacht.cpp prints the figures).
 - The roll never comes from the physics: Yacht.cpp rolls, then the cam simulates the throw ahead and repaints the pips so the dice land on the rolled numbers.
+- Chosen (2026-10-07): the owner's new dealer and faces (`tools/art/common/`; `faces.png` now replaces the expressions rebuilt from PPOT's). No backdrop behind him here.
 
 ## Open items
 
