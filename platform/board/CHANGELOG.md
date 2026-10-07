@@ -6,7 +6,7 @@ bumps it. `python tools/release/release.py --repo bateske/CHGame` (in the
 repository root) publishes the release and uses the matching section of this
 file as the GitHub release notes.
 
-## 0.3.0 (not yet released)
+## 0.3.0 (2026-10-07)
 
 The first release from the CHGame repository: one Boards Manager URL now
 installs the core, the menu bootloader, the libraries and the games. The
