@@ -30,7 +30,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 
 ## Gotchas
 
-- The loop after any code change: `chgame build`, read check_size's image size, give the headroom to the dictionary (`build_dict.py --bytes N`), rebuild. Nothing fails when the image passes 50,432 B: watch "save pages free: N".
+- The loop after any code change: `chgame build`, read check_size's image size, give the headroom to the dictionary (`build_dict.py --bytes N`), rebuild. Since 2026-10-07 a release build that passes 50,432 B fails (`SAVE_PAGES`, tools/gamecfg.py), so the dictionary can take the headroom down to the last byte.
 - The built-in list: front coding, Huffman tables chosen by the previous letter, and 24 suffix rules that fold inflections into base words ("closure", roughly doubling words per byte). Encoder `tools/dict/build_dict.py`, decoder `FlashDict.cpp`; `src/dict/DictData.*` are generated, never hand-edit.
 - `tools/dict/wordlist.py` downloads ENABLE and Norvig's word frequencies into tools/dict/data/ (gitignored) on first use: network needed once. Until then `chgame test` still passes but prints "0 ENABLE words checked" (it skips the full-list check): run wordlist.py once in a fresh clone.
 - `tools/dict/build_sd.py` writes sdcard/WORDS.DIC (a hash table of 512 B blocks: one block read per lookup, no index in RAM). chgame check builds it if missing.

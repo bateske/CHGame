@@ -22,14 +22,17 @@ void wall() {
     for (int x = 3; x < 128; x += 8) row[x >> 1] = (uint8_t)((row[x >> 1] & 0x0F) | (INK << 4));
     for (int y = 0; y < WALL_H; y++) gfx_copyRow(y, row, 0, GFX_W);
     dither(0, 0, 128, 3, INK, 0);                       // darker ceiling
-    dither(DEALER_X + 6, 2, 36, 30, WOOD, 1);           // warm spotlight behind the caller
+    // A spotlight behind the caller: a disc of 25% white dots on his head,
+    // below the ceiling.
+    gfx_setClip(0, 2, GFX_W, WALL_H - 2);
+    spotlight(DEALER_X + 23, 17, 24, WHITE);
+    gfx_resetClip();
 }
 
 void dealer(uint8_t expr, uint8_t look, bool alt, int x, int y) {
     const uint8_t *rm = alt ? DEALER_ALT_REMAP : RM_ID;
     sprite4(DEALER, x, y, rm);
     int fx = x + (FACE_X - DEALER_X), fy = y + (FACE_Y - DEALER_Y);
-    sprite4(FACE_NORMAL, fx, fy, rm);
     if (expr > E_TALK) expr = E_NORMAL;
     if (expr) {
         for (uint16_t i = FACE_EDIT_AT[expr - 1]; i < FACE_EDIT_AT[expr]; i++) {

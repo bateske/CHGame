@@ -162,7 +162,17 @@ extern uint16_t gfx_pal[16];
 /* ------------------------------------------------------------------ */
 /* Lifecycle                                                           */
 /* ------------------------------------------------------------------ */
-void gfx_begin(uint8_t spiDiv = GFX_DIV2, uint8_t colorMode = GFX_16BPP);
+/* gfx_begin() picks one of two starts. A sketch that names GFX_12BPP and
+ * never calls gfx_setColorMode() gets gfx__begin12(), and the 16 and 18 bpp
+ * converters and tables stay out of its image (0.2-0.4 KB of flash, 176 B
+ * of it SRAM code). Any other mode, or one only known when it runs, gets
+ * gfx__begin(), which keeps all three. */
+void gfx__begin(uint8_t spiDiv, uint8_t colorMode);
+void gfx__begin12(uint8_t spiDiv);
+static inline void gfx_begin(uint8_t spiDiv = GFX_DIV2, uint8_t colorMode = GFX_16BPP) {
+    if (colorMode == GFX_12BPP) gfx__begin12(spiDiv);
+    else gfx__begin(spiDiv, colorMode);
+}
 void gfx_setSpiDiv(uint8_t div);
 void gfx_setColorMode(uint8_t mode);
 uint8_t gfx_colorMode(void);

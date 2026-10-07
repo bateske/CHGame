@@ -4,9 +4,9 @@
 #pragma once
 #include <stdint.h>
 
-extern const uint8_t DEALER[487];                          // the dealer, span4, 48 x 42
-extern const uint8_t FACE_NORMAL[119];                     // his face, a 24 x 18 patch at (12, 14)
-extern const uint16_t FACE_EDITS[138];                    // the other expressions, as the pixels that differ:
+extern const uint8_t DEALER[463];                          // the dealer, span4, 48 x 42
+extern const uint8_t FACE_NORMAL[122];                     // his face, a 24 x 18 patch at (12, 14)
+extern const uint16_t FACE_EDITS[196];                    // the other expressions, as the pixels that differ:
 extern const uint16_t FACE_EDIT_AT[7];                     // (y * 24 + x) << 4 | colour; each one's start, and the end
 extern const uint8_t DISC[59];                            // span4, 10 x 10, neutral tones
 extern const uint8_t DISC_REMAP[2][16];                     // ... as RED's, as GOLD's (tools/art/sides.txt)

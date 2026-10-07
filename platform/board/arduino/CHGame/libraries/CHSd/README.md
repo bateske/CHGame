@@ -84,6 +84,13 @@ both save pages still fit.
 
   It also pulls the card after every possible number of reads. `--quick`
   leaves out the 34 MB FAT32 images.
+- It also builds `src/SdSpi.cpp` (its `init()` and `read()`) against a model
+  of a card in SPI mode, `tests/test_spi.cpp`, behind stand-in registers
+  (`tests/spi/Arduino.h`; a 32-bit build, which zig makes on Windows and
+  x86-64 Linux): SDHC, SDSC v2 and v1, no card, the SPI handed back as
+  CHGfx left it, identification under 400 kHz. The model keeps CRC
+  checking on across CMD0 and an MCU reset, as a card CHSDtoUSB has used
+  may, so the driver must turn it off itself (CMD59, 2026-10-07).
 - The simulators' card (`host/sd_host.cpp`) serves a `.img` file as the
   whole card. Any other file (`sdcard/WORDS.DIC`, `sdcard/PHRASES.BNK`) goes onto a
   pretend FAT16 card built on the fly (`host/VCard.h`), in two pieces with a

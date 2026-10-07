@@ -23,7 +23,6 @@ void backdrop(int rows) {
 void dealer(uint8_t expr, uint8_t look, int x, int y) {
     sprite4(DEALER, x, y);
     int fx = x + (FACE_X - DEALER_X), fy = y + (FACE_Y - DEALER_Y);
-    sprite4(FACE_NORMAL, fx, fy);
     if (expr > E_TALK) expr = E_NORMAL;
     if (expr) {
         for (uint16_t i = FACE_EDIT_AT[expr - 1]; i < FACE_EDIT_AT[expr]; i++) {

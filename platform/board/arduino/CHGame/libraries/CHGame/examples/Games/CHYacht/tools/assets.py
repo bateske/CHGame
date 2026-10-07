@@ -331,9 +331,9 @@ class Out:
     def array(self, name, data, ctype="uint8_t", comment=""):
         if comment:
             self.c.append(f"// {comment}")
-        body = ",".join(f"0x{v:02X}" if ctype == "uint8_t" else str(v) for v in data)
-        lines = [body[i:i + 110] for i in range(0, len(body), 110)]
-        self.c.append(f"const {ctype} {name}[{len(data)}] = {{\n  " + "\n  ".join(lines) + "\n};")
+        vals = [f"0x{v:02X}" if ctype == "uint8_t" else str(v) for v in data]
+        lines = [",".join(vals[i:i + 22]) for i in range(0, len(vals), 22)]     # whole values a line
+        self.c.append(f"const {ctype} {name}[{len(data)}] = {{\n  " + ",\n  ".join(lines) + "\n};")
         self.h.append(f"extern const {ctype} {name}[{len(data)}];")
 
     def const(self, name, value):
@@ -429,6 +429,17 @@ def main():
                               [(9, 15, "k"), (9, 16, "k"), (14, 15, "k"), (14, 16, "k")] +
                               [(x, y, "m") for x in range(10, 14) for y in (15, 16)])
     faces["TALK"] = edit([(x, 15, "k") for x in range(9, 15)] + [(x, 16, "m") for x in range(10, 14)])
+    # tools/art/faces.png (the shared one, tools/art/common), when it is there,
+    # is the whole set as drawn by hand: NORMAL ANGRY RAISED BLINK SMILE
+    # SURPRISED TALK, 24x18 each. It replaces the expressions built above.
+    faces_png = artlib.art(HERE, "faces.png")
+    if faces_png.exists():
+        sheet = load_png(faces_png)
+        names = ["NORMAL", "ANGRY", "RAISED", "BLINK", "SMILE", "SURPRISED", "TALK"]
+        assert len(sheet) == 18 and len(sheet[0]) == 24 * len(names), "faces.png must be 7 cells of 24x18"
+        cells = {nm: [row[24 * k:24 * k + 24] for row in sheet] for k, nm in enumerate(names)}
+        assert cells["NORMAL"] == normal, "faces.png: its NORMAL must be the dealer's face (12,14 of dealer.png)"
+        faces = {nm: cells[nm] for nm in names[1:]}
     order = ["ANGRY", "RAISED", "BLINK", "SMILE", "SURPRISED", "TALK"]
     words, starts = [], []
     for nm in order:

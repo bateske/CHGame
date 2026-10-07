@@ -7,6 +7,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 - Imported from https://github.com/bateske/CHCraps at commit fa1fd77 (2026-10-01); develop here now, not in the old repo.
 - Release build (`opt=oslto,rtlib=nano,periph=game,usb=uploadonly`, board package 0.3.0, 2026-10-02): flash 49,579 of 50,944 B (1,365 spare), static RAM 15,568 of 18,416 B (2,848 spare).
 - The image (the repository's `tools/check_size.py`, its `image:` line; 49,940 B on 2026-10-02) is only ~490 B under the 50,432 B that keeps both A/B save pages (0xF500 and 0xF600, the CHGame library's `chgame/Save.cpp`). Past 0xF500 saving drops to one page; past 0xF600 it switches off.
+- 2026-10-07: the title art of 2026-10-06 had taken the image to 50,764 B, past both pages, so saving was off, and nothing failed. CHGfx 1.3.1's 12 bpp-only start brought it to **50,428 B, 4 B under the line**: any addition needs a cut first. A release build now fails past 50,432 B (`SAVE_PAGES`, tools/gamecfg.py).
 - Verification: simulator only. `chgame test` (every bet against an independent oracle, exact house edges, dice physics, zone reachability), `tools/tests/sim_save.py` (save mid-hand, debug `V` reboot and continue, the broke case), and the chdrive scripts in `tools/scripts`; `chgame check` runs all of it.
 - As of 2026-10-01 it has never run on the device: frame times unmeasured, sound unheard.
 
@@ -21,6 +22,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 - Chosen: music only if flash is left once the game is complete; there is none (`Sounds.h` says so).
 - Chosen (2026-10-06): the title screen draws the cover's CRAPS (the S kerned as there): `tools/cart.py` `title_lines()` gives its lettering as the cover places it, `tools/titleart.py` packs it, the library's `titleArt()` draws it in the house gold as a smooth dithered gradient, with no bevel or glints (docs/cover-art.md, "The same title on the title screen"). The tagline and the dice's spotlight moved down 4 px. `tools/art/logo.txt` is no longer read.
 - Architecture to keep: the rules settle the whole roll in `Craps::throwDice()` (a result per spot); the presenter (`Presenter.cpp`) only replays it - call, losers swept, pays, home, come moves. Money has already moved, so a save mid-show is always consistent.
+- Chosen (2026-10-07): the owner's new dealer and faces, and a white dotted spotlight behind him (the library's `spotlight()`). To fit (both save pages): the angry expression, never shown here, has no edits, and the normal face is no longer drawn over `DEALER`, which has it already.
 
 ## Open items
 

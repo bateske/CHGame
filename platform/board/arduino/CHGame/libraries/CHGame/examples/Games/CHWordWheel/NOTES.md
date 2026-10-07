@@ -21,6 +21,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 - Chosen (owner): engine first with a built-in flash bank, then an SD bank using the shared SD reader (now CHSd).
 - Chosen (owner liked the game, asked for depth): the shading/depth pass, with palette shades and 50% dithers lit from the top left.
 - Cut for flash: screen shake, the win-screen sunburst, the victory/broke songs (only the title tune is left), the PPOT end lettering.
+- Chosen (2026-10-07): the owner's new dealer and faces (`tools/art/common/dealer.png`, `faces.png`), and behind him a spotlight of 25% white dots centred on his head (the library's `spotlight()`), where the wood rectangle was.
 
 ## Open items
 
@@ -36,7 +37,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 
 - Size pragma: every size-optimised file begins `#pragma GCC optimize("Os", "no-ipa-sra", "no-inline-functions-called-once", "no-jump-tables", "no-guess-branch-probability")`, ~1 KB smaller than plain Os + LTO here. Measured dead ends: `no-ipa-cp` broke the build; making `Sig::add` (Presenter.cpp) noinline made it bigger. Hot pixel loops are `RAMFUNC` (SRAM) and unaffected. Probably worth trying in sibling games. The pragma also governs the library's `chgame/Sizzle` bodies, which `Fx.cpp` includes after it (coins only, no burst, no shake: `Fx.h`).
 - The drawing primitives, 3x5 font, masks, palette, input, fx maths and formatting are the CHGame library's (`platform/board/arduino/CHGame/libraries/CHGame`), not CHGfx 1.3's versions (CHGfx's text would cost ~2 KB more). The game's own panel shape is `edgedRound()` in Shapes.*. The library's font has real lower case, but everything the game draws is in capitals (the bank, names and quips): keep it so, or upper-case new text, to keep the look.
-- Nothing fails when the image passes 50,432 B: read check_size's "save pages free: N" after every build.
+- A release build that passes 50,432 B fails (`SAVE_PAGES`, tools/gamecfg.py, since 2026-10-07; this game had the only such check before, as `BUILD_REQUIRE`).
 - Banks: edit tools/phrases/phrases.txt (`CATEGORY|PUZZLE` lines), then `python tools/phrases/build_bank.py` (checks every puzzle fits and wraps it; writes src/bank/BankData.* and sdcard/PHRASES.BNK; `--curve` prints bytes against puzzles kept). `chgame check` rebuilds both in place and only notes a change: commit the regenerated files with phrases.txt.
 - In a fresh clone run `python tools/phrases/build_bank.py` (or `chgame check`) before `chgame test`: the bank test reads tools/phrases/build/bank_ref.txt, which build_bank.py writes and git ignores.
 - No-repeat dealing is a Feistel permutation per section fixed by a seed, so the save holds a seed and three counters, not a list.

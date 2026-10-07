@@ -5,8 +5,8 @@
 #pragma once
 #include <stdint.h>
 
-extern const uint8_t DEALER[487];
-extern const uint8_t FACE_NORMAL[119];
+extern const uint8_t DEALER[463];
+extern const uint8_t FACE_NORMAL[122];
 extern const uint8_t CHIP_TOP[37];
 extern const uint8_t CHIP_SIDE[25];
 extern const uint8_t CHIP_SIDE_ALT[25];
@@ -20,5 +20,5 @@ constexpr int LOGO_BASE = 8;
 extern const uint8_t LOGO_RAMP[23];
 constexpr int LOGO_DEPTH = 2;
 constexpr int LOGO_SIDE = 7;
-extern const uint16_t FACE_EDITS[138];
+extern const uint16_t FACE_EDITS[196];
 extern const uint16_t FACE_EDIT_AT[7];

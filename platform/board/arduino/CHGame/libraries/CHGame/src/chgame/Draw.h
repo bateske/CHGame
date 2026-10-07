@@ -37,6 +37,9 @@ void bevel(int x, int y, int w, int h, uint8_t light, uint8_t dark);
 extern const uint8_t DARKER[16], LIGHTER[16];
 
 void dither(int x, int y, int w, int h, uint8_t c, uint8_t phase);      // 50% checker
+// A round spotlight: a disc of dots in c, radius r, on 25% of its pixels
+// (every other pixel of every other row), inside the clip rectangle.
+void spotlight(int cx, int cy, int r, uint8_t c);
 // A soft shadow (a 50% INK checker) 2 px below and right of a w x h box.
 void dropShadow(int x, int y, int w, int h);
 // Recolour in place, pixel = remap[pixel] (dimming, highlighting).

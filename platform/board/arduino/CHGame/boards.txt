@@ -72,13 +72,17 @@ rev0.vid.0=0x16C0
 rev0.pid.0=0x27DD
 
 # Link-time optimisation: the core, the libraries and the sketch are optimised
-# as one program. The link needs no extra flag - gcc sees the LTO objects and
-# runs the plugin itself. Typically 1-5 KB smaller than -Os. The default since
-# 0.3.0: the casino games among the examples are written for it, and with -Os
-# alone the larger ones do not fit. -Os links faster and its map file is
-# easier to read (with LTO, functions merge and gain .constprop/.part names).
+# as one program. gcc sees the LTO objects and runs the plugin itself; the one
+# link flag, -flto-partition=one, keeps the program in a single partition (gcc
+# splits a larger one in two and cannot inline or merge across the split,
+# which cost nine of the examples 40-376 B and saved none any). Typically 1-5
+# KB smaller than -Os. The default since 0.3.0: the casino games among the examples are
+# written for it, and with -Os alone the larger ones do not fit. -Os links
+# faster and its map file is easier to read (with LTO, functions merge and
+# gain .constprop/.part names).
 rev0.menu.opt.oslto=Smallest + LTO (-Os -flto, default)
 rev0.menu.opt.oslto.build.flags.optimize=-Os -flto
+rev0.menu.opt.oslto.build.flags.ltolink=-flto-partition=one
 rev0.menu.opt.osstd=Smallest (-Os)
 rev0.menu.opt.osstd.build.flags.optimize=-Os
 rev0.menu.opt.o1std=Fast (-O1)

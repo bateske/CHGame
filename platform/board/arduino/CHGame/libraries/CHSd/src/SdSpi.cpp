@@ -103,6 +103,14 @@ static bool ident() {
     wait(false);
     while (cmd(0, 0) != 0x01)                   // GO_IDLE_STATE: enter SPI mode
         if (!--k) return false;
+    // CRC_ON_OFF off, the card's default, which the fixed CRC bytes rely on.
+    // CHSDtoUSB turns checking on, the card stays powered across a reset (an
+    // upload from CHSDtoUSB starts the game straight away), and CMD0 may not
+    // turn it off again (the bootloader's sd.c does the same). Bit 0 is the
+    // option; bits 31:1 are stuff bits, chosen so that the frame's CRC is
+    // 0x95 like the rest: 12 B against 24 B for a third constant. A card that
+    // minded them would leave CRC as it was, which is no worse than before.
+    cmd(59, 0x9A);
     bool v2 = false;
     r = cmd(8, 0x1AA);                          // SEND_IF_COND 2.7-3.6 V, check pattern 0xAA
     if (!(r & 0x04)) {                          // not an illegal command: v2.00 or later

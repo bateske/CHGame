@@ -38,6 +38,7 @@ Made by the owner:
 - The DAUBER option (red/blue/green/cyan/peach) colours the daubs, their splat and the glove's cuff.
 - A daub is CHChess's DUST puff, plus GOO "gack" particles (a Nickelodeon feel), plus a small shake.
 - After a daub the glove holds on the cell with a press-and-kick `RECOIL` curve (22 ticks, `Presenter.cpp`), then slides on. A swipe cancels the hold.
+- Chosen (2026-10-07): the owner's new dealer and faces (`tools/art/common/dealer.png`, `faces.png`), and behind him a spotlight of 25% white dots centred on his head (the library's `spotlight()`), where the wood rectangle was.
 
 ## Open items
 

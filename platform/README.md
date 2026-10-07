@@ -10,7 +10,7 @@ here. The table's "Came from" column is history, not something to sync with.
 | `board/arduino/CHGame/` | The CHGame Arduino board package: core, variant, linker scripts, bootloader binary, `boards.txt` / `platform.txt` | 0.3.0 (not yet published; 0.2.4 is) | CH32SerialBoot tag `v0.2.4` (5de3006), folder `arduino/CHGame` | MIT (`board/LICENSE`, `board/THIRD-PARTY.md`) |
 | `board/docs/` | The board's docs: hardware pin map, flash/RAM map, boot flow, upload protocol, recovery, CH32X035 gotchas, building the bootloader | 0.2.4 | same tag, folder `docs` | MIT |
 | `board/arduino/CHGame/libraries/CHGame/` | The CHGame library: `CHGame.h`, the one include of a sketch (buttons, pacing, palette, drawing, sound, saving, the debug protocol) | 0.1.0 | built here (2026-10-02) from the code the twenty games shared | Apache-2.0 (`LICENSE`, `NOTICE`) |
-| `board/arduino/CHGame/libraries/CHGfx/` | The graphics library | 1.3.0 | CHGfx tag `1.3.0` (838bbb0) | MIT (+ font notices in its `LICENSE`) |
+| `board/arduino/CHGame/libraries/CHGfx/` | The graphics library | 1.3.1 | CHGfx tag `1.3.0` (838bbb0) | MIT (+ font notices in its `LICENSE`) |
 | `board/arduino/CHGame/libraries/CHSd/` | Read-only SD card + FAT16/32 library | 1.0.0 | never had a repository of its own | MIT |
 | `bootloader/` | The bootloader with the SD game menu: sources, PC test suite, built binaries, and the uploader in Go (`host/go`, the executable the board package installs) and in Python (`host/py`, what the repository's tools use) | 0.2.4 + the SD menu (BOOT_VERSION 2) | CH32SerialBoot tag `v0.2.4` (5de3006): `bootloader/`, `shared/`, `host/py/`, `test/` | MIT (+ BSD font, `bootloader/NOTICE`) |
 | `hardware/` | Rev 0 schematic (PDF) and netlist (EasyEDA `.tel`) | 2026-08-21 | | |
@@ -212,6 +212,57 @@ list builds stayed byte-identical. Not yet run on a board.
 
 ## Changes since the copies were taken
 
+- 2026-10-07: the dealer redrawn, and a spotlight behind him.
+  `tools/art/common/dealer.png` and `faces.png` are the owner's new dealer
+  and his seven expressions. The eight games with a dealer use them:
+  CHBlackjack, CHCraps and CHYacht now read `faces.png` too, instead of
+  rebuilding Press Play On Tape's expressions, so all eight carry the same
+  arrays (the sibling checks agree). The CHGame library gains
+  `spotlight()` (`chgame/Draw.h`): a disc of 25% dots, the checker on every
+  other row. Seven games draw a white one, radius 24, centred on the
+  dealer's head (x `DEALER_X + 23`, y 17), where the wood rectangle was
+  (CHYacht has no backdrop). The dealer is no longer drawn twice: the games
+  painted `FACE_NORMAL` over `DEALER`, which already has that face
+  (identical frames, about 125 B each). The assets writer of six games
+  could cut a 16-bit value across two lines (CHSlots' output re-wrapped, no
+  value changed). CHCraps drops the angry expression it never shows (62 B).
+  Images (B) with these changes: Bingo 36,964, Blackjack 46,388, Craps
+  50,384, Four 36,736, Roulette 49,892, Tic Tac Toe 50,248, Word Wheel
+  50,112, Yacht 44,652, all with both save pages; the other twelve
+  unchanged. Checked: `chgame check --quick --no-device` in the eight,
+  Blackjack's frames identical without the second face, their README GIFs
+  re-recorded.
+
+- 2026-10-07: what two outside reviews led to (the rest of their
+  suggestions, and why they were set aside, are in
+  [../docs/performance.md](../docs/performance.md), "Dead ends").
+  - **CHGfx 1.3.1: a 12 bpp-only start.** `gfx_begin()` is inline: a
+    constant `GFX_12BPP` calls `gfx__begin12()`, anything else
+    `gfx__begin()`. The 16 and 18 bpp converters and LUT builders are
+    reached through two pointers that only `gfx__begin()` and
+    `gfx_setColorMode()` set, so a sketch that only runs 12 bpp (every game
+    and app) links neither: 168-460 B less image and 176 B less RAM in every
+    sketch, from SRAM code mostly. The 12 bpp path is the same code. The 16
+    bpp examples moved by -160 to +52 B; the simulator's stand-in has the
+    two starts too. Frames: the simulator does not run `CHGfx.cpp`, so a
+    board run of a 12 bpp game and of `Benchmark` (16 bpp) is still owed.
+  - **The board package links LTO as one partition**
+    (`-flto-partition=one`, a new `build.flags.ltolink` that the Optimize
+    option's `oslto` sets; `platform.txt`'s link recipe). gcc split ten of
+    the sketches in two; nine are 40-376 B smaller, none bigger.
+  - **CHSd turns the card's CRC checking off** (`CMD59`, in `ident()`).
+    CHSDtoUSB turns it on, the card stays powered across a reset, and an
+    upload from CHSDtoUSB starts the game without the menu (whose `sd.c`
+    already turns it off), so the word games could find no card. Its
+    argument's stuff bits make the frame's CRC the usual 0x95 (+12 B, not
+    +24). `tests/test_spi.cpp` runs `SdSpi.cpp`'s init and read against a
+    card model that keeps CRC on across CMD0 (fails without the fix).
+  - **Two save pages are a build requirement.** `SAVE_PAGES` in a game's
+    `tools/game.py` (two by default); `tools/check_size.py --save-pages`,
+    which `chgame build` passes for a release build, fails below it.
+    Nothing checked it before: since the title art (2026-10-06) CHCraps was
+    50,764 B, past both pages (saving off), and CHTicTacToe 50,508 B (one
+    page). With the two changes above they are 50,428 and 50,232 B.
 - 2026-10-07: board revisions, ahead of a rev1 whose pins will differ
   ([../docs/hardware-revisions.md](../docs/hardware-revisions.md); the rules
   in [../spec/chgame.md](../spec/chgame.md), "Devices and revisions"). Each

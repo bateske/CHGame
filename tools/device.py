@@ -19,7 +19,9 @@ keeps the 1200-baud upload handshake, so uploading still needs no button
 press). Debug builds keep USB Serial, which the debug protocol talks over,
 and turn the protocol on with -DCHGAME_DEBUG=1 in build.extra_flags (empty
 on this platform). A build ends with tools/check_size.py's report: flash,
-the image against the save pages, and RAM.
+the image against the save pages, and RAM. A release build fails when its
+image leaves fewer save pages than the sketch's SAVE_PAGES (tools/game.py;
+two by default), so a game cannot lose its A/B saves unnoticed.
 
 Uploads go through the Python uploader (platform/bootloader/host/py), which
 does the 1200-baud touch, the flash, the verify and the restart itself;
@@ -71,7 +73,12 @@ def build(sketch, debug=False, flags=""):
     if r.returncode:
         sys.stderr.write(r.stdout[-3000:] + r.stderr[-3000:])
         raise SystemExit("compile failed")
-    subprocess.run([sys.executable, str(REPO / "tools" / "check_size.py"), str(out), "--top", "0"])
+    import gamecfg
+    need = 0 if debug else gamecfg.load(sketch).SAVE_PAGES
+    r = subprocess.run([sys.executable, str(REPO / "tools" / "check_size.py"), str(out), "--top", "0",
+                        "--save-pages", str(need)])
+    if r.returncode:
+        raise SystemExit("the build does not fit (tools/check_size.py, above)")
     return out
 
 

@@ -23,6 +23,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 - Removed for flash (the owner allowed it if space was needed): the TOWER table, leaving 16 tables; save `VERSION` 2 in Save.cpp.
 - No music, only a title sting: there is no flash for a score.
 - Sound: the CHGame library's engine (chgame/Audio.h); the effect tables are Sounds.cpp (Tick and Tock `audio::SOFT`). The SOUND option (`opt.sound`: 0 on, 1 off) maps to `audio::begin(SOUNDS, COUNT, !opt.sound)` / `audio::setOn`. `chgame audio out/audio` renders them to WAV. The old engine's 800 ms last step of BROKE is two 400 ms sweeps (a step holds at most 510 ms).
+- Chosen (2026-10-07): the owner's new dealer and faces (`tools/art/common/dealer.png`, `faces.png`), and behind him a spotlight of 25% white dots centred on his head (the library's `spotlight()`), where the wood rectangle was.
 
 ## Open items
 
@@ -34,7 +35,7 @@ Agent-facing notes for continuing work here; rules and controls are in README.md
 
 ## Gotchas
 
-- Flash is effectively full. Earlier squeezes: `gfx_ellipse` dropped (fills drawn as pairs), only the bounce curve kept (`fx::bounce`, now the CHGame library's), unused banner styles cut. Nothing fails when the image passes 50,432 B: read check_size's "save pages free: N" line after every build (one page: saving loses its power-cut safety; none: saving switches off).
+- Flash is effectively full. Earlier squeezes: `gfx_ellipse` dropped (fills drawn as pairs), only the bounce curve kept (`fx::bounce`, now the CHGame library's), unused banner styles cut. A release build that passes 50,432 B fails (`SAVE_PAGES`, tools/gamecfg.py, since 2026-10-07). Before that nothing did: the title art of 2026-10-06 took the image to 50,508 B (one save page, no power-cut safety) unnoticed, until the platform changes of 2026-10-07 brought it back to about 50,230.
 - LTO inlines almost everything into `stage::render`, so the symbol table does not show what a feature costs: measure by building a patched copy with and without it.
 - Band redraw: when only the glove or cursor moved, Stage redraws just the rows they swept, inside CHGfx's clip rectangle (`gfx_setClip` in `stage::render`, Stage.cpp), which the CHGame library's primitives and CHGfx's both honour (the library's masks do not). New play-screen drawing must respect that clip. Check with `chgame redraw tools/scripts/diff/diff_iso.txt out/diff 1` (0 stale frames expected): its reference build defines `CHSIM_FORCE_FULL`, which turns every frame with motion into a full redraw (`stage::render`, Stage.cpp).
 - Palette cycling (the `FX_A`/`FX_B` slots, the CHGame library's `pal::`, platform/board/arduino/CHGame/libraries/CHGame/src/chgame/Palette.cpp) animates the cursor, the fading VANISH mark and the winning line with no redraw; static art drawn in those slots will flicker with them.

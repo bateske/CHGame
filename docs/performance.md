@@ -86,7 +86,42 @@ MOSI. Clean stripes = good. Speckle or horizontal shear = back off to
 * **Tearing-effect sync** — the ST7735 TE pin isn't broken out on this
   14-pin flex, so there's no vsync to lock to. `gfx_setPanelFrameRate()`
   scans the glass faster instead, which shortens the window in which a
-  tear can be visible.
+  tear can be visible. (On the board the display connector has no TE
+  line at all: the netlist's U2 carries GND, BL_A, RST, DC, MOSI, CLK,
+  3V3 and CS.)
+
+Two outside reviews of 2026-10-07 suggested these as well. Each was
+checked against the code and set aside:
+
+* **A naked DMA interrupt** to save the register pushes. The handler is
+  `WCH-Interrupt-fast` (hardware stacking, 5 saves), its body uses s0-s4
+  and calls the converter, and a naked function gets no `mret`.
+* **A 256-entry table converting two pixels at once.** That is `s_lut`
+  already (1 KB at 16 bpp, unrolled four times, in SRAM).
+* **Switching games to 12 bpp.** Every game, app and `Hello` is already
+  12 bpp, and losslessly: the house palette is authored in RGB444.
+* **Dirty-band flushes in the games.** Their palette cycles every tick
+  (FX_A/FX_B), and the panel sees a new colour only where it is flushed:
+  outside the band the colours would freeze. The games skip the redraw
+  instead (a scene hash in `stage::render`) and flush the frame they have.
+* **`CHGFX_ISR_IN_SRAM` for CHChess or by default.** It saves ~244 µs a
+  flush; while CHChess thinks it draws a frame every 133 ms, so the
+  search gains ~0.2 % for 330 B of SRAM.
+* **Struct-of-arrays particles.** No data cache to help, and RV32 has no
+  scaled index, so each field needs its own address arithmetic: more
+  flash for nothing.
+* **A shorter SD timeout, or read-ahead.** The 1 s is only an upper
+  bound: each wait ends at the card's first answer, an empty slot fails
+  in microseconds, and some cards do take 300-770 ms for a first read.
+  The games read single blocks at random; the one sequential reader,
+  CHStlView, already streams with DMA.
+* **A hardware timer for the speaker.** It is one: TIM1_CH2 PWM on PB10,
+  with the sequencer in the 1 kHz SysTick.
+
+What came out of checking them, both now done: `-flto-partition=one` (the board
+package's LTO link, 40-376 B in nine sketches) and the 12-bpp-only start
+in CHGfx 1.3.1 (the 16 and 18 bpp converters left out: 0.2-0.4 KB of
+image and 176 B of SRAM in every game).
 
 ## Build and run
 
