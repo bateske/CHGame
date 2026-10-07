@@ -7,7 +7,7 @@ here. The table's "Came from" column is history, not something to sync with.
 
 | Folder | What | Version | Came from | Licence |
 |---|---|---|---|---|
-| `board/arduino/CHGame/` | The CHGame Arduino board package: core, variant, linker scripts, bootloader binary, `boards.txt` / `platform.txt` | 0.3.0 (not yet published; 0.2.4 is) | CH32SerialBoot tag `v0.2.4` (5de3006), folder `arduino/CHGame` | MIT (`board/LICENSE`, `board/THIRD-PARTY.md`) |
+| `board/arduino/CHGame/` | The CHGame Arduino board package: core, variant, linker scripts, bootloader binary, `boards.txt` / `platform.txt` | 0.3.0 (released 2026-10-07) | CH32SerialBoot tag `v0.2.4` (5de3006), folder `arduino/CHGame` | MIT (`board/LICENSE`, `board/THIRD-PARTY.md`) |
 | `board/docs/` | The board's docs: hardware pin map, flash/RAM map, boot flow, upload protocol, recovery, CH32X035 gotchas, building the bootloader | 0.2.4 | same tag, folder `docs` | MIT |
 | `board/arduino/CHGame/libraries/CHGame/` | The CHGame library: `CHGame.h`, the one include of a sketch (buttons, pacing, palette, drawing, sound, saving, the debug protocol) | 0.1.0 | built here (2026-10-02) from the code the twenty games shared | Apache-2.0 (`LICENSE`, `NOTICE`) |
 | `board/arduino/CHGame/libraries/CHGfx/` | The graphics library | 1.3.1 | CHGfx tag `1.3.0` (838bbb0) | MIT (+ font notices in its `LICENSE`) |
@@ -44,11 +44,10 @@ arduino-cli core update-index
 arduino-cli core install CHGame:ch32v
 ```
 
-Until 0.3.0, the first release cut from this repository, is published, 0.2.4
-is still served from
-`https://github.com/bateske/CH32SerialBoot/releases/latest/download/package_chgame_index.json`
-(install `CHGame:ch32v@0.2.4` from there meanwhile, or stage 0.3.0 and
-install it from this machine: [board/docs/trying-a-release.md](board/docs/trying-a-release.md)).
+0.3.0 (2026-10-07) is the first release cut from this repository. The
+CH32SerialBoot repository's URL offers 0.2.4 only. To try the next version
+before it is published, stage it and install it from this machine:
+[board/docs/trying-a-release.md](board/docs/trying-a-release.md).
 
 **What the copy here is:**
 - the source of the next release. A change made here does not reach a build
@@ -73,7 +72,7 @@ install it from this machine: [board/docs/trying-a-release.md](board/docs/trying
   behaviour and memory report are described in
   [../README.md](../README.md) and [../CLAUDE.md](../CLAUDE.md).
 
-**Fixed here, not yet released:**
+**Fixed here, released in 0.3.0:**
 - **Linux builds failed.** `cores/arduino/ch32/lib/ch32yyxx.h` included
   `core_riscv_cH32yyxx.h`; the file is `core_riscv_ch32yyxx.h`, so it only
   resolved on case-insensitive file systems (Windows, default macOS). Fixed
@@ -83,7 +82,7 @@ install it from this machine: [board/docs/trying-a-release.md](board/docs/trying
   0x2000 (`link_chgame_app.ld`, `chgame_map.h`), and one in `boards.txt`
   naming a `tools/gen_ld.py` that does not exist (2026-10-02).
 
-**Changed here, not yet released** (2026-10-02; all 20 games built from the
+**Changed here, released in 0.3.0** (2026-10-02; all 20 games built from the
 staged package, sizes unchanged):
 - **Smallest + LTO is the default** *Optimize* option. FQBNs without `opt=`
   now build with `-flto`; with plain `-Os` the larger games do not fit.

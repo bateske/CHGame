@@ -95,10 +95,11 @@ arduino-cli core update-index
 arduino-cli core install CHGame:ch32v
 ```
 
-(Until 0.3.0 is published, 0.2.4 is still served from
-`https://github.com/bateske/CH32SerialBoot/releases/latest/download/package_chgame_index.json`,
-without the libraries, games and menu bootloader. To try 0.3.0 now:
-[trying-a-release.md](platform/board/docs/trying-a-release.md).)
+The same release, [v0.3.0](https://github.com/bateske/CHGame/releases/tag/v0.3.0),
+carries every game and app as one cart, `CHGame-Casino-0.3.0.chgame`
+([spec/chgame.md](spec/chgame.md)), and that cart's SD card as a zip.
+(Boards Manager URLs from before 0.3.0, the CH32SerialBoot repository's,
+offer 0.2.4 only.)
 
 **Then, in the IDE:** *Tools > Board > CHGame Boards > CHGame Rev0*. The games are under *File >
 Examples > CHGame > Games*; set *Tools > USB* to **Upload only** for them
@@ -277,8 +278,7 @@ chgame cart deploy out/CHGame-Casino.chgame --card E:\   # onto a mounted card
 ### The board package: `platform/board/`
 
 The Arduino core for the board: package `CHGame`, architecture `ch32v`,
-version **0.3.0** (built and tested, not yet published; 0.2.4 is the one
-installed today). It is a fork of the WCH CH32 Arduino core. It adds the
+version **0.3.0** (released 2026-10-07). It is a fork of the WCH CH32 Arduino core. It adds the
 CHGame variant (pin names such as `PIN_BTN_A` and `PIN_SD_CS`), the USB CDC
 serial port, the app linker script (the sketch starts at 0x3000, above the
 12 KB bootloader), and the `chgame-upload` tool, which uploads over USB in
