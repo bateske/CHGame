@@ -1,6 +1,6 @@
 # Roadmap: from this repository to one board package
 
-The goal ([README](../README.md#what-this-repository-is-for)): someone
+The goal ([README](../README.md#why-one-repository)): someone
 installs **CHGame** in the Arduino Boards Manager and has everything: the
 core, the menu bootloader, one `CHGame.h` library, the casino games as
 examples. An update delivers all of it together. The PC tools live in the

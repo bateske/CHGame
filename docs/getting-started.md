@@ -105,7 +105,7 @@ It uses 10.8 KB of flash and 11.9 KB of RAM, most of the RAM being the
   chgame --sketch Hello upload
   ```
 - **Arduino IDE:**
-  1. Install the CHGame board package, 0.3.0 or later ([README](../README.md#installing)).
+  1. Install the CHGame board package, 0.3.0 or later ([README](../README.md#1-install-the-board-package)).
      The CHGame and CHGfx libraries come with it. (With 0.2.4, copy
      `platform/board/arduino/CHGame/libraries/CHGfx` and `.../CHGame` into
      your sketchbook's `libraries/`, and choose *Tools > Optimize >

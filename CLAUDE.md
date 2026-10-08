@@ -77,6 +77,12 @@ changing that game.
      lists orphans and jaggies). Look at them all with `python tools/artsheet.py`;
      the README's galleries (`docs/cover-art.png`, `cover-art-defaults.png`)
      come from `python tools/artsheet.py --gallery`.
+   - The brand's pictures in `docs/brand/` (the README's banner, which shows
+     the box art, its buttons, caution and XOXO, the API reference's logo) come from
+     `python tools/brand/make.py`; the look, palette and rules are
+     [docs/brand/README.md](docs/brand/README.md), and the API reference's
+     stylesheet `docs/api/extra.css` follows them. After a box art changes,
+     remake the banner too.
 5. **The shared `tools/` serve all 20 games.** After changing anything in
    `tools/chsim` or `tools/*.py`, run `chgame check` in several games and
    compare sim frames against a run from before the change.
@@ -242,6 +248,7 @@ it, `python tools/chgame.py` is the same thing. The shared tools under
 | A picture's previews and the house checks, while painting it / a title's lettering from thousands of pixel fonts (needs Pixel Logo Lab beside the repository, or `$CHG_LOGOLAB`) | `python -m artkit show RECIPE.py` / `python -m artkit.fontscout scout "TITLE" OUT` |
 | The casino card's covers (`tools/sdcard/art/`, from `art/src/*.py`) / the menu's default pictures (`spec/assets/`, from `tools/art/menu/*.py`) / its built-in icons (`art/icons/` -> `src/icons.h`) | `python tools/sdcard/covers.py` / `python tools/menuart.py` / `python platform/bootloader/tools/icons.py` |
 | Every picture the menus show on one sheet (or before/after for some; or the README's galleries, `docs/cover-art*.png`, after a picture changes) | `python tools/artsheet.py [OUT]` / `python tools/artsheet.py --compare OUT NAME ...` / `python tools/artsheet.py --gallery` |
+| The README's banner, buttons, caution and XOXO, and the API reference's logo (`docs/brand/`; one frame of the banner to look at) | `python tools/brand/make.py [banner\|buttons\|warning\|xoxo\|wordmark\|swatches]` / `python tools/brand/make.py banner --still out/banner.png` |
 | Build the uploader, `chgame-upload` (Go, five hosts, into `out/chgame-upload/`) | `python tools/release/build_uploader.py` |
 | The uploaders' parity tests (Python and Go against one vector file) | `python -m unittest discover -s platform/bootloader/test/protocol`; `go test ./...` in `host/go` |
 | Stage a release locally and test it as a new user (fresh arduino-cli in `out/newuser/`, every example compiled from the installed package, the casino cart and the SD card zip) | `python tools/release/stage.py [--quick] [--serve]` |
