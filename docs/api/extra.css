@@ -1,7 +1,14 @@
 /* The CHGame reference's few changes to Doxygen's look. */
+#titlearea {
+    padding: 10px 16px;
+}
+#projectlogo {
+    padding-right: 12px;
+}
 #projectlogo img {
     height: 56px;
     width: auto;
+    display: block;
 }
 #projectname {
     font-size: 200%;
