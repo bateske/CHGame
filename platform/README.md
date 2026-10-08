@@ -25,10 +25,10 @@ CHGfx's `LICENSE`.
 Everything: the core, the menu bootloader, the `CHGame` library (with CHGfx
 and CHSd beside it) and the casino games as its examples, so that
 installing or updating "CHGame" in the Boards Manager brings all of it at
-once. That is 0.3.0, built from here and tested as a new user would get it
-(`python tools/release/stage.py`), not yet published;
-[../docs/roadmap.md](../docs/roadmap.md) has what is left. Until it is
-published, the pieces are used from this repository as described below,
+once. That is 0.3.0, released on 2026-10-07, built from here and tested
+as a new user would get it (`python tools/release/stage.py`);
+[../docs/roadmap.md](../docs/roadmap.md) has what is left. Between
+releases, the pieces are used from this repository as described below,
 or from a staged install
 ([board/docs/trying-a-release.md](board/docs/trying-a-release.md)).
 
