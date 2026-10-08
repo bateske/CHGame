@@ -33,7 +33,7 @@ This page records what is in place and what each step involved.
 
 | | Where | State |
 |---|---|---|
-| Arduino core, variant, linker scripts, Tools menus | `platform/board/arduino/CHGame` | 0.3.0, built and tested, not yet published (0.2.4 is the published one) |
+| Arduino core, variant, linker scripts, Tools menus | `platform/board/arduino/CHGame` | 0.3.0, released 2026-10-07 |
 | Bootloader with the SD game menu | `platform/bootloader` | menu v2 (2026-10-03), Rainbow and Static (White until that evening, when colour 15 became the picture's magenta as painted; that build has not run on a board): the PC suite, and installed and checked on a board the same day (`test/hil/RESULTS-2026-10-03.md`; the first menu on 2026-10-01) |
 | The visual menu: the same bootloader, one picture at a time, no text ([visual-menu.md](visual-menu.md)) | `platform/bootloader` (`--ui=visual`), `tools/artkit`, each example's `tools/cart.py` | 2026-10-03: Rainbow and Static, in Burn Bootloader; the PC suite passes on test cards and the real casino card (which is now in genre folders, with box art for all 22 programs, repainted on 2026-10-04 with the menu's own pictures: [cover-art.md](cover-art.md)). Not yet run on a board (`platform/bootloader/HARDWARE.md`, "The visual menu") |
 | The `.chgame` format and the SD card's layout | `spec/`, `tools/chcart` | version 1 and layout 2 (with the visual menu's pictures: `menu.cover`, `menu.about`, folder covers, `cartImage` in each CHG file); reference implementation, 24 unit tests, 27 conformance fixtures; the repository's games and release use it |
@@ -54,20 +54,18 @@ builds the uploader for the five hosts, the platform archive and the Boards
 Manager index, and publishes them with `gh`
 (`platform/board/docs/building.md`). `python tools/release/release.py
 --dry-run` makes the whole set in `out/dist/`. `platform.txt` says 0.3.0
-and the changelog has its section, headed "(not yet released)".
+and the changelog has its section.
 
 Also done the same day: `stage.py` builds the release as `0.3.0-local` with
 localhost URLs, `serve.py` serves it to the Arduino IDE, and
 `acceptance.py` is the new-user test, which `release.py` now runs before it
-publishes anything; it also packs the release's SD card zip. What is left
-is the release itself: date the changelog heading, run it.
+publishes anything; it also packs the release's SD card zip. **0.3.0 was
+released on 2026-10-07** (`v0.3.0`, with the casino cart and its SD card
+zip). What is left:
 
-- The package index then lives at
-  `https://github.com/bateske/CHGame/releases/latest/download/package_chgame_index.json`.
-- Every place that gives the old URL changes with it: the root README's
-  *Installing* section, `CLAUDE.md`, `platform/README.md` and
-  `platform/board/arduino/CHGame/libraries/CHGame/examples/Apps/CHSDtoUSB/README.md`. The games' READMEs link to the root
-  README instead of repeating it.
+- (Done) The package index lives at
+  `https://github.com/bateske/CHGame/releases/latest/download/package_chgame_index.json`,
+  and the README, `CLAUDE.md` and `platform/README.md` give that URL only.
 - Decide how people on the old URL find the new one. An index is not
   redirected by itself; a last release on the old URL that says so is one
   way.
