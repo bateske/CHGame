@@ -23,7 +23,7 @@ From the repository root, with Doxygen 1.9.8 or later (the workflow uses
 Ubuntu's):
 
 ```bash
-doxygen docs/api/Doxyfile
+mkdir -p out/api-docs && doxygen docs/api/Doxyfile
 ```
 
 Open `out/api-docs/html/index.html`. Warnings go to
@@ -31,7 +31,7 @@ Open `out/api-docs/html/index.html`. Warnings go to
 without documentation is one. Without a local Doxygen, Docker does it:
 
 ```bash
-docker run --rm -v "$PWD:/src" -w /src ubuntu:24.04 sh -c "apt-get update -qq && apt-get install -y -qq doxygen >/dev/null && doxygen docs/api/Doxyfile"
+docker run --rm -v "$PWD:/src" -w /src ubuntu:24.04 sh -c "apt-get update -qq && apt-get install -y -qq doxygen >/dev/null && mkdir -p out/api-docs && doxygen docs/api/Doxyfile"
 ```
 
 ## How the comments are written

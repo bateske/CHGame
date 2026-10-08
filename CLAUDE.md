@@ -247,7 +247,7 @@ it, `python tools/chgame.py` is the same thing. The shared tools under
 | Stage a release locally and test it as a new user (fresh arduino-cli in `out/newuser/`, every example compiled from the installed package, the casino cart and the SD card zip) | `python tools/release/stage.py [--quick] [--serve]` |
 | Serve the staged release to the Arduino IDE | `python tools/release/serve.py` (URL `http://localhost:8765/package_chgame_index.json`) |
 | A release, dry or real (`platform/board/docs/building.md`) | `python tools/release/release.py [--dry-run]` |
-| The API reference (Doxygen, into `out/api-docs/html`; published to <https://bateske.github.io/CHGame/> by `.github/workflows/docs.yml`) | `doxygen docs/api/Doxyfile` (or the Docker line in [docs/api/README.md](docs/api/README.md)) |
+| The API reference (Doxygen, into `out/api-docs/html`; published to <https://bateske.github.io/CHGame/> by `.github/workflows/docs.yml`) | `mkdir -p out/api-docs && doxygen docs/api/Doxyfile` (or the Docker line in [docs/api/README.md](docs/api/README.md)) |
 
 The release FQBN is
 `CHGame:ch32v:rev0:opt=oslto,rtlib=nano,periph=game,usb=uploadonly`. A debug
