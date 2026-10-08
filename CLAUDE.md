@@ -77,6 +77,12 @@ changing that game.
      lists orphans and jaggies). Look at them all with `python tools/artsheet.py`;
      the README's galleries (`docs/cover-art.png`, `cover-art-defaults.png`)
      come from `python tools/artsheet.py --gallery`.
+   - The brand's pictures in `docs/brand/` (the README's banner, which shows
+     the box art, its buttons, caution and XOXO, the API reference's logo) come from
+     `python tools/brand/make.py`; the look, palette and rules are
+     [docs/brand/README.md](docs/brand/README.md), and the API reference's
+     stylesheet `docs/api/extra.css` follows them. After a box art changes,
+     remake the banner too.
 5. **The shared `tools/` serve all 20 games.** After changing anything in
    `tools/chsim` or `tools/*.py`, run `chgame check` in several games and
    compare sim frames against a run from before the change.
@@ -90,8 +96,8 @@ changing that game.
    (the style: [docs/api/README.md](docs/api/README.md)), and
    `doxygen docs/api/Doxyfile` must stay free of warnings. Two things to know:
    - `platform/board` is what the *next* board package release will contain.
-     Builds use the installed package for the core (0.2.4, or 0.3.0-local
-     when a staged build is installed), so an edit to the core, variant,
+     Builds use the installed package for the core (0.3.0, or a
+     `-local` version when a staged build is installed), so an edit to the core, variant,
      `platform.txt` or `boards.txt` has no effect on a build until it is
      released, staged and installed, or the installed copy is patched.
    - The three libraries in `platform/board/arduino/CHGame/libraries/` are
@@ -164,22 +170,22 @@ pip install -e .[sim]      # the tools (Pillow, pyserial, numpy) and the `chgame
 Manager), then `pip install -e .[sim]` in the repository root.
 
 **Notes:**
-- **The Boards Manager URL** above is this repository's. Until 0.3.0, the
-  first release cut from here, is published, 0.2.4 is still served from
-  `https://github.com/bateske/CH32SerialBoot/releases/latest/download/package_chgame_index.json`
-  (use that URL and `CHGame:ch32v@0.2.4` meanwhile). The URL is given here,
-  in the README and in `platform/README.md`: change the three together.
-  To install 0.3.0 before it is published: `python tools/release/stage.py`
-  builds it as `0.3.0-local` and tests it as a new user, and
+- **The Boards Manager URL** above is this repository's; 0.3.0
+  (2026-10-07) is the first release from here, with every game as one
+  cart, `CHGame-Casino-0.3.0.chgame`, and its SD card's zip beside it. The
+  URL is given here, in the README and in `platform/README.md`: change the
+  three together. To install the next version before it is published:
+  `python tools/release/stage.py` builds it as `<version>-local` and tests
+  it as a new user, and
   `python tools/release/serve.py` serves it to Boards Manager at
   `http://localhost:8765/package_chgame_index.json`
   ([platform/board/docs/trying-a-release.md](platform/board/docs/trying-a-release.md)).
 - The board package brings its own RISC-V GCC 8.2 and the `chgame-upload`
   tool, so nothing else is needed for device builds.
-- **Linux:** the installed core 0.2.4's `ch32yyxx.h` includes
+- **Linux:** core 0.2.4's `ch32yyxx.h` includes
   `core_riscv_cH32yyxx.h` with a capital H, which only resolves on
-  case-insensitive file systems. It is fixed in `platform/board` (ships with
-  0.3.0); for 0.2.4:
+  case-insensitive file systems. Fixed in 0.3.0; if 0.2.4 is still
+  installed:
   `ln -s core_riscv_ch32yyxx.h ~/.arduino15/packages/CHGame/hardware/ch32v/0.2.4/cores/arduino/ch32/lib/core_riscv_cH32yyxx.h`.
 - **The libraries need no install.** `chgame build` compiles with
   `--library` for CHGfx, CHGame and CHSd from
@@ -242,6 +248,7 @@ it, `python tools/chgame.py` is the same thing. The shared tools under
 | A picture's previews and the house checks, while painting it / a title's lettering from thousands of pixel fonts (needs Pixel Logo Lab beside the repository, or `$CHG_LOGOLAB`) | `python -m artkit show RECIPE.py` / `python -m artkit.fontscout scout "TITLE" OUT` |
 | The casino card's covers (`tools/sdcard/art/`, from `art/src/*.py`) / the menu's default pictures (`spec/assets/`, from `tools/art/menu/*.py`) / its built-in icons (`art/icons/` -> `src/icons.h`) | `python tools/sdcard/covers.py` / `python tools/menuart.py` / `python platform/bootloader/tools/icons.py` |
 | Every picture the menus show on one sheet (or before/after for some; or the README's galleries, `docs/cover-art*.png`, after a picture changes) | `python tools/artsheet.py [OUT]` / `python tools/artsheet.py --compare OUT NAME ...` / `python tools/artsheet.py --gallery` |
+| The README's banner, buttons, caution and XOXO, and the API reference's logo (`docs/brand/`; one frame of the banner to look at) | `python tools/brand/make.py [banner\|buttons\|warning\|xoxo\|wordmark\|swatches]` / `python tools/brand/make.py banner --still out/banner.png` |
 | Build the uploader, `chgame-upload` (Go, five hosts, into `out/chgame-upload/`) | `python tools/release/build_uploader.py` |
 | The uploaders' parity tests (Python and Go against one vector file) | `python -m unittest discover -s platform/bootloader/test/protocol`; `go test ./...` in `host/go` |
 | Stage a release locally and test it as a new user (fresh arduino-cli in `out/newuser/`, every example compiled from the installed package, the casino cart and the SD card zip) | `python tools/release/stage.py [--quick] [--serve]` |

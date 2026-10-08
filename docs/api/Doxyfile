@@ -17,7 +17,7 @@ PROJECT_NAME           = "CHGame"
 # Set by the workflow from platform.txt's version= (empty when run by hand).
 PROJECT_NUMBER         = $(CHGAME_VERSION)
 PROJECT_BRIEF          = "Libraries for the CHGame handheld"
-PROJECT_LOGO           = docs/api/logo.png
+PROJECT_LOGO           = docs/brand/logo.png
 OUTPUT_DIRECTORY       = out/api-docs
 STRIP_FROM_PATH        = platform/board/arduino/CHGame/libraries
 STRIP_FROM_INC_PATH    = platform/board/arduino/CHGame/libraries/CHGame/src \
@@ -141,11 +141,14 @@ PREDEFINED             = __riscv=1 \
 #---------------------------------------------------------------------------
 GENERATE_HTML          = YES
 HTML_OUTPUT            = html
+# The brand's look (docs/brand/README.md): extra.css sets the colours, the
+# hue only tints the few images Doxygen draws itself (folder icons).
 HTML_EXTRA_STYLESHEET  = docs/api/extra.css
-HTML_COLORSTYLE        = AUTO_LIGHT
-HTML_COLORSTYLE_HUE    = 140
-HTML_COLORSTYLE_SAT    = 90
-HTML_COLORSTYLE_GAMMA  = 90
+HTML_EXTRA_FILES       = docs/brand/wordmark.svg
+HTML_COLORSTYLE        = LIGHT
+HTML_COLORSTYLE_HUE    = 45
+HTML_COLORSTYLE_SAT    = 200
+HTML_COLORSTYLE_GAMMA  = 80
 HTML_DYNAMIC_SECTIONS  = NO
 HTML_INDEX_NUM_ENTRIES = 1
 GENERATE_TREEVIEW      = YES

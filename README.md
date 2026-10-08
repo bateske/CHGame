@@ -1,45 +1,84 @@
-# CHGame
+<a id="readme-top"></a>
 
-[![API reference](https://img.shields.io/badge/docs-API%20reference-2e7d32)](https://bateske.github.io/CHGame/)
+<div align="center">
 
-Everything for the **CHGame** handheld, in one repository: the Arduino board
-package, the bootloader with its SD game menu, the graphics, SD-card and
-sound code that games are built from, twenty casino games, and the PC tools
-(simulator, uploader, packager, card builder).
+<a href="https://chgame.website"><img src="docs/brand/banner.gif" width="100%" alt="CHGame, the lowest-cost game system: a handheld you program in Arduino, paging through the box art in its game menu"></a>
 
-> ### 📖 [API reference: bateske.github.io/CHGame](https://bateske.github.io/CHGame/)
->
-> Every function, class and constant of the libraries the board package
-> installs (**CHGame**, **CHGfx**, **CHSd**, and the core's **SPI**,
-> **Wire** and **EEPROM**), with what it does, its parameters and what it
-> returns, in the style of the Arduboy2 library's reference. Start with the
-> [CHGame library](https://bateske.github.io/CHGame/group__lib__chgame.html).
+<p>
+<a href="https://chgame.website"><img src="docs/brand/btn-website.svg" alt="chgame.website"></a>&nbsp;
+<a href="#-get-started"><img src="docs/brand/btn-start.svg" alt="Get started"></a>&nbsp;
+<a href="https://bateske.github.io/CHGame/"><img src="docs/brand/btn-docs.svg" alt="API docs"></a>&nbsp;
+<a href="https://www.arduboy.com/shop/p/chgame"><img src="docs/brand/btn-shop.svg" alt="Buy one"></a>&nbsp;
+<a href="https://community.arduboy.com/c/color/56"><img src="docs/brand/btn-forum.svg" alt="Forum"></a>
+</p>
 
-**This repository is the source of truth for CHGame development.** It
-replaces the separate repositories the pieces grew up in
-(CH32SerialBoot, CHGfx and one repository per game). Those are frozen and
-get no more updates; nothing here links to them at build time.
+[![Board package](https://img.shields.io/github/v/release/bateske/CHGame?style=for-the-badge&label=board%20package&labelColor=252628&color=F9D84A)](https://github.com/bateske/CHGame/releases/latest)
+[![Arduino](https://img.shields.io/badge/Arduino-IDE%20%26%20CLI-BDE2C7?style=for-the-badge&logo=arduino&logoColor=white&labelColor=252628)](#-get-started)
+[![RISC-V](https://img.shields.io/badge/RISC--V-CH32X035-C8B6F3?style=for-the-badge&logo=riscv&logoColor=white&labelColor=252628)](docs/platform.md)
+[![C++](https://img.shields.io/badge/language-C%2B%2B-B7DACC?style=for-the-badge&logo=cplusplus&logoColor=white&labelColor=252628)](https://bateske.github.io/CHGame/)
 
-CHGame is a low-cost open colour handheld: a **WCH CH32X035** RISC-V
-microcontroller (48 MHz, 62 KB flash, 20 KB SRAM), a **128x128 ST7735S**
-colour LCD, a **microSD** slot on the same SPI bus as the screen, eight
-buttons, a piezo speaker, a status LED and **USB-C**. It uploads over USB
-with no button presses, like an Arduino Leonardo.
+<br>
 
-![The SD game menu](platform/bootloader/docs/menu.png)
+<img src="docs/brand/warning.svg" alt="In development: Rev0 hardware. CHGame is in active development. This board is Rev0, Rev1 will change the button wiring.">
 
-> **For AI agents and new developers:** read [CLAUDE.md](CLAUDE.md) first.
-> It has the build, simulator and test commands, the rules of the codebase,
-> and the hardware limits.
->
-> **Coming from the Arduboy?** [docs/getting-started.md](docs/getting-started.md)
-> maps the Arduboy2 calls to CHGame's, explains what happens behind the
-> scenes, and walks through a first sketch. The
-> [API reference](https://bateske.github.io/CHGame/) documents every call,
-> and the CHGame library's [README](platform/board/arduino/CHGame/libraries/CHGame/README.md)
-> explains how a game is put together.
+<br>
 
-## What this repository is for
+</div>
+
+**CHGame** is a small, open, low-cost handheld that you program in Arduino:
+a 48 MHz RISC-V chip, a 128x128 colour screen, eight buttons, a speaker, a
+microSD slot and a battery on one bare board. Plug in USB-C and press
+Upload: no programmer, no driver, no buttons to hold. This repository is
+everything that runs on it: the Arduino board package, the game menu built
+into the bootloader, the libraries games are written with, twenty casino
+games, and the PC tools (simulator, uploader, card builder).
+
+<details open>
+<summary><b>Contents</b></summary>
+
+1. [What it is](#-what-it-is)
+2. [Get started](#-get-started): [install](#1-install-the-board-package), [a first sketch](#a-first-sketch), [the game menu](#put-the-game-menu-on-your-board)
+3. [The games](#-the-games)
+4. [The game menu](#-the-game-menu)
+5. [For developers](#-for-developers)
+6. [Documentation](#-documentation)
+7. [Licences](#-licences)
+8. [Credits](#-credits)
+
+</details>
+
+## 🎮 What it is
+
+<img align="right" width="320" src="docs/brand/board.webp" alt="The CHGame Rev0 board running its demo">
+
+| Board | CHGame Rev0 |
+|---|---|
+| **Chip** | 32-bit RISC-V at 48 MHz (WCH CH32X035) |
+| **Memory** | 62 KB flash, 20 KB RAM, a microSD slot |
+| **Screen** | 128x128 colour LCD, 16 colours of 4,096 |
+| **Buttons** | eight: the D-pad, A, B, START, SELECT |
+| **Sound** | a piezo speaker, and a status LED |
+| **Power** | USB-C and a LiPo battery |
+
+It works like an Arduboy. Install one board package, write a sketch with
+one include (`CHGame.h`) and upload it over USB. Switch it on and the
+**game menu** in the bootloader lists the games on the SD card: pick one
+and play, with no PC.
+
+**What this repository holds**, and the board package delivers:
+
+| | Piece | Where |
+|---|---|---|
+| 📦 | **The board package**: the core, the RISC-V toolchain, the `chgame-upload` uploader, the bootloaders and the libraries, with the games as examples. One install in the Boards Manager | [`platform/board/`](platform/board/) |
+| 🧭 | **The bootloader with the SD game menu**: a list or one picture at a time, and it installs games from the card | [`platform/bootloader/`](platform/bootloader/) |
+| 🕹 | **The CHGame library**, `#include <CHGame.h>`: buttons, frame pacing, the house palette, drawing, sound, saving, the debug protocol | [`libraries/CHGame/`](platform/board/arduino/CHGame/libraries/CHGame/) |
+| 🖼 | **CHGfx**, the graphics: a 16-colour framebuffer sent to the panel by DMA | [`libraries/CHGfx/`](platform/board/arduino/CHGame/libraries/CHGfx/) |
+| 💾 | **CHSd**, the SD card: a read-only FAT16/FAT32 reader | [`libraries/CHSd/`](platform/board/arduino/CHGame/libraries/CHSd/) |
+| 🎰 | **Twenty casino games and three apps**, the library's examples | [`examples/`](platform/board/arduino/CHGame/libraries/CHGame/examples/) |
+| 📐 | **`.chgame`**, the format games are shared in, and the SD card's layout | [`spec/`](spec/README.md) |
+| 🧰 | **The PC tools**: simulator, uploader, packager, card builder, the art toolkit | [`tools/`](tools/README.md) |
+
+### Why one repository
 
 The aim is the Arduboy model, with one repository instead of several:
 
@@ -57,49 +96,31 @@ The aim is the Arduboy model, with one repository instead of several:
   move together and are tested together.
 - **One place for the PC side.** The tools that talk to the device outside
   Arduino (simulator, uploader, serial and screenshot tools, `.CHG` packager,
-  SD card builder) live here too, not in separate repositories.
+  SD card builder) live here too. The ones an Arduino user needs are in
+  `chgame-upload`, which the board package installs; the developer tools
+  are Python and work from a clone.
 
-### Where that stands today
+**This repository is the source of truth for CHGame.** It replaces the
+separate repositories the pieces grew up in (CH32SerialBoot, CHGfx and one
+per game); those are frozen. [docs/roadmap.md](docs/roadmap.md) has what is
+left to do.
 
-Every piece is in this repository, and the board package built from it
-delivers all of it. Release **0.3.0** is built and passes the new-user test
-(below), but is **not published yet**: until it is, the URL under
-*Installing* has nothing behind it, and
-[platform/board/docs/trying-a-release.md](platform/board/docs/trying-a-release.md)
-installs it from this machine instead.
+<p align="right"><a href="#readme-top">back to top ↑</a></p>
 
-| Piece | In this repository | Delivered by the board package (0.3.0) |
-|---|---|---|
-| Core, variant, toolchain, `chgame-upload` | `platform/board/` | yes |
-| Bootloader with the SD game menu | `platform/bootloader/` | yes: *Tools > Bootloader* (SD Text Menu, the list, or SD Graphic Menu, the pictures, each in Rainbow or Static; or USB Only), written by *Burn Bootloader* over USB with the programmer **CHGame USB**: no driver, no buttons |
-| The CHGame library (`CHGame.h`: buttons, pacing, palette, drawing, sound, saving, debug protocol) | `platform/board/arduino/CHGame/libraries/CHGame/`; every game is built on it | yes, in the package's `libraries/`: nothing to install |
-| CHGfx, the graphics library | `platform/board/arduino/CHGame/libraries/CHGfx/` (1.3.2) | yes, with its examples |
-| CHSd, the SD/FAT reader | `platform/board/arduino/CHGame/libraries/CHSd/` (1.0.0) | yes |
-| The casino games and three apps (CHStlView, CHSDtoUSB, CHSDtoSerial) as examples | `platform/board/arduino/CHGame/libraries/CHGame/examples/Games/`, `apps/` | yes: *File > Examples > CHGame > Games*, *Apps* |
-| `.chgame`, the format games are shared in ([spec/chgame.md](spec/chgame.md)), and the SD menu's card ([spec/card.md](spec/card.md)) | `spec/`, `tools/chcart/` (`chgame export`, `chgame cart ...`) | the release carries every game as one cart, `CHGame-Casino-<version>.chgame`, and its card as a zip. Every build also writes the menu's install file (`.chg`), and *Export Compiled Binary* puts it by the sketch |
-| PC tools | `tools/`, `platform/bootloader/host/` | the ones an Arduino user needs, in `chgame-upload`: upload, burn the bootloader, pack for the SD menu. The developer tools (simulator, scripted runs, screenshots, GIFs, sound preview, `.chgame` carts and cards) are Python and work from a clone (`pip install -e .`) |
+## 🚀 Get started
 
-`python tools/release/stage.py` builds the release as `0.3.0-local` and
-checks it the way a new user would get it: a fresh `arduino-cli` installs
-it from the one URL; the libraries, examples, bootloaders and programmers
-are there; every game and app compiles from the installed package with no
-`--library`; and the casino cart and its SD card are made from those builds.
-[docs/roadmap.md](docs/roadmap.md) has what is left: publishing it.
-[docs/chgame-library.md](docs/chgame-library.md) records why the library
-is as it is, and [docs/unification.md](docs/unification.md) how the
-games' twenty copies of their shared code became it.
+### 1. Install the board package
 
-## Installing
-
-**The board package** (the toolchain, the uploader, the bootloaders, the
-libraries and the games come with it). In the Arduino IDE 2.x: add
+In the Arduino IDE 2.x, add this URL under *File > Preferences >
+Additional boards manager URLs*, then install **CHGame** from the Boards
+Manager:
 
 ```
 https://github.com/bateske/CHGame/releases/latest/download/package_chgame_index.json
 ```
 
-under *File > Preferences > Additional boards manager URLs*, then install
-**CHGame** from the Boards Manager. With `arduino-cli`:
+<details>
+<summary>The same with <code>arduino-cli</code></summary>
 
 ```bash
 arduino-cli config add board_manager.additional_urls https://github.com/bateske/CHGame/releases/latest/download/package_chgame_index.json
@@ -107,105 +128,105 @@ arduino-cli core update-index
 arduino-cli core install CHGame:ch32v
 ```
 
-(Until 0.3.0 is published, 0.2.4 is still served from
-`https://github.com/bateske/CH32SerialBoot/releases/latest/download/package_chgame_index.json`,
-without the libraries, games and menu bootloader. To try 0.3.0 now:
-[trying-a-release.md](platform/board/docs/trying-a-release.md).)
+</details>
 
-**Then, in the IDE:** *Tools > Board > CHGame Boards > CHGame Rev0*. The games are under *File >
-Examples > CHGame > Games*; set *Tools > USB* to **Upload only** for them
-(*Tools > Optimize* is **Smallest + LTO** by default, which they need too).
-A new sketch only needs `#include <CHGame.h>`; *Hello* is the smallest one.
+That is everything: the toolchain, the uploader, the bootloaders, the
+libraries (nothing else to install) and the games under *File > Examples*.
+The release, [v0.3.0](https://github.com/bateske/CHGame/releases/tag/v0.3.0),
+also carries every game and app as one cart, `CHGame-Casino-0.3.0.chgame`
+([spec/chgame.md](spec/chgame.md)), and that cart's SD card as a zip.
+(Boards Manager URLs from before 0.3.0, the CH32SerialBoot repository's,
+offer 0.2.4 only.)
 
-**The menu bootloader** is installed over USB, through the bootloader a
-board already has: no driver, no buttons. *Tools > Bootloader* **SD Text
-Menu (Rainbow)** (or **(Static)**), *Tools > Programmer*
-**CHGame USB**, then *Tools > Burn Bootloader*. Without the 0.3.0 package:
+### 2. Pick the board
+
+*Tools > Board > CHGame Boards > CHGame Rev0*.
+
+### 3. Upload
+
+Open *File > Examples > CHGame > Hello*, plug the board in and press
+**Upload**. It resets itself, flashes in about half a second and starts.
+For the games (*File > Examples > CHGame > Games*), set *Tools > USB* to
+**Upload only**; *Tools > Optimize* stays at its default, **Smallest +
+LTO**, which they need too.
+
+### A first sketch
+
+A new sketch needs only `#include <CHGame.h>`:
+
+```cpp
+#include <CHGame.h>
+
+void setup() {
+    chgame.boot();                    // buttons; START held 3 s goes back to the menu
+    gfx_begin(GFX_DIV2, GFX_12BPP);   // the panel: 128x128, 16 colours on screen
+    pal::init();                      // the house colours (INK, WHITE, FELT, GOLD ...)
+    chgame.setFrameRate(60);
+}
+
+void loop() {
+    if (!chgame.nextFrame()) return;  // 60 times a second
+    chgame.pollButtons();
+    // ... game logic: chgame.pressed(LEFT_BUTTON), chgame.justPressed(A_BUTTON) ...
+    pal::tick();
+
+    gfx_wait();                       // the last frame has gone out: draw the next
+    pal::commit();
+    gfx_clear(FELT);
+    text35x2s(10, 9, "HELLO", WHITE);
+    gfx_flushAsync();                 // sent by DMA while the next frame's logic runs
+}
+```
+
+- **Coming from the Arduboy?** [docs/getting-started.md](docs/getting-started.md)
+  maps the Arduboy2 calls to CHGame's, explains what happens behind the
+  scenes, and walks through a first game.
+- **Every call** is in the [API reference](https://bateske.github.io/CHGame/):
+  the CHGame, CHGfx and CHSd libraries and the core's SPI, Wire and EEPROM.
+  Start with the [CHGame library](https://bateske.github.io/CHGame/group__lib__chgame.html).
+- **How a game is put together:** the CHGame library's
+  [README](platform/board/arduino/CHGame/libraries/CHGame/README.md).
+
+### Put the game menu on your board
+
+The menu bootloader goes on over USB, through the bootloader the board
+already has: no driver, no buttons. *Tools > Bootloader* **SD Text Menu
+(Rainbow)** (or **(Static)**), *Tools > Programmer* **CHGame USB**, then
+*Tools > Burn Bootloader*. Or pick **SD Graphic Menu**, the
+[visual menu](#-the-game-menu), which shows one picture at a time. Without
+the IDE:
 `chgame uploader selfupdate platform/bootloader/release/chgame_sdboot.bin`
 ([platform/bootloader](platform/bootloader/README.md#installing-it-on-a-board)).
-The WCH driver and the BOOT button are only for recovery.
+The WCH driver and the BOOT button are only for
+[recovery](platform/board/docs/recovery.md).
 
-**The visual menu** is the other face of the same bootloader: one picture at
-a time, no text, like the Arduboy FX. The card's cover at power-on, a cover
-for each folder (LEFT/RIGHT), each game's box art (UP/DOWN), a bar over the
-picture while a game installs. *Tools > Bootloader* **SD Graphic Menu
-(Rainbow)** or **(Static)**; the same card works with both
-([docs/visual-menu.md](docs/visual-menu.md)).
-
-![The visual menu on the casino card: the splash, a folder's cover, two games](platform/bootloader/docs/visual.png)
-
-**The SD card.** Unzip `CHGame-sdcard-<version>.zip` from the release page
-onto a FAT32 card, or deploy `CHGame-Casino-<version>.chgame` to it
+**The SD card:** unzip `CHGame-sdcard-<version>.zip` from the
+[release page](https://github.com/bateske/CHGame/releases/latest) onto a
+FAT32 card, or deploy `CHGame-Casino-<version>.chgame` to it
 (`chgame cart deploy ... --card E:\`; [docs/sd-menu.md](docs/sd-menu.md)).
+Holding **START** for 3 s in any game goes back to the menu.
 
-**Your own menu picture.** Everything behind the menu's list, the CHGAME
-logo included, is one 128x128 picture on the SD card, so you can redraw it
-or replace it with anything you like:
+<p align="right"><a href="#readme-top">back to top ↑</a></p>
 
-```bash
-chgame background --template my-menu.png          # the default picture, to edit in any paint program
-chgame background my-menu.png --preview p.gif     # see the menu on it (any image is converted to fit)
-chgame background my-menu.png --card E:\          # put it on a mounted card
-```
-
-The menu leaves the top 20 rows (the logo) and the bottom 8 (key hints) to
-the picture, and anything painted in pure magenta (#FF00FF) turns through
-the rainbow (or stays as painted, with the Static bootloader). [docs/menu-image.md](docs/menu-image.md) walks through it step
-by step, including putting a picture into a `.chgame` cart.
-
-**Pictures for the visual menu** are the same kind of 128x128 PNG: a game's
-box art (`docs/cart.png` in its sketch), the card's cover, a folder's
-cover, the about page. Draw yours in any paint program:
-
-```bash
-chgame picture --template my-art.png           # a blank picture with the menu's marks shown
-chgame picture my-art.png --preview p.gif      # as the visual menu shows it
-chgame picture photo.jpg --out my-art.png      # any image made to fit (scaled, colours reduced)
-```
-
-Or paint it in code, as every picture in this repository is: a Python
-recipe (a game's `tools/cart.py`) using `tools/artkit`, with shapes, light
-and small 3D props in true colour, an ordered dither down to the 16
-colours, and a title set in a pixel font at its own size.
-[docs/cover-art.md](docs/cover-art.md) is the house look and the method:
-
-```bash
-chgame boxart                                  # in a game's folder: run its tools/cart.py, write docs/cart.png
-python -m artkit show tools/cart.py            # previews at 1x and 4x and as the menu shows it, and the house checks
-python tools/artsheet.py                       # from the root: every picture the menus show on one sheet
-```
-
-**This repository** is for working on the platform and the games: clone it
-and `pip install -e .[sim]` (see *Quick start* below). `chgame build`
-compiles against the repository's own copies of the libraries, so an edit
-there takes effect at once.
-
-## The games
+## 🎰 The games
 
 Twenty casino and table games with one look: green felt, gold lettering,
 casino chips and a dealer. They are the platform's examples and its test
-load: most are within 1 KB of filling the flash. They all fit on one SD card
-behind the **game menu built into the bootloader**: switch on, pick a game,
-play, with no PC, like an Arduboy FX ([docs/sd-menu.md](docs/sd-menu.md)).
-
-Each one, and each app, has its own box art for the visual menu, painted in
-the manner of early-1990s game boxes, and the casino card has a cover and
-a cover for each of its seven genre folders:
+load (most are within 1 KB of filling the flash), and they all fit on one
+SD card behind the game menu. Each one, and each app, has box art for the
+visual menu, painted in the manner of early-1990s game boxes:
 
 ![The casino card's box art: its cover, the seven folders, the twenty games and the two apps](docs/cover-art.png)
 
-The menu's own pictures, which every card falls back on (the default
-cover and text-menu picture, the about page, installed, no picture, a
-folder without a cover, the five errors), are in
-[docs/cover-art-defaults.png](docs/cover-art-defaults.png).
-[docs/cover-art.md](docs/cover-art.md) says how they are all made.
+Each game is a sketch in
+`platform/board/arduino/CHGame/libraries/CHGame/examples/Games/<Name>/`
+with its own README (rules, controls, design) and NOTES.md (status,
+decisions, open items). The image column is the release build's size with
+the 0.3.0 package (2026-10-07), against the **50,944 B** the bootloader
+leaves for a sketch; up to 50,432 B a game keeps both of its save pages.
 
-Each game is a standalone sketch in `platform/board/arduino/CHGame/libraries/CHGame/examples/Games/<Name>/<Name>.ino` with its own
-README (rules, controls, design) and NOTES.md (status, design decisions,
-open items). The image column is the release build size with the 0.3.0
-package (2026-10-07), against the
-**50,944 B** the bootloader leaves for a sketch; up to 50,432 B a game keeps
-both of its save pages.
+<details>
+<summary><b>All twenty games</b>: what each one is, and its size</summary>
 
 | Game | What it is | Image |
 |---|---|---|
@@ -230,73 +251,115 @@ both of its save pages.
 | [CHWordWheel](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHWordWheel) | WORD WHEEL, a word-puzzle game show: spin, call letters, solve | 49,832 B |
 | [CHYacht](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHYacht) | YACHT DICE (five dice, thirteen boxes) with Craps's 3D dice | 44,704 B |
 
-[docs/status.md](docs/status.md) lists what each game has been verified on
-(the simulator or the device), its open items and the known issues.
+</details>
 
-## Repository map
+The three apps sit beside them in `examples/Apps/`: **CHStlView** (a 3D
+model viewer that streams STL files off the card), **CHSDtoUSB** (the board
+as a USB card reader) and **CHSDtoSerial** (the card over serial, for the
+website's tools). [docs/status.md](docs/status.md) lists what each game has
+been verified on (the simulator or the device), its open items and the
+known issues.
 
-```
-CHGame/
-├── CLAUDE.md          start here: commands, rules, limits, gotchas
-├── platform/          the platform itself; these are the master copies
-│   ├── board/           the Arduino board package (core, variant, linker scripts) + the board's docs
-│   ├── bootloader/      the bootloader with the SD game menu: sources, PC test suite, binaries,
-│   │                    and the uploader's source (host/go)
-│   │   └── arduino/CHGame/libraries/  CHGame (CHGame.h), CHGfx (graphics), CHSd (SD/FAT), beside SPI, Wire, EEPROM
-│   │       └── CHGame/examples/   Hello, games/ (the 20 casino games), apps/ (CHStlView, CHSDtoUSB, CHSDtoSerial)
-│   └── hardware/        Rev 0 schematic and netlist
-├── spec/              the .chgame format, the SD card's layout and the CHG file: the contract
-│                      with the emulator and web tools, with conformance fixtures
-├── tools/             the PC tools shared by every game (device.py, the simulator and script
-│                      driver, sound preview, size report, serial, chcart/ for .chgame carts
-│                      and cards, chgpack.py for CHG files, sdcard/ for the casino cart,
-│                      artkit/ for the box art)
-└── docs/              platform knowledge: hardware, performance, SD card, how a game is built,
-                       status, the roadmap to the first release, the CHGame library's decisions
-                       and history, and a getting-started guide for Arduboy developers;
-                       api/ builds the API reference (Doxygen) published to GitHub Pages
-```
+<p align="right"><a href="#readme-top">back to top ↑</a></p>
 
-## Quick start for development
+## 🧭 The game menu
 
-You need `arduino-cli` (or the Arduino IDE 2.x), Python 3.9+ and, for the
-simulator and host tests, a C++ compiler. zig is the easiest; it comes with
-pip.
+The bootloader shows the games on the SD card at every power-on, in
+folders, with the installed game preselected; starting it writes nothing,
+and another game is checked completely before anything is erased. It has
+two faces, from one source:
+
+| The list (SD Text Menu) | The pictures (SD Graphic Menu) |
+|:---:|:---:|
+| <img src="platform/bootloader/docs/menu_rainbow.gif" width="200" alt="The list menu on the casino card, its highlight turning through the rainbow"> | <img src="platform/bootloader/docs/visual.png" width="500" alt="The visual menu on the casino card: the splash, a folder's cover, two games"> |
+| one picture behind a list of the card's games | one picture at a time, like the Arduboy FX: the card's cover, a cover for each folder (LEFT/RIGHT), each game's box art (UP/DOWN) |
+
+Both run the same card ([docs/sd-menu.md](docs/sd-menu.md) is the players'
+guide, [docs/visual-menu.md](docs/visual-menu.md) the visual menu's).
+Every picture is a 128x128 PNG on the card that you can redraw:
 
 ```bash
-# 1. The board package: see "Installing" above
+chgame background --template my-menu.png       # the list menu's picture, to edit
+chgame background my-menu.png --preview p.gif  # the menu on your picture
+chgame picture --template my-art.png           # a blank visual-menu picture, marks shown
+chgame picture photo.jpg --out my-art.png      # any image, made to fit
+chgame boxart                                  # in a game's folder: paint docs/cart.png
+```
 
-# 2. Python tools, the `chgame` command and a compiler for the simulator
+<details>
+<summary>More on the menu's pictures</summary>
+
+- **The list menu** leaves the top 20 rows (the logo) and the bottom 8
+  (key hints) to the picture, and anything painted in pure magenta
+  (#FF00FF) turns through the rainbow (or stays as painted, with the
+  Static bootloader). [docs/menu-image.md](docs/menu-image.md) walks
+  through it step by step, including putting a picture into a `.chgame`
+  cart.
+- **The visual menu's pictures** are a game's box art (`docs/cart.png` in
+  its sketch), the card's cover, a folder's cover and the about page.
+  `chgame picture my-art.png --card E:\` puts one on a mounted card.
+- **Every picture in this repository is painted in code**: a Python recipe
+  (a game's `tools/cart.py`) using `tools/artkit`, with shapes, light and
+  small 3D props in true colour, an ordered dither down to the 16 colours,
+  and a title set in a pixel font at its own size.
+  [docs/cover-art.md](docs/cover-art.md) is the house look and the method;
+  `python -m artkit show tools/cart.py` previews one with the house checks,
+  and `python tools/artsheet.py` puts every picture the menus show on one
+  sheet. The menu's own pictures, which every card falls back on, are in
+  [docs/cover-art-defaults.png](docs/cover-art-defaults.png).
+
+</details>
+
+<p align="right"><a href="#readme-top">back to top ↑</a></p>
+
+## 🧰 For developers
+
+> **For AI agents and new developers:** read [CLAUDE.md](CLAUDE.md) first.
+> It has the build, simulator and test commands, the rules of the codebase,
+> and the hardware limits.
+
+Clone this repository to work on the platform or the games. You need
+`arduino-cli` (or the Arduino IDE 2.x) with the board package, Python 3.9+
+and, for the simulator and host tests, a C++ compiler; zig is the easiest,
+and comes with pip.
+
+```bash
+# 1. Python tools, the `chgame` command and a compiler for the simulator
 pip install -e .[sim]
 
-# 3. Build a game (from its folder) against this repository's libraries
+# 2. Build a game (from its folder) against this repository's libraries
 cd platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHFour
-chgame build              # release build + size report
-chgame check --no-device         # host tests + every sim script, twice (games that have check.py)
-chgame sim # just the PC simulator
+chgame build                     # release build + size report
+chgame check --no-device         # host tests + every sim script, twice
+chgame sim                       # just the PC simulator
 chgame run tools/scripts/endings.txt out/endings   # screenshots in out/endings
 
-# 4. On a board (plugged in by USB)
+# 3. On a board (plugged in by USB)
 chgame upload
 
-# 5. Share a game, and make a card for the game menu
+# 4. Share a game, and make a card for the game menu
 chgame export                             # build/CHFour.chgame
 chgame card                               # every game: out/CHGame-Casino.chgame and out/sdcard/
 chgame cart deploy out/CHGame-Casino.chgame --card E:\   # onto a mounted card
 ```
 
-## The parts
+`chgame build` compiles against the repository's own copies of the
+libraries, so an edit there takes effect at once. The simulator runs a
+sketch's real code on the PC, deterministically, and scripts drive it (and
+the board) through the library's debug protocol.
+
+<details>
+<summary><b>The parts</b>: the board package, the libraries, the bootloader, the PC tools</summary>
 
 ### The board package: `platform/board/`
 
 The Arduino core for the board: package `CHGame`, architecture `ch32v`,
-version **0.3.0** (built and tested, not yet published; 0.2.4 is the one
-installed today). It is a fork of the WCH CH32 Arduino core. It adds the
-CHGame variant (pin names such as `PIN_BTN_A` and `PIN_SD_CS`), the USB CDC
-serial port, the app linker script (the sketch starts at 0x3000, above the
-12 KB bootloader), and the `chgame-upload` tool, which uploads over USB in
-about half a second with no button presses. This folder is its master copy;
-releases of the board package are cut from here.
+version **0.3.0** (released 2026-10-07). It is a fork of the WCH CH32
+Arduino core. It adds the CHGame variant (pin names such as `PIN_BTN_A`
+and `PIN_SD_CS`), the USB CDC serial port, the app linker script (the
+sketch starts at 0x3000, above the 12 KB bootloader), and the
+`chgame-upload` tool, which uploads over USB in about half a second with
+no button presses. Releases of the board package are cut from here.
 
 Its Tools menus matter for every game:
 
@@ -326,20 +389,21 @@ CHGfx it gives:
 - `RAMFUNC`, which puts hot code in SRAM.
 
 It was built from the code the twenty games carried copies of, and every
-game is now built on it ([docs/unification.md](docs/unification.md)). Every
-call is in the [API reference](https://bateske.github.io/CHGame/group__lib__chgame.html),
-its [README](platform/board/arduino/CHGame/libraries/CHGame/README.md) is the
-guide, and `examples/Hello` the smallest complete sketch.
+game is now built on it ([docs/unification.md](docs/unification.md);
+[docs/chgame-library.md](docs/chgame-library.md) records why it is as it
+is). Every call is in the [API reference](https://bateske.github.io/CHGame/group__lib__chgame.html),
+its [README](platform/board/arduino/CHGame/libraries/CHGame/README.md) is
+the guide, and `examples/Hello` the smallest complete sketch.
 
 ### CHGfx: `platform/board/arduino/CHGame/libraries/CHGfx/`
 
-The graphics library, version **1.3.2**. A full 16-bit framebuffer would not
-fit in 20 KB of RAM. CHGfx keeps a **4-bit indexed framebuffer** (8 KB, a
-16-colour palette that can change every frame), converts it to the panel's
-format in chunks, and streams it out by DMA at 24 MHz while the game draws
-the next frame. It provides the drawing primitives, sprites (`sprite4`),
-fonts, text effects, palette effects and partial updates. It also owns the
-SPI bus that the SD card shares.
+The graphics library, version **1.3.2**. A full 16-bit framebuffer would
+not fit in 20 KB of RAM. CHGfx keeps a **4-bit indexed framebuffer** (8 KB,
+a 16-colour palette that can change every frame), converts it to the
+panel's format in chunks, and streams it out by DMA at 24 MHz while the
+game draws the next frame. It provides the drawing primitives, sprites
+(`sprite4`), fonts, text effects, palette effects and partial updates. It
+also owns the SPI bus that the SD card shares.
 [docs/performance.md](docs/performance.md) explains the design and its
 measured limits; the [API reference](https://bateske.github.io/CHGame/group__lib__chgfx.html)
 documents every call.
@@ -349,17 +413,18 @@ documents every call.
 A small read-only SD library: a polled SPI block driver plus a FAT16/FAT32
 reader, about 1.7 KB of flash and 24 B of RAM. CHWords, CHCrossword and
 CHWordWheel use it to read their dictionary, puzzle packs and phrase bank
-from the card, and the app CHStlView browses the card's folders and streams
-3D models off it every frame (`sd::stream()`: one command, 24 MHz, DMA).
-The games include it as a library (`<Fat.h>`, `<SdSpi.h>`); the
-simulator swaps its SPI driver for a pretend card (`$CHSD_CARD`). CHSDtoUSB has its own faster, read-write SD driver, which
-is GPL-3.0 and stays inside that sketch.
+from the card, and the app CHStlView browses the card's folders and
+streams 3D models off it every frame (`sd::stream()`: one command, 24 MHz,
+DMA). The games include it as a library (`<Fat.h>`, `<SdSpi.h>`); the
+simulator swaps its SPI driver for a pretend card (`$CHSD_CARD`).
+CHSDtoUSB has its own faster, read-write SD driver, which is GPL-3.0 and
+stays inside that sketch.
 [API reference](https://bateske.github.io/CHGame/group__lib__chsd.html).
 
 ### The bootloader and the SD game menu: `platform/bootloader/`
 
 The board's permanent bootloader (12 KB at 0x0000), with the game menu in
-two faces, the list and the pictures ([docs/visual-menu.md](docs/visual-menu.md)):
+two faces, the list and the pictures:
 - the menu appears at every power-on and lists `GAMES/*.CHG` from a
   FAT16/FAT32 card, in folders;
 - the installed game is preselected, and starting it writes nothing;
@@ -370,10 +435,10 @@ two faces, the list and the pictures ([docs/visual-menu.md](docs/visual-menu.md)
 
 It has its own PC test suite, which runs the real C code against models of
 the flash, SD card and panel, including a power cut at every flash
-operation of an install. Its README covers building, testing and installing
-it; [docs/sd-menu.md](docs/sd-menu.md) is the players' guide and
-[spec/chg.md](spec/chg.md) the developers' one-pager; what it reads from the
-card is [spec/card.md](spec/card.md).
+operation of an install. Its [README](platform/bootloader/README.md)
+covers building, testing and installing it; [spec/chg.md](spec/chg.md) is
+the developers' one-pager, and what it reads from the card is
+[spec/card.md](spec/card.md).
 
 ### The PC tools: `tools/`
 
@@ -398,13 +463,10 @@ The tools for working with the system outside the Arduino IDE:
 - the **casino cart** (`sdcard/mkcard.py`, `chgame card`): builds every game
   into one cart and its card;
 - the **box art** ([docs/cover-art.md](docs/cover-art.md)): `artkit/`, the
-  toolkit every menu picture is painted with (shapes and light, a small 3D
-  ray marcher, the ramp-aware dither, pixel finishing, titles, the house
-  checks), and `artkit.fontscout`, which sets a title in thousands of pixel
-  fonts to choose from. The recipes are each program's `tools/cart.py`
-  (`chgame boxart`), the casino card's `sdcard/art/src/` (`sdcard/covers.py`)
-  and the menu's defaults in `art/menu/` (`menuart.py`); `artsheet.py` puts
-  them all on one sheet;
+  toolkit every menu picture is painted with, and `artkit.fontscout`, which
+  sets a title in thousands of pixel fonts to choose from;
+- the **brand** (`brand/make.py`, [docs/brand/](docs/brand/README.md)): this
+  README's banner and buttons, and the API reference's wordmark;
 - the **uploader**: `chgame upload` and `chgame uploader ...` go through the
   Python one (`platform/bootloader/host/py`, the package `chgame_upload`);
   `platform/bootloader/host/go` is the same tool in Go, `chgame-upload`, the
@@ -419,10 +481,54 @@ The tools for working with the system outside the Arduino IDE:
 
 What is a game's own stays with it: its script commands (`chdrive.py`),
 its description for the shared checks (`game.py`), the tests and the asset
-pipeline. [tools/README.md](tools/README.md) classifies every tool in
-the repository.
+pipeline. [tools/README.md](tools/README.md) classifies every tool in the
+repository.
 
-## Licences
+</details>
+
+<details>
+<summary><b>Repository map</b></summary>
+
+```
+CHGame/
+├── CLAUDE.md          start here: commands, rules, limits, gotchas
+├── platform/          the platform itself; these are the master copies
+│   ├── board/           the Arduino board package (core, variant, linker scripts) + the board's docs
+│   │   └── arduino/CHGame/libraries/  CHGame (CHGame.h), CHGfx (graphics), CHSd (SD/FAT), beside SPI, Wire, EEPROM
+│   │       └── CHGame/examples/   Hello, Games/ (the 20 casino games), Apps/ (CHStlView, CHSDtoUSB, CHSDtoSerial)
+│   ├── bootloader/      the bootloader with the SD game menu: sources, PC test suite, binaries,
+│   │                    and the uploader's source (host/go)
+│   └── hardware/        Rev 0 schematic and netlist
+├── spec/              the .chgame format, the SD card's layout and the CHG file: the contract
+│                      with the emulator and web tools, with conformance fixtures
+├── tools/             the PC tools shared by every game (device.py, the simulator and script
+│                      driver, sound preview, size report, serial, chcart/ for .chgame carts
+│                      and cards, chgpack.py for CHG files, sdcard/ for the casino cart,
+│                      artkit/ for the box art, brand/ for the README's banner)
+└── docs/              platform knowledge: hardware, performance, SD card, how a game is built,
+                       status, the roadmap, the CHGame library's decisions and history, a
+                       getting-started guide for Arduboy developers, brand/ (the look);
+                       api/ builds the API reference (Doxygen) published to GitHub Pages
+```
+
+</details>
+
+<p align="right"><a href="#readme-top">back to top ↑</a></p>
+
+## 📚 Documentation
+
+| For | Read |
+|---|---|
+| Writing a game | [Getting started](docs/getting-started.md) (from the Arduboy) · [API reference](https://bateske.github.io/CHGame/) · [the CHGame library](platform/board/arduino/CHGame/libraries/CHGame/README.md) · [anatomy of a game](docs/game-anatomy.md) |
+| What things cost | [platform.md](docs/platform.md) (pins, memory map, speeds) · [performance.md](docs/performance.md) · [hardware revisions](docs/hardware-revisions.md) |
+| Playing | [the SD game menu](docs/sd-menu.md) · [the visual menu](docs/visual-menu.md) · [the SD card](docs/sd-card.md) |
+| Pictures | [menu pictures](docs/menu-image.md) · [cover art](docs/cover-art.md) · [pixel art rules](docs/pixel-art.md) · [the brand](docs/brand/README.md) |
+| Sharing games | [the `.chgame` format and the card](spec/README.md) · [the CHG file](spec/chg.md) · [the upload protocol](platform/board/docs/protocol.md) |
+| The project | [roadmap](docs/roadmap.md) · [status of each game](docs/status.md) · [the library's decisions](docs/chgame-library.md) · [unification](docs/unification.md) · [CLAUDE.md](CLAUDE.md) |
+
+<p align="right"><a href="#readme-top">back to top ↑</a></p>
+
+## 📜 Licences
 
 Each folder carries its own licence:
 
@@ -440,13 +546,14 @@ Each folder carries its own licence:
 | `platform/hardware/` | No licence stated yet (schematic and netlist) |
 | `docs/`, root files | Apache-2.0 (`LICENSE`, `NOTICE`) |
 
-The box art's titles are lettered in pixel fonts by other people. Each
-title's text art (`tools/art/title.txt` and the like) names its font, author,
-stated terms and source in its header, and
-[docs/cover-art.md](docs/cover-art.md#credits-fonts-in-the-titles) lists
-them all.
+The box art's titles and the banner's lettering are set in pixel fonts by
+other people. Each title's text art (`tools/art/title.txt` and the like)
+names its font, author, stated terms and source in its header, and
+[docs/cover-art.md](docs/cover-art.md#credits-fonts-in-the-titles) and
+[docs/brand/README.md](docs/brand/README.md#credits) list them all.
 
-## History
+<details>
+<summary><b>History</b></summary>
 
 The pieces were developed in separate repositories and brought together
 here on 2026-10-01, without their histories:
@@ -460,3 +567,36 @@ here on 2026-10-01, without their histories:
 The collection was first assembled under the working name CHCasino (the
 name went from the code and comments on 2026-10-02). Those repositories are
 frozen. All development continues here.
+
+</details>
+
+<p align="right"><a href="#readme-top">back to top ↑</a></p>
+
+## 🙌 Credits
+
+CHGame stands on other people's open work. The licences above say what is
+whose; these are the projects it leans on most:
+
+| Project | What CHGame owes it |
+|---|---|
+| [CH32_Arduino_Core](https://github.com/jobitjoseph/CH32_Arduino_Core) and [CH32X035_USBSerial](https://github.com/jobitjoseph/CH32X035_USBSerial) by jobitjoseph | the Arduino core the board package forks, and the USB serial port in the core and the bootloader |
+| [arduino_core_ch32](https://github.com/openwch/arduino_core_ch32) by WCH | the upstream core, the chip's peripheral library and start-up code |
+| [wchisp](https://github.com/ch32-rs/wchisp) by ch32-rs | factory programming and recovery |
+| [Adafruit GFX](https://github.com/adafruit/Adafruit-GFX-Library) | the 5x7 font in CHGfx and the menu, and the drawing API CHGfx's compatibility layer follows |
+| [SdFat / sdfatlib](https://github.com/greiman/SdFat) by Bill Greiman | the SD driver inside CHSDtoUSB |
+| [go-serial](https://github.com/bugst/go-serial) by bugst | the serial port under the Go uploader |
+| [Arduino](https://www.arduino.cc/) | the IDE, the CLI and the board package format that make one install enough |
+
+<p align="right"><a href="#readme-top">back to top ↑</a></p>
+
+## 💛 Special thanks
+
+<img src="docs/brand/xoxo.gif" alt="XOXO, spelled in CHTicTacToe's spinning X and O pieces">
+
+To [**Mr.Blinky**](https://github.com/MrBlinky/) and [**MLXXXp**](https://github.com/mlxxxp/),
+for showing what is possible when you give developers the tools they need.
+The Arduboy's homemade package, its FX flash cart and the Arduboy2 library
+with its reference are the model for CHGame's board package, its game
+menu and its API reference.
+
+<p align="right"><a href="#readme-top">back to top ↑</a></p>

@@ -12,7 +12,7 @@ to `main` that touches a library or this folder.
 | `mainpage.md` | the front page |
 | `groups.dox` | the top-level topics, one per library, with each library's overview |
 | `chgfx_fonts.dox` | CHGfx's bundled fonts (their headers are generated, so not commented) |
-| `extra.css`, `logo.png` | the look |
+| `extra.css` | the look: the brand's neobrutalist style ([docs/brand](../brand/README.md)); the logo and the wordmark come from `docs/brand/` |
 
 Everything else comes from the comments in the libraries' headers under
 `platform/board/arduino/CHGame/libraries/*/src/`.

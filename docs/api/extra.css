@@ -1,15 +1,1184 @@
-/* The CHGame reference's few changes to Doxygen's look. */
+/* The CHGame API reference's look: neobrutalism in the brand's palette
+   (docs/brand/README.md). Flat colours, ink outlines, hard shadows offset
+   down and right; nothing blurred or graded. Doxygen 1.9.8's own colours
+   are set through its variables, the rest is overridden below. */
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..800;1,9..40,400..800&family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@500;700&display=swap');
+
+html {
+    --ch-ink: #252628;
+    --ch-yellow: #F9D84A;
+    --ch-cream: #FFFDF6;
+    --ch-paper: #FBFAF5;
+    --ch-mint: #BDE2C7;
+    --ch-sage: #B7DACC;
+    --ch-teal: var(--ch-sage);      /* the main accent; yellow is kept for the few big highlights */
+    --ch-lavender: #C8B6F3;
+    --ch-coral: #F4A28C;
+    --ch-dots: #E6E2D3;
+    --ch-muted: #5F5E58;
+    --ch-line: 2px solid var(--ch-ink);
+    --ch-shadow: 4px 4px 0 var(--ch-ink);
+    --ch-shadow-sm: 3px 3px 0 var(--ch-ink);
+    --ch-radius: 8px;
+    --ch-sans: 'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --ch-display: 'Space Grotesk', 'DM Sans', system-ui, sans-serif;
+    --ch-mono: 'JetBrains Mono', Consolas, Menlo, monospace;
+
+    /* Doxygen's own variables */
+    --page-background-color: var(--ch-paper);
+    --page-foreground-color: var(--ch-ink);
+    --page-link-color: var(--ch-ink);
+    --page-visited-link-color: var(--ch-ink);
+    --index-odd-item-bg-color: var(--ch-cream);
+    --index-even-item-bg-color: var(--ch-paper);
+    --index-header-color: var(--ch-ink);
+    --index-separator-color: var(--ch-ink);
+    --header-background-color: var(--ch-paper);
+    --header-separator-color: var(--ch-ink);
+    --header-gradient-image: none;
+    --group-header-separator-color: var(--ch-ink);
+    --group-header-color: var(--ch-ink);
+    --inherit-header-color: var(--ch-muted);
+    --footer-foreground-color: var(--ch-cream);
+    --title-background-color: var(--ch-paper);
+    --title-separator-color: var(--ch-ink);
+    --directory-separator-color: var(--ch-ink);
+    --separator-color: var(--ch-ink);
+    --blockquote-background-color: var(--ch-cream);
+    --blockquote-border-color: var(--ch-ink);
+    --scrollbar-thumb-color: var(--ch-ink);
+    --scrollbar-background-color: var(--ch-paper);
+    --icon-background-color: var(--ch-lavender);
+    --icon-foreground-color: var(--ch-ink);
+    --memdecl-background-color: var(--ch-cream);
+    --memdecl-separator-color: var(--ch-dots);
+    --memdecl-foreground-color: var(--ch-muted);
+    --memdecl-template-color: var(--ch-muted);
+    --memdef-border-color: var(--ch-ink);
+    --memdef-title-background-color: var(--ch-teal);
+    --memdef-title-gradient-image: none;
+    --memdef-proto-background-color: var(--ch-cream);
+    --memdef-proto-text-color: var(--ch-ink);
+    --memdef-proto-text-shadow: none;
+    --memdef-doc-background-color: var(--ch-cream);
+    --memdef-param-name-color: #7A3E9D;
+    --memdef-template-color: var(--ch-muted);
+    --table-cell-border-color: var(--ch-ink);
+    --table-header-background-color: var(--ch-teal);
+    --table-header-foreground-color: var(--ch-ink);
+    --label-background-color: var(--ch-mint);
+    --label-left-top-border-color: var(--ch-ink);
+    --label-right-bottom-border-color: var(--ch-ink);
+    --label-foreground-color: var(--ch-ink);
+    --nav-background-color: var(--ch-cream);
+    --nav-foreground-color: var(--ch-ink);
+    --nav-gradient-image: none;
+    --nav-gradient-hover-image: none;
+    --nav-gradient-active-image: none;
+    --nav-gradient-active-image-parent: none;
+    --nav-separator-image: none;
+    --nav-breadcrumb-image: none;
+    --nav-breadcrumb-border-color: var(--ch-ink);
+    --nav-splitbar-image: none;
+    --nav-text-normal-color: var(--ch-ink);
+    --nav-text-hover-color: var(--ch-ink);
+    --nav-text-active-color: var(--ch-ink);
+    --nav-text-normal-shadow: none;
+    --nav-text-hover-shadow: none;
+    --nav-text-active-shadow: none;
+    --nav-menu-button-color: var(--ch-ink);
+    --nav-menu-background-color: var(--ch-cream);
+    --nav-menu-foreground-color: var(--ch-ink);
+    --nav-menu-toggle-color: var(--ch-cream);
+    --nav-arrow-color: var(--ch-ink);
+    --nav-arrow-selected-color: var(--ch-ink);
+    --toc-background-color: var(--ch-cream);
+    --toc-border-color: var(--ch-ink);
+    --toc-header-color: var(--ch-ink);
+    --search-background-color: var(--ch-cream);
+    --search-foreground-color: var(--ch-ink);
+    --search-active-color: var(--ch-ink);
+    --search-filter-background-color: var(--ch-cream);
+    --search-filter-foreground-color: var(--ch-ink);
+    --search-filter-border-color: var(--ch-ink);
+    --search-filter-highlight-text-color: var(--ch-ink);
+    --search-filter-highlight-bg-color: var(--ch-yellow);
+    --search-results-foreground-color: var(--ch-ink);
+    --search-results-background-color: var(--ch-cream);
+    --search-results-border-color: var(--ch-ink);
+    --search-box-shadow: none;
+    --code-keyword-color: #6A3FC2;
+    --code-type-keyword-color: #1F6E52;
+    --code-flow-keyword-color: #B5482F;
+    --code-comment-color: #7D7A6E;
+    --code-preprocessor-color: #8A6100;
+    --code-string-literal-color: #8A6100;
+    --code-char-literal-color: #8A6100;
+    --code-link-color: var(--ch-ink);
+    --code-external-link-color: var(--ch-ink);
+    --fragment-foreground-color: var(--ch-ink);
+    --fragment-background-color: var(--ch-cream);
+    --fragment-border-color: var(--ch-ink);
+    --fragment-lineno-border-color: var(--ch-ink);
+    --fragment-lineno-background-color: var(--ch-paper);
+    --fragment-lineno-foreground-color: var(--ch-muted);
+    --tooltip-foreground-color: var(--ch-ink);
+    --tooltip-background-color: var(--ch-cream);
+    --tooltip-border-color: var(--ch-ink);
+    --tooltip-doc-color: var(--ch-muted);
+    --tooltip-declaration-color: #1F6E52;
+    --tooltip-link-color: var(--ch-ink);
+    --tooltip-shadow: var(--ch-shadow);
+    --font-family-normal: var(--ch-sans);
+    --font-family-monospace: var(--ch-mono);
+    --font-family-nav: var(--ch-sans);
+    --font-family-title: var(--ch-display);
+    --font-family-toc: var(--ch-sans);
+    --font-family-search: var(--ch-sans);
+    --font-family-tooltip: var(--ch-sans);
+}
+
+/* ---------------------------------------------------------------- page */
+
+body, table, div, p, dl {
+    font: 400 15px/1.6 var(--ch-sans);
+}
+
+body {
+    background-color: var(--ch-paper);
+    color: var(--ch-ink);
+}
+
+::selection {
+    background: var(--ch-yellow);
+    color: var(--ch-ink);
+}
+
+a, a:visited, .contents a:visited {
+    color: var(--ch-ink);
+}
+
+a.el, a.elRef, .contents a {
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-color: var(--ch-teal);
+    text-decoration-thickness: 3px;
+    text-underline-offset: 3px;
+}
+
+a.el:hover, a.elRef:hover, .contents a:hover {
+    background-color: var(--ch-teal);
+    text-decoration-color: var(--ch-ink);
+}
+
+a.code, a.code:visited, a.line, a.line:visited {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: var(--ch-teal);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 2px;
+}
+
+a.code:hover {
+    background-color: var(--ch-teal);
+}
+
+h1, h2, h3, h4, h5, h6,
+h1.groupheader, h2.groupheader, h3.groupheader {
+    font-family: var(--ch-display);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--ch-ink);
+}
+
+.textblock h1, .contents > h1 {
+    font-size: 2em;
+}
+
+.textblock h2 {
+    font-size: 1.55em;
+    margin-top: 1.6em;
+    padding-bottom: 4px;
+    border-bottom: 3px solid var(--ch-ink);
+}
+
+.textblock h3 {
+    font-size: 1.2em;
+    margin-top: 1.4em;
+}
+
+code, tt, kbd, samp {
+    font-family: var(--ch-mono);
+    font-size: 0.88em;
+}
+
+p code, li code, td code, dd code, .memdoc code, .textblock code {
+    display: inline;
+    padding: 1px 5px;
+    background: var(--ch-cream);
+    border: 1.5px solid var(--ch-ink);
+    border-radius: 5px;
+    white-space: nowrap;
+}
+
+/* a code chip that is a link (the header names in tables): a small
+   button, 1 px outline and a hard shadow; teal on hover */
+p code:has(> a.el), li code:has(> a.el), td code:has(> a.el), dd code:has(> a.el),
+.textblock code:has(> a.el), .memdoc code:has(> a.el) {
+    display: inline-block;
+    border: 1px solid var(--ch-ink);
+    border-radius: 5px;
+    box-shadow: 2px 2px 0 var(--ch-ink);
+    background: var(--ch-cream);
+    padding: 1px 6px;
+    margin: 2px 4px 4px 0;
+}
+
+code:has(> a.el):hover {
+    background: var(--ch-teal);
+}
+
+code > a.el, code > a.el:hover {
+    text-decoration: none;
+    background: none;
+    font-weight: 700;
+}
+
+hr {
+    height: 0;
+    border: none;
+    border-top: 2px dashed var(--ch-ink);
+}
+
+/* ---------------------------------------------------------------- the header */
+
+#top {
+    background: var(--ch-paper);
+}
+
 #titlearea {
-    padding: 10px 16px;
+    padding: 16px 24px 18px;
+    border-bottom: none;
+    background-color: var(--ch-paper);
+    background-image: radial-gradient(var(--ch-dots) 1.5px, transparent 1.6px);
+    background-size: 20px 20px;
 }
+
+#projectrow {
+    height: auto;
+}
+
 #projectlogo {
-    padding-right: 12px;
+    padding-right: 18px;
 }
+
 #projectlogo img {
-    height: 56px;
+    height: 60px;
     width: auto;
     display: block;
+    filter: drop-shadow(4px 4px 0 var(--ch-ink));
 }
+
 #projectname {
-    font-size: 200%;
+    /* the pixel CHGAME logo (docs/brand/wordmark.svg) stands in for the text */
+    font-size: 0;
+    line-height: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+#projectname::before {
+    content: "";
+    display: inline-block;
+    width: 219px;
+    height: 54px;
+    background: url('wordmark.svg') no-repeat left center / contain;
+}
+
+#projectnumber {
+    font: 700 13px/1 var(--ch-mono);
+    color: var(--ch-ink);
+    background: var(--ch-mint);
+    border: var(--ch-line);
+    border-radius: 999px;
+    padding: 5px 10px 4px;
+    box-shadow: var(--ch-shadow-sm);
+    margin-left: 0;
+}
+
+#projectbrief {
+    font: 500 15px/1.4 var(--ch-sans);
+    color: var(--ch-muted);
+    margin-top: 10px;
+}
+
+/* the menu bar */
+#main-nav {
+    background: var(--ch-teal);
+    border-top: 3px solid var(--ch-ink);
+    border-bottom: 3px solid var(--ch-ink);
+}
+
+.sm-dox {
+    background: var(--ch-teal);
+    padding: 0;
+}
+
+#main-menu {
+    padding: 6px 14px;
+}
+
+.sm-dox a, .sm-dox a:focus, .sm-dox a:active, .sm-dox a:hover, .sm-dox a.highlighted {
+    font: 700 14px/34px var(--ch-sans);
+    color: var(--ch-ink);
+    background: transparent;
+    border: 2px solid transparent;
+    border-radius: 7px !important;
+    margin: 0 3px;
+    text-shadow: none;
+}
+
+.sm-dox > li > a:hover, .sm-dox > li > a.highlighted {
+    background: var(--ch-cream);
+    border-color: var(--ch-ink);
+    box-shadow: var(--ch-shadow-sm);
+    transform: translate(-1px, -1px);
+}
+
+.sm-dox a span.sub-arrow {
+    border-color: var(--ch-ink) transparent transparent transparent;
+}
+
+.sm-dox a:hover span.sub-arrow {
+    border-color: var(--ch-ink) transparent transparent transparent;
+}
+
+.sm-dox ul {
+    border: var(--ch-line);
+    border-radius: var(--ch-radius) !important;
+    box-shadow: var(--ch-shadow);
+    background: var(--ch-cream);
+    padding: 6px;
+}
+
+.sm-dox > li > ul:before, .sm-dox > li > ul:after {
+    display: none;
+}
+
+.sm-dox ul a, .sm-dox ul a:hover, .sm-dox ul a:focus, .sm-dox ul a:active, .sm-dox ul a.highlighted {
+    font: 600 13px/30px var(--ch-sans);
+    color: var(--ch-ink);
+    border-radius: 6px !important;
+    margin: 0;
+}
+
+.sm-dox ul a:hover, .sm-dox ul a.highlighted {
+    background: var(--ch-yellow);
+    color: var(--ch-ink);
+    text-shadow: none;
+}
+
+.sm-dox ul a span.sub-arrow, .sm-dox ul a:hover span.sub-arrow {
+    border-color: transparent transparent transparent var(--ch-ink);
+}
+
+.main-menu-btn-icon, .main-menu-btn-icon:before, .main-menu-btn-icon:after {
+    background: var(--ch-ink);
+}
+
+/* the search box */
+#MSearchBox {
+    background: var(--ch-cream);
+    border: var(--ch-line);
+    border-radius: 999px;
+    box-shadow: var(--ch-shadow-sm);
+    padding: 2px 10px 2px 4px;
+}
+
+#MSearchBox.MSearchBoxActive {
+    background: #fff;
+    box-shadow: 4px 4px 0 var(--ch-ink);
+}
+
+#MSearchField {
+    font: 500 14px var(--ch-sans);
+    color: var(--ch-ink);
+    width: 10em;
+}
+
+#MSearchField::placeholder {
+    color: var(--ch-muted);
+}
+
+#MSearchSelectWindow, #MSearchResultsWindow {
+    border: var(--ch-line);
+    border-radius: var(--ch-radius);
+    box-shadow: var(--ch-shadow);
+    background: var(--ch-cream);
+}
+
+a.SelectItem:hover, .SelectionMark {
+    background: var(--ch-yellow);
+    color: var(--ch-ink);
+}
+
+.SRPage {
+    background: var(--ch-cream);
+}
+
+.SRSymbol, .SRScope {
+    color: var(--ch-ink);
+    font-family: var(--ch-sans);
+}
+
+.SRSymbol {
+    font-weight: 700;
+}
+
+.SRSymbol, .SRScope, .SRStatus {
+    font-size: 13px;
+}
+
+.SRResult {
+    padding: 2px 4px;
+}
+
+/* ---------------------------------------------------------------- the tree */
+
+#side-nav {
+    padding-right: 0;
+}
+
+#nav-tree {
+    background: var(--ch-cream);
+    border-right: 3px solid var(--ch-ink);
+}
+
+.ui-resizable-e {
+    background: transparent;
+    width: 8px;
+}
+
+#nav-tree-contents {
+    margin-top: 10px;
+    padding-left: 8px;
+}
+
+#nav-tree .label {
+    font: 500 14px/1.9 var(--ch-sans);
+}
+
+#nav-tree .label a {
+    padding: 2px 6px;
+    border-radius: 5px;
+}
+
+#nav-tree .item:hover .label a {
+    background: var(--ch-yellow);
+}
+
+#nav-tree .selected {
+    background: none;
+    text-shadow: none;
+    margin: 2px 0 6px;      /* air round the raised pill, so its shadow does not crowd the next row */
+}
+
+#nav-tree .selected .label a {
+    background: var(--ch-mint);
+    border: var(--ch-line);
+    box-shadow: var(--ch-shadow-sm);
+    font-weight: 700;
+    color: var(--ch-ink);
+}
+
+/* The tree's arrows. Doxygen writes them as two different characters
+   (a right-pointing one, a down-pointing one) that have different shapes;
+   here the character is hidden and one triangle is drawn instead, turned a
+   quarter when the node is open. Every arrow, and every leaf's spacer,
+   keeps some air before its label. */
+#nav-tree .arrow {
+    margin-right: 6px;
+    vertical-align: top;
+}
+
+#nav-tree a > span.arrow {
+    font-size: 0;
+    position: relative;
+    opacity: 1;
+}
+
+#nav-tree a > span.arrow::before {
+    content: "";
+    position: absolute;
+    right: 3px;
+    top: 50%;
+    margin-top: -5px;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 5px 0 5px 8px;
+    border-color: transparent transparent transparent var(--ch-ink);
+    transition: transform 0.12s;
+}
+
+#nav-tree li:has(> ul.children_ul:not([style*="display: none"])) > div.item > a > span.arrow::before {
+    transform: rotate(90deg);
+}
+
+/* the tree's "sync with the page" toggle: syncing is on by default and
+   is all anyone wants, so the button only adds clutter */
+#nav-sync {
+    display: none;
+}
+
+/* ---------------------------------------------------------------- the content */
+
+#doc-content {
+    background: var(--ch-paper);
+}
+
+div.header {
+    background: transparent;
+    border-bottom: none;
+    padding: 18px 26px 4px;
+}
+
+div.headertitle {
+    padding: 0;
+}
+
+div.header .title {
+    font: 700 2.15em/1.15 var(--ch-display);
+    letter-spacing: -0.02em;
+    color: var(--ch-ink);
+    margin: 6px 0 4px;
+}
+
+div.ingroups {
+    font: 600 13px var(--ch-sans);
+    color: var(--ch-muted);
+}
+
+div.ingroups a {
+    background: var(--ch-lavender);
+    border: 1.5px solid var(--ch-ink);
+    border-radius: 999px;
+    padding: 1px 9px;
+    text-decoration: none;
+}
+
+div.summary {
+    font: 600 0/1.6 var(--ch-sans);    /* hides Doxygen's " | " between the links */
+    padding: 6px 0 0;
+}
+
+div.summary a {
+    font-size: 13px;
+    margin-left: 6px;
+    display: inline-block;
+    background: var(--ch-cream);
+    border: 1.5px solid var(--ch-ink);
+    border-radius: 999px;
+    padding: 0 9px;
+    margin: 2px 0;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+div.summary a:hover {
+    background: var(--ch-teal);
+}
+
+div.contents {
+    margin: 0;
+    padding: 6px 26px 32px;
+    max-width: 1100px;
+}
+
+div.textblock > p, div.textblock > ul, div.textblock > ol {
+    max-width: 78ch;
+}
+
+/* the contents box on long pages */
+div.toc {
+    background: var(--ch-cream);
+    border: var(--ch-line);
+    border-radius: var(--ch-radius);
+    box-shadow: var(--ch-shadow);
+    padding: 12px 20px;
+}
+
+div.toc h3 {
+    font: 700 13px var(--ch-display);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ch-ink);
+}
+
+div.toc li {
+    background: none;
+    font: 500 13px var(--ch-sans);
+}
+
+/* section headings of a topic / class page */
+h2.groupheader {
+    font-size: 1.35em;
+    color: var(--ch-ink);
+    border-bottom: 3px solid var(--ch-ink);
+    margin-top: 1.8em;
+    padding-bottom: 4px;
+}
+
+tr.heading h2.groupheader {
+    margin-top: 1.2em;
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+h2.groupheader a, h2.groupheader a:hover {
+    background: none;
+    text-decoration: none;
+}
+
+/* ---------------------------------------------------------------- the summaries */
+
+table.memberdecls {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.memberdecls td {
+    transition: none;
+}
+
+.memItemLeft, .memItemRight, .memTemplItemLeft, .memTemplItemRight, .memTemplParams {
+    background-color: var(--ch-cream);
+    font-family: var(--ch-mono);
+    font-size: 13px;
+    padding: 7px 0 2px 12px;
+}
+
+.memItemLeft {
+    border-left: var(--ch-line);
+    color: var(--ch-muted);
+}
+
+.memItemRight {
+    border-right: var(--ch-line);
+    padding-right: 12px;
+}
+
+.mdescLeft, .mdescRight {
+    background-color: var(--ch-cream);
+    color: var(--ch-muted);
+    font: 400 13.5px/1.5 var(--ch-sans);
+    padding: 0 12px 8px;
+}
+
+.mdescLeft {
+    border-left: var(--ch-line);
+}
+
+.mdescRight {
+    border-right: var(--ch-line);
+}
+
+/* a box round each run of declarations */
+table.memberdecls tr.heading + tr > td, table.memberdecls tr.inherit_header + tr > td {
+    border-top: var(--ch-line);
+}
+
+table.memberdecls tr.heading + tr > td:first-child {
+    border-top-left-radius: var(--ch-radius);
+}
+
+table.memberdecls tr.heading + tr > td:last-child {
+    border-top-right-radius: var(--ch-radius);
+}
+
+.memSeparator {
+    border-bottom: 1px dashed var(--ch-dots);
+    line-height: 1px;
+    padding: 0;
+}
+
+table.memberdecls tr:last-child > td.memSeparator, table.memberdecls tr:has(+ tr.heading) > td.memSeparator {
+    border: var(--ch-line);
+    border-top: none;
+    border-radius: 0 0 var(--ch-radius) var(--ch-radius);
+    box-shadow: var(--ch-shadow);
+    line-height: 4px;
+    background: var(--ch-cream);
+}
+
+.memItemLeft a.el, .memItemRight a.el, .mdescRight a.el {
+    font-weight: 700;
+}
+
+/* ---------------------------------------------------------------- one member */
+
+h2.memtitle {
+    display: inline-block;
+    background: var(--ch-teal);
+    border: var(--ch-line);
+    border-bottom: none;
+    border-radius: var(--ch-radius) var(--ch-radius) 0 0;
+    font: 700 15px/1.2 var(--ch-mono);
+    padding: 8px 14px 7px;
+    margin: 26px 0 0;
+    color: var(--ch-ink);
+    box-shadow: none;
+}
+
+.permalink {
+    font-size: 11px;
+    margin-right: 4px;
+}
+
+.permalink a {
+    text-decoration: none;
+    color: var(--ch-ink);
+}
+
+div.memitem {
+    margin: 0 0 24px;
+    padding: 0;
+    border: var(--ch-line);
+    border-radius: 0 var(--ch-radius) var(--ch-radius) var(--ch-radius);
+    box-shadow: var(--ch-shadow);
+    background: var(--ch-cream);
+    display: block;
+    overflow: visible;
+}
+
+div.memproto, dl.reflist dt {
+    background: var(--ch-paper);
+    border: none;
+    border-bottom: var(--ch-line);
+    border-radius: 0 6px 0 0;
+    box-shadow: none;
+    text-shadow: none;
+    padding: 10px 14px;
+    font-weight: 400;
+}
+
+table.memname, table.memname td {
+    font: 500 13.5px/1.5 var(--ch-mono);
+    color: var(--ch-ink);
+}
+
+td.memname {
+    font-weight: 700;
+}
+
+.paramname, .paramname em {
+    color: #7A3E9D;
+    font-style: normal;
+    font-weight: 600;
+}
+
+div.memdoc, dl.reflist dd {
+    background: var(--ch-cream);
+    border: none;
+    border-radius: 0 0 6px 6px;
+    box-shadow: none;
+    padding: 8px 16px 6px;
+}
+
+.memdoc > p:first-child {
+    margin-top: 6px;
+}
+
+/* labels such as static, inline */
+span.mlabel {
+    background: var(--ch-mint);
+    color: var(--ch-ink);
+    border: 1.5px solid var(--ch-ink);
+    border-radius: 999px;
+    font: 700 11px var(--ch-mono);
+    padding: 2px 8px;
+    margin-right: 4px;
+}
+
+/* parameters */
+dl.params dt, dl.tparams dt, dl.retval dt, dl.exception dt {
+    font: 700 12px var(--ch-display);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+table.params, table.tparams, table.retval, table.exception {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.params .paramname, .tparams .paramname, .retval .paramname, .exception .paramname {
+    font: 700 13px var(--ch-mono);
+    padding-right: 14px;
+}
+
+.params .paramdir, .tparams .paramdir {
+    font: 600 12px var(--ch-mono);
+    color: var(--ch-muted);
+}
+
+/* notes, warnings, see-also, return */
+dl.section {
+    margin: 12px 0;
+    padding: 8px 12px 8px 14px;
+    border: var(--ch-line);
+    border-radius: var(--ch-radius);
+    background: var(--ch-paper);
+}
+
+dl.section dt {
+    font: 700 12px var(--ch-display);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 2px;
+}
+
+dl.section dd {
+    margin: 0 0 2px;
+}
+
+dl.note {
+    background: #FFF6CC;
+    box-shadow: var(--ch-shadow-sm);
+    margin-left: 0;
+    border-left: var(--ch-line);
+}
+
+dl.warning, dl.attention, dl.bug {
+    background: #FCE3DB;
+    box-shadow: var(--ch-shadow-sm);
+    margin-left: 0;
+    border-left: var(--ch-line);
+    border-color: var(--ch-ink);
+}
+
+dl.see, dl.return, dl.since, dl.pre, dl.post, dl.invariant, dl.user, dl.remark, dl.todo, dl.deprecated {
+    margin-left: 0;
+    border-left: var(--ch-line);
+    border-color: var(--ch-ink);
+}
+
+dl.see {
+    background: #EFE9FD;
+}
+
+dl.return {
+    background: #E8F5EC;
+}
+
+dl.deprecated, dl.todo {
+    background: #FFF6CC;
+}
+
+/* ---------------------------------------------------------------- code */
+
+div.fragment {
+    background: var(--ch-cream);
+    border: var(--ch-line);
+    border-radius: var(--ch-radius);
+    box-shadow: var(--ch-shadow);
+    padding: 12px 14px;
+    margin: 10px 6px 18px 0;
+    overflow-x: auto;
+}
+
+div.line {
+    font: 400 13px/1.55 var(--ch-mono);
+    min-height: 13px;
+}
+
+pre.fragment {
+    font-family: var(--ch-mono);
+    border: var(--ch-line);
+    border-radius: var(--ch-radius);
+    box-shadow: var(--ch-shadow);
+    background: var(--ch-cream);
+    padding: 12px 14px;
+}
+
+span.lineno {
+    border-right: 2px solid var(--ch-dots);
+    background: transparent;
+    color: var(--ch-muted);
+    padding-right: 6px;
+}
+
+span.lineno a, span.lineno a:hover {
+    background: transparent;
+    color: var(--ch-muted);
+}
+
+span.keyword, span.keywordflow, span.keywordtype {
+    font-weight: 600;
+}
+
+/* ---------------------------------------------------------------- tables */
+
+table.markdownTable, table.doxtable, table.fieldtable, table.directory {
+    border-collapse: separate;
+    border-spacing: 0;
+    border: var(--ch-line);
+    border-radius: var(--ch-radius);
+    box-shadow: var(--ch-shadow);
+    background: var(--ch-cream);
+    overflow: hidden;
+    margin: 10px 6px 18px 0;
+}
+
+table.markdownTable td, table.markdownTable th, table.doxtable td, table.doxtable th {
+    border: none;
+    border-bottom: 1.5px solid var(--ch-ink);
+    border-right: 1.5px solid var(--ch-ink);
+    padding: 7px 12px;
+    vertical-align: top;
+    font-size: 14px;
+}
+
+table.markdownTable tr > :last-child, table.doxtable tr > :last-child {
+    border-right: none;
+}
+
+table.markdownTable tr:last-child > td, table.doxtable tr:last-child > td {
+    border-bottom: none;
+}
+
+th.markdownTableHeadLeft, th.markdownTableHeadRight, th.markdownTableHeadCenter, th.markdownTableHeadNone,
+table.doxtable th {
+    background: var(--ch-teal);
+    color: var(--ch-ink);
+    font: 700 13px var(--ch-display);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 8px 12px;
+}
+
+tr.markdownTableRowEven, table.doxtable tr:nth-child(odd) td {
+    background: var(--ch-paper);
+}
+
+/* the field tables (enum values, struct fields) */
+.fieldtable {
+    width: auto;
+}
+
+.fieldtable th {
+    background: var(--ch-teal);
+    color: var(--ch-ink);
+    font: 700 13px var(--ch-display);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: var(--ch-line);
+    padding: 8px 12px;
+}
+
+.fieldtable td {
+    border-color: var(--ch-ink);
+    border-width: 0 0 1.5px;
+    border-style: solid;
+}
+
+.fieldtable td.fieldname, .fieldtable td.fieldtype {
+    font: 600 13px var(--ch-mono);
+    border-right: 1.5px solid var(--ch-ink);
+    padding: 6px 12px;
+}
+
+.fieldtable td.fielddoc {
+    padding: 6px 12px;
+}
+
+.fieldtable tr:last-child td {
+    border-bottom: none;
+}
+
+.fieldtable td.fieldname em, .fieldtable td.fieldname {
+    color: #7A3E9D;
+    font-style: normal;
+}
+
+/* the index tables (topics, classes, files) */
+div.directory {
+    border: none;
+    margin: 0;
+}
+
+table.directory {
+    width: auto;
+    min-width: min(100%, 640px);
+    font: 400 14px var(--ch-sans);
+}
+
+.directory tr.even, .directory tr.odd {
+    padding-left: 0;
+}
+
+.directory tr.even td {
+    background: var(--ch-paper);
+}
+
+.directory tr.odd td {
+    background: var(--ch-cream);
+}
+
+.directory td {
+    border-bottom: 1px solid var(--ch-dots);
+    padding: 6px 10px;
+}
+
+.directory td.entry {
+    white-space: nowrap;
+}
+
+.directory td.entry a.el {
+    font-weight: 700;
+}
+
+.directory td.desc {
+    color: var(--ch-muted);
+    border-left: 1px solid var(--ch-dots);
+}
+
+.directory .levels {
+    font: 700 12px var(--ch-sans);
+    padding: 8px 0 8px;
+}
+
+.directory .levels span {
+    display: inline-block;
+    min-width: 18px;
+    text-align: center;
+    border: 1.5px solid var(--ch-ink);
+    border-radius: 5px;
+    background: var(--ch-cream);
+    margin-left: 4px;
+    color: var(--ch-ink);
+}
+
+.directory .levels span:hover {
+    background: var(--ch-teal);
+}
+
+.icona .icon, .icon {
+    background: var(--ch-lavender);
+    color: var(--ch-ink);
+    border: 1.5px solid var(--ch-ink);
+    border-radius: 5px;
+    font: 700 11px/14px var(--ch-mono);
+    width: 16px;
+    height: 16px;
+}
+
+.arrow {
+    color: var(--ch-ink);
+}
+
+/* ---------------------------------------------------------------- tooltips */
+
+div.ttc {
+    font-family: var(--ch-sans);
+}
+
+div.ttc .tttitle, .tooltip {
+    border: var(--ch-line);
+    border-radius: var(--ch-radius);
+    box-shadow: var(--ch-shadow);
+}
+
+/* ---------------------------------------------------------------- the footer */
+
+.navpath ul {
+    background: var(--ch-ink);
+    border: none;
+    border-top: 3px solid var(--ch-ink);
+    height: 34px;
+    line-height: 34px;
+    font: 600 12px/34px var(--ch-sans);
+    color: var(--ch-cream);
+}
+
+.navpath li.navelem {
+    background: none;
+    padding: 0 6px 0 12px;
+}
+
+.navpath li.navelem a, .navpath li.navelem a:hover {
+    color: var(--ch-ink);
+    background: var(--ch-teal);
+    border: 1.5px solid var(--ch-ink);
+    border-radius: 999px;
+    padding: 2px 10px;
+    text-shadow: none;
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.navpath li.navelem + li.navelem::before {
+    content: "\203A";
+    color: var(--ch-cream);
+    margin-right: 10px;
+}
+
+.navpath li.footer, .navpath li.footer a {
+    color: var(--ch-cream);
+    font: 500 12px/34px var(--ch-sans);
+    text-shadow: none;
+}
+
+img.footer {
+    filter: invert(1) grayscale(1) brightness(1.6);
+    height: 18px;
+    width: auto;
+    vertical-align: middle;
+}
+
+/* ---------------------------------------------------------------- small screens */
+
+@media (max-width: 767px) {
+    /* the tree would take most of a phone's width: the menu (the
+       hamburger) navigates instead, and the page scrolls as a whole */
+    #side-nav {
+        display: none;
+    }
+
+    #doc-content {
+        margin-left: 0 !important;
+        height: auto !important;
+        overflow: visible;
+    }
+
+    #MSearchField {
+        width: 8em;
+    }
+
+    .sm-dox a span.sub-arrow, .sm-dox a:hover span.sub-arrow {
+        border: 1.5px solid var(--ch-ink);
+        background: var(--ch-cream);
+        border-radius: 6px;
+    }
+
+    #projectname::before {
+        width: 146px;
+        height: 36px;
+    }
+
+    #projectlogo img {
+        height: 44px;
+    }
+
+    div.contents {
+        padding: 6px 14px 28px;
+    }
+
+    div.header {
+        padding: 14px 14px 4px;
+    }
 }
