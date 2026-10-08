@@ -462,12 +462,15 @@ void gfx__begin(uint8_t spiDiv, uint8_t colorMode) {
     begin(spiDiv, colorMode);
 }
 
+/* The whole of SPI1's set-up, not only the clock: this is also how a sketch
+ * puts SPI1 back after the Arduino SPI class (which resets the peripheral
+ * and may leave another mode or bit order, or with SPI.end() its clock
+ * off), gfx_setSpiDiv(gfx_spiDiv()). The flush sets the frame width itself
+ * and DMA is enabled per transfer. */
 void gfx_setSpiDiv(uint8_t div) {
     gfx_wait();
-    SPI1->CTLR1 &= ~SPI_SPE;
-    SPI1->CTLR1 = (SPI1->CTLR1 & ~(7u << 3)) | brBits(div);
-    SPI1->CTLR1 |= SPI_SPE;
-    s_div = div;
+    RCC->APB2PCENR |= RCC_APB2Periph_SPI1;
+    spiInit(div);
 }
 
 void gfx_setColorMode(uint8_t mode) {

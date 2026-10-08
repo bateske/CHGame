@@ -6,6 +6,37 @@ bumps it. `python tools/release/release.py --repo bateske/CHGame` (in the
 repository root) publishes the release and uses the matching section of this
 file as the GitHub release notes.
 
+## Unreleased
+
+### Added
+
+- **An API reference**, <https://bateske.github.io/CHGame/>: every public
+  function, class and constant of CHGame, CHGfx, CHSd, SPI, Wire and EEPROM,
+  documented in their headers with Doxygen.
+
+### Fixed
+
+- **EEPROM no longer writes the CH32X035's option bytes.** The library is
+  the CH32V003's: its `commit()` erased the option-byte block and rewrote it
+  a half-word at a time, which the CH32X035 is not documented to accept. A
+  write that did not take would leave the chip read-protected (recovery
+  erases the whole flash, bootloader included) or with its user options
+  changed. On this chip `commit()` now writes nothing and returns `false`,
+  `begin()` reads only `Data0`/`Data1`, and including `EEPROM.h` prints a
+  compiler message (`#define EEPROM_NO_WARNING` silences it). Save with the
+  CHGame library's `save::`.
+- **Wire reports a missing or refusing device as Arduino does.**
+  `endTransmission()` returns 2 when no device acknowledges the address and
+  3 when a data byte is not acknowledged, at once and with a STOP; it
+  returned 4 after the timeout. A byte that never leaves now times out
+  instead of hanging, and `requestFrom()` to an absent device releases the
+  bus. (Not yet run on hardware.)
+- **CHGfx 1.3.2: `gfx_setSpiDiv()` sets SPI1 up afresh** (clock enabled, master, mode 0,
+  MSB first), not only its clock divider, so `gfx_setSpiDiv(gfx_spiDiv())`
+  hands SPI1 back to CHGfx after the Arduino SPI class, whatever mode, bit
+  order or `SPI.end()` it left behind. No game calls it: their images are
+  unchanged.
+
 ## 0.3.0 (2026-10-07)
 
 The first release from the CHGame repository: one Boards Manager URL now

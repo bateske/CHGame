@@ -1,0 +1,168 @@
+# Doxygen configuration for the CHGame API reference: every library the
+# board package ships (CHGame, CHGfx, CHSd, SPI, Wire, EEPROM).
+#
+# Run from the repository root:
+#
+#     doxygen docs/api/Doxyfile
+#
+# The site lands in out/api-docs/html (open index.html). The GitHub workflow
+# .github/workflows/docs.yml builds the same thing and publishes it to
+# GitHub Pages. Only the settings that differ from Doxygen's defaults are
+# here; docs/api/README.md says how the comments are written.
+
+#---------------------------------------------------------------------------
+# Project
+#---------------------------------------------------------------------------
+PROJECT_NAME           = "CHGame"
+# Set by the workflow from platform.txt's version= (empty when run by hand).
+PROJECT_NUMBER         = $(CHGAME_VERSION)
+PROJECT_BRIEF          = "Libraries for the CHGame handheld"
+PROJECT_LOGO           = docs/api/logo.png
+OUTPUT_DIRECTORY       = out/api-docs
+STRIP_FROM_PATH        = platform/board/arduino/CHGame/libraries
+STRIP_FROM_INC_PATH    = platform/board/arduino/CHGame/libraries/CHGame/src \
+                         platform/board/arduino/CHGame/libraries/CHGfx/src \
+                         platform/board/arduino/CHGame/libraries/CHSd/src \
+                         platform/board/arduino/CHGame/libraries/SPI/src \
+                         platform/board/arduino/CHGame/libraries/Wire/src \
+                         platform/board/arduino/CHGame/libraries/EEPROM/src
+FULL_PATH_NAMES        = YES
+MARKDOWN_SUPPORT       = YES
+TOC_INCLUDE_HEADINGS   = 3
+AUTOLINK_SUPPORT       = YES
+BUILTIN_STL_SUPPORT    = NO
+DISTRIBUTE_GROUP_DOC   = NO
+TAB_SIZE               = 4
+
+#---------------------------------------------------------------------------
+# What is extracted
+#---------------------------------------------------------------------------
+# Only what is documented is shown, and every undocumented public item is a
+# warning (see WARN_*): the warning log is the coverage check.
+EXTRACT_ALL            = NO
+EXTRACT_PRIVATE        = NO
+EXTRACT_STATIC         = YES
+EXTRACT_LOCAL_CLASSES  = NO
+EXTRACT_ANON_NSPACES   = NO
+HIDE_UNDOC_MEMBERS     = YES
+HIDE_UNDOC_CLASSES     = YES
+HIDE_FRIEND_COMPOUNDS  = YES
+HIDE_IN_BODY_DOCS      = YES
+INTERNAL_DOCS          = NO
+CASE_SENSE_NAMES       = NO
+SHOW_INCLUDE_FILES     = YES
+INLINE_INFO            = YES
+SORT_MEMBER_DOCS       = NO
+SORT_BRIEF_DOCS        = NO
+SORT_GROUP_NAMES       = NO
+SHOW_USED_FILES        = YES
+SHOW_FILES             = YES
+SHOW_NAMESPACES        = YES
+GROUP_NESTED_COMPOUNDS = YES
+INLINE_SIMPLE_STRUCTS  = NO
+TYPEDEF_HIDES_STRUCT   = NO
+SHOW_GROUPED_MEMB_INC  = NO
+REPEAT_BRIEF           = YES
+ALWAYS_DETAILED_SEC    = YES
+JAVADOC_AUTOBRIEF      = YES
+QT_AUTOBRIEF           = YES
+OPTIMIZE_OUTPUT_FOR_C  = NO
+
+#---------------------------------------------------------------------------
+# Warnings
+#---------------------------------------------------------------------------
+QUIET                  = YES
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = YES
+WARN_IF_DOC_ERROR      = YES
+WARN_IF_INCOMPLETE_DOC = YES
+WARN_NO_PARAMDOC       = YES
+WARN_AS_ERROR          = NO
+WARN_LOGFILE           = out/api-docs/warnings.log
+
+#---------------------------------------------------------------------------
+# Input
+#---------------------------------------------------------------------------
+INPUT                  = docs/api/mainpage.md \
+                         docs/api/groups.dox \
+                         docs/api/chgfx_fonts.dox \
+                         docs/api/examples.dox \
+                         platform/board/arduino/CHGame/libraries/CHGame/src \
+                         platform/board/arduino/CHGame/libraries/CHGfx/src \
+                         platform/board/arduino/CHGame/libraries/CHSd/src \
+                         platform/board/arduino/CHGame/libraries/SPI/src/SPI.h \
+                         platform/board/arduino/CHGame/libraries/Wire/src/Wire.h \
+                         platform/board/arduino/CHGame/libraries/EEPROM/src/EEPROM.h
+INPUT_ENCODING         = UTF-8
+FILE_PATTERNS          = *.h *.dox *.md
+RECURSIVE              = YES
+# Not part of the API: CHGfx's internals, its 5x7 glyph table, the generated
+# font data (documented in docs/api/chgfx_fonts.dox), and Sizzle's bodies.
+EXCLUDE                = platform/board/arduino/CHGame/libraries/CHGfx/src/CHGfx_internal.h \
+                         platform/board/arduino/CHGame/libraries/CHGfx/src/CHGfx_font.h \
+                         platform/board/arduino/CHGame/libraries/CHGfx/src/fonts
+EXCLUDE_PATTERNS       = */utility/* *.inl
+# gfx__*: gfx_begin()'s two halves. SIZZLE_*: Sizzle's switches, documented
+# as a table on its page. The rest: include guards.
+EXCLUDE_SYMBOLS        = gfx__* SIZZLE_* \
+                         _SPI_H_INCLUDED TwoWire_h EEPROM_h
+USE_MDFILE_AS_MAINPAGE = docs/api/mainpage.md
+EXAMPLE_PATH           = platform/board/arduino/CHGame/libraries/CHGame/examples/Hello \
+                         platform/board/arduino/CHGame/libraries/CHGfx/examples
+EXAMPLE_PATTERNS       = *.ino
+EXAMPLE_RECURSIVE      = YES
+IMAGE_PATH             = docs/api
+
+#---------------------------------------------------------------------------
+# Source browsing: the header listings, as Arduboy2's reference has them
+#---------------------------------------------------------------------------
+SOURCE_BROWSER         = NO
+VERBATIM_HEADERS       = YES
+STRIP_CODE_COMMENTS    = NO
+REFERENCED_BY_RELATION = NO
+REFERENCES_RELATION    = NO
+
+#---------------------------------------------------------------------------
+# Preprocessor: the device build, with the debug protocol and the profiler
+# on so their calls are documented (they are empty inlines otherwise).
+#---------------------------------------------------------------------------
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = NO
+SEARCH_INCLUDES        = NO
+PREDEFINED             = __riscv=1 \
+                         CH32X035=1 \
+                         CHGAME_DEBUG=1 \
+                         CHGAME_PROFILE=1 \
+                         SIZZLE_CONFIGURED=1 \
+                         DOXYGEN=1
+
+#---------------------------------------------------------------------------
+# HTML
+#---------------------------------------------------------------------------
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+HTML_EXTRA_STYLESHEET  = docs/api/extra.css
+HTML_COLORSTYLE        = AUTO_LIGHT
+HTML_COLORSTYLE_HUE    = 140
+HTML_COLORSTYLE_SAT    = 90
+HTML_COLORSTYLE_GAMMA  = 90
+HTML_DYNAMIC_SECTIONS  = NO
+HTML_INDEX_NUM_ENTRIES = 1
+GENERATE_TREEVIEW      = YES
+DISABLE_INDEX          = NO
+FULL_SIDEBAR           = NO
+TREEVIEW_WIDTH         = 260
+ENUM_VALUES_PER_LINE   = 1
+SEARCHENGINE           = YES
+SERVER_BASED_SEARCH    = NO
+
+GENERATE_LATEX         = NO
+GENERATE_XML           = NO
+GENERATE_MAN           = NO
+GENERATE_RTF           = NO
+
+#---------------------------------------------------------------------------
+# Diagrams: Doxygen's own class diagrams only, no Graphviz needed
+#---------------------------------------------------------------------------
+HAVE_DOT               = NO
+CLASS_GRAPH            = YES

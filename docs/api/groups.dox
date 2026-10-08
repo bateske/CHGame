@@ -1,0 +1,202 @@
+/**
+@defgroup lib_chgame CHGame library
+@brief The one include for a CHGame game: buttons, frame pacing, palette,
+drawing, lettering, effects, sound, saving and the debug protocol.
+
+@code
+#include <CHGame.h>
+@endcode
+
+brings everything the twenty casino games share, on top of
+@ref lib_chgfx "CHGfx" (the framebuffer, the panel and its DMA). It is modelled
+on the Arduboy2 library: one global object, @ref ::chgame, with the same
+button names, `nextFrame()` and `pollButtons()`, and a handful of small
+namespaces for the rest (`pal::`, `fx::`, `audio::`, `save::`, `dbg::`).
+
+Every CHGame game runs the same frame loop: logic, then `gfx_wait()` (the
+previous frame has finished going out to the panel), then drawing into the
+framebuffer, then `gfx_flushAsync()` (the panel gets it by DMA while the
+next frame's logic runs).
+
+@code
+void setup() {
+    chgame.boot();                    // buttons; START held 3 s goes back to the menu
+    gfx_begin(GFX_DIV2, GFX_12BPP);   // the panel
+    pal::init();                      // the house colours
+    chgame.setFrameRate(60);
+}
+
+void loop() {
+    dbg::poll();                      // the debug protocol (nothing in a release build)
+    if (!chgame.nextFrame()) return;
+    chgame.pollButtons();
+    // ... logic ...
+    pal::tick();
+    audio::update();
+
+    gfx_wait();                       // the previous frame has gone out: draw
+    pal::commit();
+    gfx_clear(FELT);
+    // ... draw into the framebuffer ...
+    gfx_flushAsync();                 // DMA to the panel while the next frame's logic runs
+}
+@endcode
+
+The whole of that sketch, with a sound and a saved counter, is
+@ref Hello.ino "the Hello example". The twenty games in the library's
+`examples/Games/` folder are complete programs built on it.
+
+@see [The library's README](https://github.com/bateske/CHGame/blob/main/platform/board/arduino/CHGame/libraries/CHGame/README.md),
+[Getting started (for Arduboy developers)](https://github.com/bateske/CHGame/blob/main/docs/getting-started.md),
+[Why the library is as it is](https://github.com/bateske/CHGame/blob/main/docs/chgame-library.md)
+*/
+
+/**
+@defgroup lib_chgfx CHGfx library
+@brief Wire-speed ST7735 graphics: a 16-colour framebuffer, DMA flushes,
+sprites, shapes, text and fonts.
+
+@code
+#include <CHGfx.h>
+@endcode
+
+CHGfx drives the 128x128 ST7735S panel on SPI1 with DMA. It keeps a 4 bpp
+(16-colour) framebuffer of 8 KB in SRAM and expands it through a palette to
+the panel's 12 or 16 bpp while the DMA is already sending it, so a full
+frame goes out at 90 fps (16 bpp) or 119 fps (12 bpp). @ref lib_chgame "CHGame"
+is built on it, and a sketch that includes `CHGame.h` has all of CHGfx too.
+
+Everything is a plain C function (`gfx_clear()`, `gfx_flushAsync()` ...);
+the @ref CHGfx class and its one instance @ref Gfx are zero-cost forwarders
+for those who prefer `Gfx.clear(0)`.
+
+@code
+gfx_begin(GFX_DIV2, GFX_12BPP);
+gfx_setPaletteEntry(1, gfx_rgb(255, 255, 255));
+gfx_clear(0);
+gfx_text(4, 4, "Hello", 1);
+gfx_flush();
+@endcode
+
+The rule that matters: drawing goes into the framebuffer, and the
+framebuffer is free to draw into only after `gfx_wait()` (or
+`gfx_waitRow()`), once the previous flush has finished reading it.
+
+@see [The library's README](https://github.com/bateske/CHGame/blob/main/platform/board/arduino/CHGame/libraries/CHGfx/README.md)
+(performance, the simulator, configuration and what everything costs),
+[FONTS.md](https://github.com/bateske/CHGame/blob/main/platform/board/arduino/CHGame/libraries/CHGfx/FONTS.md)
+*/
+
+/**
+@defgroup lib_chsd CHSd library
+@brief Read-only microSD: an SPI-mode block driver and a FAT16/FAT32 reader
+that turns a file name into runs of card blocks.
+
+@code
+#include <SdSpi.h>
+#include <Fat.h>
+@endcode
+
+About 1.7 KB of flash and 24 B of RAM. The card shares SPI1 with the panel,
+so every call goes between `gfx_wait()` and the next flush, and every call
+borrows a 512-byte, 4-byte-aligned buffer (CHGfx's `gfx_chunkScratch()` is
+idle at exactly that time).
+
+@code
+// Once, after gfx_wait():
+fat::Run run[4];
+uint8_t nRuns = fat::open("WORDS   DIC", run, 4, gfx_chunkScratch());
+// ... then any block of the file, any time after gfx_wait():
+if (!fat::read(run, nRuns, k, gfx_chunkScratch())) { /* the card has gone */ }
+@endcode
+
+Cards must be FAT16 or FAT32 (how cards up to 32 GB come); exFAT is
+reported as fat::E_EXFAT so a game can ask for a reformat.
+
+@see [The library's README](https://github.com/bateske/CHGame/blob/main/platform/board/arduino/CHGame/libraries/CHSd/README.md),
+[SD card notes](https://github.com/bateske/CHGame/blob/main/docs/sd-card.md)
+*/
+
+/**
+@defgroup lib_core Core libraries
+@brief The Arduino libraries the board package's core provides: SPI, Wire
+(I2C) and EEPROM, ported to WCH's chips.
+
+These are the standard Arduino APIs, so sketches and libraries written for
+other boards work unchanged. On the CHGame board, note:
+
+- **SPI1 belongs to the panel and the SD card.** CHGfx drives it directly
+  with DMA; use the @ref core_spi "SPI" class only for your own devices, and
+  only between `gfx_wait()` and the next flush. The SPI class resets SPI1
+  and sets its own clock and mode, so hand SPI1 back to CHGfx afterwards
+  with `gfx_setSpiDiv(gfx_spiDiv())`.
+- **Wire** (I2C) is on the expansion header: SDA PC18, SCL PC19, with no
+  pull-ups on the board.
+- **Saving a game** is done with the @ref chgame_save "save::" functions of
+  the CHGame library, which keep a record in flash with a CRC and survive
+  re-uploads. @ref core_eeprom "EEPROM" is the CH32V003's: on this chip its
+  `commit()` writes nothing and returns `false` (rewriting the option bytes
+  its way could leave the chip read-protected), and including it prints a
+  compiler message.
+*/
+
+/*
+ * The order the topics appear in under each library. Each is documented in
+ * its header (or chgfx_fonts.dox); this only fixes the order, which would
+ * otherwise follow the file names.
+ */
+/** @defgroup chgame_input Buttons and frame pacing
+    @ingroup lib_chgame */
+/** @defgroup chgame_palette Palette
+    @ingroup lib_chgame */
+/** @defgroup chgame_draw Drawing
+    @ingroup lib_chgame */
+/** @defgroup chgame_mask Lettering masks
+    @ingroup lib_chgame */
+/** @defgroup chgame_fx Effects maths
+    @ingroup lib_chgame */
+/** @defgroup chgame_sizzle Particles, banners and floating texts
+    @ingroup lib_chgame */
+/** @defgroup chgame_audio Sound and LED
+    @ingroup lib_chgame */
+/** @defgroup chgame_save Saving
+    @ingroup lib_chgame */
+/** @defgroup chgame_fmt Number formatting
+    @ingroup lib_chgame */
+/** @defgroup chgame_ramfunc RAM functions
+    @ingroup lib_chgame */
+/** @defgroup chgame_debug Debug protocol
+    @ingroup lib_chgame */
+/** @defgroup chgame_config Build switches
+    @ingroup lib_chgame */
+
+/** @defgroup chgfx_config Configuration
+    @ingroup lib_chgfx */
+/** @defgroup chgfx_setup Setup
+    @ingroup lib_chgfx */
+/** @defgroup chgfx_palette Palette
+    @ingroup lib_chgfx */
+/** @defgroup chgfx_present Presenting the framebuffer
+    @ingroup lib_chgfx */
+/** @defgroup chgfx_stream Direct streaming
+    @ingroup lib_chgfx */
+/** @defgroup chgfx_draw Drawing
+    @ingroup lib_chgfx */
+/** @defgroup chgfx_shapes Shapes
+    @ingroup lib_chgfx */
+/** @defgroup chgfx_sprites Span sprites
+    @ingroup lib_chgfx */
+/** @defgroup chgfx_rows Row operations
+    @ingroup lib_chgfx */
+/** @defgroup chgfx_text Text
+    @ingroup lib_chgfx */
+/** @defgroup chgfx_fonts Fonts
+    @ingroup lib_chgfx */
+/** @defgroup chgfx_direct Direct to the panel
+    @ingroup lib_chgfx */
+/** @defgroup chgfx_internals Internals and scratch
+    @ingroup lib_chgfx */
+/** @defgroup chgfx_class The Gfx object
+    @ingroup lib_chgfx */
+/** @defgroup chgfx_adafruit Adafruit_GFX bridge
+    @ingroup lib_chgfx */

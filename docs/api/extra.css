@@ -1,0 +1,9 @@
+/* The CHGame reference's few changes to Doxygen's look. */
+#projectlogo img {
+    height: 64px;
+    width: 64px;
+    border-radius: 6px;
+}
+#projectname {
+    font-size: 200%;
+}

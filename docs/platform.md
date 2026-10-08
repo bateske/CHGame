@@ -85,8 +85,11 @@ empty on this platform. The `*_MODULE_ONLY` flags travel in
 
 ## Saving: flash pages instead of EEPROM
 
-There is no usable EEPROM. The core's `EEPROM` library emulates 26 bytes in
-the option bytes and is untested here. Instead:
+There is no EEPROM. The core's `EEPROM` library emulates 26 bytes in the
+CH32V003's option bytes; on this chip its `commit()` is switched off (it writes
+nothing and returns `false`, and including it prints a compiler message),
+because rewriting the option bytes its way could leave the chip read-protected.
+Instead:
 
 - **Why it works.** The bootloader erases only the pages a new image covers.
   Pages between the end of the image and the metadata page at 0xF700

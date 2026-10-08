@@ -10,7 +10,7 @@ here. The table's "Came from" column is history, not something to sync with.
 | `board/arduino/CHGame/` | The CHGame Arduino board package: core, variant, linker scripts, bootloader binary, `boards.txt` / `platform.txt` | 0.3.0 (not yet published; 0.2.4 is) | CH32SerialBoot tag `v0.2.4` (5de3006), folder `arduino/CHGame` | MIT (`board/LICENSE`, `board/THIRD-PARTY.md`) |
 | `board/docs/` | The board's docs: hardware pin map, flash/RAM map, boot flow, upload protocol, recovery, CH32X035 gotchas, building the bootloader | 0.2.4 | same tag, folder `docs` | MIT |
 | `board/arduino/CHGame/libraries/CHGame/` | The CHGame library: `CHGame.h`, the one include of a sketch (buttons, pacing, palette, drawing, sound, saving, the debug protocol) | 0.1.0 | built here (2026-10-02) from the code the twenty games shared | Apache-2.0 (`LICENSE`, `NOTICE`) |
-| `board/arduino/CHGame/libraries/CHGfx/` | The graphics library | 1.3.1 | CHGfx tag `1.3.0` (838bbb0) | MIT (+ font notices in its `LICENSE`) |
+| `board/arduino/CHGame/libraries/CHGfx/` | The graphics library | 1.3.2 | CHGfx tag `1.3.0` (838bbb0) | MIT (+ font notices in its `LICENSE`) |
 | `board/arduino/CHGame/libraries/CHSd/` | Read-only SD card + FAT16/32 library | 1.0.0 | never had a repository of its own | MIT |
 | `bootloader/` | The bootloader with the SD game menu: sources, PC test suite, built binaries, and the uploader in Go (`host/go`, the executable the board package installs) and in Python (`host/py`, what the repository's tools use) | 0.2.4 + the SD menu (BOOT_VERSION 2) | CH32SerialBoot tag `v0.2.4` (5de3006): `bootloader/`, `shared/`, `host/py/`, `test/` | MIT (+ BSD font, `bootloader/NOTICE`) |
 | `hardware/` | Rev 0 schematic (PDF) and netlist (EasyEDA `.tel`) | 2026-08-21 | | |
@@ -211,6 +211,30 @@ list builds stayed byte-identical. Not yet run on a board.
    root README.
 
 ## Changes since the copies were taken
+
+- 2026-10-07: an API reference for every library the board package ships.
+  The public headers of CHGame, CHGfx, CHSd, SPI, Wire and EEPROM carry
+  Doxygen comments (a brief, every parameter, the return value, and the
+  details that matter, after the Arduboy2 library's reference), and
+  `docs/api/` builds them into one site, published to
+  <https://bateske.github.io/CHGame/> by `.github/workflows/docs.yml`
+  ([../docs/api/README.md](../docs/api/README.md)). The headers' code is
+  unchanged (EEPROM.h aside, below) and all 20 games' release images are
+  byte-identical. Save.h's example said a record holds 248 bytes; it holds
+  244 (`save::MAX_DATA`). Writing the comments turned up three things,
+  fixed with it (board/CHANGELOG.md, "Unreleased"):
+  - **EEPROM**: the CH32V003's option-byte emulation erased and rewrote the
+    CH32X035's option bytes in a way WCH's library for this chip never
+    does, and a failed write could leave the chip read-protected. On the
+    CH32X035 its `commit()` now writes nothing and returns `false`, and
+    including it prints a compiler message.
+  - **Wire**: `endTransmission()` returned 4 after a timeout for a device
+    that did not answer; it now returns Arduino's 2 or 3 at once and sends
+    a STOP, and reads of an absent device release the bus. Compiled, not
+    yet run on hardware.
+  - **CHGfx**: `gfx_setSpiDiv()` now programs all of SPI1, so
+    `gfx_setSpiDiv(gfx_spiDiv())` hands the bus back after the Arduino SPI
+    class (which resets SPI1). No game calls it.
 
 - 2026-10-07: the dealer redrawn, and a spotlight behind him.
   `tools/art/common/dealer.png` and `faces.png` are the owner's new dealer

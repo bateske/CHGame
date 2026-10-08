@@ -1,9 +1,19 @@
 # CHGame
 
+[![API reference](https://img.shields.io/badge/docs-API%20reference-2e7d32)](https://bateske.github.io/CHGame/)
+
 Everything for the **CHGame** handheld, in one repository: the Arduino board
 package, the bootloader with its SD game menu, the graphics, SD-card and
 sound code that games are built from, twenty casino games, and the PC tools
 (simulator, uploader, packager, card builder).
+
+> ### 📖 [API reference: bateske.github.io/CHGame](https://bateske.github.io/CHGame/)
+>
+> Every function, class and constant of the libraries the board package
+> installs (**CHGame**, **CHGfx**, **CHSd**, and the core's **SPI**,
+> **Wire** and **EEPROM**), with what it does, its parameters and what it
+> returns, in the style of the Arduboy2 library's reference. Start with the
+> [CHGame library](https://bateske.github.io/CHGame/group__lib__chgame.html).
 
 **This repository is the source of truth for CHGame development.** It
 replaces the separate repositories the pieces grew up in
@@ -24,8 +34,10 @@ with no button presses, like an Arduino Leonardo.
 >
 > **Coming from the Arduboy?** [docs/getting-started.md](docs/getting-started.md)
 > maps the Arduboy2 calls to CHGame's, explains what happens behind the
-> scenes, and walks through a first sketch. The CHGame library's
-> [README](platform/board/arduino/CHGame/libraries/CHGame/README.md) is the reference.
+> scenes, and walks through a first sketch. The
+> [API reference](https://bateske.github.io/CHGame/) documents every call,
+> and the CHGame library's [README](platform/board/arduino/CHGame/libraries/CHGame/README.md)
+> explains how a game is put together.
 
 ## What this repository is for
 
@@ -61,7 +73,7 @@ installs it from this machine instead.
 | Core, variant, toolchain, `chgame-upload` | `platform/board/` | yes |
 | Bootloader with the SD game menu | `platform/bootloader/` | yes: *Tools > Bootloader* (SD Text Menu, the list, or SD Graphic Menu, the pictures, each in Rainbow or Static; or USB Only), written by *Burn Bootloader* over USB with the programmer **CHGame USB**: no driver, no buttons |
 | The CHGame library (`CHGame.h`: buttons, pacing, palette, drawing, sound, saving, debug protocol) | `platform/board/arduino/CHGame/libraries/CHGame/`; every game is built on it | yes, in the package's `libraries/`: nothing to install |
-| CHGfx, the graphics library | `platform/board/arduino/CHGame/libraries/CHGfx/` (1.3.1) | yes, with its examples |
+| CHGfx, the graphics library | `platform/board/arduino/CHGame/libraries/CHGfx/` (1.3.2) | yes, with its examples |
 | CHSd, the SD/FAT reader | `platform/board/arduino/CHGame/libraries/CHSd/` (1.0.0) | yes |
 | The casino games and three apps (CHStlView, CHSDtoUSB, CHSDtoSerial) as examples | `platform/board/arduino/CHGame/libraries/CHGame/examples/Games/`, `apps/` | yes: *File > Examples > CHGame > Games*, *Apps* |
 | `.chgame`, the format games are shared in ([spec/chgame.md](spec/chgame.md)), and the SD menu's card ([spec/card.md](spec/card.md)) | `spec/`, `tools/chcart/` (`chgame export`, `chgame cart ...`) | the release carries every game as one cart, `CHGame-Casino-<version>.chgame`, and its card as a zip. Every build also writes the menu's install file (`.chg`), and *Export Compiled Binary* puts it by the sketch |
@@ -241,7 +253,8 @@ CHGame/
 │                      artkit/ for the box art)
 └── docs/              platform knowledge: hardware, performance, SD card, how a game is built,
                        status, the roadmap to the first release, the CHGame library's decisions
-                       and history, and a getting-started guide for Arduboy developers
+                       and history, and a getting-started guide for Arduboy developers;
+                       api/ builds the API reference (Doxygen) published to GitHub Pages
 ```
 
 ## Quick start for development
@@ -313,13 +326,14 @@ CHGfx it gives:
 - `RAMFUNC`, which puts hot code in SRAM.
 
 It was built from the code the twenty games carried copies of, and every
-game is now built on it ([docs/unification.md](docs/unification.md)). Its
-[README](platform/board/arduino/CHGame/libraries/CHGame/README.md) is the reference, and
-`examples/Hello` the smallest complete sketch.
+game is now built on it ([docs/unification.md](docs/unification.md)). Every
+call is in the [API reference](https://bateske.github.io/CHGame/group__lib__chgame.html),
+its [README](platform/board/arduino/CHGame/libraries/CHGame/README.md) is the
+guide, and `examples/Hello` the smallest complete sketch.
 
 ### CHGfx: `platform/board/arduino/CHGame/libraries/CHGfx/`
 
-The graphics library, version **1.3.1**. A full 16-bit framebuffer would not
+The graphics library, version **1.3.2**. A full 16-bit framebuffer would not
 fit in 20 KB of RAM. CHGfx keeps a **4-bit indexed framebuffer** (8 KB, a
 16-colour palette that can change every frame), converts it to the panel's
 format in chunks, and streams it out by DMA at 24 MHz while the game draws
@@ -327,7 +341,8 @@ the next frame. It provides the drawing primitives, sprites (`sprite4`),
 fonts, text effects, palette effects and partial updates. It also owns the
 SPI bus that the SD card shares.
 [docs/performance.md](docs/performance.md) explains the design and its
-measured limits.
+measured limits; the [API reference](https://bateske.github.io/CHGame/group__lib__chgfx.html)
+documents every call.
 
 ### CHSd: `platform/board/arduino/CHGame/libraries/CHSd/`
 
@@ -339,6 +354,7 @@ from the card, and the app CHStlView browses the card's folders and streams
 The games include it as a library (`<Fat.h>`, `<SdSpi.h>`); the
 simulator swaps its SPI driver for a pretend card (`$CHSD_CARD`). CHSDtoUSB has its own faster, read-write SD driver, which
 is GPL-3.0 and stays inside that sketch.
+[API reference](https://bateske.github.io/CHGame/group__lib__chsd.html).
 
 ### The bootloader and the SD game menu: `platform/bootloader/`
 

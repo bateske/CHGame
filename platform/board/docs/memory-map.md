@@ -31,8 +31,9 @@ ID table; that is the nominal family size, not the usable user area.
 Erase and program granularity is 256 bytes (`FLASH_ErasePage_Fast` /
 `FLASH_ProgramPage_Fast`), so every boundary above is page aligned.
 
-The core's `EEPROM` library stores into the **option bytes** (`OB_BASE`), not the
-flash tail, so it does not collide with the metadata page.
+The core's `EEPROM` library would store into the **option bytes** (`OB_BASE`), not
+the flash tail; on the CH32X035 its `commit()` is switched off and writes nothing
+(see its header), so it touches neither.
 
 ### Overflow protection
 

@@ -1,5 +1,7 @@
 # CHGame library
 
+**API reference: <https://bateske.github.io/CHGame/group__lib__chgame.html>** (every call, its parameters and what it does).
+
 The one include for a CHGame sketch:
 
 ```cpp

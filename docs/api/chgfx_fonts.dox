@@ -1,0 +1,93 @@
+/**
+@defgroup chgfx_fonts Fonts
+@ingroup lib_chgfx
+@brief The bundled fonts in `src/fonts/`, the GFXfont format they use, and
+the built-in 5x7.
+
+CHGfx has a 5x7 font built in and supports **GFXfont**, the Adafruit_GFX
+bitmap font format, for anything larger or proportional. A font is a
+header: include it, and pass its GFXfont to gfx_setFont() (or
+`Gfx.setFont()`). Only the fonts a sketch includes are linked, and flash is
+the scarce resource here: the CH32X035G8U6 gives a sketch about 50 KB
+after the bootloader.
+
+@code
+#include <CHGfx.h>
+#include <fonts/CHGfx_Sans12.h>
+
+gfx_setFont(&CHGfx_Sans12);
+gfx_text(4, 4 + gfx_fontBaseline(), "Hello", 1);   // top of the text at y = 4
+gfx_setFont(nullptr);                              // back to the built-in 5x7
+@endcode
+
+The text calls themselves are in @ref chgfx_text. Remember that the origin
+changes with the font: with the built-in font `y` is the top of the glyph
+box, with a GFXfont it is the baseline. gfx_fontBaseline() is the
+conversion (0 for the built-in font, the ink ascent for a GFXfont).
+
+## The bundled fonts
+
+Each is a `const GFXfont` of the same name as its header. "Line" is the
+baseline-to-baseline spacing (gfx_fontLineHeight()), "Baseline" the ink
+ascent (gfx_fontBaseline()), "Digit" the advance width of a numeral; all
+in pixels at scale 1. "Flash" is the whole cost of including it.
+
+| Font | Include | Glyphs | Line | Baseline | Digit | Flash | Use |
+|---|---|---|---:|---:|---:|---:|---|
+| built-in 5x7 | none (`gfx_setFont(nullptr)`) | 0x20-0x7E | 8 | 0 | 6 | 475 B | Always there, no setup; fixed 6 px advance |
+| `CHGfx_Tiny3x5` | `<fonts/CHGfx_Tiny3x5.h>` | 0x20-0x7E | 7 | 5 | 4 | 857 B | 3x5 pixels, 32 characters a line: HUDs, plates |
+| `CHGfx_Mono11` | `<fonts/CHGfx_Mono11.h>` | 0x20-0x7E | 14 | 9 | 7 | 1233 B | Fixed pitch (DejaVu Sans Mono, 11 px), 18 columns across |
+| `CHGfx_Sans12` | `<fonts/CHGfx_Sans12.h>` | 0x20-0x7E | 15 | 10 | 8 | 1344 B | Proportional body text (DejaVu Sans, 12 px) |
+| `CHGfx_SansBold12` | `<fonts/CHGfx_SansBold12.h>` | 0x20-0x7E | 15 | 10 | 8 | 1444 B | Same size, bold: reads on busy art |
+| `CHGfx_SansBold16` | `<fonts/CHGfx_SansBold16.h>` | 0x20-0x7E | 19 | 13 | 11 | 1866 B | Titles, menu headings (DejaVu Sans Bold, 16 px) |
+| `CHGfx_Digits24` | `<fonts/CHGfx_Digits24.h>` | `+` to `:` | 29 | 18 | 17 | 523 B | Scores and timers: `+,-./0123456789:` only (DejaVu Sans Bold, 24 px) |
+
+`CHGfx_Digits24` is the shape to copy when flash is tight: a display font
+you only ever point at a score or a timer does not need 95 glyphs. Sixteen
+characters buy a 24 px face for a third of what the small text faces cost.
+Characters outside a font's range are drawn as `?`, or dropped when the
+font has no `?`. A space is *not* in `CHGfx_Digits24`, so pad with `0` or
+leave gaps with cursor arithmetic.
+
+`CHGfx_Tiny3x5` is a pixel font drawn by hand (Press Play On Tape's 3x5
+from "Blackjack" for the Arduboy, Apache License 2.0), completed to the
+whole printable ASCII range. Capitals are 5 px tall and lowercase 4, with a
+one-pixel descender; every character advances 4 px (5 for `~`), so text
+measures 4 px a character. It is sharp at scale 2 and 3 as well: 6x10 menu
+text, or banner lettering with gfx_textFx().
+
+The five larger fonts are rasterized from DejaVu Sans, which is freely
+redistributable. The licence notices are in the library's `LICENSE` and
+`LICENSE.Apache-2.0` files.
+
+## Fonts from elsewhere
+
+The format is byte-for-byte Adafruit's (see CHGfx_gfxfont.h), so it works
+in both directions with no conversion: every font in the Adafruit GFX
+Library's `Fonts/` directory works with gfx_setFont(), and CHGfx's fonts
+work with Adafruit_GFX's `setFont()`. Adafruit's fonts are sized for
+141 dpi, so they are much larger than their names suggest:
+`FreeSans9pt7b` is a 22 px line and measured 1932 bytes linked, against
+15 px and 1344 for `CHGfx_Sans12`.
+
+## Converting your own
+
+`extras/fontconvert.py` turns any TTF or OTF into a header in this format
+(it needs Pillow, and it made every font above):
+
+@code{.sh}
+python extras/fontconvert.py DejaVuSans.ttf 12 MyFont > src/fonts/MyFont.h
+@endcode
+
+The arguments are the font file, the **pixel em size** and the C symbol
+name; `--first`/`--last` or `--chars` choose the characters, and `--line`
+overrides the line spacing. The generated header's comment block reports
+the exact flash cost, the line height and the baseline, so a font can be
+sized against the budget before it is linked. The em size is not the cap
+height: DejaVu Sans at 12 px is about 10 px from baseline to the top of a
+capital. Below roughly 10 px, hinted TTF output gets mushy and the
+built-in 5x7 is usually the better answer.
+
+@see [FONTS.md](https://github.com/bateske/CHGame/blob/main/platform/board/arduino/CHGame/libraries/CHGfx/FONTS.md)
+for every option of the converter and what text costs at run time.
+*/

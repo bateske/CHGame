@@ -1,5 +1,12 @@
 ## **EEPROM Library** for Arduino CH32
 
+> **On the CHGame board (CH32X035) this library does not save.** `commit()`
+> writes nothing and returns `false`, and including `EEPROM.h` prints a compiler
+> message: the option-byte writes below are the CH32V003's, and on the CH32X035 a
+> write that did not take could leave the chip read-protected. Save with the
+> CHGame library's `save::` functions instead
+> ([API reference](https://bateske.github.io/CHGame/group__chgame__save.html)).
+
 ### **What is the EEPROM library**
 
 The EEPROM library provides an easy to use interface to interact with the internal non-volatile storage found in Arduino boards. 

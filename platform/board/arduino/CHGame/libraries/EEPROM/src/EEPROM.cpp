@@ -19,6 +19,7 @@
    (including required inverse values). This is 24 bytes that can be used plus the two data0 and data1 bytes. 
    Layout for uint8_t _data[26]: { ob[4], ob[6], ob[16...62] ].
 */
+#define EEPROM_NO_WARNING   // the message is for the sketch that includes it
 #include <EEPROM.h>
 
 #define OB_AVAIL_DATA_START 8  // valid for CH32V003; how about others?
@@ -57,8 +58,15 @@ void EEPROMClass::begin(void)
     uint16_t *ob16p=(uint16_t *)OB_BASE;
     _data[0]=(uint8_t)ob16p[2];   // simple cast ignores the inversed second half-word
     _data[1]=(uint8_t)ob16p[3];   // simple cast ignores the inversed second half-word
+#if defined(CH32X035)
+    // The CH32X035's option bytes are the 16-byte block alone: nothing past
+    // it is read (see commit()).
+    for(int i=2; i<_size; i++)
+      _data[i]=0xFF;
+#else
     for(int i=2; i<_size; i++)
       _data[i]=(uint8_t)ob16p[OB_AVAIL_DATA_START+(i-2)];
+#endif
   }
   _dirty = false;
 }
@@ -99,7 +107,20 @@ bool EEPROMClass::commit()
   if(!_dirty)
     return(true);
 
-  volatile uint16_t hold[8]; 		// array to hold reserved values while erasing
+#if defined(CH32X035)
+  // Not on the CH32X035 (the CHGame board). This erases the option bytes
+  // and rewrites them a half-word at a time, the CH32V003's way; WCH's
+  // CH32X035 library programs them only as a fast-programmed page, and the
+  // chip's 16-byte block has no room past Data0/Data1. A write that does not
+  // take after the erase leaves the chip read-protected (recovery: a full
+  // erase with the factory ISP, bootloader included) or with its user
+  // options changed (on the CHGame board they keep PB7, SELECT, from being
+  // the reset pin). So nothing is written: the data stays in RAM, and
+  // commit() says it failed. A game saves with the CHGame library's save::.
+  return(false);
+#endif
+
+  volatile uint16_t hold[8];		// array to hold reserved values while erasing
   // The entire 64 byte data block of the "User-selected words" will be erased
   // so we need to keep a copy of the reserved content for re-writing after erase.
   // Save a few (20) bytes code space by moving 32 bits at a time.

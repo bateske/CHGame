@@ -311,7 +311,15 @@ i2c_status_e i2c_master_write(i2c_t *obj, uint8_t dev_address,
     I2C_Send7bitAddress(obj->handle.Instance, dev_address, I2C_Direction_Transmitter);
     while(!I2C_CheckEvent(obj->handle.Instance, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED))//{}
     {
-        if((GetTick()-tickstart) > I2C_TIMEOUT_TICK) 
+        // Nobody acknowledged the address (Arduino's endTransmission() 2):
+        // say so at once instead of waiting out the timeout as an error (4).
+        if(I2C_GetFlagStatus(obj->handle.Instance, I2C_FLAG_AF) != RESET)
+        {
+          I2C_ClearFlag(obj->handle.Instance, I2C_FLAG_AF);
+          I2C_GenerateSTOP(obj->handle.Instance, ENABLE);
+          return I2C_NACK_ADDR;
+        }
+        if((GetTick()-tickstart) > I2C_TIMEOUT_TICK)
         {
 // MMOLE: To allow I2C scanning, timeout on an addresses should release the bus
           if(sendstop)  
@@ -322,21 +330,43 @@ i2c_status_e i2c_master_write(i2c_t *obj, uint8_t dev_address,
 
 // MMOLE: Support for I2C scanning: allow only sending the address (without actual data)
 if(size)
-{  
+{
+    // A data byte the device did not acknowledge (endTransmission() 3) ends
+    // the write with a STOP; so does a byte that never leaves (timeout).
+    tickstart = GetTick();
     while(size)
     {
+        if(I2C_GetFlagStatus(obj->handle.Instance, I2C_FLAG_AF) != RESET)
+        {
+          I2C_ClearFlag(obj->handle.Instance, I2C_FLAG_AF);
+          I2C_GenerateSTOP(obj->handle.Instance, ENABLE);
+          return I2C_NACK_DATA;
+        }
         if( I2C_GetFlagStatus(obj->handle.Instance, I2C_FLAG_TXE) != RESET )
         {
             I2C_SendData(obj->handle.Instance, *data++);
             size--;
+            tickstart = GetTick();
+        }
+        else if((GetTick()-tickstart) > I2C_TIMEOUT_TICK)
+        {
+          I2C_GenerateSTOP(obj->handle.Instance, ENABLE);
+          return I2C_TIMEOUT;
         }
     }
 
     tickstart = GetTick();
     while(!I2C_CheckEvent(obj->handle.Instance, I2C_EVENT_MASTER_BYTE_TRANSMITTED))
     {
-        if((GetTick()-tickstart) > I2C_TIMEOUT_TICK) 
+        if(I2C_GetFlagStatus(obj->handle.Instance, I2C_FLAG_AF) != RESET)
         {
+          I2C_ClearFlag(obj->handle.Instance, I2C_FLAG_AF);
+          I2C_GenerateSTOP(obj->handle.Instance, ENABLE);
+          return I2C_NACK_DATA;
+        }
+        if((GetTick()-tickstart) > I2C_TIMEOUT_TICK)
+        {
+          I2C_GenerateSTOP(obj->handle.Instance, ENABLE);
           return I2C_TIMEOUT;
         }
     }
@@ -516,8 +546,17 @@ i2c_status_e i2c_master_read(i2c_t *obj, uint8_t dev_address, uint8_t *data, uin
 	I2C_Send7bitAddress( obj->handle.Instance, dev_address, I2C_Direction_Receiver );
   while( !I2C_CheckEvent( obj->handle.Instance, I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED ) )
   {
-      if((GetTick()-tickstart) > I2C_TIMEOUT_TICK) 
+      // No slave acknowledged the address: release the bus (a STOP) rather
+      // than leave it held until the next transfer.
+      if(I2C_GetFlagStatus( obj->handle.Instance, I2C_FLAG_AF ) != RESET)
       {
+          I2C_ClearFlag( obj->handle.Instance, I2C_FLAG_AF );
+          I2C_GenerateSTOP( obj->handle.Instance, ENABLE );
+          return I2C_NACK_ADDR;
+      }
+      if((GetTick()-tickstart) > I2C_TIMEOUT_TICK)
+      {
+          I2C_GenerateSTOP( obj->handle.Instance, ENABLE );
           return I2C_TIMEOUT;
       }
   }

@@ -18,7 +18,8 @@ implementation.
 [docs/roadmap.md](docs/roadmap.md) says what is done and what is not,
 [docs/chgame-library.md](docs/chgame-library.md) why the library is as it
 is, and [docs/unification.md](docs/unification.md) what changed when the
-games moved onto it.
+games moved onto it. The API reference, <https://bateske.github.io/CHGame/>,
+is built from the libraries' headers ([docs/api/](docs/api/README.md)).
 [docs/hardware-revisions.md](docs/hardware-revisions.md) covers board
 revisions: the released board is `rev0`, a rev1 with other pins is
 reserved, and the page says how boards are named and how one is added.
@@ -84,7 +85,10 @@ changing that game.
    game builds on them, so a change needs all 20 games rebuilt (size) and
    their sim frames compared; record it in
    [platform/README.md](platform/README.md) (the bootloader's README lists
-   its own). Two things to know:
+   its own). A change to a library's public API changes its Doxygen comment
+   too: every public item of the six libraries is documented in its header
+   (the style: [docs/api/README.md](docs/api/README.md)), and
+   `doxygen docs/api/Doxyfile` must stay free of warnings. Two things to know:
    - `platform/board` is what the *next* board package release will contain.
      Builds use the installed package for the core (0.2.4, or 0.3.0-local
      when a staged build is installed), so an edit to the core, variant,
@@ -243,6 +247,7 @@ it, `python tools/chgame.py` is the same thing. The shared tools under
 | Stage a release locally and test it as a new user (fresh arduino-cli in `out/newuser/`, every example compiled from the installed package, the casino cart and the SD card zip) | `python tools/release/stage.py [--quick] [--serve]` |
 | Serve the staged release to the Arduino IDE | `python tools/release/serve.py` (URL `http://localhost:8765/package_chgame_index.json`) |
 | A release, dry or real (`platform/board/docs/building.md`) | `python tools/release/release.py [--dry-run]` |
+| The API reference (Doxygen, into `out/api-docs/html`; published to <https://bateske.github.io/CHGame/> by `.github/workflows/docs.yml`) | `doxygen docs/api/Doxyfile` (or the Docker line in [docs/api/README.md](docs/api/README.md)) |
 
 The release FQBN is
 `CHGame:ch32v:rev0:opt=oslto,rtlib=nano,periph=game,usb=uploadonly`. A debug

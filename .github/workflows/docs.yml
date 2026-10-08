@@ -1,0 +1,72 @@
+# Builds the API reference (docs/api/Doxyfile) and publishes it to GitHub
+# Pages: https://bateske.github.io/CHGame/
+#
+# Pull requests only build it and report the warnings; pushes to main
+# publish it. The repository's Pages source must be "GitHub Actions"
+# (Settings > Pages).
+name: API docs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "platform/board/arduino/CHGame/libraries/**"
+      - "platform/board/arduino/CHGame/platform.txt"
+      - "docs/api/**"
+      - ".github/workflows/docs.yml"
+  pull_request:
+    paths:
+      - "platform/board/arduino/CHGame/libraries/**"
+      - "docs/api/**"
+      - ".github/workflows/docs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Doxygen
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq doxygen
+
+      - name: Build the reference
+        run: |
+          export CHGAME_VERSION=$(sed -n 's/^version=//p' platform/board/arduino/CHGame/platform.txt)
+          doxygen docs/api/Doxyfile
+          touch out/api-docs/html/.nojekyll
+
+      - name: Report warnings
+        run: |
+          if [ -s out/api-docs/warnings.log ]; then
+            echo "::warning::Doxygen reported $(wc -l < out/api-docs/warnings.log) warnings"
+            cat out/api-docs/warnings.log
+          else
+            echo "No warnings."
+          fi
+
+      - uses: actions/upload-pages-artifact@v3
+        if: github.event_name != 'pull_request'
+        with:
+          path: out/api-docs/html
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

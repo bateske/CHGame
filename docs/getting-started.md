@@ -7,7 +7,7 @@ CHGame is built to feel familiar to an Arduboy developer:
 
 This page covers what is the same, what is different, and what happens behind the scenes, and walks through a first sketch.
 
-One `#include <CHGame.h>` brings buttons, graphics, the house palette and drawing helpers, sound, saving and the debug protocol, as `Arduboy2.h` does. The library's [README](../platform/board/arduino/CHGame/libraries/CHGame/README.md) is the reference; all twenty games in `games/` are built on it.
+One `#include <CHGame.h>` brings buttons, graphics, the house palette and drawing helpers, sound, saving and the debug protocol, as `Arduboy2.h` does. The [API reference](https://bateske.github.io/CHGame/) documents every call (as the Arduboy2 library's Doxygen pages do), and the library's [README](../platform/board/arduino/CHGame/libraries/CHGame/README.md) is the guide; all twenty games in `games/` are built on it.
 
 ## The machine
 
@@ -59,7 +59,7 @@ One `#include <CHGame.h>` brings buttons, graphics, the house palette and drawin
 | `BLACK`, `WHITE`, `invert()` | the house colours `INK`, `WHITE`, `GOLD` ... (`pal::init()`), or your own palette; `gfx_setInverted()` |
 | `setRGBled`, `digitalWriteRGB` | `audio::led(pattern)`, or `digitalWrite(LED_BUILTIN, …)` |
 | `ArduboyTones`, `audio.on()`/`off()` | `audio::sfx(effect)` from a table of your effects, `audio::blip(hz, ms)`, `audio::music(score)` / `audio::melody(m)`, `audio::setOn(on)`. Arduino's `tone()` is compiled out by the default *Peripherals* setting. |
-| `EEPROM.put`/`get` | `save::store(MAGIC, version, data)` / `save::load(...)`: up to 244 bytes, kept across power cycles and re-uploads. The core's `EEPROM` library emulates only 26 bytes. |
+| `EEPROM.put`/`get` | `save::store(MAGIC, version, data)` / `save::load(...)`: up to 244 bytes, kept across power cycles and re-uploads. The core's `EEPROM` library does not save on this chip (`commit()` writes nothing). |
 | `initRandomSeed()` | `randomSeed(micros())` once the player has pressed something; for presentation, `fx::rnd()` (repeatable in the simulator) |
 | `PROGMEM`, `pgm_read_byte`, `F()` | not needed: `const` data stays in flash and is read normally |
 | `exitToBootloader()` | `chgame.exitToMenu()` (the SD menu) |

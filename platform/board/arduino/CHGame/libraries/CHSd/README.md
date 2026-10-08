@@ -1,5 +1,7 @@
 # CHSd
 
+**API reference: <https://bateske.github.io/CHGame/group__lib__chsd.html>**.
+
 Read-only microSD access for CHGame games: a polled SPI-mode block driver
 and a FAT16/FAT32 reader that turns a file name into runs of card blocks.
 It is about 1.7 KB of flash and 24 B of RAM (plus the caller's run list),

@@ -1,0 +1,56 @@
+/**
+@example Hello.ino
+The smallest complete CHGame sketch (the CHGame library's `examples/Hello`).
+
+Steer the ball with the D-pad. A chirps and counts; the count is saved in
+flash and is still there after a power cycle. B re-dyes the felt. It shows
+the frame loop every CHGame game uses: logic, then `gfx_wait()`, then
+drawing into the framebuffer, then `gfx_flushAsync()`.
+
+The twenty casino games in the library's `examples/Games/` folder are
+complete games built the same way.
+*/
+
+/**
+@example HelloGraphics.ino
+The smallest useful CHGfx sketch: draw into the framebuffer, then send the
+whole frame to the panel by DMA in one burst.
+*/
+
+/**
+@example PartialUpdate.ino
+Sending only the rectangle that changed (`gfx_flushRect()`): the cost of a
+flush scales with its area.
+*/
+
+/**
+@example GameKit.ino
+CHGfx's game-making pieces on one screen: a clip rectangle under a HUD,
+span sprites with palette remaps and rotation, row operations, shapes,
+outlined banner text and palette animation.
+*/
+
+/**
+@example Fonts.ino
+Custom bitmap fonts: the bundled fonts and Adafruit_GFX's, and the one
+gotcha (a custom font's y is its baseline).
+*/
+
+/**
+@example Demoscene.ino
+A seven-part demo that uses both rendering modes: the 16-colour
+framebuffer, and `gfx_stream()` computing full-colour pixels straight into
+the DMA's buffer.
+*/
+
+/**
+@example AdafruitGFXCompat.ino
+Keep Adafruit_GFX drawing code and put CHGfx's framebuffer and DMA
+transport underneath it (`CHGfx_GFX`).
+*/
+
+/**
+@example Benchmark.ino
+The graphics throughput benchmark: every primitive and flush mode timed on
+the board, with results on the serial monitor and the panel.
+*/

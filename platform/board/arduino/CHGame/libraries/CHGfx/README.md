@@ -1,5 +1,7 @@
 # CHGfx
 
+**API reference: <https://bateske.github.io/CHGame/group__lib__chgfx.html>** (every call, its parameters and what it does).
+
 Wire-speed ST7735 graphics for the **CH32X035** (QingKe V4C, 48 MHz,
 20 KB SRAM). Built for the CHGame handheld — ST7735S 1.44" 128×128 on
 SPI1 — but the control pins are remappable.
@@ -563,7 +565,7 @@ Gfx.begin(GFX_DIV4);      // 12 MHz, comfortably in spec
 
 ## API
 
-Class methods (on `Gfx`) and the equivalent free functions:
+The [API reference](https://bateske.github.io/CHGame/group__lib__chgfx.html) documents each call. Class methods (on `Gfx`) and the equivalent free functions:
 
 | Class | Free function |
 |---|---|
