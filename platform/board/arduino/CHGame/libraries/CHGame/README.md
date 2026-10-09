@@ -99,7 +99,10 @@ include just the one it needs, e.g. `<chgame/Fmt.h>`.
   what fills it. Unused parts of the library cost nothing (link-time optimisation
   drops them).
 - **RAM is 18,416 B** for statics, plus a 2 KB stack. The framebuffer takes
-  8 KB of it.
+  8 KB of it when the sketch draws with CHGfx. A sketch that includes
+  `CHGame.h` for its sound, buttons or saves and draws through its own code
+  does not carry it: the libraries link from archives, so an object is
+  linked only when something calls into it.
 - **`static const` tables of 8 bytes or less** are copied into SRAM by this
   core's link script; sound steps use `AUDIO_STEPS` to stay in flash.
 - **Integer maths only.** Soft-float costs kilobytes and frame rate.
