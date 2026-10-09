@@ -211,6 +211,18 @@ list builds stayed byte-identical. Not yet run on a board.
 
 ## Changes since the copies were taken
 
+- 2026-10-08: CHSd clocks one idle byte before each command (`cmd()` in
+  `SdSpi.cpp`), the SD spec's N_RC: at least 8 clocks between a response
+  and the next command. Identification sent its commands back to back
+  (`read()` and `stream()` already waited first). A SanDisk 32 GB card
+  ("SK32G") took them misaligned and stopped answering, so CHStlView and
+  the word games found no card where the menu, whose `sd.c` always sent the
+  byte, read it. Contributed with a board run on that card (PR #21).
+  `tests/test_spi.cpp`'s card model now counts a command sent with no gap
+  as a failure (11 or 12 per init without the fix). +8 B in each of the
+  four sketches on CHSd (CHWords, CHWordWheel, CHCrossword, CHStlView),
+  RAM unchanged; the simulator does not run `SdSpi.cpp`.
+
 - 2026-10-08: the three libraries link from archives (`dot_a_linkage=true`
   in CHGfx's, CHGame's and CHSd's `library.properties`). A developer using
   only `audio::` and the buttons, with their own display code, found every

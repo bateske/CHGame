@@ -3,7 +3,10 @@
 // card keeps across an MCU reset (it stays powered): its state and whether
 // CRC checking is on. CHSDtoUSB turns checking on, and the model's CMD0 does
 // not turn it off, the worst case (the bootloader's test/native/sd_model.c
-// assumes the same). tests/run_tests.py builds and runs it.
+// assumes the same). It is also a strict card about N_RC: a command must not
+// start on the byte right after the last byte of a response (some cards,
+// such as a SanDisk 32 GB "SK32G", take it misaligned and stop answering).
+// tests/run_tests.py builds and runs it.
 #include <stdio.h>
 #include <string.h>
 #include "Arduino.h"
@@ -36,7 +39,8 @@ struct Card {
     enum State { POWERUP, IDLE, READY } state = POWERUP;
     bool crcOn = false, acmd = false;
     int acmd41Left = 0;
-    uint32_t clocksCsHigh = 0, badCrc = 0, fastIdent = 0, conflicts = 0, blocks = 1024;
+    uint32_t clocksCsHigh = 0, badCrc = 0, fastIdent = 0, conflicts = 0, noGap = 0, blocks = 1024;
+    bool justAnswered = false;                              // the last byte out ended a response
     uint8_t cmd[6];
     int cmdLen = 0;
     uint8_t out[600];
@@ -96,10 +100,14 @@ struct Card {
         if (type == NONE) return 0xFF;
         if (!csLow) {
             if (clocksCsHigh < 1000) clocksCsHigh += 8;
+            justAnswered = false;
             return 0xFF;                                    // DO released: the pull-up
         }
+        bool noRc = justAnswered;
+        justAnswered = outPos + 1 == outLen;
         uint8_t o = outPos < outLen ? out[outPos++] : 0xFF;
         if (cmdLen == 0) {
+            if ((in & 0xC0) == 0x40 && noRc) noGap++;       // N_RC: 8 clocks at least
             if ((in & 0xC0) == 0x40) cmd[cmdLen++] = in;
         } else {
             cmd[cmdLen++] = in;
@@ -140,6 +148,7 @@ static void initAndRead(const char *name, bool expectOk) {
     CHECK(t_spi.CTLR1 == lcd, "SPI1 not handed back as CHGfx left it");
     CHECK(card.conflicts == 0, "the panel and the card selected together");
     CHECK(card.fastIdent == 0, "identification above 400 kHz");
+    CHECK(card.noGap == 0, "%u commands without N_RC", (unsigned)card.noGap);
     CHECK(card.badCrc == 0, "%u commands refused for their CRC", (unsigned)card.badCrc);
     if (!expectOk) {
         CHECK(now_us - t0 < 20000, "an empty slot took %u us", (unsigned)(now_us - t0));
