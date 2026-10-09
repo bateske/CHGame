@@ -21,7 +21,10 @@
 /// | chgame/Debug.h   | dbg:: the serial debug protocol the simulator and the tools drive a game through (CHGAME_DEBUG builds) |
 /// | chgame/Config.h  | the library's build switches (CHGAME_DEBUG ...) |
 ///
-/// The casino games in this library's examples are built from these.
+/// The casino games in this library's examples are built from these. Only
+/// what a sketch calls is linked: CHGfx's framebuffer and DMA handler come
+/// with the first drawing call, not with the include, so a sketch that uses
+/// this library for its sound, buttons or saves alone pays nothing for them.
 /// chgame/Sizzle.h (particles, banners, floating texts) is not included
 /// here: a game configures and compiles it itself.
 #pragma once

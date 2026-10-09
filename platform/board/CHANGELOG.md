@@ -14,6 +14,19 @@ file as the GitHub release notes.
   function, class and constant of CHGame, CHGfx, CHSd, SPI, Wire and EEPROM,
   documented in their headers with Doxygen.
 
+### Changed
+
+- **CHGfx, CHGame and CHSd link from archives** (`dot_a_linkage=true` in
+  their `library.properties`), so an object of theirs is linked only when
+  the sketch calls into it. Arduino otherwise links every object of an
+  included library whole, and CHGfx's DMA interrupt handler (its
+  `DMA1_Channel3_IRQHandler` replaces the core's weak default) kept the 8 KB
+  framebuffer, the 1 KB chunk buffers and the SRAM converters alive in any
+  sketch that included `CHGame.h`, drawing with it or not. A sketch that
+  uses `audio::` and `chgame_readButtons()` and draws through its own code
+  now takes 352 B of static RAM instead of 9,712 B. The 20 games' and the
+  3 apps' release images are byte-identical. (Reported by a developer.)
+
 ### Fixed
 
 - **CHSd works with more microSD cards.** It sent each command right after

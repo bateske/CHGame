@@ -211,6 +211,22 @@ list builds stayed byte-identical. Not yet run on a board.
 
 ## Changes since the copies were taken
 
+- 2026-10-08: the three libraries link from archives (`dot_a_linkage=true`
+  in CHGfx's, CHGame's and CHSd's `library.properties`). A developer using
+  only `audio::` and the buttons, with their own display code, found every
+  sketch that includes `CHGame.h` carrying CHGfx's framebuffer: Arduino
+  links a library's objects whole, and the DMA interrupt handler in
+  `CHGfx.cpp` (a strong `DMA1_Channel3_IRQHandler` over the core's weak
+  one) keeps `gfx_fb`, the chunk buffers and the SRAM converters with it.
+  From an archive an object is linked only when something calls into it,
+  so that sketch is 352 B of RAM instead of 9,712 B, and the two hooks the
+  libraries override (that handler, and `osSystickHandler` in `Audio.cpp`)
+  sit in the same objects as `gfx_begin()` and `audio::begin()`, so a
+  sketch that uses the feature always gets them. Plain `riscv-none-embed-ar`
+  indexes GCC 8's slim LTO objects, so the `-Os -flto` builds need no
+  `gcc-ar`. All 23 examples' release images are byte-identical
+  (board/CHANGELOG.md, "Unreleased"). The simulator does not read the flag.
+
 - 2026-10-07: an API reference for every library the board package ships.
   The public headers of CHGame, CHGfx, CHSd, SPI, Wire and EEPROM carry
   Doxygen comments (a brief, every parameter, the return value, and the
