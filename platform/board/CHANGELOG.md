@@ -16,6 +16,15 @@ file as the GitHub release notes.
 
 ### Fixed
 
+- **CHSd works with more microSD cards.** It sent each command right after
+  the card's previous response, where the SD Physical Layer Simplified
+  Specification asks for at least 8 clocks in between (N_RC, SPI mode
+  timing). Many cards do without them; a strict one (a SanDisk 32 GB,
+  "SK32G") took the next command misaligned and stopped answering, so every
+  sketch on CHSd (CHStlView, the word games' card files) said there was no
+  card while the SD menu bootloader read it. `cmd()` now clocks one idle
+  byte first, as the bootloader's `sd.c` does: one byte per command, not per
+  block.
 - **EEPROM no longer writes the CH32X035's option bytes.** The library is
   the CH32V003's: its `commit()` erased the option-byte block and rewrote it
   a half-word at a time, which the CH32X035 is not documented to accept. A
