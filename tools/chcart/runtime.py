@@ -204,16 +204,32 @@ def levels(cart):
     return out
 
 
-def prepare(cart, device="rev0"):
+def for_device(cart, device="rev0"):
+    """(the cart as `device`'s card holds it, [ids left off]): a game with no
+    binary for the device is left off its card (spec/card.md), its SD files
+    with it, and the launch flag too if it named one. Raises CartError
+    (bad-device) when no game has one."""
+    import dataclasses
+    keep = [g for g in cart.games if device in g.binaries]
+    if not keep:
+        raise CartError([Issue("bad-device", "games", f"no game has a binary for {device}")])
+    left = [g.id for g in cart.games if device not in g.binaries]
+    launch = cart.launch if cart.launch not in left else ""
+    return dataclasses.replace(cart, games=keep, launch=launch), left
+
+
+def prepare(cart, device="rev0", log=None):
     """{card path: bytes} for the cart: GAMES/ and the games' SD files.
-    Raises CartError if the cart breaks a rule or a game has no binary for
-    `device`. A card is for one board: its CHG files carry that board's
-    target id, and another board's menu refuses to install them."""
+    Raises CartError if the cart breaks a rule or no game has a binary for
+    `device`; a game without one is left off (log(), if given, says which).
+    A card is for one board: its CHG files carry that board's target id, and
+    another board's menu refuses to install them."""
     errors = [i for i in model.validate(cart) if i.error]
-    errors += [Issue("bad-device", f"games[{g.id}].binaries", f"no binary for {device}")
-               for g in cart.games if device not in g.binaries]
     if errors:
         raise CartError(errors)
+    cart, left = for_device(cart, device)
+    if left and log:
+        log(f"not on a {device} card (no {device} binary): {', '.join(left)}")
     ui = cart.ui_colors()
     tree = levels(cart)
     where = {"": "GAMES"}                           # folder path -> card path

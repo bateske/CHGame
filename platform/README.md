@@ -7,12 +7,12 @@ here. The table's "Came from" column is history, not something to sync with.
 
 | Folder | What | Version | Came from | Licence |
 |---|---|---|---|---|
-| `board/arduino/CHGame/` | The CHGame Arduino board package: core, variant, linker scripts, bootloader binary, `boards.txt` / `platform.txt` | 0.3.0 (released 2026-10-07) | CH32SerialBoot tag `v0.2.4` (5de3006), folder `arduino/CHGame` | MIT (`board/LICENSE`, `board/THIRD-PARTY.md`) |
+| `board/arduino/CHGame/` | The CHGame Arduino board package: core, variants (CHGame Rev0, CHGame Rev1), linker scripts, bootloader binaries, `boards.txt` / `platform.txt` | 0.4.0, not yet released (0.3.0 released 2026-10-07) | CH32SerialBoot tag `v0.2.4` (5de3006), folder `arduino/CHGame` | MIT (`board/LICENSE`, `board/THIRD-PARTY.md`) |
 | `board/docs/` | The board's docs: hardware pin map, flash/RAM map, boot flow, upload protocol, recovery, CH32X035 gotchas, building the bootloader | 0.2.4 | same tag, folder `docs` | MIT |
 | `board/arduino/CHGame/libraries/CHGame/` | The CHGame library: `CHGame.h`, the one include of a sketch (buttons, pacing, palette, drawing, sound, saving, the debug protocol) | 0.1.0 | built here (2026-10-02) from the code the twenty games shared | Apache-2.0 (`LICENSE`, `NOTICE`) |
-| `board/arduino/CHGame/libraries/CHGfx/` | The graphics library | 1.3.2 | CHGfx tag `1.3.0` (838bbb0) | MIT (+ font notices in its `LICENSE`) |
+| `board/arduino/CHGame/libraries/CHGfx/` | The graphics library | 1.3.3 | CHGfx tag `1.3.0` (838bbb0) | MIT (+ font notices in its `LICENSE`) |
 | `board/arduino/CHGame/libraries/CHSd/` | Read-only SD card + FAT16/32 library | 1.0.0 | never had a repository of its own | MIT |
-| `bootloader/` | The bootloader with the SD game menu: sources, PC test suite, built binaries, and the uploader in Go (`host/go`, the executable the board package installs) and in Python (`host/py`, what the repository's tools use) | 0.2.4 + the SD menu (BOOT_VERSION 2) | CH32SerialBoot tag `v0.2.4` (5de3006): `bootloader/`, `shared/`, `host/py/`, `test/` | MIT (+ BSD font, `bootloader/NOTICE`) |
+| `bootloader/` | The bootloader with the SD game menu: sources, PC test suite, built binaries, and the uploader in Go (`host/go`, the executable the board package installs) and in Python (`host/py`, what the repository's tools use) | 0.2.4 + the SD menu (BOOT_VERSION 3), for Rev0 and Rev1 | CH32SerialBoot tag `v0.2.4` (5de3006): `bootloader/`, `shared/`, `host/py/`, `test/` | MIT (+ BSD font, `bootloader/NOTICE`) |
 | `hardware/` | Rev 0 schematic (PDF) and netlist (EasyEDA `.tel`) | 2026-08-21 | | |
 
 The third-party code inside these (the WCH core and SPL, the USB CDC stack,
@@ -26,7 +26,10 @@ Everything: the core, the menu bootloader, the `CHGame` library (with CHGfx
 and CHSd beside it) and the casino games as its examples, so that
 installing or updating "CHGame" in the Boards Manager brings all of it at
 once. That is 0.3.0, released on 2026-10-07, built from here and tested
-as a new user would get it (`python tools/release/stage.py`);
+as a new user would get it (`python tools/release/stage.py`). The next,
+0.4.0, has two boards: **CHGame Rev0** (`CHGame:ch32v:rev0`) and **CHGame
+Rev1** (`CHGame:ch32v:rev1`, which Rev 1.5 uses too), each with its own
+variant and bootloaders, and every game and app builds for both;
 [../docs/roadmap.md](../docs/roadmap.md) has what is left. Between
 releases, the pieces are used from this repository as described below,
 or from a staged install
@@ -54,20 +57,19 @@ before it is published, stage it and install it from this machine:
   until a release is installed (or the installed package is patched by
   hand), because arduino-cli compiles against the installed package, not
   this folder;
-- the place to read the core, variant and linker script (the pin names are
-  in `variants/CH32X035/CHGame_Rev0/variant_CHGame_Rev0.h`; the menus and their flags
-  in `boards.txt`);
-- 0.3.0: what the next release installs. What changed from 0.2.4 is in
-  [board/CHANGELOG.md](board/CHANGELOG.md).
+- the place to read the core, the variants and the linker script (the pin
+  names are in `variants/CH32X035/CHGame_Rev0/variant_CHGame_Rev0.h` and
+  `CHGame_Rev1/variant_CHGame_Rev1.h`, both boards' pin maps in
+  [board/docs/hardware-pinmap.md](board/docs/hardware-pinmap.md); the menus
+  and their flags in `boards.txt`);
+- 0.4.0: what the next release installs. What changed since 0.3.0 is in
+  [board/CHANGELOG.md](board/CHANGELOG.md), "Unreleased".
 
 **Gaps:**
 - The board docs sometimes refer to `bootloader/`, `host/` or `tools/`
   paths as they were in CH32SerialBoot. `bootloader/` and `host/py` are now
   under [bootloader/](bootloader). The release scripts are
   `tools/release/` (Python), described in `board/docs/building.md`.
-- `board/docs/hardware-pinmap.md` leaves some ports as "—". The variant
-  header has them all; the summary is in
-  [../docs/platform.md](../docs/platform.md).
 - The core has no README of its own here. The Tools menus, `Serial`
   behaviour and memory report are described in
   [../README.md](../README.md) and [../CLAUDE.md](../CLAUDE.md).
@@ -113,7 +115,9 @@ the record of its decisions. The board package carries it from 0.3.0:
   which wins over the installed package's copy;
 - the simulator compiles its `src/` unless `CHSIM_CHGAME` points elsewhere;
 - with 0.2.4, Arduino IDE users copy this folder into their sketchbook's
-  `libraries/`.
+  `libraries/`. From 0.3.0 such a copy is in the way: the IDE prefers the
+  sketchbook's library to the package's, and a copy from before 0.4.0 knows
+  only Rev0's pins (the same goes for CHGfx and CHSd). Remove it.
 
 A change to it is a change to every game: rebuild all twenty (size), and
 compare their simulator frames (and, for `chgame/Audio`, the sound preview
@@ -160,20 +164,20 @@ the SD card ([../docs/sd-menu.md](../docs/sd-menu.md)).
 [bootloader/README.md](bootloader/README.md) has the design, the
 differences from 0.2.4, building, testing and installing.
 
-**It is in `platform/board`, not in a released package yet** (2026-10-02).
-- `board/arduino/CHGame/bootloaders/CHGame/` carries the menu bootloader,
-  the no-menu build and the 0.2.4 bootloader. *Tools > Bootloader* chooses
-  one, and the programmer **CHGame USB** writes it through the bootloader
-  already on the board (`chgame-upload burn`, tool version 0.2.0,
-  `bootloader/host/go`); **WCH factory ISP** remains for recovery.
-- Tried on a board through `arduino-cli burn-bootloader`: every change
-  between the three, 0.2.4 to the menu included, then an upload.
-- The installed package 0.2.4 has none of this: it offers the factory ISP
-  only and writes the 0.2.4 bootloader.
-- Games build against core 0.2.4 unchanged; the menu bootloader is
-  compatible with it.
-- To ship it through the Boards Manager, the release must also publish the
-  `chgame-upload` 0.2.0 archives and name them in the package index.
+**It ships with the board package** (from 0.3.0).
+- `board/arduino/CHGame/bootloaders/CHGame/` carries Rev0's five (the SD
+  Text Menu and the SD Graphic Menu, each Rainbow or Static, and USB Only),
+  and `bootloaders/CHGame/rev1/` the same five built for Rev1 (0.4.0).
+  *Tools > Bootloader* offers the selected board's, and the programmer
+  **CHGame USB** writes it through the bootloader already on the board
+  (`chgame-upload burn`, tool version 0.3.0 from 0.4.0,
+  `bootloader/host/go`); **WCH factory ISP** remains for a blank board and
+  for recovery. Both refuse an image built for the other board (`-device`).
+  The 0.2.4 bootloader is kept in `bootloader/release/0.2.4/` for a Rev0's
+  rollback, not in the package.
+- Tried on a board through `arduino-cli burn-bootloader` (2026-10-02):
+  every change between the 0.2.4 bootloader, the USB-only one and the
+  first menu, then an upload.
 
 **Menu v2** (2026-10-03, BOOT_VERSION 3): folders, the card's order and
 background (`GAMES/MENU.IDX`, `MENU.BG`: [../spec/card.md](../spec/card.md)),
@@ -197,6 +201,27 @@ each in its CHG file), an about page, its own screens from the card
 list menu. The list and visual menus share `bootloader/src/card.c`; the
 list builds stayed byte-identical. Not yet run on a board.
 
+**Rev1** (2026-11-17, `build.sh --board=rev1`): every build again for
+CHGame Rev1's pins, with its backlight lit only after the panel's first
+frame (40 ms after DISPON: no white flash at power-on, checked on the
+first Rev1 board) and `HELLO`'s board field (`CGR1`), into
+`bootloader/release/rev1/` and the package's `bootloaders/CHGame/rev1/`.
+List 11,928 B, visual 12,064 B (224 B free, 32 B more than its gate
+keeps), USB Only 5,348 B;
+every Rev0 binary is unchanged to the byte
+([bootloader/README.md](bootloader/README.md), "Changes of 2026-11-17:
+rev1"; [bootloader/SIZES.md](bootloader/SIZES.md)). Installing it on a new
+board: [bootloader/HARDWARE.md](bootloader/HARDWARE.md), "Rev1".
+
+**Version 4** (2026-11-20, BOOT_VERSION 4): every build keeps the system
+settings block, the metadata page's last 32 B, when it installs a program,
+aborts an upload or updates itself. List 11,952 B (rev1 11,944 B), visual
+12,080 B (rev1 12,084 B; 16 B and 12 B above its gate), USB Only 5,336 B
+(rev1 5,344 B) ([bootloader/README.md](bootloader/README.md), "Changes of
+2026-11-20"). Run on the Rev 1.5 board on 2026-11-20 (the rev1 Graphic
+Menu): a pattern written into the block came through USB uploads, a
+change of program, an ABORT, a self-update and an install from the card.
+
 ## Changing a platform piece
 
 1. Make the change here and say what it is for in the commit. For the
@@ -210,6 +235,129 @@ list builds stayed byte-identical. Not yet run on a board.
    root README.
 
 ## Changes since the copies were taken
+
+- 2026-11-20: **The system settings block: 32 B reserved at the end of
+  flash.** The metadata page's last 32 B, `0xF7E0`-`0xF7FF`
+  (`CHGAME_SYS_ADDR`/`CHGAME_SYS_SIZE` in both copies of `chgame_map.h`),
+  are set aside for settings that belong to the handheld rather than to a
+  game: sound, brightness, a player's name, ... None is defined, and
+  nothing reads or writes them yet; the rules for when something does are
+  in spec/chgame.md, "The system settings block". The space was picked
+  because no game can reach it: uploads stop at `0xF700` and saves use
+  `0xF500`/`0xF600`. Bootloader version 4 keeps it across installs,
+  ABORT and self-update, where versions 1-3 erase it at every install
+  (bootloader/README.md, "Changes of 2026-11-20"; +32 B list, +20 B
+  visual, RAM -32 B). Both boards' binaries are refreshed (`dist.sh`), so
+  0.4.0 ships v4. No game, library or core code changes: the core's map
+  gains two constants that nothing uses yet, and no image differs. Boards
+  in the field keep erasing the block until their bootloader is updated
+  (Burn Bootloader with CHGame USB).
+
+- 2026-11-20: **The Rev1 backlight is dark from the sketch's first
+  instruction.** `cores/arduino/board.c`'s `pre_init()` drives PB9 low
+  before anything else (rev1 only; rev0 images unchanged). Until now it was
+  a floating input from the reset until CHGfx's `gfx_begin()`, R20's
+  pull-down did not hold the backlight off, and a program started without
+  an SD card showed the panel's power-up noise for a moment (the CHPower
+  apps, which set up the power section first, the longest). 48 B on each
+  rev1 image; all 20 games still fit (the largest, CHCraps, 50,260 B). The
+  installed 0.4.0-local core was patched by hand to try it; a re-stage
+  carries it.
+
+- 2026-11-20: **CHPower moved to a repository of its own**, as an add-on
+  (the Rev 1.5's power section may not carry over to later boards): the
+  library, split there into CHPower and CHUSBHost, and its two apps,
+  CHPDTrigger and CHUSBHost, are no longer here, in the board package or
+  on the casino card. What stays is general: the CHGame library's
+  `chgame_beforeExit()` hook, `tools/game.py`'s `BOARDS`, the card's rule
+  that leaves off a program with no binary for its board, and the tools
+  now build a sketch from another repository with the libraries beside it
+  (`tools/paths.py`'s `sketch_libraries()`, `$CHGAME_TOOLS` for its
+  scripts).
+
+- 2026-11-19: **CHPower 0.1.0** (moved out on 2026-11-20, above), the Rev 1.5 power section's library
+  (CH211, INA226 and CN1; the USB-PD sink with PPS; battery-powered USB
+  host with hubs, keyboards, mice and pads), with its two apps among the
+  CHGame library's examples (`Apps/`), CHPDTrigger (PD TRIGGER) and
+  CHUSBHost (USB HOST): built for rev1 alone (a new `tools/game.py` key,
+  `BOARDS`, which `build`, `check`, `export` and `card` honour, and CHPower
+  stops a build for any other board), and on the rev1 casino card's APPS
+  folder only. For that, preparing a card now leaves off a game with no
+  binary for its board instead of refusing the cart (spec/card.md; the
+  emulator project is told in spec/README.md). `tools/device.py` and the
+  simulator pass it like the other three; it is not yet in a release. Its
+  safeties live in the library, not the apps (its README, "What it guards
+  by itself"): CN1 goes by the contract the PD sink hands it, the limit is
+  clamped to the contract's budget, a contract that ends or shrinks turns
+  CN1 off or lowers the limit, VBUS off the contract trips CN1, host power
+  never meets another source's 5 V, and `pd::service()` /
+  `host::service()` run the checks themselves.
+  **The CHGame library** gained a weak hook, `chgame_beforeExit()`, called
+  before every exit to the menu (START held, `exitToMenu()`, the debug
+  protocol's B); CHPower defines it as `pwr::safeDown()`. In a game, which
+  defines none, it is a test and a call that never runs: 18 B. All 20
+  games rebuilt for both boards, each within 50,432 B (the largest,
+  CHCraps, 50,340 B on rev0 and 50,216 B on rev1); the simulator does not
+  compile the hook, so its frames cannot change.
+
+- 2026-11-17: **CHGame Rev1**, the second board, which Rev 1.5 uses too:
+  the same CH32X035G8U6 and memory map on other pins
+  ([board/docs/hardware-pinmap.md](board/docs/hardware-pinmap.md),
+  [../docs/hardware-revisions.md](../docs/hardware-revisions.md)). The board
+  package is 0.4.0 (`platform.txt`; not released, staged and installed here
+  as `0.4.0-local`), with two boards (board/CHANGELOG.md, "Unreleased"):
+  - **The board and its variant.** "CHGame Rev1" in `boards.txt`
+    (`CHGame:ch32v:rev1`, `build.chgame_device=rev1`, its *Bootloader* menu
+    from `bootloaders/CHGame/rev1/`) and `variants/CH32X035/CHGame_Rev1/`:
+    its pins, `PIN_LCD_BL` (PB9), `PIN_VBUS_SENSE` (PA0), `PIN_TP14` /
+    `PIN_TP15`, Serial1 on CN3, Wire on CN2, PWM only on PB9, PB10 and PA1,
+    Servo on TIM3, and in its header the rules on who owns which pin and
+    timer. Rev 1.5 gets no board of its own.
+  - **`platform.txt`** passes `-DARDUINO_{build.board}` in
+    `build.info.flags`, so the core, the libraries and the sketch see
+    `ARDUINO_CHGAME_REV0` or `ARDUINO_CHGAME_REV1` (0.3.0 defined neither),
+    and `-device {build.chgame_device}` to chgame-upload in the pack hook,
+    Upload, Burn Bootloader and Upload Using Programmer.
+  - **The core.** On Rev1, `noTone()` and `tone(pin, 0)` leave the pin low
+    (`Tone.cpp`), and the crash handler drives the buzzer (PA1) low and
+    lights the LED (PB10), leaving the backlight as it is; a debug build's
+    restart reads A on PB11 (`chgame_boot.c`). On both boards Serial1, which
+    is USART2 on PA2/PA3, now receives: its receive interrupt was set up
+    only for a `Serial2` (`HardwareSerial.cpp`).
+  - **CHGfx 1.3.3:** the panel's and the card's pins from the variant
+    (`CHGFX_*`, whose defaults stay Rev0's) and a switched backlight
+    (`CHGFX_BL_PORT` / `CHGFX_BL_PIN`), held low until `gfx_begin()` has
+    sent the panel a black frame.
+  - **CHSd:** the card's CS on PB3 (`SdSpi.cpp`); `tests/run_tests.py` runs
+    the SPI test once per board.
+  - **CHGame:** Rev1's buttons (`Input.cpp`); the sound on TIM2 channel 2
+    (PA1), low whenever it is silent, with pitches under 16 Hz as silence,
+    and the LED patterns on PB10 (`Audio.cpp`).
+  - **The uploader** 0.3.0, Go and Python: rev1 known, `-device` on
+    `burn` and `provision` too, `provision` asking before it erases.
+  - **The bootloader** for Rev1: "The bootloader", above.
+
+  Every Rev1 difference is under `#if defined(ARDUINO_CHGAME_REV1)` or in
+  the variant, with Rev0's code as it was. Checked: 28 sketches (the 20
+  games, the 3 apps, Hello, CHSDtest and three of CHGfx's examples) built
+  for rev0 with the new tools and libraries and the installed
+  `0.4.0-local` core are byte-identical to their images from before the
+  change, built with 0.3.0. For rev1 the 20 games and the 3 apps build,
+  each within the 50,432 B that keep both save pages (the largest,
+  CHCraps, 50,184 B). Not yet run on a Rev1 board:
+  [bootloader/HARDWARE.md](bootloader/HARDWARE.md), "Rev1", is the
+  bring-up.
+
+- 2026-10-20: the CHGame library's rounded corners (`INSET` in
+  `chgame/Draw.cpp`, used by `fillRound()`, `roundRect()`, `panel()` and
+  `panelLit()`) step one pixel a row: radius 3 is `{3, 2, 1}` and 4 is
+  `{4, 3, 2, 1}`, instead of the arcs `{3, 1, 1}` and `{4, 2, 1, 1}`,
+  whose second row carried a doubled pixel the owner wanted gone (menu
+  highlights, panels, pause boxes, bubbles, dice shadows; radius 3 alone
+  is about 200 calls in the games). Radii 1 and 2 were already so.
+  CHGfx's own `gfx_roundRect()` is unchanged. All 20 games: sizes
+  unchanged, every sim script's frames differ only at those corners (at
+  most 82 px a frame), every README GIF re-recorded.
 
 - 2026-10-08: CHSd clocks one idle byte before each command (`cmd()` in
   `SdSpi.cpp`), the SD spec's N_RC: at least 8 clocks between a response

@@ -9,9 +9,10 @@ Sources:
   * New art drawn for this port, as palette-letter text in tools/art/.
   * Hand-painted overrides as palette-exact PNGs in tools/art/ (dealer.png:
     the whole 48x42 dealer, replacing the recoloured PPOT bust).
-  * The title screen's title: the cover's (tools/cart.py title_lines(),
-    tools/art/title.txt), packed by tools/titleart.py. PPOT's own logo
-    stays on the splash.
+  * The title (title screen and splash): the cover's (tools/cart.py
+    title_lines(), tools/art/title.txt), packed by tools/titleart.py.
+  * The pixel CHGAME logo (splash, credits): the console's own,
+    tools/brand/logo-pixel.png at the repository's root, as two masks.
 
 Outputs:
   src/assets/Assets.h / Assets.cpp   - generated, do not edit
@@ -112,28 +113,6 @@ def load_sheet(name, sizes=None):
             assert len(img) == h and all(len(r) == w for r in img), f"{name} glyph {i}: expected {w}x{h}"
         imgs.append(img)
     return imgs
-
-
-def sprites_array(header, name):
-    """Decode an Arduboy Sprites-format array (w, h, then 8-row pages of column bytes)."""
-    import re
-    text = (PPOT / "Blackjack" / "src" / "images" / header).read_text(encoding="utf-8", errors="replace")
-    m = re.search(r"PPOT\[\]\s*=\s*\{(.*?)\};" if name == "PPOT" else name + r"\[\]\s*=\s*\{(.*?)\};", text, re.S)
-    body = re.sub(r"/\*.*?\*/", "", m.group(1), flags=re.S)
-    body = re.sub(r"//[^\n]*", "", body)
-    body = re.sub(r"#\w+[^\n]*", "", body)
-    nums = [int(t, 0) for t in re.findall(r"0x[0-9A-Fa-f]+|\d+", body)]
-    w, h = nums[0], nums[1]
-    data = nums[2:]
-    img = [[0] * w for _ in range(h)]
-    for page in range((h + 7) // 8):
-        for x in range(w):
-            b = data[page * w + x]
-            for bit in range(8):
-                y = page * 8 + bit
-                if y < h and (b >> bit) & 1:
-                    img[y][x] = 1
-    return img
 
 
 # ---------------------------------------------------------------------------
@@ -423,12 +402,7 @@ def main():
     for f, nm in [("Dealer_FaceAngry", "ANGRY"), ("Dealer_FaceRaisedEye", "RAISED"),
                   ("Dealer_FaceEyesClosed", "BLINK")]:
         faces[nm] = rebase(face_patch(f))
-    # Title logo "BlackJack" (PPOT splash screen, rows 8..21).
-    splash = load_mono("SplashScreen.png")
-    logo = [[1 if splash[y][x] else 0 for x in range(14, 118)] for y in range(8, 22)]
-    o.array("LOGO", pack_rows1(logo), comment="PPOT 'BlackJack' logo 104x14, MSB-first rows")
-    mono_preview("logo", logo)
-    # The title screen's: the cover's title (tools/cart.py), as the cover draws it.
+    # The title screen's and the splash's: the cover's title (tools/cart.py), as the cover draws it.
     import cart
     import titleart
     line, = cart.title_lines()
@@ -444,12 +418,18 @@ def main():
         o.const(nm + "_W", len(bits[0]))
         mono_preview(nm.lower(), bits)
 
-    # PPOT logo for the splash (Sprites format in Splash.h).
-    ppot = sprites_array("Splash.h", "PPOT")
-    o.array("PPOT_LOGO", pack_rows1(ppot), comment=f"PPOT logo {len(ppot[0])}x{len(ppot)}")
-    o.const("PPOT_LOGO_W", len(ppot[0]))
-    o.const("PPOT_LOGO_H", len(ppot))
-    mono_preview("ppot_logo", ppot)
+    # The pixel CHGAME logo (splash, credits): its letters (black in the PNG)
+    # and its hand-placed shadow (magenta) as two masks of one size.
+    im = Image.open(HERE.parents[9] / "tools" / "brand" / "logo-pixel.png").convert("RGB")
+    w, h = im.size
+    px = im.load()
+    letters = [[1 if px[x, y] == (0, 0, 0) else 0 for x in range(w)] for y in range(h)]
+    shadow = [[1 if px[x, y] == (255, 0, 255) else 0 for x in range(w)] for y in range(h)]
+    o.array("CHG_LOGO", pack_rows1(letters), comment=f"CHGAME logo's letters {w}x{h}, MSB-first rows")
+    o.array("CHG_LOGO_SHADOW", pack_rows1(shadow), comment=f"CHGAME logo's shadow {w}x{h}")
+    o.const("CHG_LOGO_W", w)
+    o.const("CHG_LOGO_H", h)
+    mono_preview("chg_logo", letters)
 
     # New expressions for this port, edited from the normal face patch.
     base = normal
@@ -482,6 +462,9 @@ def main():
         cells = {nm: [row[24 * k:24 * k + 24] for row in sheet] for k, nm in enumerate(names)}
         assert cells["NORMAL"] == normal, "faces.png: its NORMAL must be the dealer's face (12,14 of dealer.png)"
         faces = {nm: cells[nm] for nm in names[1:]}
+    # The blink keeps only his eyes (rows 5-9 of the patch): the mouth and
+    # mustache stay as in NORMAL, and it costs fewer edits.
+    EYES = range(5, 10)
     order = ["ANGRY", "RAISED", "BLINK", "SMILE", "SURPRISED", "TALK"]
     words, starts = [], []
     for nm in order:
@@ -489,7 +472,7 @@ def main():
         img = faces[nm]
         for y in range(18):
             for x in range(24):
-                if img[y][x] != normal[y][x]:
+                if img[y][x] != normal[y][x] and (nm != "BLINK" or y in EYES):
                     c = 15 if img[y][x] == TRANSPARENT else img[y][x]
                     words.append(((y * 24 + x) << 4) | c)
         preview(f"face_{nm.lower()}", img, bg=11)

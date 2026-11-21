@@ -1,10 +1,12 @@
-# CHGame board definition.
+# CHGame board definitions: CHGame Rev0, and CHGame Rev1 (which Rev 1.5 uses
+# too). The two have different pins: the board selected must be the one in
+# hand, and the uploader refuses the other (platform.txt, -device).
 #
-# Deliberately ONE board with ONE obvious upload behaviour. The upstream CH32
-# core exposes menus for clock, optimisation, debug level, C runtime and
-# programmer choice; almost none of that is meaningful to someone who just
-# wants to press Upload, and every extra menu is another way to end up with a
-# board that will not enumerate.
+# Deliberately ONE entry per board, with ONE obvious upload behaviour. The
+# upstream CH32 core exposes menus for clock, optimisation, debug level, C
+# runtime and programmer choice; almost none of that is meaningful to
+# someone who just wants to press Upload, and every extra menu is another
+# way to end up with a board that will not enumerate.
 #
 # The advanced menus that remain are the ones a game actually needs to trade
 # off: optimisation, float printf support, which core peripherals are compiled
@@ -166,3 +168,103 @@ rev0.build.enable_usb=
 rev0.build.usb_speed=
 rev0.build.peripheral_pins=
 rev0.build.startup_file=
+
+# ---------------------------------------------------------------------------
+# CHGame Rev1. Rev 1.5 uses this entry too: the same pins, plus a USB-PD
+# sink, a battery USB host and a protected power output, which libraries
+# and apps of its own drive. A different pinout from Rev0's
+# (variants/CH32X035/CHGame_Rev1), so a sketch
+# is built for one board or the other: each drives pins the other uses as
+# buttons. An upload or a bootloader built for the other board is refused
+# (-device {build.chgame_device}, platform.txt), and so is its .chg in the
+# SD menu. Everything else is as Rev0's entry above, which explains each
+# setting.
+rev1.name=CHGame Rev1
+
+rev1.build.core=arduino
+rev1.build.board=CHGAME_REV1
+rev1.build.mcu=QingKe-V4C
+rev1.build.series=CH32X035
+rev1.build.chip=CH32X035G8U
+rev1.build.variant=CH32X035/CHGame_Rev1
+rev1.build.variant_h=variant_CHGame_Rev1.h
+rev1.build.march=rv32imacxw
+rev1.build.mabi=ilp32
+rev1.build.math_lib_gcc=-lm
+rev1.build.ch_extra_lib=-lprintf
+# The device chgame-upload checks the board against (pack, flash, burn).
+rev1.build.chgame_device=rev1
+
+# The same memory map as Rev0 (platform/bootloader/src/chgame_map.h).
+rev1.build.ldscript=link_chgame_app.ld
+rev1.upload.maximum_size=50944
+rev1.upload.maximum_data_size=18416
+rev1.build.warn_data_percentage=95
+
+rev1.build.flags.clock=-DSYSCLK_FREQ_48MHz_HSI=48000000 -DF_CPU=48000000
+
+rev1.upload.tool=chgame_upload
+rev1.upload.protocol=chgame
+rev1.upload.use_1200bps_touch=false
+rev1.upload.wait_for_upload_port=false
+rev1.upload.native_usb=true
+
+rev1.bootloader.tool=chgame_upload
+
+rev1.vid.0=0x16C0
+rev1.pid.0=0x27DD
+
+rev1.menu.opt.oslto=Smallest + LTO (-Os -flto, default)
+rev1.menu.opt.oslto.build.flags.optimize=-Os -flto
+rev1.menu.opt.oslto.build.flags.ltolink=-flto-partition=one
+rev1.menu.opt.osstd=Smallest (-Os)
+rev1.menu.opt.osstd.build.flags.optimize=-Os
+rev1.menu.opt.o1std=Fast (-O1)
+rev1.menu.opt.o1std.build.flags.optimize=-O1
+rev1.menu.opt.o2std=Faster (-O2)
+rev1.menu.opt.o2std.build.flags.optimize=-O2
+rev1.menu.opt.o3std=Fastest (-O3)
+rev1.menu.opt.o3std.build.flags.optimize=-O3
+rev1.menu.opt.ogstd=Debug (-Og)
+rev1.menu.opt.ogstd.build.flags.optimize=-Og
+
+rev1.menu.rtlib.nano=Newlib Nano (default)
+rev1.menu.rtlib.nano.build.flags.ldflags=--specs=nano.specs --specs=nosys.specs
+rev1.menu.rtlib.nanofp=Newlib Nano + Float Printf
+rev1.menu.rtlib.nanofp.build.flags.ldflags=--specs=nano.specs --specs=nosys.specs -u _printf_float
+rev1.menu.rtlib.full=Newlib Standard
+rev1.menu.rtlib.full.build.flags.ldflags=--specs=nosys.specs
+
+# Serial1 is USART2 on CN3 (PA2 TX, PA3 RX). tone() and Servo share TIM3:
+# TIM1 is the backlight's and the LED's, TIM2 the CHGame library's audio.
+# On Rev1 noTone() and tone(pin, 0) stop with the pin low (Tone.cpp): a
+# buzzer pin left high is a steady current through the buzzer.
+rev1.menu.periph.game=Game: USB Serial only, no Serial1/tone/PWM (default, ~4 KB smaller)
+rev1.menu.periph.game.build.flags.periph=-DUART_MODULE_ONLY -DTIM_MODULE_ONLY
+rev1.menu.periph.full=Full: Serial1 on CN3, tone(), PWM, HardwareTimer
+rev1.menu.periph.full.build.flags.periph=
+
+rev1.menu.usb.serial=Serial (default)
+rev1.menu.usb.serial.build.usb_flags=-DUSE_CHGAME_USB_CDC
+rev1.menu.usb.uploadonly=Upload only: no Serial (~0.7 KB smaller)
+rev1.menu.usb.uploadonly.build.usb_flags=-DUSE_CHGAME_USB_BOOTONLY
+
+# Rev1's own bootloaders (bootloaders/CHGame/rev1/): the same five as Rev0's,
+# built for these pins. A Rev0 bootloader on this board drives its buttons.
+rev1.menu.boot.sdmenu=SD Text Menu (Rainbow)
+rev1.menu.boot.sdmenu.bootloader.file=CHGame/rev1/chgame_sdboot.bin
+rev1.menu.boot.sdstatic=SD Text Menu (Static)
+rev1.menu.boot.sdstatic.bootloader.file=CHGame/rev1/chgame_sdboot_static.bin
+rev1.menu.boot.sdvisual=SD Graphic Menu (Rainbow)
+rev1.menu.boot.sdvisual.bootloader.file=CHGame/rev1/chgame_sdvisual.bin
+rev1.menu.boot.sdvisualstatic=SD Graphic Menu (Static)
+rev1.menu.boot.sdvisualstatic.bootloader.file=CHGame/rev1/chgame_sdvisual_static.bin
+rev1.menu.boot.nomenu=USB Only
+rev1.menu.boot.nomenu.bootloader.file=CHGame/rev1/chgame_boot_nomenu.bin
+
+rev1.build.flags.debug=-DNDEBUG
+rev1.build.flags.fp=
+rev1.build.enable_usb=
+rev1.build.usb_speed=
+rev1.build.peripheral_pins=
+rev1.build.startup_file=

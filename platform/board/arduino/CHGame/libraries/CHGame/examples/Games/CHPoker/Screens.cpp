@@ -437,7 +437,7 @@ static void optionsRender(uint32_t frame) {
         optField(OPT_TEXT[i], (uint8_t)(optByte(i) + 1), value);
         text35(114 - text35Width(value), y + 2, value, i == sel ? WHITE : FELT_LT);
     }
-    centred35(116, "ART: PRESS PLAY ON TAPE", SILVER);
+    centred35(116, "CHGAME", SILVER);
 }
 
 // ---------------------------------------------------------------------------

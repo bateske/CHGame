@@ -68,6 +68,7 @@ func TestLayout(t *testing.T) {
 		"CHGAME_FLASH_SIZE": flashSize, "CHGAME_PAGE_SIZE": pageSize, "CHGAME_BOOT_SIZE": bootSize,
 		"CHGAME_APP_START": appStart, "CHGAME_META_ADDR": metaAddr, "CHGAME_APP_MAX_SIZE": appMaxSize,
 		"CHGAME_META_MAGIC": metaMagic, "CHGAME_META_VERSION": metaVersion,
+		"CHGAME_SYS_SIZE": sysSize, "CHGAME_SYS_ADDR": sysAddr,
 	}
 	for k, val := range want {
 		if v.Layout[k] != val {

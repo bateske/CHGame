@@ -479,8 +479,7 @@ static void optionsRender(uint32_t frame) {
                      : optSel == O_PACE ? (game.opt.pace ? "SHORTER SPINS, NO DRAMA" : "THE FULL SHOW")
                      : "B: BACK";
     centred35(103, help, GOLD);
-    centred35(111, "CROUPIER ART: VAMPIRICS", SILVER);    // Press Play On Tape's (see NOTICE)
-    centred35(117, "FONT: PRESS PLAY ON TAPE", SILVER);
+    centred35(117, "CHGAME", SILVER);
 }
 
 // ---------------------------------------------------------------------------
@@ -555,9 +554,9 @@ static void statsRender(uint32_t frame) {
 }
 
 // ---------------------------------------------------------------------------
-// Credits: CHBlackjack's back room. The croupier, under his lamp, tells you
-// who made the game. A neon sign flickers; a cigarette smoulders. The felt is
-// drawn once; each frame redraws only the wall band and the rail.
+// Credits: CHBlackjack's back room. The croupier, under his lamp, sees you
+// out. A neon sign flickers; a cigarette smoulders. The felt is drawn once;
+// each frame redraws only the wall band and the rail.
 // ---------------------------------------------------------------------------
 static void creditsUpdate() {
     if (chgame.justPressed(A_BUTTON | B_BUTTON)) { audio::sfx(Sfx::Select); go(Scr::Stats); }
@@ -565,8 +564,7 @@ static void creditsUpdate() {
 
 #if CHRL_CREDITS && !CHRL_LEAN
 static const char *const CREDIT_LINES[] = {
-    "Thanks for\nplaying!", "I'm from\nBlackjack's\ntables", "Art by\nvampirics", "Font by\nPress Play\nOn Tape",
-    "In colour\non CHGame!", "Another\nspin?",
+    "Thanks for\nplaying!", "I'm from\nBlackjack's\ntables", "In colour\non CHGame!", "Another\nspin?",
 };
 static const uint16_t CREDIT_FRAMES = 180;       // per line: typed at a letter every 2 frames, then held
 #endif
@@ -585,8 +583,7 @@ static void creditsRender(uint32_t frame) {
         logo(54, true);                                  // printed on the felt
         art::chipStack(16, 84, 25 * 3 + 10 * 2, 6);
         art::chipStack(112, 84, 100 + 25 * 2 + 5, 6);
-        text35(24, 92, "ART\nFONT", FELT_LT);
-        text35(56, 92, "VAMPIRICS\nPPOT", GOLD);
+        centred35(96, "ROULETTE " CHRL_VERSION, GOLD);
         centred35(110, "CHGAME CASINO 2026", FELT_LT);
     }
     table::wall();

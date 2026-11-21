@@ -10,10 +10,12 @@ import re
 import struct
 import sys
 import unittest
+from unittest import mock
 
 HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parents[1] / "host" / "py"))
 from chgame_upload import chg as C, image as I, layout as L, protocol as P, upload as U, vectors as V  # noqa: E402
+from chgame_upload import provision as W  # noqa: E402
 
 VECTORS = json.loads((HERE / "vectors.json").read_text(encoding="utf-8"))
 
@@ -84,6 +86,56 @@ class Vectors(unittest.TestCase):
         C.pack(bytes(v["max_ok_length"]), "X")
         for n in v["names"]:
             self.assertEqual((C.default_title(n["path"]), C.default_output(n["path"])), (n["title"], n["out"]))
+
+    def test_board(self):
+        """Which board: the table (rev0 and rev1 known, none reserved), the
+        names, HELLO's board field, a bootloader image's board word, -device
+        against an image, and pack's header for each board."""
+        b = VECTORS["board"]
+        self.assertEqual((C.DEVICES, C.RESERVED), (b["devices"], b["reserved"]))
+        self.assertEqual((C.target_of("rev0"), C.target_of("rev1")), (C.TARGET_REV0, C.TARGET_REV1))
+        self.assertEqual(C.known_devices(), b["known"])
+        with self.assertRaises(ValueError) as cm:
+            C.target_of("rev9")
+        self.assertIn(f"(known: {b['known']})", str(cm.exception))
+        for n in b["names"]:
+            self.assertEqual(C.board_name(n["target"]), n["name"])
+        for h in b["hello"]:
+            parsed = P.Hello.parse(bytes.fromhex(h["payload"]))
+            self.assertEqual((parsed.board, parsed.board_reported), (h["board"], h["reported"]))
+        images = {c["name"]: bytes.fromhex(c["image"]) for c in b["boot_image"]}
+        for c in b["boot_image"]:
+            self.assertEqual(I.boot_image_board(images[c["name"]]), c["board"], c["name"])
+        for c in b["device_check"]:
+            try:
+                I.check_boot_board(images[c["image"]], c["device"])
+                ok = True
+            except ValueError:
+                ok = False
+            self.assertEqual(ok, c["ok"], c)
+        for p in b["packs"]:
+            self.assertEqual(C.pack(bytes(64), "X", device=p["device"])[:C.HEADER_BYTES].hex(), p["header"], p["device"])
+
+    def test_reserved_board(self):
+        """No board is reserved now; one patched in for the test is refused by
+        name everywhere a device is taken, as rev1 was before it was defined."""
+        r = VECTORS["board"]["reserved_example"]
+        self.assertNotIn(r["device"], C.DEVICES)
+        with mock.patch.dict(C.RESERVED, {r["device"]: r["target"]}):
+            self.assertEqual(C.board_name(r["target"]), r["name"])
+            for refuse in (lambda: C.target_of(r["device"]), lambda: C.pack(bytes(64), "X", device=r["device"]),
+                           lambda: I.check_boot_board(bytes(256), r["device"])):
+                with self.assertRaises(ValueError) as cm:
+                    refuse()
+                self.assertIn("reserved for a board that is not defined yet", str(cm.exception))
+        self.assertTrue(C.board_name(r["target"]).startswith("unknown board"))
+
+    def test_wchisp(self):
+        """What provision reads from wchisp's output."""
+        for c in VECTORS["wchisp"]["probe"]:
+            self.assertEqual(W.devices_in(c["output"]), c["devices"])
+        for c in VECTORS["wchisp"]["info"]:
+            self.assertEqual(W.uid_in(c["output"]) or "", c["uid"])
 
     def test_chg_matches_chgpack_and_the_header(self):
         """The repository's tools/chgpack.py and shared/chg_format.h say the same."""

@@ -14,21 +14,25 @@ itself does not change.
 | MCU | WCH **CH32X035G8U6** (QFN28), RISC-V RV32IMAC at 48 MHz; marking and `wchisp` report agree |
 | Program link origin | **0x3000** (the CHGame board package's `link_chgame_app.ld`, unchanged) |
 | Largest program | **50,944 B** (0x3000-0xF6FF). Games that save keep it at 50,432 B or less ([../docs/platform.md](../docs/platform.md)) |
-| Metadata page | 0xF700, written by the bootloader **last**, after the image's CRC checks out |
+| Metadata page | 0xF700, written by the bootloader **last**, after the image's CRC checks out. Its last 32 B (0xF7E0-0xF7FF) are the system settings block, which bootloader v4 and later keep (chgame.md, "The system settings block") |
 | RAM | 20 KB, of which the first 16 B (0x20000000) are the retained boot-request block; the board package's linker script reserves them. Stack 2 KB. |
 | Boot region | 0x0000-0x2FFF belongs to the bootloader. Nothing in a CHG file can write there: the destination is always 0x3000, and the flash writer checks every page's address itself. |
 | Layout id | `0x003000F7` (program at 0x3000, metadata at 0xF700) |
-| Target id | `0x35335843` (`CX35`): the board, CHGame Rev0 (below) |
+| Target id | the board's: `0x35335843` (`CX35`) for CHGame Rev0, `0x31524743` (`CGR1`) for CHGame Rev1 (below) |
 
-This is rev0, the one board defined so far. Each board, `rev0`, `rev1` and
-so on, has its own target id, and a later one may have another memory map
-too: chgame.md, "Devices and revisions", holds the table and the rules for
-naming them.
+Two boards are defined, `rev0` and `rev1` (CHGame Rev1, which Rev 1.5 also
+uses). They share everything in this table but the target id: the same MCU,
+memory map, layout id and limits. Their pins differ, so a program built for
+one does not run on the other, and the target id is what tells them apart:
+a bootloader installs only its own board's CHG files. A later board may
+have another memory map too: chgame.md, "Devices and revisions", holds the
+table and the rules for naming them.
 
 Build exactly as for an upload: the board package `CHGame:ch32v` (0.2.4 or
-later); the games use
+later for rev0, 0.4.0 or later for rev1, `CHGame:ch32v:rev1`); the games use
 `opt=oslto,rtlib=nano,periph=game,usb=uploadonly`. From 0.3.0 every build
-also writes the CHG file, `<sketch>.ino.chg`, beside the `.bin` (below).
+also writes the CHG file, `<sketch>.ino.chg`, beside the `.bin` (below),
+for the board it was built for.
 
 ## The file (format version 1)
 
@@ -133,7 +137,7 @@ The usual way is not by hand: `chgame cart prepare` (or `chgame card`, or
 else the menu needs (card.md). By hand:
 
 ```
-python tools/chgpack.py pack build/release/MyGame.ino.bin MYGAME.CHG --title "MY GAME" [--author ME] [--version 1.0] [--image cart.png] [--device rev0]
+python tools/chgpack.py pack build/<board>/release/MyGame.ino.bin MYGAME.CHG --title "MY GAME" [--author ME] [--version 1.0] [--image cart.png] [--device rev0|rev1]
 python tools/chgpack.py verify MYGAME.CHG
 python tools/chgpack.py info E:\        # list the CHG files on a card (or a folder, or a FAT image)
 ```
@@ -141,7 +145,8 @@ python tools/chgpack.py info E:\        # list the CHG files on a card (or a fol
 `chgpack.py` needs only Python 3. With the board package 0.3.0 or later
 nothing else is needed: every build runs `chgame-upload pack` (the uploader
 the package installs; `-title`, `-author`, `-gameversion`, `-out`, and
-`-device` for a board other than rev0) and
+`-device`: rev0 when absent, and from 0.4.0 the package's recipe passes the
+board being built for) and
 *Sketch > Export Compiled Binary* copies `MyGame.ino.chg` into the sketch's
 `build/` folder, titled with the sketch's name in capitals. The two tools
 make the same bytes (the uploader's shared test vectors check it). Copy the

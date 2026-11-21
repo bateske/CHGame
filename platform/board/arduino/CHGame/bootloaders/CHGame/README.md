@@ -3,8 +3,9 @@
 *Tools > Bootloader* chooses one, *Tools > Programmer* how it is written
 (**CHGame USB**: through the CHGame bootloader already on the board, no
 driver; **WCH factory ISP**: hold BOOT on power-up, needs the driver), and
-*Tools > Burn Bootloader* writes it. All three keep the same memory map and
-upload protocol, so a sketch built for one runs under the others.
+*Tools > Burn Bootloader* writes it. All five keep the same memory map and
+upload protocol, so a sketch built for one runs under the others on the
+same board.
 
 | Menu entry | File | What it is |
 |---|---|---|
@@ -24,3 +25,16 @@ docs/visual-menu.md). Switch between them at any time with Burn Bootloader:
 the card and the installed game stay as they are. The 0.2.4 bootloader is no
 longer offered: every bootloader here accepts the same sketches and adds the
 bootloader update over USB.
+
+## One folder per board
+
+The files above, in this folder, are **CHGame Rev0**'s. **CHGame Rev1**'s
+(Rev 1.5 uses them too) are in `rev1/`, under the same five names: the same
+menus and protocol, built for Rev1's pins (`platform/bootloader/build.sh
+--board=rev1`) and copied there by `dist.sh`. Each board's Bootloader menu
+(`boards.txt`) offers only its own folder. They are not interchangeable:
+another board's bootloader drives this board's buttons as outputs.
+chgame-upload refuses one: it checks the image's board word against the
+board selected in the IDE (`-device`), and over USB also against the board
+the bootloader's HELLO reports; through the factory ISP only the check
+against the board selected in the IDE stands in the way.

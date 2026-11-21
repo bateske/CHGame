@@ -9,4 +9,6 @@ tools/chsd_test.py."""
 ECHO = ("STATE",)
 # USB Serial and the mass-storage drive need the full USB stack (no
 # usb=uploadonly), and it is tested on the board with -Os, not yet with LTO.
+# The tools swap the board field (rev0 here) for the board a build is for
+# (--board; tools/device.py fqbn()), keeping the options.
 FQBN = "CHGame:ch32v:rev0:opt=osstd"

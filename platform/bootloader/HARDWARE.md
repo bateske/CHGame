@@ -19,6 +19,116 @@ There are two routes:
 Every step can be rolled back over USB, and the factory ISP is the last
 resort ([recovery.md](../board/docs/recovery.md)).
 
+**Which board.** Everything after "Rev1" below was written for CHGame
+Rev0. The tools build for the newest board, Rev1, unless told
+otherwise, so for a Rev0 set `CHGAME_BOARD=rev0` (or run `chgame --board
+rev0 ...`), and use the images in [release/](release), never those in
+[release/rev1/](release/rev1). A Rev1 or a Rev 1.5 starts at "Rev1" and
+uses only `release/rev1/`. One board's bootloader or sketch on the other
+drives pins that are buttons there, and a press then shorts a driven
+output.
+
+## Rev1 (and Rev 1.5): bring-up and provisioning
+
+A new Rev1 has no bootloader. It gets the USB-only one through the factory
+ISP, a bench sketch checks the board, and then the SD menu goes on over USB
+as on Rev0. A Rev 1.5 is a Rev1 here: the same pins, and with this
+firmware its power parts (the CH211, the INA226, the host boost) stay as
+they power up. `UP` is the uploader ("Before starting", below). The core
+must have Rev1 (board package 0.4.0, or a staged `0.4.0-local`:
+[trying-a-release.md](../board/docs/trying-a-release.md)). Keep Rev0
+boards off the bench, and label each board with its edition.
+
+1. **Preflight**, at the first power-on, with BOOT held (the factory ISP
+   runs; every GPIO is still as reset leaves it), on a USB meter or a
+   current-limited supply:
+   - the idle current, and the 3V3 and `VSYS_SW` rails;
+   - the buzzer silent and R27 cold;
+   - the backlight dark;
+   - `wchisp info`: record the chip (`CH32X035G8U6`), its UID, BTVER, RDPR,
+     WRP and RST_MOD. **No option byte is changed.**
+   - Optional, powered off: PA1 and PB9 about 100 kΩ to GND, PB3 about
+     10 kΩ to 3V3, PA0 about 1 kΩ to GND.
+2. **Provision the USB-only bootloader**, still in ISP mode:
+   ```
+   UP provision --device rev1 --bootloader platform/bootloader/release/rev1/chgame_boot_nomenu.bin
+   ```
+   It refuses an image that is not rev1's, and refuses while wchisp sees
+   more than one chip in ISP mode; it prints the chip, its UID and the
+   image's board, and asks before erasing (`--yes` does not ask). The same
+   from the board package: `chgame-upload provision -device rev1
+   -bootloader <package>/bootloaders/CHGame/rev1/chgame_boot_nomenu.bin`
+   ([recovery.md](../board/docs/recovery.md)).
+   Then **switch off and on** without BOOT: the reset that ends
+   provisioning is a soft one. Check:
+   - the screen stays dark (USB Only never touches the panel or its
+     backlight) and the LED (PB10) blinks: USB mode, no program;
+   - `UP probe` lists the board in its bootloader, board `rev1 (CGR1)`,
+     and `UP info` reports bootloader v4 (v3 before 2026-11-20).
+3. **The bench sketch**, `tools/sketches/CHBoardTest` (its README describes
+   each check):
+   ```
+   chgame --sketch CHBoardTest upload
+   ```
+   - all eight buttons, each alone;
+   - the LED;
+   - the backlight comes on only over a black screen, at a cold start and
+     after each upload;
+   - SWEEP, then silence with nothing warm (R27, the buzzer); SOAK for the
+     power checks of step 7;
+   - the SD card (a FAT32 card);
+   - VBUS about 5 V on USB;
+   - CN3 with a wire from TX to RX, and CN2's two lines idle high;
+   - TP14/15 (Rev 1 only, armed with SELECT): FREE and FREE, unplugged and
+     with the USB-C cable either way round;
+   - the deliberate fault, with a tone sounding: the sound stops (PA1 at
+     0 V) and the LED stays lit.
+4. **The SD menu.** Make Rev1's card: `chgame card` writes it to
+   `out/sdcard-rev1/` (Rev0's beside it, in `out/sdcard-rev0/`). Copy the
+   folder's contents to the root of a FAT32 card, with a PC's reader or the
+   board itself (`chgame --sketch CHSDtoUSB upload` builds the reader for
+   Rev1). Then install the text menu over USB:
+   ```
+   UP selfupdate platform/bootloader/release/rev1/chgame_sdboot.bin --device rev1 --yes
+   ```
+   `UP info` reports bootloader v4 (v3 before 2026-11-20), board `CGR1`. Switch off and on with
+   the card in: the menu, the backlight coming on with its first picture.
+   - **B held at power-on:** USB mode, the screen dark (the backlight stays
+     off) and the LED blinking on PB10.
+   - **The games:** install each of the 20 and the apps from the menu;
+     play, save and restore; hold START 3 s to come back. CHWords,
+     CHWordWheel and CHCrossword find their files; CHStlView reads an STL;
+     the SD card reader works.
+   - Then the points of "Menu v2", step 4, and HW3 that apply.
+5. **Refusals**, with the text menu:
+   - Rev0's card (`out/sdcard-rev0/`): its games are grey and A says
+     ERROR 5; nothing is erased.
+   - `chgame --board rev0 upload` of a game: refused, the installed program
+     unchanged.
+   - `UP selfupdate platform/bootloader/release/chgame_sdboot.bin --yes`
+     (Rev0's): refused.
+   - In a Rev0, Rev1's card: grey, ERROR 5, the installed game intact.
+
+   Then the graphic menu (`release/rev1/chgame_sdvisual.bin`, as above): a
+   Rev0 game shows the ERROR 5 picture. Once each from the IDE, board
+   CHGame Rev1: *Burn Bootloader* and *Upload Using Programmer* with
+   **CHGame USB**.
+6. **Debug runs:** `chgame run --device` with a few games' scripts (say so
+   first: CLAUDE.md, "The device"), then CHSDtest's `MIX` with `SET
+   PATTERN 1` on one of the 128 MB gift cards, which the DI gate should now
+   let pass.
+7. **Power:** 10 minutes of CHBoardTest's SOAK on USB while charging,
+   measuring the current and the temperatures of R27, the buzzer and the
+   regulator; a sweep of the buzzer's range, written down; play on the
+   battery alone; USB plugged and unplugged during play; a run down to a
+   low battery.
+8. **Rev 1.5**, with the same firmware: the checks of steps 3 and 4; CN1
+   at 0 V throughout; no host power on the USB port on battery; charging
+   from 5 V works.
+9. **Afterwards.** Put a release build of a game back, and leave the
+   bootloader the owner wants. Write `test/hil/RESULTS-<date>.md` with the
+   measured numbers, `wchisp info` and each check.
+
 ## Menu v2 (BOOT_VERSION 3)
 
 The steps below were written for the first menu, and they still describe
@@ -48,7 +158,7 @@ colour 15.)
      DRY RUN OK and writes nothing.
 3. **Install it.** Build with `./build.sh release`, then run
    `UP selfupdate platform/bootloader/build/release/chgame_boot.bin --yes`.
-   `UP info` should report bootloader v3.
+   `UP info` should report bootloader v4 (v3 before 2026-11-20).
 4. **What to check and report:**
    - **The look.** It should match [docs/menu.png](docs/menu.png):
      - the CHGAME logo, crisp, its colours turning, with the rule under it;
@@ -106,7 +216,8 @@ installed game stay. `UP` is the uploader as above (`chgame uploader` or
    on a game shows the check mark and writes nothing; START leaves.
 3. **Install it.** `./build.sh release --ui=visual`, then
    `UP selfupdate platform/bootloader/build/release-visual/chgame_boot.bin --yes`
-   (or `release/chgame_sdvisual.bin`). `UP info` reports bootloader v3.
+   (or `release/chgame_sdvisual.bin`). `UP info` reports bootloader v4 (v3
+   before 2026-11-20).
 4. **What to check and report:**
    - **Power-on.** The cover fades in (CHGAME CASINO) and stays, whatever
      is installed (until 2026-10-06 the installed game's picture followed
@@ -158,8 +269,9 @@ installed game stay. `UP` is the uploader as above (`chgame uploader` or
 ## Before starting
 
 - **Software.** This branch checked out. Python 3 with `pip install -r
-  tools/requirements.txt`. arduino-cli with `CHGame:ch32v@0.2.4`
-  (CLAUDE.md, Setup).
+  tools/requirements.txt`. arduino-cli with `CHGame:ch32v`
+  (CLAUDE.md, Setup; these steps were run with 0.2.4, and a Rev1 needs
+  0.4.0 or a staged `0.4.0-local`).
 - **Commands.** Run from the repository root. `UP` is `chgame uploader`
   (the Python uploader, `platform/bootloader/host/py`; `python -m
   chgame_upload` from that folder is the same). `chgame-upload` is the board
@@ -167,13 +279,16 @@ installed game stay. `UP` is the uploader as above (`chgame uploader` or
 - **Another session using the board.** Check that nothing else is using it
   (CLAUDE.md, "The device"). `UP probe` lists the board's port and what it
   is running.
-- **Rollback image.** Keep `platform/bootloader/release/0.2.4/chgame_bootloader.bin`
-  (the 0.2.4 bootloader) at hand.
-- **What gets flashed.** The binaries are in [release/](release), with
-  SHA-256 sums. `tools/dist.sh` rebuilds them byte-identical.
+- **Rollback image** (Rev0 only). Keep `platform/bootloader/release/0.2.4/chgame_bootloader.bin`
+  (the 0.2.4 bootloader) at hand. It is Rev0's: never put it on a Rev1.
+- **What gets flashed.** The binaries are in [release/](release) (Rev1's in
+  [release/rev1/](release/rev1)), with SHA-256 sums. `tools/dist.sh`
+  rebuilds them byte-identical.
 - **Card contents.** `chgame card` builds the casino cart
   (`out/CHGame-Casino.chgame`: the 20 games, the STL viewer and the SD card
-  reader) and its card in `out/sdcard/`. (For the first menu, which shows
+  reader, for both boards) and a card for each board, `out/sdcard-rev0/`
+  and `out/sdcard-rev1/` (`out/sdcard/` until 2026-11-17). For the routes
+  below, Rev0's. (For the first menu, which shows
   no folders, the two apps in APPS stay out of reach: copy their CHG files
   up into `GAMES/` by hand if you need them there.)
 
@@ -192,9 +307,9 @@ above first, and these as well:
 
 **D1. Build and load the card**, while the board still has its old
 bootloader.
-1. Run `python tools/sdcard/mkcard.py`. It builds all 21 sketches into
-   `out/sdcard/`, which takes 20-30 minutes.
-2. Copy everything in `out/sdcard/` to the root of a FAT32 microSD card (32 GB
+1. Run `chgame --board rev0 card`. It builds all 21 sketches into
+   `out/sdcard-rev0/`, which takes 20-30 minutes.
+2. Copy everything in `out/sdcard-rev0/` to the root of a FAT32 microSD card (32 GB
    or less). Use either:
    - a PC card reader;
    - the board itself as a card reader: HW1 step 1 (CHSDtoUSB).
@@ -220,20 +335,21 @@ UP info                                  # BOOT_VERSION 2
 **If D3 goes wrong**, try these in order:
 1. **No picture, or a garbled one.**
    - Hold B while switching on. The bootloader skips the card and the panel
-     and waits in USB mode (the LED blinks at 2 Hz; the backlight is lit
-     whenever the board is on).
+     and waits in USB mode (the LED blinks at 2 Hz; on Rev0 the backlight
+     is lit whenever the board is on).
    - Check that `UP probe` answers.
    - Note exactly what the screen did.
-   - To go back: `UP selfupdate platform/bootloader/release/0.2.4/chgame_bootloader.bin --yes`.
+   - To go back (Rev0 only): `UP selfupdate platform/bootloader/release/0.2.4/chgame_bootloader.bin --yes`.
 2. **"NO GAMES FOUND" or "CAN'T INSTALL / CARD READ ERROR"** with a card
    that reads fine on the PC: this is the SD clock or the card driver.
    - Run the dry run, which works under any bootloader:
      `UP flash platform/bootloader/release/chgame_menu_dryrun.bin --run`.
    - Then follow HW1 step 3 and note which SD speeds work.
    - SELECT leaves it, to the "USB UPLOAD" screen.
-3. **No USB at all, even with B held.**
+3. **No USB at all, even with B held** (Rev0 only; a Rev1 takes a rev1
+   image, as in "Rev1", step 2).
    - Hold BOOT across power-on.
-   - Run `UP provision --bootloader platform/bootloader/release/0.2.4/chgame_bootloader.bin`,
+   - Run `UP provision --device rev0 --bootloader platform/bootloader/release/0.2.4/chgame_bootloader.bin`,
      or `wchisp flash` the same image.
 
 **D4. The HW3 checklist**, in this order (fewest power cycles):
@@ -270,7 +386,7 @@ UP info                                  # BOOT_VERSION 2
    arduino-cli compile -b CHGame:ch32v:rev0 --library ../../platform/board/arduino/CHGame/libraries/CHGfx .
    arduino-cli upload  -b CHGame:ch32v:rev0 -p <PORT> .
    ```
-   - A drive appears (vendor "CHGame"). Copy everything in `out/sdcard/`
+   - A drive appears (vendor "CHGame"). Copy everything in `out/sdcard-rev0/`
      to its root, then eject it.
    - The card must be FAT32 or FAT16. `python tools/chgpack.py info <drive>`
      should list 21 packages, all "ok".
@@ -435,12 +551,17 @@ expected result.
 
 ## Rolling back
 
-- **Back to 0.2.4 over USB:**
+- **Back to 0.2.4 over USB** (Rev0 only: 0.2.4 is Rev0's bootloader):
   `UP selfupdate platform/bootloader/release/0.2.4/chgame_bootloader.bin --yes`.
   The menu bootloader still has the self-update commands, which is the
   point of keeping them in the release.
-- **If USB is gone:**
+- **If USB is gone** (Rev0; a Rev1 takes `UP provision --device rev1
+  --bootloader platform/bootloader/release/rev1/<image>`, as in "Rev1",
+  step 2):
   1. Hold BOOT across power-on (factory ISP).
   2. `wchisp flash <image>`. `wchisp flash` erases only what it writes
      (gotcha 5), so the old sketch stays.
   3. Re-upload or reinstall a game afterwards.
+- **A Rev1** goes back only to another image in [release/rev1/](release/rev1),
+  over USB (`UP selfupdate ... --device rev1 --yes`) or the ISP. There is
+  no older Rev1 bootloader.

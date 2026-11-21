@@ -9,31 +9,43 @@ it. The release itself is in [building.md](building.md).
 From the repository root:
 
 ```bash
-python tools/release/stage.py
+python tools/release/stage.py [--quick] [--include-untracked] [--suffix local2]
 ```
 
 This builds what a release would (the uploader for the five hosts, its tool
 archives, the platform archive, the Boards Manager index) into `out/stage/`,
-as version **`<version>-local`** (for example `0.3.0-local`), with every
+as version **`<version>-local`** (for example `0.4.0-local`), with every
 download URL on `http://localhost:8765`. Then it runs the new-user test,
-`tools/release/acceptance.py`:
+`tools/release/acceptance.py`, for each board the package defines (CHGame
+Rev0 and CHGame Rev1):
 
 - a fresh `arduino-cli` with its own folders in `out/newuser/` (your own
   Arduino setup is not touched) installs CHGame from that URL;
-- it checks that the libraries came with it, that *File > Examples* lists
-  Hello, the twenty games and CHSDtoUSB, that *Tools > Bootloader* and
-  *Tools > Programmer* offer what they should, and that the bootloader files
-  are there;
+- it checks that *Tools > Board* lists the two boards, that the libraries
+  came with it, that *File > Examples* lists Hello, the twenty games and
+  CHSDtoUSB, that each board's *Tools > Bootloader* and *Tools > Programmer*
+  offer what they should, and that the bootloader files are there;
 - it copies Hello, CHFour and CHWords into the sketchbook, as the IDE does
-  when an example is saved, and compiles them with no `--library`, checking
-  that *Export Compiled Binary* leaves a `.bin` and a `.chg`;
-- it compiles every game and app from the installed package, makes the
-  casino cart from those builds, `out/stage/CHGame-Casino-<version>.chgame`,
-  and packs its SD card's contents: `out/stage/CHGame-sdcard-<version>.zip`.
+  when an example is saved, and compiles them for each board with no
+  `--library`, checking that *Export Compiled Binary* leaves a `.bin` and a
+  `.chg` for that board;
+- it compiles every game and app for each board from the installed
+  package, makes the casino cart from those builds, with both boards'
+  binaries, `out/stage/CHGame-Casino-<version>.chgame`, and packs an SD
+  card's contents for each board: `out/stage/CHGame-sdcard-<version>-rev0.zip`
+  and `-rev1.zip`.
 
-`--quick` skips the twenty games, the cart and the card (a few minutes instead of
-about fifteen). The toolchain (250 MB) is downloaded once and kept in
+`--quick` skips the twenty games, the cart and the cards, which take most
+of the time (every program is built once per board): a few minutes
+instead. The toolchain (250 MB) is downloaded once and kept in
 `out/arduino-downloads/`.
+
+The package holds the files git tracks under `platform/board/arduino/CHGame`,
+uncommitted edits included. `--include-untracked` adds the new files git
+does not track yet (a new variant, new bootloaders), so the staged package
+is the working tree as it is. Arduino does not reinstall a version it
+already has, so stage again with another suffix to install over a staged
+package: `--suffix local2` makes `0.4.0-local2`.
 
 The `-local` version is a pre-release, so it sorts before the real one: when
 the release is published, Boards Manager offers it as an update, and the
@@ -52,7 +64,7 @@ serves `out/stage/` until Ctrl+C. In the Arduino IDE 2.x:
    published, the GitHub URL in the README has nothing behind it and the IDE
    reports an error for it; remove it while you test, and put it back after.
 2. *Tools > Board > Boards Manager*, search **CHGame**, install
-   **0.3.0-local** (listed as *CHGame Boards by bateske*). It brings the RISC-V toolchain, wchisp and
+   **0.4.0-local** (listed as *CHGame Boards by bateske*). It brings the RISC-V toolchain, wchisp and
    `chgame-upload` with it.
 3. Stop the server. Nothing is fetched after the install.
 
@@ -62,10 +74,36 @@ the cached index (`%LOCALAPPDATA%\Arduino15\package_chgame_index.json` on
 Windows, `~/.arduino15/` on Linux, `~/Library/Arduino15/` on macOS) if the
 IDE keeps showing an old version.
 
+### Or in your own arduino-cli
+
+The repository's tools (`chgame build`, `chgame check` ...) compile against
+the core arduino-cli has installed, so a staged package is how they get a
+core that is not released yet (0.4.0's Rev1 board, for one). With
+`serve.py` running:
+
+```bash
+arduino-cli core update-index --additional-urls http://localhost:8765/package_chgame_index.json
+arduino-cli core install CHGame:ch32v@0.4.0-local --additional-urls http://localhost:8765/package_chgame_index.json
+```
+
+The install replaces the version that was there. Back to the release:
+
+```bash
+arduino-cli core update-index --additional-urls https://github.com/bateske/CHGame/releases/latest/download/package_chgame_index.json
+arduino-cli core install CHGame:ch32v@0.3.0 --additional-urls https://github.com/bateske/CHGame/releases/latest/download/package_chgame_index.json
+```
+
+Both indexes are cached under the same name, `package_chgame_index.json`,
+so update the index from the URL you are about to install from (building.md,
+"Traps when publishing").
+
 ## 3. What to try
 
-**Pick the board.** *Tools > Board > CHGame Boards > CHGame Rev0*, and the port
-(the board is USB `16C0:27DD`).
+**Pick the board.** *Tools > Board > CHGame Boards*: **CHGame Rev0**, or
+**CHGame Rev1** for a Rev1 or a Rev 1.5. Then the port (the board is USB
+`16C0:27DD`). The two have different pins, so a sketch built for one does
+not run on the other, and Upload refuses a board whose bootloader names the
+other.
 
 **The examples.** *File > Examples*, under *Examples for CHGame*:
 
@@ -86,9 +124,11 @@ Nothing needs to be copied into the sketchbook's `libraries/`:
 
 **The bootloader.** The SD game menu comes with the package:
 
-1. *Tools > Bootloader*: **SD Text Menu** (the default) or **USB Only**.
-   The menu's look comes from the card (a card the tools prepare carries
-   the CHGAME logo).
+1. *Tools > Bootloader*: **SD Text Menu** (the default) or **SD Graphic
+   Menu**, each Rainbow or Static, or **USB Only**. Each board offers its
+   own five, and Burn Bootloader refuses an image for the other board. The
+   menu's look comes from the card (a card the tools prepare carries the
+   CHGAME logo).
 2. *Tools > Programmer*: **CHGame USB (requires CHGame bootloader, no
    drivers)**. It goes through the bootloader already on the board, like
    Upload: no driver, no buttons, and the port must be selected.
@@ -101,21 +141,24 @@ open sketch. **WCH factory ISP** is for a board whose bootloader is missing
 or broken: hold BOOT on power-up first, with the WinUSB driver on Windows
 ([recovery.md](recovery.md)).
 
-**The SD card.** Unzip `CHGame-sdcard-<version>.zip` onto a FAT32 card
+**The SD card.** A card is for one board. Unzip the board's,
+`CHGame-sdcard-<version>-rev0.zip` or `-rev1.zip`, onto a FAT32 card
 (everything at the root: the `GAMES` folder and the data files beside it),
-put it in the board and switch on: the menu lists the games. To copy files
-without taking the card out, pick **SD CARD READER** in the menu's
-**APPS** folder. From a clone, `chgame cart deploy
-CHGame-Casino-<version>.chgame --card <drive>` writes the same card from
-the cart.
+put it in the board and switch on: the menu lists the games. The other
+board's card shows its games greyed (ERROR 5) and installs none of them.
+To copy files without taking the card out, pick **SD CARD READER** in the
+menu's **APPS** folder. From a clone, `chgame --board rev1 cart deploy
+CHGame-Casino-<version>.chgame --card <drive>` (or `--board rev0`) writes
+the same card from the cart.
 
 **Your own game on the card.** From a clone, `chgame export` in the
-sketch's folder writes `build/<Name>.chgame`, and `chgame cart deploy` puts
-it on the card or the board (docs/sd-menu.md). With the IDE alone:
-*Sketch > Export Compiled Binary* writes
-`<sketch>.ino.chg` into the sketch's `build/` folder beside the `.bin`. Copy
-it into the card's `GAMES` folder under a short name (`MYGAME.CHG`); the
-menu shows the sketch's name in capitals. `chgame-upload pack` sets another
+sketch's folder writes `build/<Name>.chgame`, with a binary for each board
+the installed core has, and `chgame cart deploy` puts it on the card or the
+board (docs/sd-menu.md). With the IDE alone: *Sketch > Export Compiled
+Binary* writes `<sketch>.ino.chg`, for the board selected, into the
+sketch's `build/CHGame.ch32v.<board>/` folder beside the `.bin`. Copy it
+into the card's `GAMES` folder under a short name (`MYGAME.CHG`); the menu
+shows the sketch's name in capitals. `chgame-upload pack` sets another
 title (`-title "MY GAME"`).
 
 ## 4. Afterwards

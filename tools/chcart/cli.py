@@ -1,12 +1,16 @@
 """`chgame cart ...` and `chgame export`: .chgame files from the command line.
 
-    chgame export [--no-build] [--out F]          in a sketch folder: build/<Name>.chgame
+    chgame export [--no-build] [--out F] [--device B]
+                                                  in a sketch folder: build/<Name>.chgame, with a
+                                                  binary for every board the installed core has
     chgame cart info PKG [--json]                 the games, their files, the warnings
     chgame cart verify PKG ...                    every rule of spec/chgame.md (exit 1 on an error)
     chgame cart extract PKG DIR                   the files, as laid out inside
-    chgame cart new OUT ITEM ... [--title T ...]  a cart from .chgame/.bin/.hex/.elf/.chg files and sketches
-    chgame cart build RECIPE.json [OUT]           a cart from a recipe (games named by sketch)
-    chgame cart add PKG ITEM ... [--folder F] [--at N]
+    chgame cart new OUT ITEM ... [--title T ...] [--device B]
+                                                  a cart from .chgame/.bin/.hex/.elf/.chg files and sketches
+    chgame cart build RECIPE.json [OUT] [--device B]
+                                                  a cart from a recipe (games named by sketch)
+    chgame cart add PKG ITEM ... [--folder F] [--at N] [--device B]
     chgame cart remove PKG ID ...
     chgame cart order PKG ID|FOLDER/ ...          these first, in this order; the rest after (FOLDER/:
                                                   that folder's games, which puts the folder there)
@@ -24,10 +28,16 @@
     chgame cart prepare PKG OUTDIR [--image IMG]  the card's files (spec/card.md), and a FAT32 image
     chgame cart flash PKG [--game ID] [--port P]  upload one game
     chgame cart deploy PKG [--card DIR] [--port P] [--clean] [--no-flash]
-    chgame cart backup CARD OUT [--game PATH|ID ...] [--sd CHG=PATH ...] [--title T]
+    chgame cart backup CARD OUT [--game PATH|ID ...] [--sd CHG=PATH ...] [--title T] [--device B]
                                                   the card's games (CARD: a drive, a FAT image or a
                                                   ZIP of its files) back into a cart, with their SD
                                                   files (chcart/backup.py); all of them: the menu too
+
+A sketch (an ITEM, or a recipe's game) is built for every board the installed
+CHGame core has, and its game carries a binary for each (tools/device.py
+skips, and names, a board the core lacks); --device B builds it for B alone.
+For a .bin, .hex or .elf, --device names the board it was built for (default
+rev0). --no-build takes each board's build/<board>/release as it is.
 
 A recipe is a manifest whose games may be {"sketch": "CHFour", "folder": ...,
 other game keys to override}: chgame cart build compiles each sketch (unless
@@ -82,9 +92,11 @@ def cmd_info(a):
         print(f"launch: {cart.launch}")
     for g in cart.games:
         where = f"[{g.folder}] " if g.folder else ""
-        sizes = ", ".join(f"{d} {len(b)} B" for d, b in sorted(g.binaries.items()) if d != "rev0")
-        img = g.binary("rev0")
-        print(f"  {g.id:20s} {where}{g.title!r}  {len(img) if img else 0} B" + (f" ({sizes})" if sizes else "")
+        if list(g.binaries) == ["rev0"]:
+            sizes = f"{len(g.binaries['rev0'])} B"
+        else:                               # every board's: rev0 36624 B, rev1 36640 B
+            sizes = ", ".join(f"{d} {len(b)} B" for d, b in sorted(g.binaries.items()))
+        print(f"  {g.id:20s} {where}{g.title!r}  {sizes}"
               + (f", {len(g.sd)} SD file{'s' * (len(g.sd) != 1)} ({sum(map(len, g.sd.values()))} B)" if g.sd else "")
               + (f"  {g.version}" if g.version else ""))
     return 0
@@ -122,7 +134,7 @@ def _apply_cart_args(cart, a):
 def cmd_new(a):
     games = []
     for item in a.items:
-        games = sources.merge(games, sources.load_item(item, build=not a.no_build))
+        games = sources.merge(games, sources.load_item(item, build=not a.no_build, device=a.device))
     first = next((zipio.load(i) for i in a.items if str(i).lower().endswith(".chgame")), None)
     cart = model.Cart(title=a.title or (first.title if first else games[0].title if len(games) == 1 else "CART"),
                       games=games)
@@ -141,14 +153,37 @@ def recipe_sketches(recipe_path):
     return [e["sketch"] for e in r.get("games", []) if "sketch" in e]
 
 
-def build_recipe(recipe_path, build=True, platform_dir=None, binary=None, only=None):
-    """A Cart from a recipe file. `binary(sketch_dir)` may supply each release
-    .bin instead of building (tools/release/acceptance.py); `platform_dir`
-    finds the sketches in an installed board package instead of here; `only`
-    keeps the games of those sketches."""
+def _per_board(binary):
+    """binary(sketch_dir, board), from a callback that takes the board, or (as
+    before builds were per board) the folder alone: then rev0's .bin."""
+    import inspect
+    try:
+        params = [p for p in inspect.signature(binary).parameters.values()
+                  if p.kind in (p.POSITIONAL_ONLY, p.POSITIONAL_OR_KEYWORD, p.VAR_POSITIONAL)]
+    except (TypeError, ValueError):
+        return binary, False
+    if len(params) == 1 and params[0].kind != params[0].VAR_POSITIONAL:
+        return (lambda d, board: binary(d)), True
+    return binary, False
+
+
+def build_recipe(recipe_path, build=True, platform_dir=None, binary=None, only=None, devices=None):
+    """A Cart from a recipe file. Each game gets a binary for every board in
+    `devices` (default: every board the installed CHGame core has).
+    `binary(sketch_dir, board)` may supply each release .bin instead of
+    building (tools/release/acceptance.py; a callback of the folder alone
+    gives rev0's); `platform_dir` finds the sketches in an installed board
+    package instead of here; `only` keeps the games of those sketches."""
     import paths
     r = json.loads(pathlib.Path(recipe_path).read_text(encoding="utf-8"))
     base = pathlib.Path(recipe_path).parent
+    if binary is not None:
+        binary, rev0_only = _per_board(binary)
+        if rev0_only:
+            devices = devices or ["rev0"]
+    if not devices:
+        import device as dev                # tools/device.py
+        devices = dev.installed_boards()
     games = []
     for e in r.get("games", []):
         e = dict(e)
@@ -156,10 +191,14 @@ def build_recipe(recipe_path, build=True, platform_dir=None, binary=None, only=N
         if only and name not in only:
             continue
         d = paths.sketch(name) if platform_dir is None else _in_platform(name, platform_dir)
+        import device as dev                # (a sketch made for other boards alone is left out)
+        if not dev.sketch_boards(d, devices):
+            print(f"{name}: left out (it is for {', '.join(dev.for_boards(d))} alone)", file=sys.stderr)
+            continue
         if binary is not None:
-            g = sources.from_sketch(d, pathlib.Path(binary(d)).read_bytes())
+            g = sources.game_for_boards(d, devices, binary)
         else:
-            g = sources.load_item(d, build=build)[0]
+            g = sources.sketch_game(d, devices, build)
         for k, v in e.items():
             if k not in GAME_SET:
                 raise CartError([model.Issue("bad-field", f"{recipe_path}: {name}.{k}", "not a game key a recipe sets")])
@@ -224,7 +263,7 @@ def _in_platform(name, platform_dir):
 
 
 def cmd_build(a):
-    cart = build_recipe(a.recipe, build=not a.no_build)
+    cart = build_recipe(a.recipe, build=not a.no_build, devices=[a.device] if a.device else None)
     out = a.out or str(pathlib.Path(a.recipe).with_suffix(".chgame").name)
     _save(cart, out)
     return 0
@@ -234,7 +273,7 @@ def cmd_add(a):
     cart = _load(a.pkg)
     new = []
     for item in a.items:
-        new += sources.load_item(item, build=not a.no_build)
+        new += sources.load_item(item, build=not a.no_build, device=a.device)
     for g in new:
         if a.folder is not None:
             g.folder = a.folder
@@ -351,7 +390,7 @@ def cmd_art(a):
 
 def cmd_prepare(a):
     cart = _load(a.pkg)
-    files = runtime.prepare(cart, a.device)
+    files = runtime.prepare(cart, a.device, log=lambda m: print(m, file=sys.stderr))
     runtime.write_folder(files, a.outdir)
     print(f"{a.outdir}: {len(files)} files, {sum(map(len, files.values()))} B; copy its contents to the card's root")
     if a.image:
@@ -381,7 +420,7 @@ def cmd_backup(a):
         if not sep:
             raise CartError([model.Issue("bad-field", pair, "--sd takes GAMES/<NAME>.CHG=<path on the card>")])
         sd.setdefault(chg.replace("\\", "/"), []).append(path)
-    cart, issues = backup.backup(a.card, a.game, a.title or "CARD BACKUP", sd)
+    cart, issues = backup.backup(a.card, a.game, a.title or "CARD BACKUP", sd, device=a.device)
     for i in issues:
         print(i, file=sys.stderr)
     _save(cart, a.out)
@@ -391,13 +430,16 @@ def cmd_backup(a):
     return 0
 
 
-def cmd_export(a, sketch):
-    g = sources.load_item(sketch, build=not a.no_build)[0]
+def cmd_export(a, sketch, boards=None):
+    """boards: the boards to build for (`chgame --board B export`); --device
+    wins, and neither means every board the installed core has."""
+    g = sources.sketch_game(sketch, [a.device] if a.device else boards, build=not a.no_build)
     cart = model.Cart(title=g.title, games=[g], version=g.version, author=g.author, license=g.license,
                       url=g.url, sourceUrl=g.sourceUrl)
     out = pathlib.Path(a.out) if a.out else sketch / "build" / f"{sketch.name}.chgame"
     out.parent.mkdir(parents=True, exist_ok=True)
     _save(cart, out)
+    print("  " + ", ".join(f"{d}.bin {len(b)} B" for d, b in g.binaries.items()))
     return 0
 
 
@@ -413,6 +455,8 @@ def parser():
     p = sub.add_parser("extract", help="unpack a cart's files")
     p.add_argument("pkg")
     p.add_argument("dir")
+    items_device_help = ("the board a .bin, .hex or .elf was built for (default rev0); sketches are built for it "
+                         "alone (default: every board the installed core has)")
     for name in ("new", "build"):
         p = sub.add_parser(name, help="a cart from items" if name == "new" else "a cart from a recipe")
         if name == "new":
@@ -421,7 +465,8 @@ def parser():
         else:
             p.add_argument("recipe")
             p.add_argument("out", nargs="?")
-        p.add_argument("--no-build", action="store_true", help="sketches: take build/release as it is")
+        p.add_argument("--no-build", action="store_true", help="sketches: take build/<board>/release as it is")
+        p.add_argument("--device", choices=list(model.DEVICES), help=items_device_help)
         for k in CART_SET:
             p.add_argument(f"--{k}")
     p = sub.add_parser("add", help="add games")
@@ -430,6 +475,7 @@ def parser():
     p.add_argument("--folder")
     p.add_argument("--at", type=int, help="position (0 = first)")
     p.add_argument("--no-build", action="store_true")
+    p.add_argument("--device", choices=list(model.DEVICES), help=items_device_help)
     p = sub.add_parser("remove", help="remove games")
     p.add_argument("pkg")
     p.add_argument("ids", nargs="+")
@@ -493,6 +539,8 @@ def parser():
     p.add_argument("--sd", action="append", metavar="CHG=PATH",
                    help="an SD file of a game whose CHG file has no record, e.g. GAMES/WORDS.CHG=WORDS.DIC")
     p.add_argument("--title", help="the cart's title (the card does not hold one)")
+    p.add_argument("--device", choices=list(model.DEVICES),
+                   help="only that board's games (default: every board's the card holds)")
     return ap
 
 
@@ -604,13 +652,17 @@ def picture_main(argv):
         return 1
 
 
-def export_main(argv, sketch):
-    ap = argparse.ArgumentParser(prog="chgame export", description="the sketch as a .chgame (build/<Name>.chgame)")
-    ap.add_argument("--no-build", action="store_true", help="take build/release as it is")
+def export_main(argv, sketch, boards=None):
+    """boards: `chgame --board B export`'s board (default every board the
+    installed core has)."""
+    ap = argparse.ArgumentParser(prog="chgame export", description="the sketch as a .chgame (build/<Name>.chgame), "
+                                 "with a binary for every board the installed CHGame core has")
+    ap.add_argument("--no-build", action="store_true", help="take build/<board>/release as it is")
     ap.add_argument("--out")
+    ap.add_argument("--device", choices=list(model.DEVICES), help="this board's binary alone")
     a = ap.parse_args(argv)
     try:
-        return cmd_export(a, sketch)
+        return cmd_export(a, sketch, boards)
     except CartError as e:
         print(e, file=sys.stderr)
         return 1

@@ -12,6 +12,8 @@ Produces, in out/dist/:
                                       with the games as their examples (their
                                       tools, art, data files and README GIFs
                                       included), minus _common.PACKAGE_EXCLUDE_*
+                                      (stage.py --include-untracked adds the
+                                      untracked files; a release never does)
     package_chgame_index.json         the Boards Manager index: one packager,
                                       CHGame, whose platform depends on three
                                       tools so that one URL installs everything:
@@ -55,12 +57,22 @@ PACKAGER = {
 }
 
 
-def tracked_files() -> list[Path]:
+def tracked_files(include_untracked: bool = False) -> list[Path]:
+    """Every file git tracks under the platform folder, as it is in the working
+    tree. include_untracked (stage.py --include-untracked; never a release) adds
+    the files git neither tracks nor ignores (git ls-files --others
+    --exclude-standard), so a staged package can try work not yet committed."""
     rel = PLATFORM.relative_to(REPO).as_posix()
-    r = subprocess.run(["git", "ls-files", "-z", "--", rel], cwd=REPO, capture_output=True)
-    if r.returncode:
-        fail("git ls-files failed: " + r.stderr.decode(errors="replace"))
-    return [REPO / p for p in r.stdout.decode("utf-8").split("\0") if p]
+    cmds = [["git", "ls-files", "-z", "--", rel]]
+    if include_untracked:
+        cmds.append(["git", "ls-files", "-z", "--others", "--exclude-standard", "--", rel])
+    files: list[Path] = []
+    for cmd in cmds:
+        r = subprocess.run(cmd, cwd=REPO, capture_output=True)
+        if r.returncode:
+            fail("git ls-files failed: " + r.stderr.decode(errors="replace"))
+        files += [REPO / p for p in r.stdout.decode("utf-8").split("\0") if p]
+    return files
 
 
 def keep(path: Path) -> bool:
@@ -77,11 +89,12 @@ def nested_sketches(files: list[Path]) -> list[str]:
                   if "examples" in s.relative_to(PLATFORM).parts and any(a in sketches for a in s.parents))
 
 
-def build_archive(version: str, out: Path = DIST) -> Path:
-    """version is platform.txt's for a release. stage.py passes another (0.3.0-local):
-    the archive's platform.txt then says that, as the folder it installs to does."""
+def build_archive(version: str, out: Path = DIST, include_untracked: bool = False) -> Path:
+    """version is platform.txt's for a release. stage.py passes another (0.4.0-local):
+    the archive's platform.txt then says that, as the folder it installs to does.
+    include_untracked adds the untracked files (tracked_files()); a release never does."""
     root = f"CHGame-ch32v-{version}"
-    files = [p for p in tracked_files() if keep(p)]
+    files = [p for p in tracked_files(include_untracked) if keep(p)]
     for p in files:
         if any(part in PACKAGE_EXCLUDE_DIRS for part in p.relative_to(PLATFORM).parts[:-1]):
             fail(f"refusing to package {p.relative_to(REPO)}: a build directory")
@@ -124,6 +137,16 @@ def uploader_def(base_url: str, tool_json: Path = UPLOADER_TOOL_JSON) -> dict:
     return tool
 
 
+def board_names() -> list[str]:
+    """The boards Boards Manager lists for the platform: each <id>.name= of
+    boards.txt, in its order (CHGame Rev0, CHGame Rev1)."""
+    text = (PLATFORM / "boards.txt").read_text(encoding="utf-8")
+    names = re.findall(r"(?m)^[A-Za-z0-9_]+\.name=(.+?)\s*$", text)
+    if not names:
+        fail("boards.txt names no board")
+    return names
+
+
 def build_index(version: str, archive: Path, base_url: str, out: Path = DIST,
                 tool_json: Path = UPLOADER_TOOL_JSON) -> Path:
     gcc, wchisp, uploader = tool_def("riscv-none-embed-gcc"), tool_def("wchisp"), uploader_def(base_url, tool_json)
@@ -137,7 +160,7 @@ def build_index(version: str, archive: Path, base_url: str, out: Path = DIST,
         "archiveFileName": archive.name,
         "checksum": "SHA-256:" + sha256(archive),
         "size": str(archive.stat().st_size),
-        "boards": [{"name": "CHGame Rev0"}],
+        "boards": [{"name": n} for n in board_names()],
         "toolsDependencies": [{"packager": "CHGame", "name": t["name"], "version": t["version"]}
                               for t in (gcc, wchisp, uploader)],
     }

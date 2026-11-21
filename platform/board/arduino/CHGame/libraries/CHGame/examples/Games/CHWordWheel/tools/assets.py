@@ -214,6 +214,9 @@ def main():
     faces = [[row[24 * k:24 * k + 24] for row in sheet] for k in range(len(FACES))]
     normal = faces[0]
     o.array("FACE_NORMAL", pack_span4(normal), comment="face patch 24x18 at (12,14), row spans")
+    # The blink keeps only his eyes (rows 5-9 of the patch): the mouth and
+    # mustache stay as in NORMAL, and it costs fewer edits.
+    EYES = range(5, 10)
     words, starts = [], []
     for k in range(1, len(FACES)):
         starts.append(len(words))
@@ -221,7 +224,7 @@ def main():
             continue
         for y in range(18):
             for x in range(24):
-                if faces[k][y][x] != normal[y][x]:
+                if faces[k][y][x] != normal[y][x] and (FACES[k] != "BLINK" or y in EYES):
                     c = 15 if faces[k][y][x] == TRANSPARENT else faces[k][y][x]
                     words.append(((y * 24 + x) << 4) | c)
         preview(f"face_{FACES[k].lower()}", faces[k], bg=11)

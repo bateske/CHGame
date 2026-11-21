@@ -12,7 +12,7 @@
 static struct { char name[16]; int code; uint32_t len, crc; char path[512]; } pk[MAXP];
 static int npk;
 static char img_fat32[512], img_fat16[512], img_nogames[512], img_boot[512];
-static char img_cart[512], img_cartlaunch[512], img_cartbadbg[512], img_cartbig[512];
+static char img_cart[512], img_cartlaunch[512], img_cartbadbg[512], img_cartbig[512], img_otherbrd[512];
 static const char *frames, *frame_prefix = "";
 static uint8_t payload[CHGAME_APP_MAX_SIZE];
 
@@ -65,6 +65,11 @@ static void lcd_sane(const char *what)
     CHECK(B->spi_off_xfers == 0, "%s: %u SPI transfers with SPI1 off (would hang the chip)", what, B->spi_off_xfers);
     CHECK(B->wrong_frames == 0, "%s: %u transfers in the wrong frame size", what, B->wrong_frames);
     CHECK(B->sd.init_fast == 0, "%s: card identified above 400 kHz", what);
+    /* rev1's backlight: on in a boot that switched the panel on, only once
+       it showed the frame lcd_on() sent; dark in any other */
+    CHECK(B->backlight != 2, "%s: backlight on before the panel showed a written frame", what);
+    CHECK(B->backlight == (B->lcd.dispon_count > B->dispon_at_boot), "%s: backlight %s", what,
+          B->backlight == 2 ? "on too soon" : B->backlight ? "on, the panel never switched on" : "dark over the lit panel");
 }
 
 /* Index of a title in the menu's sorted order (the zoo is sorted by title in
@@ -97,6 +102,7 @@ static void t_no_card_no_app(void)
     CHECK(host_boot() == END_HANG, "no card, no app: waits");
     CHECK(B->usb_up, "in USB mode");
     CHECK(B->lcd.on, "and says so on the panel");
+    CHECK(B->backlight == 1, "the backlight on, over the panel's first frame");
     lcd_sane("no card");
     snap("no_games");
 }
@@ -179,6 +185,18 @@ static void t_switch_game(void)
     CHECK(B->erase_count[0xF500 / 256] == 0 && B->erase_count[0xF600 / 256] == 0, "game save pages untouched");
 }
 
+/* Installing from the card keeps the system settings block (chgame_map.h). */
+static void t_sys_install(void)
+{
+    preinstall("ALPHA.CHG");
+    sys_seed(1);
+    card(img_fat32);
+    go_to(800, menu_index("ALPHA.CHG"), menu_index("BRAVO.CHG"));
+    press(800 + 150 * 4, BTN_A);
+    CHECK(host_boot() == END_RESET && installed_is("BRAVO.CHG"), "switched to BRAVO");
+    CHECK(sys_is(1), "the system settings block kept");
+}
+
 static void t_bad_packages(void)
 {
     static const char *bad[] = { "BADHCRC.CHG", "NOTCHG.CHG", "WRONGTGT.CHG", "WRONGLAY.CHG", "WRONGVER.CHG",
@@ -228,12 +246,14 @@ static void t_b_held_escape(void)
     B->limit_us = 2000000;
     CHECK(host_boot() == END_HANG && B->usb_up, "B held at power-on: USB mode");
     CHECK(B->sd.cmds == 0 && B->lcd.pixels == 0, "card and panel untouched");
+    CHECK(B->backlight == 0, "the backlight stays dark");
     host_keys_clear();
     host_keys(0, BTN_B);
     host_keys(1200, 0);
     host_keys(1500, BTN_B);                  /* a fresh press */
     host_keys(1600, 0);
     CHECK(host_boot() == END_RESET, "only a fresh press of B leaves USB mode");
+    CHECK(B->backlight == 0, "the backlight dark throughout");
 }
 
 /* CHSDtoUSB's hold-B resets with B still down: that is a software reset,
@@ -442,7 +462,7 @@ static void t_cart_launch_installed(void)
     B->limit_us = 4000000;
     CHECK(host_boot() == END_RESET && B->retained[0] == CHGAME_BOOTREQ_RUN, "launch game installed: RUN at once");
     CHECK(B->flash_ops == 0, "nothing written (%u ops)", B->flash_ops);
-    CHECK(!B->lcd.on, "the panel never switched on");
+    CHECK(!B->lcd.on && B->backlight == 0, "the panel never switched on, nor the backlight");
     CHECK(B->now_us < 1000000, "power-on to RUN in %llu ms", (unsigned long long)(B->now_us / 1000));
 }
 
@@ -511,6 +531,22 @@ static void t_cart_full_folder(void)
     CHECK(host_boot() == END_RESET && installed_is("G239.CHG"), "the last row is GAME 239, and it installs");
 }
 
+/* A package built for the other board (rev0's on a rev1, rev1's on a rev0):
+   listed, refused, nothing written. The otherbrd card (boot_cases.py) holds
+   BRAVO, for this board, and OTHER BOARD, for the other: rows 0 and 1. */
+static void t_other_board(void)
+{
+    preinstall("BRAVO.CHG");
+    card(img_otherbrd);
+    press(800, BTN_DOWN);
+    press(1100, BTN_A);
+    B->limit_us = 4000000;
+    CHECK(host_boot() == END_HANG, "the other board's package: refused, the menu waits");
+    CHECK(B->flash_ops == 0, "nothing written (%u ops)", B->flash_ops);
+    CHECK(installed_is("BRAVO.CHG"), "BRAVO still installed");
+    lcd_sane("other board");
+}
+
 /* The real card from tools/sdcard/mkcard.py: install every program, each
    from a fresh board, through its folder (the manifest's code: folder row
    << 8 | row in it), and check what is installed. */
@@ -568,6 +604,7 @@ int main(int argc, char **argv)
             if (!strcmp(b, "cartlaunch")) snprintf(img_cartlaunch, sizeof img_cartlaunch, "%s", c);
             if (!strcmp(b, "cartbadbg")) snprintf(img_cartbadbg, sizeof img_cartbadbg, "%s", c);
             if (!strcmp(b, "cartbig")) snprintf(img_cartbig, sizeof img_cartbig, "%s", c);
+            if (!strcmp(b, "otherbrd")) snprintf(img_otherbrd, sizeof img_otherbrd, "%s", c);
         } else if (!strcmp(a, "pkg") && npk < MAXP) {
             sscanf(line, "%*s %15s %d %u %x %511s", pk[npk].name, &pk[npk].code, &pk[npk].len, &pk[npk].crc, pk[npk].path);
             npk++;
@@ -601,6 +638,7 @@ int main(int argc, char **argv)
     TEST(t_install_then_run);
     TEST(t_installed_marked);
     TEST(t_switch_game);
+    TEST(t_sys_install);
     TEST(t_bad_packages);
     TEST(t_usb_notice);
     TEST(t_b_held_escape);
@@ -619,5 +657,6 @@ int main(int argc, char **argv)
     TEST(t_cart_bad_background);
     TEST(t_cart_full_folder);
     TEST(t_cart_empty_folder);
+    if (img_otherbrd[0]) TEST(t_other_board);
     return test_summary();
 }

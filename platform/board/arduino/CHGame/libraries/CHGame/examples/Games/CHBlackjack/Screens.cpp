@@ -164,7 +164,7 @@ static void centred35(int y, const char *s, uint8_t c) { text35(64 - text35Width
 static void centred57(int y, const char *s, uint8_t c) { gfx_text(64 - gfx_textWidth(s) / 2, y, s, c); }
 
 // ---------------------------------------------------------------------------
-// Splash: PPOT's logo, now with a little colour
+// Splash: the console's CHGAME logo presents the game
 // ---------------------------------------------------------------------------
 // Frames at which each item appears (one a second), then a three-second hold.
 // The still-screen check in render() redraws only when one of these passes.
@@ -175,29 +175,27 @@ static void splashUpdate() {
     if (chgame.justPressedMask() || t > SPLASH_END) { audio::blip(1800, 40); go(Scr::Title); }
 }
 
-// Press Play On Tape's logo, 65x32: in its blue gradient (splash), or
-// printed flat on the felt like the table's own lettering (credits).
-static void ppotLogo(int x, int y, bool printed = false) {
-    Mask m = maskBegin(PPOT_LOGO_W, PPOT_LOGO_H);
-    maskBlit1(m, PPOT_LOGO, PPOT_LOGO_W, PPOT_LOGO_H);
-    if (printed) { maskDraw(m, x, y, FELT_LT); return; }
-    uint8_t ramp[PPOT_LOGO_H];
-    for (int i = 0; i < PPOT_LOGO_H; i++) ramp[i] = i < 11 ? WHITE : (i < 22 ? CYAN : BLUE);
-    maskDraw(m, x, y, WHITE, NAVY, -1, ramp);
+// The console's pixel CHGAME logo, 73x18 (tools/brand/logo-pixel.png): white
+// letters on a shadow in FX_A, which turns through the rainbow as the menu's
+// does (splash), or printed on the felt like the table's own lettering (credits).
+static void chgLogo(int x, int y, bool printed = false) {
+    Mask s = maskBegin(CHG_LOGO_W, CHG_LOGO_H);
+    maskBlit1(s, CHG_LOGO_SHADOW, CHG_LOGO_W, CHG_LOGO_H);
+    maskDraw(s, x, y, printed ? FELT_DK : FX_A);
+    Mask m = maskBegin(CHG_LOGO_W, CHG_LOGO_H);
+    maskBlit1(m, CHG_LOGO, CHG_LOGO_W, CHG_LOGO_H);
+    maskDraw(m, x, y, printed ? FELT_LT : WHITE);
 }
 
 static void splashRender(uint32_t frame) {
+    (void)frame;
     gfx_clear(INK);
-    ppotLogo(64 - PPOT_LOGO_W / 2, 26);
-    if (t > SPLASH_PRESENTS) centred35(68, "PRESENTS", SILVER);
-    if (t > SPLASH_LOGO) {
-        Mask l = maskBegin(104, 14);
-        maskBlit1(l, LOGO, 104, 14);
-        uint8_t r2[16];
-        for (int i = 0; i < 16; i++) r2[i] = i < 3 ? FX_B : (i < 13 ? GOLD : WOOD);
-        maskDraw(l, 12, 82, GOLD, INK, WINE, r2);
-    }
-    if (t > SPLASH_TAG) centred35(104, "NOW IN COLOUR", FX_A);
+    chgLogo(64 - CHG_LOGO_W / 2, 30);
+    if (t > SPLASH_PRESENTS) centred35(58, "PRESENTS", SILVER);
+    if (t > SPLASH_LOGO)
+        titleArt(TITLE_LOGO, TITLE_LOGO_W, TITLE_LOGO_H, 62 - TITLE_LOGO_W / 2, 72, TITLE_LOGO_BASE, TITLE_LOGO_RAMP,
+                 TITLE_LOGO_DEPTH, TITLE_LOGO_SIDE);
+    if (t > SPLASH_TAG) centred35(104, "BREAK THE BANK", FX_A);
 }
 
 // ---------------------------------------------------------------------------
@@ -276,7 +274,7 @@ static void titleRender(uint32_t frame) {
     // Credits in the bottom corners of the flat felt, 1 px in from the
     // dithered border (feltBackdrop: 6 px, so the flat area is 6..121). Drawn
     // before the menu: with four items, the last one's highlight overlaps them.
-    text35(7, 116, "PPOT 2018", FELT_LT);
+    text35(7, 116, "V" CHBJ_VERSION, FELT_LT);
     text35(121 - text35Width("CHGAME 2026"), 116, "CHGAME 2026", FELT_LT);
 
     // Menu.
@@ -471,7 +469,7 @@ static void optionsRender(uint32_t frame) {
         if (sel) { text35(112 - w, y, "<", SILVER); text35(120, y, ">", SILVER); }
     }
     const char *help = optSel == O_RULES
-        ? (game.opt.rules ? "PPOT: DEALER HITS SOFT 17S" : "STANDS ON 17, 6 DECKS")
+        ? (game.opt.rules ? "HITS SOFT 17S, 1 DECK" : "STANDS ON 17, 6 DECKS")
         : "B: BACK";
     centred35(118, help, SILVER);
 }
@@ -524,9 +522,9 @@ static void statsRender(uint32_t frame) {
 }
 
 // ---------------------------------------------------------------------------
-// Credits: the back room. The dealer, under his lamp, tells you who made the
-// game while Press Play On Tape's name is printed on the felt the way a
-// casino prints its own. A neon sign flickers; a cigarette smoulders.
+// Credits: the back room. The dealer, under his lamp, sees you out while the
+// CHGAME logo is printed on the felt the way a casino prints its own name. A
+// neon sign flickers; a cigarette smoulders.
 //
 // The felt is drawn once; each frame redraws only the wall band (dealer,
 // bubble, neon, smoke) and the rail.
@@ -537,8 +535,7 @@ static void creditsUpdate() {
 
 #if !CHBJ_LEAN
 static const char *const CREDIT_LINES[] = {
-    "Thanks for\nplaying!", "Blackjack by\nPress Play\nOn Tape", "Code by\nfilmote", "Art by\nvampirics",
-    "In colour\non CHGame!", "Another\nhand?",
+    "Thanks for\nplaying!", "Dealt to you\nby CHGame", "The house\nusually\nwins", "Another\nhand?",
 };
 static const uint16_t CREDIT_FRAMES = 180;       // per line: typed at a letter every 2 frames, then held
 
@@ -555,12 +552,11 @@ static void creditsRender(uint32_t frame) {
         dither(0, top, 6, 128, FELT_DK, 0);           // the lamplight falls off
         dither(122, top, 6, 128, FELT_DK, 1);
         dither(0, 122, 128, 6, FELT_DK, 1);
-        ppotLogo(64 - PPOT_LOGO_W / 2, 51, true);         // printed on the felt
+        chgLogo(64 - CHG_LOGO_W / 2, 60, true);           // printed on the felt
         art::chipStack(16, 80, 25 * 3 + 10 * 2, 6);
         art::chipStack(112, 80, 100 + 25 * 2 + 5, 6);
-        text35(24, 93, "CODE\nART", FELT_LT);
-        text35(68, 93, "FILMOTE\nVAMPIRICS", GOLD);
-        centred35(115, "ORIGINAL FOR ARDUBOY 2018", FELT_LT);
+        centred35(93, "BLACKJACK " CHBJ_VERSION, GOLD);
+        centred35(115, "CHGAME CASINO 2026", FELT_LT);
     }
 
     // The wall band: the dealer telling the credits one line at a time.

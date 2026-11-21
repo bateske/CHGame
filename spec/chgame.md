@@ -124,7 +124,7 @@ as `objcopy -O binary` does), so readers only ever see one format.
 | `device` | Board | Target id | MCU | Load address | Largest image | Notes |
 |---|---|---|---|---|---|---|
 | `rev0` | CHGame Rev0 (`CHGame:ch32v:rev0`) | `CX35` (`0x35335843`) | CH32X035G8U6 | 0x3000 | 50,944 B | saving needs the image at 50,432 B or less (above that a game's saves switch off: warning `save-pages`); CHG layout `0x003000F7` (chg.md) |
-| `rev1` | CHGame Rev1, **reserved**: not defined yet | `CGR1` (`0x31524743`) | | | | the name and id are taken; until this row is filled in, a `rev1` binary is one no reader knows (`unknown-device`) |
+| `rev1` | CHGame Rev1 (`CHGame:ch32v:rev1`); Rev 1.5 is the same device | `CGR1` (`0x31524743`) | CH32X035G8U6 | 0x3000 | 50,944 B | rev0's memory map and limits (saving needs the image at 50,432 B or less: warning `save-pages`; CHG layout `0x003000F7`) on other pins: buttons, screen, card, speaker and lights moved, and the backlight is switched. A rev0 binary does not run on it, nor a rev1 binary on rev0 |
 
 - **The image's length**, padded with 0xFF to a multiple of 4, must not
   exceed the device's largest image.
@@ -186,8 +186,9 @@ reference tools, the bootloader and the uploaders
 ([docs/hardware-revisions.md](../docs/hardware-revisions.md) is the
 checklist). A row can be *reserved* first, naming a board and its id before
 anything else about it is settled, so that nothing else takes them. Readers
-treat a reserved device as one they do not know. A new device is not a new
-`schemaVersion` (below, "Versions").
+treat a reserved device as one they do not know. `rev1` was reserved from
+2026-10-07 until its row was filled in (2026-11-17); no device is reserved
+now. A new device is not a new `schemaVersion` (below, "Versions").
 
 **What readers and writers do.**
 - **A game has at most one binary per device** (`bad-device` otherwise).
@@ -200,7 +201,33 @@ treat a reserved device as one they do not know. A new device is not a new
   carries rev0 and rev1 binaries still works, for rev0, in a reader made
   before rev1.
 - **Preparing a card or uploading a game is for one device** (card.md): a
-  game without a binary for that device cannot be put on that board.
+  game without a binary for that device cannot be put on that board. A
+  card for it leaves the game off; uploading it is refused (`bad-device`).
+
+### The system settings block
+
+The last 32 bytes of user flash on `rev0` and `rev1`, `0xF7E0`-`0xF7FF`
+(the end of the metadata page at `0xF700`), are reserved for system
+settings: settings that belong to the handheld rather than to a game, such
+as sound or a player's name, which every program will be able to read.
+None is defined yet. These rules keep the space free until one is.
+
+- **Kept across installs.** Bootloader version 4 and later
+  (platform/board/docs/protocol.md, "Bootloader versions") keep the block
+  byte for byte whenever they rewrite the metadata page: an upload, an
+  install from the menu, `ABORT` and a self-update. Versions 1 to 3 erase
+  it at every install, and a factory-ISP chip erase (provisioning,
+  recovery) erases it.
+- **All 0xFF means never written**: every setting has its default.
+- **Byte 0 will be the block's format version**, 0xFF meaning none. A
+  reader that does not know the version treats the block as never written.
+  The rest of the block, an integrity check included, is the first
+  version's to define.
+- **Nothing writes the block** until a format version is published: no
+  program, uploader or tool. A program must not write the metadata page.
+- **Uploaders do nothing for it.** The bootloader keeps it, and an image
+  for the factory ISP leaves it 0xFF.
+- **An emulator** models it as never written (0xFF).
 
 ### SD card files
 
@@ -264,7 +291,9 @@ nothing.
 - **New devices** are additions to the table above, not a new version. A
   reader from before one warns (`unknown-device`), leaves that device's
   binaries alone and goes on. Until 2026-10-07 an unknown device was the
-  error `bad-device`; no cart carried one then.
+  error `bad-device`; no cart carried one then. `rev1` (2026-11-17) is the
+  first device added this way: a reader from before it reads a cart with
+  rev1 binaries for rev0 as before.
 
 ## Extensions
 
@@ -356,5 +385,5 @@ format:
 | A sketch as a cart | `chgame export` in its folder writes `build/<Name>.chgame`, described by the sketch's `chgame.json` (tools/chcart/sources.py: every key optional) |
 | Carts from games and other carts | `chgame cart new OUT ITEM ...` (`.chgame`, `.bin`, `.hex`, `.elf`, `.chg`, sketch folders), `add`, `remove`, `order`, `set`, `launch`, `background`, `picture` (the cover, a game's, a folder's, the about page, `--system` one of the menu's own screens) |
 | Checking | `chgame cart verify FILE ...` prints every issue and exits 1 on an error; `chgame cart info FILE --json` prints the manifest as chcart reads it |
-| The card | `chgame cart prepare FILE DIR [--image IMG]`, `chgame cart deploy FILE --card E:\` (card.md); `--device` picks the board (default `rev0`), as it does for `chgame cart flash` |
+| The card | `chgame cart prepare FILE DIR [--image IMG]`, `chgame cart deploy FILE --card E:\` (card.md); `--device` picks the board, as it does for `chgame cart flash` (when it is not given, `chgame` passes its `--board` or `$CHGAME_BOARD`, else its default, the newest board; chcart run on its own defaults to `rev0`) |
 | Back from a card | `chgame cart backup E:\ OUT [--game ID ...]`: the card's games as a cart, with their SD files, from the record in each CHG file (card.md, "Backing up a card"). A `.chg` given to `new` or `add` is read the same way: with a record, the game comes back as its cart had it |

@@ -676,7 +676,7 @@ static void optionsRender(uint32_t frame) {
     }
     centred35(111, sel == O_VIEW ? (opt.view ? "HOLD B FOR THE WHOLE GRID" : "HOLD B FOR THE CLOSE-UP")
                    : opt.check ? "NO HELP: JUDGED WHEN FULL" : "RIGHT WORDS LOCK IN GOLD", SILVER);
-    centred35(118, "3X5 FONT: PRESS PLAY ON TAPE", SILVER);
+    centred35(118, "CHGAME", SILVER);
 }
 #endif
 

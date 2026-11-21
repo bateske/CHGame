@@ -10,12 +10,98 @@ file as the GitHub release notes.
 
 ### Added
 
+- **The CHGame Rev1 board, also for Rev 1.5** (*Tools > Board > CHGame
+  Boards > CHGame Rev1*), FQBN `CHGame:ch32v:rev1`, device `rev1`, variant
+  `CH32X035/CHGame_Rev1`, board macro `ARDUINO_CHGAME_REV1`. Rev 1.5 is
+  the same board with USB-PD, a battery USB host and a protected power
+  output added; it uses this entry. **Rev1 is our attempt at a stable
+  pinout**: the pins we mean to keep for the boards that follow. Rev1 has
+  other pins than Rev0, so a sketch is built for one board or the other:
+  - buttons UP PB0, DOWN PB1 (PB5 is the same pad: never driven), LEFT
+    PC3, RIGHT PC0, A PB11, B PB6, SELECT PB7, START PB8; LCD DC PB4 (CS
+    PA4 and RST PB12 as before); SD CS PB3; the LED on PB10; the buzzer on
+    PA1, TIM2_CH2 at remap 0, a magnetic buzzer switched by a MOSFET, which
+    the CHGame library's audio leaves low when silent;
+  - new: `PIN_LCD_BL` (PB9, active high), the backlight, which stays low
+    until the panel shows a defined picture: the core drives it low before
+    `setup()` (`pre_init()`), so the panel's power-up noise never shows
+    between the reset and CHGfx's `gfx_begin()`, which lights it after a
+    black frame (R20's pull-down alone did not hold it off); `PIN_VBUS_SENSE` (PA0, VBUS /
+    101, analog input only); `PIN_TP14` / `PIN_TP15` (PC14 / PC15, test
+    pads on Rev 1, CC1 / CC2 on Rev 1.5). `PIN_GPIO1`-`4` are gone with
+    the H1 header: Serial1 is USART2 on CN3 (PA2 TX, PA3 RX), Wire is I2C1
+    on CN2 (PC18 SDA, PC19 SCL);
+  - PWM (`analogWrite()`, *Peripherals: Full*) only on PB9 and PB10 (TIM1
+    CH1/CH2) and PA1 (TIM2 CH2), all at remap 0; no complementary outputs
+    or break input, which would land on buttons. `Servo` moves off TIM2
+    (the CHGame library's audio) to TIM3, which it shares with `tone()`;
+  - the core's `noTone()` and `tone(pin, 0)` leave the pin low on Rev1
+    (they left it at its last level, high about half the time, which on
+    Rev1's buzzer is a steady current);
+  - after a crash the buzzer (PA1) is driven low and the LED (PB10) lit;
+    the backlight is left as it is. PA0's latch is cleared too, so on a
+    Rev 1.5 a crash turns host power (PA0 high: the battery boost onto
+    VBUS) off; elsewhere PA0 is an input and nothing changes. A debug
+    build's "press A to restart" reads PB11.
+
+  Rev1's five bootloaders, under the same names as Rev0's, are in
+  `bootloaders/CHGame/rev1/`, and the Bootloader menu of each board offers
+  only its own. Rev0's board entry and bootloader files are unchanged.
+- **The board macro is defined**: `platform.txt` passes
+  `-DARDUINO_{build.board}` to every C, C++ and assembler file
+  (`ARDUINO_CHGAME_REV0`, `ARDUINO_CHGAME_REV1`). 0.3.0's notes named
+  `ARDUINO_CHGAME_REV0`, but nothing defined it. The Rev1 variant stops
+  the build with an `#error` if the macro is missing.
+- **Upload, Burn Bootloader and Upload Using Programmer refuse the other
+  board.** `platform.txt` passes `-device {build.chgame_device}` (`rev0`
+  unless the board entry says otherwise) to chgame-upload's `pack` hook
+  (the `.chg` file carries the board's target id, which the SD menu
+  checks), its `flash` upload and its `burn`: a sketch is not flashed onto
+  a board whose bootloader names another board, and a bootloader image for
+  another board is refused before anything is written. This needs
+  chgame-upload 0.3.0, which the package installs with it.
 - **An API reference**, <https://bateske.github.io/CHGame/>: every public
   function, class and constant of CHGame, CHGfx, CHSd, SPI, Wire and EEPROM,
   documented in their headers with Doxygen.
 
 ### Changed
 
+- **The bootloaders keep the system settings block** (bootloader version
+  4, both boards). The last 32 bytes of flash, `0xF7E0`-`0xF7FF` at the
+  end of the metadata page, are reserved for settings that belong to the
+  handheld rather than to a game; none is defined yet. Programs cannot
+  reach them, and from version 4 the bootloader keeps them when it
+  installs a program, aborts an upload or updates itself, where earlier
+  versions erased them at every install. To keep them on a board in the
+  field, update its bootloader (*Burn Bootloader* with the CHGame USB
+  programmer). The core's `chgame_map.h` names the block
+  (`CHGAME_SYS_ADDR`, `CHGAME_SYS_SIZE`); a sketch must not write it.
+- **The libraries know Rev1.** Each Rev1 difference is under
+  `ARDUINO_CHGAME_REV1` or comes from the Rev1 variant, so Rev0's builds
+  are unchanged: the 20 games' and the 3 apps' release images are
+  byte-identical.
+  - **CHGfx 1.3.3** takes the panel's and the card's pins from the board's
+    variant (`CHGFX_*`; its own defaults stay Rev0's) and drives a switched
+    backlight (`CHGFX_BL_PORT` / `CHGFX_BL_PIN`, PB9 on Rev1): low from the
+    start, and high only after `gfx_begin()` has sent the panel a black
+    frame, so the panel's power-up noise is never lit.
+  - **CHSd**: the card's chip select is PB3 on Rev1.
+  - **CHGame**: Rev1's buttons; the sound on TIM2 channel 2 (PA1), driven
+    low whenever it is silent, with a pitch under 16 Hz played as silence
+    (the timer cannot make it without holding the pin high); the LED
+    patterns on PB10.
+- **chgame-upload 0.3.0** knows rev1 and takes `-device` on `burn`,
+  `selfupdate` and `provision` too: a bootloader image built for another
+  board (its board word, offset `0x14`) is refused before the board is
+  touched, over USB and through the factory ISP alike. The factory ISP
+  cannot see which board it is on, so `provision` also refuses while more
+  than one chip is in ISP mode, prints the chip, its UID and the image's
+  board, and asks before it erases (`-yes` does not ask). `burn -method
+  isp`, what Burn Bootloader runs with *WCH factory ISP*, never asks.
+- **The casino cart carries both boards' binaries, and its SD card comes
+  as one zip per board**, `CHGame-sdcard-<version>-rev0.zip` and
+  `CHGame-sdcard-<version>-rev1.zip`: a card is for one board, since its
+  CHG files hold that board's programs.
 - **CHGfx, CHGame and CHSd link from archives** (`dot_a_linkage=true` in
   their `library.properties`), so an object of theirs is linked only when
   the sketch calls into it. Arduino otherwise links every object of an
@@ -29,6 +115,17 @@ file as the GitHub release notes.
 
 ### Fixed
 
+- **Serial1 receives.** It is USART2, on PA2/PA3 (Rev0's H1 header, Rev1's
+  CN3), but the core set up USART2's receive interrupt only for a
+  `Serial2`, which these boards do not have, so `Serial1.read()` never saw
+  a byte; sending worked. (*Tools > Peripherals: Full*, as before.)
+- **chgame-upload keeps the flags given before its command.** It read
+  `-port`, `-timeout`, `-verbose` and `-quiet` before the command and then
+  reset them to their defaults when it read the command's own flags. The
+  Upload and Burn Bootloader recipes give `-port` there, so the selected
+  port was ignored: the tool looked for the board itself, and with two
+  CHGame boards plugged in it stopped with "several CHGame devices found".
+  (The Go tool, which the package installs; the Python one was right.)
 - **CHSd works with more microSD cards.** It sent each command right after
   the card's previous response, where the SD Physical Layer Simplified
   Specification asks for at least 8 clocks in between (N_RC, SPI mode

@@ -5,11 +5,19 @@
 /* The one flash-update transaction, shared by the USB protocol (proto.c) and
  * the SD installer (install.c), so both get the same safety order:
  *
- *   upd_begin()      erase the metadata page: from here the installed program
- *                    is invalid, so a power cut leaves the bootloader in charge
+ *   upd_begin()      erase the metadata page's header: from here the installed
+ *                    program is invalid, so a power cut leaves the bootloader
+ *                    in charge
  *   upd_page() ...   write the image page by page (each one read back)
  *   upd_end()        CRC the image AS STORED IN FLASH against the expected
  *                    CRC, and only then write the metadata page
+ *
+ * Both keep the page's last CHGAME_SYS_SIZE bytes, the system settings block
+ * (chgame_map.h), as they are. It stays in flash throughout, so only a power
+ * cut while this page itself is rewritten can lose it: none while the block
+ * is blank; once it is written, the erase-then-program in upd_begin() and the
+ * one in upd_end() (about 1.4 ms each). Self-update (proto.c) clears the
+ * header through upd_begin() too.
  *
  * Results are protocol status codes (ST_OK, ST_ERR_RANGE, ST_ERR_CRC,
  * ST_ERR_FLASH from proto.h), so proto.c passes them straight through. */

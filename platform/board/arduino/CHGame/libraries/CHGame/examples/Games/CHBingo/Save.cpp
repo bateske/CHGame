@@ -15,7 +15,7 @@ static const uint8_t VERSION = 1;
 // progress" flag, and the CRC).
 struct Data {
     int32_t   purse, jackpot;
-    uint8_t   hasRound, buyN, pad[2];
+    uint8_t   hasRound, buyN, mode, pad;      // mode: was padding (0, EASY) before modes
     Options   opt;
     Stats     stats;
     RoundSave round;
@@ -33,6 +33,7 @@ bool load(Bingo &g, bool &hasGame) {
         hasGame = true;
         g.purse = rec->purse;
         g.buyN = rec->buyN;
+        g.mode = rec->mode < MODES ? rec->mode : M_EASY;   // before the round: it sets the pot
         if (rec->hasRound) g.loadRound(rec->round);
     }
     return true;
@@ -59,6 +60,7 @@ bool store(const Bingo &g, bool withGame) {
     if (withGame) {
         rec.purse = g.purse;                    // the cards in play are already paid for
         rec.buyN = g.buyN;
+        rec.mode = g.mode;
         if (g.hasRound()) { rec.hasRound = 1; g.saveRound(rec.round); }
     }
     return write(MAGIC, VERSION, sizeof rec, withGame);

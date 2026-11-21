@@ -18,9 +18,9 @@ One `#include <CHGame.h>` brings buttons, graphics, the house palette and drawin
 | RAM | 2.5 KB | **20 KB**, of which a sketch may use 18,416 B statically; the stack is 2 KB |
 | Screen | 128x64, 1 bit | **128x128, 16 colours out of 4,096** (or 65,536 at 16 bpp), ST7735S over SPI |
 | Buttons | 6 | **8**: the Arduboy six plus START and SELECT |
-| Sound | two-pin piezo | one piezo, driven by a timer |
+| Sound | two-pin piezo | one buzzer, driven by a timer (a piezo on Rev0, a magnetic buzzer on Rev1) |
 | LED | RGB | one status LED |
-| Storage | 1 KB EEPROM | **no EEPROM**: two 256 B flash pages for saves, and a microSD card |
+| Storage | 1 KB EEPROM, its first 16 B the system's | **no EEPROM**: two 256 B flash pages for saves, and a microSD card. The system's 32 B are the last of flash, where no sketch reaches them |
 | USB | upload + Serial | upload with no buttons, + Serial |
 
 [platform.md](platform.md) has the pins, the memory map and measured speeds. Its section [C++ on this chip](platform.md#c-on-this-chip-coming-from-avrarduboy) lists the AVR habits that do not apply here. For example, `int` is 32 bits, and `PROGMEM` is not needed.

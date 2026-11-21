@@ -18,16 +18,18 @@ or macOS. The only shell script left is the bootloader's own build.
 ## The bootloader
 
 ```bash
-platform/bootloader/build.sh [release|locked|nomenu|app]    # -> platform/bootloader/build/
-python3 platform/bootloader/test/native/run_tests.py         # the PC suite (flash/SD/panel models, power cuts, menu frames)
-platform/bootloader/tools/dist.sh                            # refresh release/ (+ SHA256SUMS) and bootloaders/CHGame/
+platform/bootloader/build.sh [release|locked|nomenu|app] [--board=rev0|rev1]   # -> platform/bootloader/build/
+python3 platform/bootloader/test/native/run_tests.py         # the PC suite, both boards (flash/SD/panel models, power cuts, menu frames)
+platform/bootloader/tools/dist.sh                            # refresh release/ (+ SHA256SUMS) and bootloaders/CHGame/, both boards
 ```
 
-`dist.sh` copies the binaries into
-`platform/board/arduino/CHGame/bootloaders/CHGame/`, where the board
-package carries them (*Tools > Bootloader*). The release script does not
-build the bootloader: it checks that the committed binaries match
-`platform/bootloader/release/SHA256SUMS` and refuses otherwise.
+`dist.sh` builds every mode for both boards and copies the five that
+*Tools > Bootloader* offers into the board package: Rev0's into
+`platform/board/arduino/CHGame/bootloaders/CHGame/`, Rev1's under the same
+names into `bootloaders/CHGame/rev1/` (and `platform/bootloader/release/rev1/`).
+The release script does not build the bootloader: it checks that the
+committed binaries of both boards are tracked by git and match
+`platform/bootloader/release/SHA256SUMS`, and refuses otherwise.
 
 The layout has one source of truth, `platform/bootloader/src/chgame_map.h`.
 `host/py/chgame_upload/layout.py` mirrors it for the uploader, which ships
@@ -96,23 +98,33 @@ Manager compares with what a user has installed to decide whether to offer
 an update, so every release bumps it, and the release script refuses a
 version that does not match it. The platform and the uploader are versioned
 apart: `chgame-upload`'s version only moves when `host/go` changes behaviour.
-The next release is platform **0.3.0** with `chgame-upload` **0.2.0** (the
-0.1.0 tool that 0.2.4 installs has no `burn` command).
+The next release is platform **0.4.0**, with two boards (CHGame Rev0 and
+CHGame Rev1), and `chgame-upload` **0.3.0**: 0.4.0's recipes pass `-device`
+to `burn` too, which 0.3.0 checks there (0.2.0 checked it on `flash` only),
+and 0.3.0 keeps a `-port` given before the command, as the recipes give it
+(0.2.0 lost it). The index names the tool's version, so 0.4.0 installs 0.3.0
+with it.
 
-1. Bump `version=` in `platform.txt`.
+1. Bump `version=` in `platform.txt` (0.4.0 already says it).
 2. Retitle the `## Unreleased` (or `## <version> (not yet released)`)
    section of `platform/board/CHANGELOG.md` to `## <version> (<date>)`. The
    script uses it as the GitHub release notes, refuses to run without it,
    and refuses to publish while it says "not yet released".
 3. If the bootloader changed: `build.sh` and `tools/dist.sh`, commit.
+   The platform archive holds only what git tracks, so commit every new
+   file under `platform/board/arduino/CHGame` first: for 0.4.0, Rev1's
+   variant (`variants/CH32X035/CHGame_Rev1/`) and its bootloaders
+   (`bootloaders/CHGame/rev1/`, with `platform/bootloader/release/rev1/`).
+   The script refuses an untracked bootloader; a missing variant shows as
+   failed Rev1 builds in the new-user test.
 4. Commit and push. The release tag is created on GitHub at the pushed
    `main`, so the script also refuses a dirty tree or an unpushed `HEAD`.
 5. `python tools/release/release.py --dry-run`: builds everything into
    `out/dist/` and publishes nothing. Look at the asset table and the ten
    largest files of the archive. It also runs the new-user test against
    what it built (below, *Staging and the new-user test*) and makes the
-   casino cart and the SD card from it; `--no-accept` skips that, for a dry
-   run only.
+   casino cart and the SD cards, one per board, from it; `--no-accept`
+   skips that, for a dry run only.
 6. `python tools/release/release.py` (`--repo bateske/CHGame` is the
    default).
 7. Commit `tools/release/chgame_upload_tool.json`, which now points at the
@@ -134,11 +146,16 @@ They produce, in `out/dist/`:
 - `chgame-upload-<toolversion>-<host>.tar.bz2`, one per host;
 - `package_chgame_index.json`, the Boards Manager index;
 - `CHGame-Casino-<version>.chgame`, every game and app as one cart (the
-  format games are shared in: spec/chgame.md), built by the new-user test
-  from the installed package's own examples (tools/sdcard/casino.json);
-- `CHGame-sdcard-<version>.zip`, that cart's SD card (spec/card.md: the
-  `GAMES` folder with the CHG files, the menu's order and background, and
-  the games' data files);
+  format games are shared in: spec/chgame.md) with a binary for each board,
+  built by the new-user test from the installed package's own examples
+  (tools/sdcard/casino.json);
+- `CHGame-sdcard-<version>-rev0.zip` and `CHGame-sdcard-<version>-rev1.zip`,
+  that cart's SD card for each board (spec/card.md: the `GAMES` folder with
+  the board's CHG files, the menu's order and background, and the games'
+  data files). A card is for one board, so these are the one exception to
+  "no board in a file name" (docs/hardware-revisions.md): a distribution
+  file that holds one board's contents. 0.3.0 had one,
+  `CHGame-sdcard-<version>.zip`;
 - `release-notes-<version>.md`.
 
 All of them go to a GitHub release tagged `v<version>` (the script uploads
@@ -175,10 +192,17 @@ into this repository's releases would make installs reproducible; wchisp is
 GPL-2.0, so mirroring it means shipping its licence and a source offer
 (`platform/board/THIRD-PARTY.md`).
 
+The toolchain has builds for Windows, x86-64 Linux and Intel Macs only:
+Apple silicon runs it through Rosetta, and ARM Linux cannot install the
+package. The plan for the release after 0.4.0, GCC 16 beside it (Julien
+Dorra's suggestion, bateske/CHGame#23), is in the roadmap
+([9. A newer compiler](../../../docs/roadmap.md#9-a-newer-compiler)).
+
 ### What the platform archive contains
 
 Every file git tracks under `platform/board/arduino/CHGame`: the core, the
-variant, the bootloaders, `boards.txt`/`platform.txt`, and the `libraries/`
+variants (Rev0's and Rev1's), the bootloaders (Rev1's in
+`bootloaders/CHGame/rev1/`), `boards.txt`/`platform.txt`, and the `libraries/`
 folder with CHGfx, CHSd and CHGame, whose examples are the twenty games
 whole (their `tools/`, art, `sdcard/` data and README GIFs included: the
 IDE's *File > Examples* copies a sketch's whole folder). The excludes are
@@ -196,9 +220,9 @@ inside the IDE's copy.
 ### Staging and the new-user test
 
 ```bash
-python tools/release/stage.py [--quick] [--serve]     # build 0.3.0-local into out/stage/, test it as a new user
+python tools/release/stage.py [--quick] [--serve] [--include-untracked] [--suffix local2]   # build 0.4.0-local into out/stage/, test it as a new user
 python tools/release/serve.py [--dist out/stage]     # serve it to the Arduino IDE on localhost:8765
-python tools/release/acceptance.py [--dist out/dist] [--all] [--card x.zip]   # the test on its own
+python tools/release/acceptance.py [--dist out/dist] [--all] [--card x-{board}.zip]   # the test on its own
 ```
 
 `stage.py` builds what `release.py` builds, versioned `<version>-local`
@@ -207,19 +231,34 @@ python tools/release/acceptance.py [--dist out/dist] [--all] [--card x.zip]   # 
 version sorts before the release, so a staged install is offered the
 release as an update, and the uploader is downloaded again then.
 
+Its archive is, as the release's, the files git tracks under
+`platform/board/arduino/CHGame`, as they are in the working tree.
+`--include-untracked` adds the files git neither tracks nor ignores there
+(still filtered as a release's are), so new files that are not committed
+yet, such as a new board's variant, are in the staged package: it is then
+a snapshot of the working tree, whoever made the changes. `release.py`
+never does this. Arduino does not reinstall a version it already has and
+keeps downloaded archives by name, so a second staging that is to be
+installed over the first takes another suffix: `--suffix local2`
+(`0.4.0-local2`), then `local3`.
+
 `acceptance.py` serves the folder (`serve.py` points the index's own URLs
 at itself, so an `out/dist/` built for GitHub serves the same, with the
 same checksums) and installs it with a fresh `arduino-cli` whose data
 folder, sketchbook and config are in `out/newuser/`. It checks the three
-tools, the platform libraries, the examples under *File > Examples*, the
-*Bootloader* and *Programmer* menus and the bootloader files, then copies
-examples into the sketchbook and compiles them with plain `arduino-cli
-compile`: Hello and CHChess with the IDE's default options, CHFour and
-CHWords with the release options, CHWords with the defaults (it must stop
-with its "needs Tools > USB > Upload only" message), and *Export Compiled
-Binary* must leave a `.bin` and a valid `.chg`. `--all` compiles every
-game and app from the installed package, and `--card` makes the casino
-cart from those builds and packs its SD card. It touches no board.
+tools, that *Tools > Board* lists CHGame Rev0 and CHGame Rev1 and nothing
+else, the platform libraries, the examples under *File > Examples*, each
+board's *Bootloader* and *Programmer* menus and its bootloader files, then
+copies examples into the sketchbook and compiles them for each board with
+plain `arduino-cli compile`: Hello and CHChess with the IDE's default
+options, CHFour and CHWords with the release options, CHWords with the
+defaults (it must stop with its "needs Tools > USB > Upload only"
+message), and *Export Compiled Binary* must leave a `.bin` and a `.chg`
+that board's bootloader accepts. `--all` compiles every game and app for
+each board from the installed package, and `--card` makes the casino cart
+from those builds, with both boards' binaries, and packs an SD card for
+each board (`{board}` in its name is replaced by `rev0`, `rev1`). It
+touches no board.
 [trying-a-release.md](trying-a-release.md) is the same by hand, in the IDE,
 with a board.
 
@@ -251,6 +290,9 @@ arduino-cli core install CHGame:ch32v --additional-urls https://github.com/bates
 arduino-cli compile -b CHGame:ch32v:rev0 -u -p <port> platform/board/arduino/CHGame/libraries/CHGame/examples/Hello
 arduino-cli burn-bootloader -b CHGame:ch32v:rev0 -P chgameusb -p <port>
 ```
+
+On a Rev1 (or Rev 1.5) board the FQBN is `CHGame:ch32v:rev1`. Each board's
+Upload and Burn Bootloader refuse the other board.
 
 The compile line has no `--library`: the package must deliver the
 libraries itself (the roadmap's acceptance test). Removing the package

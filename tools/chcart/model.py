@@ -46,11 +46,15 @@ class Device:
 DEVICES = {
     "rev0": Device("rev0", "CHGame Rev0", "CH32X035G8U6", 0x3000, 50944, 50432,
                    0x35335843, 0x003000F7, "CHGame:ch32v:rev0"),
+    # Rev1 and Rev1.5 (the same pins; 1.5 adds USB-PD and host power, which
+    # its own libraries drive): new pins, the same chip and memory map.
+    "rev1": Device("rev1", "CHGame Rev1", "CH32X035G8U6", 0x3000, 50944, 50432,
+                   0x31524743, 0x003000F7, "CHGame:ch32v:rev1"),
 }
 # Names and ids assigned to boards not defined yet: a binary for one is not
 # used (warning unknown-device, as for any board this reader does not know)
-# until it joins DEVICES.
-RESERVED_DEVICES = {"rev1": 0x31524743}        # "CGR1"
+# until it joins DEVICES. None at present.
+RESERVED_DEVICES: dict = {}
 # What any device name looks like, known or not; one that breaks it is bad-device.
 DEVICE_RE = re.compile(r"^[a-z][a-z0-9-]{0,31}$")
 BOOT_SIG, BOOT_SIG_OFFSET = 0x4C424843, 8      # "CHBL": a bootloader image, not a program

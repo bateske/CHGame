@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """M6: repeated end-to-end upload cycles, unattended.
 
-    python test/hil/test_soak.py --cycles 100
+    python test/hil/test_soak.py --cycles 100 [--board rev0]
+
+The images are built for --board (default: the newest board the installed
+CHGame core has, tools/device.py's default_board()), and a board whose
+bootloader says it is another one is refused before anything is written.
 
 Each cycle is the complete user-visible operation: 1200-baud touch on a running
 sketch, wait for the bootloader, erase, write, device-side CRC, host-side
@@ -25,22 +29,33 @@ import time
 import zlib
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+REPO = ROOT.parents[1]
 sys.path.insert(0, str(ROOT / "host" / "py"))
+sys.path.insert(1, str(REPO / "tools"))
 
 from chgame_upload.client import Client, ensure_bootloader, find_ports   # noqa: E402
 from chgame_upload import upload as up                                   # noqa: E402
 from chgame_upload import protocol as P                                  # noqa: E402
+from chgame_upload.chg import board_name, target_of                      # noqa: E402
+import device                                                            # noqa: E402  (tools/device.py)
 
-FQBN = "CHGame:ch32v:rev0"
+
+def fqbn(board: str) -> str:
+    """The board's FQBN, with the IDE's default options (CHGame:ch32v:rev0)."""
+    return device.DEVICES[board].fqbn
 
 
-def build(sketch: pathlib.Path, out: pathlib.Path) -> bytes:
+def build(sketch: pathlib.Path, out: pathlib.Path, board: str) -> bytes:
     r = subprocess.run(
-        ["arduino-cli", "compile", "-b", FQBN, str(sketch), "--build-path", str(out)],
+        ["arduino-cli", "compile", "-b", fqbn(board), str(sketch), "--build-path", str(out)],
         capture_output=True, text=True)
     if r.returncode != 0:
         sys.exit(f"compile failed for {sketch.name}:\n{r.stdout}\n{r.stderr}")
     return (out / f"{sketch.name}.ino.bin").read_bytes()
+
+
+class WrongBoard(RuntimeError):
+    """The board attached is not the one the images are built for: the soak stops."""
 
 
 def wait_for_port(timeout: float = 10.0) -> str:
@@ -61,7 +76,7 @@ def wait_for_port(timeout: float = 10.0) -> str:
     raise RuntimeError("no CHGame device appeared")
 
 
-def one_cycle(image: bytes, timeout: float) -> dict:
+def one_cycle(image: bytes, timeout: float, board: str) -> dict:
     port = wait_for_port(timeout)
 
     t0 = time.monotonic()
@@ -69,6 +84,10 @@ def one_cycle(image: bytes, timeout: float) -> dict:
     t_touch = time.monotonic() - t0
 
     with Client(boot, timeout=timeout) as c:
+        h = c.hello()
+        if h.board != target_of(board):     # as the uploader's -device: never another board's image
+            raise WrongBoard(f"the images are built for {board_name(target_of(board))}, but this board's "
+                             f"bootloader is {board_name(h.board)}'s: pass --board")
         info = up.upload(c, image, verify_readback=True)
         if not info.get("readback_ok"):
             raise RuntimeError("readback mismatch")
@@ -94,12 +113,15 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--cycles", type=int, default=100)
     ap.add_argument("--timeout", type=float, default=15.0)
+    ap.add_argument("--board", choices=device.BOARDS,
+                    help="the board attached (default: the newest the installed CHGame core has)")
     args = ap.parse_args()
+    board = args.board or device.default_board()
 
     sketches = [ROOT / "test" / "sketches" / "BlinkSerial",
                 ROOT / "test" / "sketches" / "Empty"]
-    print("building images...")
-    images = [build(s, pathlib.Path(f"/tmp/soak_{s.name}")) for s in sketches]
+    print(f"building images for {board} ({fqbn(board)})...")
+    images = [build(s, pathlib.Path(f"/tmp/soak_{board}_{s.name}"), board) for s in sketches]
     for s, img in zip(sketches, images):
         print(f"  {s.name:12s} {len(img):6d} B  crc32=0x{zlib.crc32(img) & 0xFFFFFFFF:08X}")
 
@@ -111,10 +133,13 @@ def main() -> int:
         img = images[i % len(images)]
         name = sketches[i % len(sketches)].name
         try:
-            info = one_cycle(img, args.timeout)
+            info = one_cycle(img, args.timeout, board)
             times.append(info["cycle_s"])
             print(f"  {i:4d}/{args.cycles}  {name:12s} {info['cycle_s']:5.2f}s "
                   f"(touch {info['touch_s']:.2f}s, write {info['write_s']:.2f}s) OK")
+        except WrongBoard as e:            # nothing written: stop, every cycle would be refused
+            print(f"  {i:4d}/{args.cycles}  {name:12s} STOPPED - {e}")
+            return 1
         except Exception as e:
             failures.append((i, f"{type(e).__name__}: {e}"))
             print(f"  {i:4d}/{args.cycles}  {name:12s} FAILED - {type(e).__name__}: {e}")

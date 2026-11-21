@@ -55,12 +55,15 @@ is sent to the board package's upgrade procedure, the website flashes no
 bootloaders. protocol.md's "Host conventions" says what each of these means
 on the device.
 
-**Board revisions** (2026-10-07). The handheld will get revisions whose
-pins differ, so a game built for one does not run on the next. Each is a
-device in chgame.md's table, named `rev<n>`, with a four-character target
-id: `rev0` is `CX35`, as it always was, and `rev1`, reserved until its
-pinout is settled, is `CGR1` (chgame.md, "Devices and revisions": the
-naming rule for every later board). What it means for the web project:
+**Board revisions** (2026-10-07; `rev1` defined 2026-11-17). The handheld
+has revisions whose pins differ, so a game built for one does not run on
+the next. Each is a device in chgame.md's table, named `rev<n>`, with a
+four-character target id: `rev0` is `CX35`, as it always was, and `rev1`
+(CHGame Rev1; Rev 1.5 is the same device) is `CGR1` (chgame.md, "Devices
+and revisions": the naming rule for every later board). `rev1` was reserved
+until its pinout was settled; its row is now filled in: rev0's chip, memory
+map, layout id and limits, on other pins. No device is reserved now. What
+it means for the web project:
 - **Reading carts.** A binary for a device the reader does not know (a
   reserved one, or a board registered later) is now the warning
   `unknown-device`: the reader uses the rest of the cart and keeps that
@@ -69,7 +72,9 @@ naming rule for every later board). What it means for the web project:
   rev1 builds. `bad-device` is now a malformed device name or two binaries
   for one device. Fixtures: `bad/bad-device` breaks the name rule (`REV0`),
   and `good/devices` holds a game with a `rev1` binary and one with an
-  `other-board` binary beside their rev0 ones.
+  `other-board` binary beside their rev0 ones. Since rev1 is defined, only
+  `other-board` is `unknown-device` there (the expected results did not
+  change: the warning codes are a set, and the card is prepared for rev0).
 - **Cards and CHG files.** A card is prepared for one device, and its CHG
   files carry that device's target id. Nothing changes for rev0: its bytes
   are those of before.
@@ -80,8 +85,55 @@ naming rule for every later board). What it means for the web project:
   is for refuses a board whose `HELLO` names another (protocol.md, "Which
   board"). Bootloaders for later boards also carry their id at offset 0x14
   of their image, for uploads of a bootloader.
-- **The emulator** emulates rev0. When rev1 is defined, an emulator of rev1
-  takes the `rev1` binaries, and never another board's.
+- **The emulator** emulates rev0, and still takes only `rev0` binaries: a
+  `rev1` binary drives rev1's pins and does nothing useful on a rev0. An
+  emulator of rev1, if one is made, takes the `rev1` binaries, and never
+  another board's.
+
+**For the web emulator project: what rev1 changes** (2026-11-17).
+- **chgame.md's device table** has a `rev1` row: `CGR1` (`0x31524743`),
+  CH32X035G8U6, load address 0x3000, largest image 50,944 B (50,432 B keeps
+  the save pages), CHG layout `0x003000F7`, FQBN `CHGame:ch32v:rev1`. A
+  reader that knows rev1 checks a `rev1` binary as it checks a rev0 one and
+  no longer warns about it; one that does not still warns (`unknown-device`)
+  and goes on. Carts from this repository now carry a binary per board
+  (`<id>/rev0.bin`, `<id>/rev1.bin`), and the casino's card ships as one zip
+  per board (card.md, "Cards per board in a distribution").
+- **`HELLO`'s board field** (offset 30, the target id) is sent by rev1
+  bootloaders, as protocol.md specified on 2026-10-07: a rev1 board answers
+  34 bytes ending `CGR1`; a rev0 board still answers 30. Nothing else in the
+  protocol changed (bootloader version, `0x3000`, sizes, frames).
+- **The uploaders refuse the wrong board.** `chgame-upload` 0.3.0 (Go and
+  Python), given the board (`-device`, which the board package now always
+  passes), refuses a sketch upload to a board whose `HELLO` names another,
+  and a bootloader image whose board word (offset `0x14`) names another,
+  for USB and the factory ISP alike. A browser uploader that knows which
+  board a binary is for should do the same with `HELLO`'s field: upload a
+  cart's `rev1` binary only to a board that answers `CGR1`, its `rev0`
+  binary only to one that answers `CX35` or nothing. The SD-over-serial
+  helper is a sketch too, so it needs a build per board.
+- **A program for one board alone** (2026-11-19). A cart may carry a
+  program built for `rev1` only (the Rev 1.5's power-section apps, which
+  live in their own repository since 2026-11-20 and are not on the casino
+  cart): its game has a `rev1` binary and no `rev0` one, which chgame.md
+  always allowed ("A game need not have
+  one for every device"). Preparing a card for a board now leaves off a game
+  without that board's binary (card.md, "Runtime preparation"), where it
+  was `bad-device`; a cart with no game for the board stays `bad-device`. An
+  emulator of rev0 should list and run only the games with a `rev0` binary,
+  and skip the rest, as the rev0 card does.
+
+**For the web emulator project: the system settings block** (2026-11-20).
+The last 32 bytes of user flash, `0xF7E0`-`0xF7FF` (the end of the
+metadata page), are reserved for settings that belong to the handheld
+rather than to a game (chgame.md, "The system settings block"). Nothing
+defines or writes them yet.
+- **The uploader changes nothing.** The bootloader keeps the block itself.
+  Version 4 (board package 0.4.0) is the first to do so: its `HELLO`
+  reports bootloader version 4, which a host asking for 3 or later accepts.
+  Nothing else in the protocol changed.
+- **An emulator** models the block as never written (all 0xFF). An
+  emulated install or upload leaves it as it was, as version 4 does.
 
 **Backing a card up** (2026-10-06, asked for by the web emulator project,
 whose cart builder reads carts back from cards). Each CHG file that runtime

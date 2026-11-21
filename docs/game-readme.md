@@ -66,6 +66,11 @@ Exactly as the game's NOTICE gives them.
   script commands and open items live in `NOTES.md`; the list ends with a
   link to it.
 - **Credits.** Last. The same names, works and licences as `NOTICE`.
+  This section and `NOTICE` are the only places they appear: the games
+  name no other developers, artists or sources on screen (the owner's
+  rule, 2026-10-20, after Press Play On Tape asked for their names and
+  logo to come out of the games). An options screen's footer shows
+  CHGAME instead.
 
 No banner, no installing section, no development section, no sizes that
 go stale. Plain hyphens, LF line endings.

@@ -5,7 +5,8 @@ both linker scripts from it on every build, so the header and the scripts cannot
 drift.
 
 The bootloader reservation started at 8 KB and grew to 12 KB once the flash
-writer and the developer self-update landed; it is currently about 59% used.
+writer and the developer self-update landed; the SD menu now fills about 97% of
+it (`platform/bootloader/SIZES.md`).
 Shrinking it later is cheap - change one constant and rebuild - but it costs a
 reflash of every device, since it moves `APP_START`. Host tools parse that header
 via `tools/chgame_map.py`; the linker scripts mirror it by hand and are checked
@@ -20,7 +21,9 @@ by `ASSERT`s at link time. Do not hard-code these numbers anywhere else.
         | Application         50944 B    |  link_chgame_app.ld
         |                                |  upload.maximum_size = 50944
 0xF700  +--------------------------------+  CHGAME_META_ADDR
-        | Application metadata   256 B   |  one page, written LAST
+        | Application metadata   224 B   |  one page, written LAST
+0xF7E0  +- - - - - - - - - - - - - - - - +  CHGAME_SYS_ADDR
+        | System settings         32 B   |  reserved; kept by bootloader v4+
 0xF800  +--------------------------------+  end of user flash
 ```
 
@@ -48,6 +51,21 @@ Both linker scripts end in a hard assertion, so an oversized image fails the
 `chgame_meta_t` — magic, metadata version, image length, CRC-32/ISO-HDLC over
 the image, application version. Written only after a complete image verifies,
 which is what makes an interrupted update recoverable by construction.
+
+### The system settings block
+
+The page's last 32 bytes, `0xF7E0`-`0xF7FF` (`CHGAME_SYS_ADDR`,
+`CHGAME_SYS_SIZE`), are the end of user flash, reserved for settings that
+belong to the handheld rather than to a game (spec/chgame.md, "The system
+settings block"; none is defined yet). No upload can reach them, since
+images stop at `0xF700`, and no game's save does, since saves use `0xF500`
+and `0xF600`. Only the bootloader writes the page, and from version 4 it
+keeps these bytes whenever it does (`update.c`'s `meta_put()`): the header
+is cleared and rewritten around them. While they are all 0xFF, as on every
+board until something defines them, an update costs the page one erase and
+one program as before; once they are written, a second erase. Bootloader
+versions 1-3 erase them at every install, and so does a factory-ISP chip
+erase.
 
 ## RAM — 20 KB
 

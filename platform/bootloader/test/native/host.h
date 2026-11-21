@@ -45,6 +45,7 @@ typedef struct {
     /* flash operation accounting */
     uint32_t flash_ops;             /* erase or program operations so far */
     uint32_t cut_at_op;             /* cut power DURING this op (1-based); 0 = never */
+    uint32_t cut_addr;              /* the page that op was on, once the cut has happened */
     uint32_t erase_count[CHGAME_FLASH_SIZE / CHGAME_PAGE_SIZE];
     uint32_t boot_region_writes;    /* erase/program below APP_START (must stay 0) */
     uint32_t selfupdate_calls;
@@ -64,6 +65,11 @@ typedef struct {
     uint8_t  spi_wide;              /* hal_spi_frames() set 16-bit frames */
     uint32_t wrong_frames;          /* a byte sent in 16-bit frames, or a pixel in 8-bit ones */
     uint32_t pins_inited;
+    /* rev1's backlight (PB9, pulled down: a reset turns it off). Since this
+       boot began: 0 dark; 1 switched on over the frame lcd_on() sent; 2
+       switched on too soon (the panel off, or showing unwritten pixels). */
+    uint8_t  backlight;
+    uint32_t dispon_at_boot;        /* lcd.dispon_count when this boot began */
 
     /* USB (proto) */
     uint8_t  usb_up;

@@ -604,8 +604,7 @@ static void optionsRender(uint32_t frame) {
         optField(OPT_TEXT[i], (uint8_t)(optByte(i) + 1), value);
         text35x2(114 - text35x2Width(value), y, value, i == sel ? WHITE : FELT_LT);
     }
-    centred35(110, "ARDUCHESS ENGINE: PETER BROWN", SILVER);
-    centred35(117, "FONT: PRESS PLAY ON TAPE", SILVER);
+    centred35(117, "CHGAME", SILVER);
 }
 #endif
 

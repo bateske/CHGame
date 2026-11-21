@@ -563,8 +563,7 @@ static void optionsRender(uint32_t frame) {
     }
     centred35(85, optSel == O_ANTE ? "THE NEXT GAME'S STAKE" : "A SOLO SCORE PAYS THE ANTE:", SILVER);
     payLines(93, WHITE);
-    centred35(111, "FONT AND DEALER BY", FELT_LT);
-    centred35(118, "PRESS PLAY ON TAPE", FELT_LT);
+    centred35(118, "CHGAME", FELT_LT);
 }
 
 // ---------------------------------------------------------------------------

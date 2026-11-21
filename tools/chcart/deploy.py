@@ -31,6 +31,7 @@ NEED_CARD = ("needs the SD card mounted: pick SD CARD READER in the CHGame's men
 def flash(game, port=None, device="rev0", log=print):
     """Uploads the game's binary for `device` through the Python uploader and
     starts it; a board whose bootloader reports another board is refused."""
+    _has(game, device)
     import paths  # noqa: F401  (tools/paths.py: puts the uploader on sys.path)
     from chgame_upload.upload import flash_file
     with tempfile.TemporaryDirectory() as d:
@@ -38,6 +39,12 @@ def flash(game, port=None, device="rev0", log=print):
         f.write_bytes(runtime.flash_image(game, device))
         log(f"flash   : {game.title} ({game.id})")
         return flash_file(f, port=port, run=True, log=log, device=device)
+
+
+def _has(game, device):
+    if device not in game.binaries:
+        raise CartError([Issue("bad-device", f"games[{game.id}].binaries",
+                               f"no binary for {device} (it has {', '.join(sorted(game.binaries))})")])
 
 
 def _write(root, rel, data, log):
@@ -61,6 +68,7 @@ def _chg_title(data):
 def add_game(game, card, device="rev0", log=print):
     """A single game's CHG file and SD files onto a mounted card, leaving the
     card's menu alone. Returns the CHG file's card path."""
+    _has(game, device)
     root = pathlib.Path(card)
     games = root / "GAMES"
     taken, same = set(), None
@@ -81,7 +89,7 @@ def add_game(game, card, device="rev0", log=print):
 def write_card(cart, card, clean=False, device="rev0", log=print):
     """A cart's whole runtime (runtime.prepare) onto a mounted card."""
     root = pathlib.Path(card)
-    files = runtime.prepare(cart, device)
+    files = runtime.prepare(cart, device, log=log)
     if clean and (root / "GAMES").exists():
         log("card    : GAMES/ emptied (--clean)")
         shutil.rmtree(root / "GAMES")
@@ -112,8 +120,9 @@ def deploy(cart, card=None, port=None, clean=False, device="rev0", do_flash=True
         raise CartError([Issue("missing-file", "--card", f"a cart of {len(cart.games)} games {NEED_CARD}")])
     write_card(cart, card, clean, device, log)
     _sync()
-    if do_flash and cart.launch:
-        flash(cart.game(cart.launch), port, device, log)
+    launch = runtime.for_device(cart, device)[0].launch       # (not one left off this board's card)
+    if do_flash and launch:
+        flash(cart.game(launch), port, device, log)
     log("done    : eject the card before the CHGame reads it (hold B, or START for 3 s, to leave the "
         "card reader)")
 

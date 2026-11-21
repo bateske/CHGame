@@ -688,7 +688,7 @@ static void optionsRender(uint32_t frame) {
         optField(OPT_TEXT[i], (uint8_t)(optGet(i) + 1), value);
         fontText(118 - fontWidth(value, 0), y, value, i == sel ? WHITE : FELT_LT, 0);
     }
-    centred35(119, "3X5 FONT: PRESS PLAY ON TAPE", SILVER);
+    centred35(119, "CHGAME", SILVER);
 }
 #endif
 

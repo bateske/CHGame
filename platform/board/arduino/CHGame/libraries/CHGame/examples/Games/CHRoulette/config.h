@@ -27,9 +27,9 @@
 #define CHRL_LEAN        0
 #endif
 
-// CHBlackjack's back room, the croupier telling the credits (Stats, A).
-// Off: it costs ~1.2 KB, and the game needs the flash; the credits are on
-// the Options screen instead.
+// CHBlackjack's back room, the croupier seeing you out (Stats, A).
+// Off: it costs ~1.2 KB, and the game needs the flash. The credits are in
+// the README and NOTICE, not in the game.
 #ifndef CHRL_CREDITS
 #define CHRL_CREDITS     0
 #endif

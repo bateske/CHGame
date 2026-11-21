@@ -226,7 +226,7 @@ Sources: BJ `present::onEvents`; CC `onCheck()`, `onOver()` and `stage::update()
 The rule (both headers): code runs from flash with 3 wait states, so a function call per pixel costs about 2-3 µs. Everything is built from `gfx_hline` spans, tight byte or word loops, or RAMFUNCs.
 
 ### Identical in both
-- `fillRound(x,y,w,h,r,c)` and `roundRect(...)` with `r ≤ 4`, using the corner table `INSET[4][4] = {{1},{2,1},{3,1,1},{4,2,1,1}}` (pixel-art circles).
+- `fillRound(x,y,w,h,r,c)` and `roundRect(...)` with `r ≤ 4`, using the corner table `INSET[4][4] = {{1},{2,1},{3,2,1},{4,3,2,1}}` (clean diagonals since 2026-10-20; 3 and 4 were the arcs `{3,1,1}` and `{4,2,1,1}`).
   - 390 B, against the library's 524 B (BJ's `Draw.cpp` comment at the time).
   - The library version also caps r at half the *width*.
 - Static `plot(p,x,c)` nibble helper.

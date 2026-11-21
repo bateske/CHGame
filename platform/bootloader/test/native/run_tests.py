@@ -11,8 +11,9 @@ fatimg.py and packages with tools/chgpack.py, and runs:
                 power cut at every flash operation of a USB upload, built
                 without the menu (the HW2a image)
   core_menu     the same with the menu built in (and core_locked, core_visual;
-                core_rev1 as a board after rev0 is built: HELLO's board field,
-                packages for another board refused)
+                core_rev1 as build.sh --board=rev1 builds it: HELLO's board
+                field, packages for another board refused); every core suite
+                checks its board's key bits (HAL_KEYS) against its pins
   sd            the SD driver against the card model (SDSC v1/v2, SDHC, no
                 card, slow or stuck cards) and the FAT reader against FAT16/
                 FAT32 images (MBR and superfloppy, fragmented files and
@@ -20,7 +21,10 @@ fatimg.py and packages with tools/chgpack.py, and runs:
                 header checks
   boot          whole-boot scenarios: menu, installs, every package error,
                 power cuts at every flash operation of an SD install, and
-                the menu's frames against pinned hashes (frames.json)
+                the menu's frames against pinned hashes (frames.json); then
+                all of it again for rev1 (boot_rev1, visual_rev1 ...: its
+                packages and its key bits, frames in build/frames-rev1 held
+                to the same hashes)
 
 Compiler: $CC, else cc. Built with -fsanitize=address,undefined.
 
@@ -118,7 +122,7 @@ def build(name, main, defs, srcs):
     cc, san = [compiler()], ["-fsanitize=address,undefined", "-fno-sanitize-recover=undefined"]
     if WSL:
         cc, san = zig_cc() + ["-target", "x86_64-linux-musl", "-static"], ["-fsanitize=undefined"]
-    cmd = [*cc, "-std=gnu11", "-O1", "-g", "-Wall", "-Wextra", "-Wno-unused-parameter", *san,
+    cmd = [*cc, "-std=gnu11", "-O1", "-g", "-Wall", "-Wextra", "-Wno-unused-parameter", "-Wundef", "-Werror=undef", *san,
            "-DCHBOOT_HOST", "-DF_CPU=48000000", *defs,
            f"-I{HERE}", f"-I{SRC}", f"-I{SHARED}", "-o", str(out),
            str(HERE / main), *[str(HERE / s) for s in HOST], *[str(SRC / s) for s in srcs]]
@@ -152,6 +156,41 @@ def defines(path):
     return vals
 
 
+# Rev1's pins as src/hal.h must configure them (variant_CHGame_Rev1.h, the
+# board's handoff): CNF:MODE nibbles, 0x3 push-pull output, 0xB alternate
+# push-pull, 0x8 input with pull-up/down; every other pin of a register the
+# bootloader writes stays 0x4, a floating input. The USB-only build: the LED.
+REV1_PINS = {"PA4": 0x3, "PA5": 0xB, "PA6": 0x8, "PA7": 0xB,                      # LCD CS, SPI1
+             "PB0": 0x8, "PB1": 0x8, "PB6": 0x8, "PB7": 0x8, "PB8": 0x8, "PB11": 0x8,  # UP DOWN B SEL START A
+             "PB3": 0x3, "PB4": 0x3, "PB9": 0x3, "PB10": 0x3, "PB12": 0x3,     # SD CS, DC, backlight, LED, RST
+             "PC0": 0x8, "PC3": 0x8}                                           # RIGHT, LEFT
+REV1_REGS = {"HAL_GPIOA_CFGLR": ("PA", 0), "HAL_GPIOB_CFGLR": ("PB", 0), "HAL_GPIOB_CFGHR": ("PB", 8),
+             "HAL_GPIOC_CFGLR": ("PC", 0)}
+
+
+def check_rev1_pins():
+    """hal.h's rev1 configuration words, decoded nibble by nibble, against
+    REV1_PINS; GPIOC's CFGHR (PC14/PC15, the test pads) never written."""
+    text = (SRC / "hal.h").read_text()
+    start = text.index("#if defined(CHGAME_BOARD_TARGET)            /* rev1 */\n#define HAL_GPIOA_CFGLR")
+    block = text[start:text.index("#else", start)]
+    words = {m.group(1): int(m.group(2), 16)
+             for m in re.finditer(r"^#define\s+(HAL_GPIO\w+)\s+0x([0-9A-Fa-f]+)u", block, re.M)}
+    bad = []
+    if set(words) != set(REV1_REGS) | {"HAL_GPIOB_CFGHR_LED"}:
+        bad.append(f"words {sorted(words)}")
+    for reg, (port, first) in REV1_REGS.items():
+        for k in range(8):
+            pin = f"{port}{first + k}"
+            got = words.get(reg, 0) >> 4 * k & 15
+            if got != REV1_PINS.get(pin, 0x4):
+                bad.append(f"{pin} {got:X}")
+    led = words.get("HAL_GPIOB_CFGHR_LED", 0)
+    if any((led >> 4 * k & 15) != (0x3 if k == 2 else 0x4) for k in range(8)):
+        bad.append(f"USB-only LED word {led:08X}")
+    return bad
+
+
 def check_constants():
     from chcart import runtime
     f = defines(SHARED / "chg_format.h")
@@ -179,8 +218,9 @@ def check_constants():
     app_max = 0xF800 - 256 - 0x3000
     if app_max != chgpack.APP_MAX_SIZE:
         bad.append("APP_MAX_SIZE")
+    bad += [f"rev1 pins: {b}" for b in check_rev1_pins()]
     print(f"{'constants':12s} {'ok' if not bad else 'FAILED':6s} chgpack.py and chcart vs chg_format.h, chgame_map.h, "
-          f"chgame_card.h; icons.h vs art/icons {bad or ''}")
+          f"chgame_card.h; icons.h vs art/icons; hal.h's rev1 pin words {bad or ''}")
     return not bad
 
 
@@ -201,11 +241,12 @@ def corrupt_header(pkg, off, value, fix_crc=True):
     return bytes(h)
 
 
-def packages():
-    """The package zoo: name -> (bytes, expected chg_check code: 0 or CHG_E_BAD,
-    1, for every failure; the order of the checks is chgpack's)."""
-    a = chgpack.pack(payload(20000, 1), "ALPHA GAME", "tester", "1.0")
-    b = chgpack.pack(payload(4096, 2), "BRAVO")
+def packages(target=chgpack.TARGET_REV0):
+    """The package zoo for the board `target`: name -> (bytes, expected
+    chg_check code: 0 or CHG_E_BAD, 1, for every failure; the order of the
+    checks is chgpack's)."""
+    a = chgpack.pack(payload(20000, 1), "ALPHA GAME", "tester", "1.0", target=target)
+    b = chgpack.pack(payload(4096, 2), "BRAVO", target=target)
     z = {
         "ALPHA.CHG": (a, 0),
         "BRAVO.CHG": (b, 0),
@@ -222,37 +263,38 @@ def packages():
     return z
 
 
-def build_images(quick):
-    BUILD.mkdir(exist_ok=True)
-    pk = packages()
+def build_images(quick, target=chgpack.TARGET_REV0, out=BUILD):
+    """The zoo for the board `target` and the card images, in `out`."""
+    out.mkdir(parents=True, exist_ok=True)
+    pk = packages(target)
     files = {"GAMES/" + n: d for n, (d, _) in pk.items()}
     files["GAMES/README.TXT"] = b"not a package\n"
     files["WORDS.DIC"] = bytes(5000)
     imgs = {}
     lay = {}
-    lay["fat32"] = fatimg.build_image(str(BUILD / "fat32.img"), files, fs="fat32", lfn=True, decoys=True,
+    lay["fat32"] = fatimg.build_image(str(out / "fat32.img"), files, fs="fat32", lfn=True, decoys=True,
                                       fragment={"GAMES/ALPHA.CHG": 6}, dir_pieces={"GAMES": 3},
                                       padding={"GAMES": 40})
-    imgs["fat32"] = BUILD / "fat32.img"
-    lay["fat16"] = fatimg.build_image(str(BUILD / "fat16.img"), files, fs="fat16", mbr=False,
+    imgs["fat32"] = out / "fat32.img"
+    lay["fat16"] = fatimg.build_image(str(out / "fat16.img"), files, fs="fat16", mbr=False,
                                       fragment={"GAMES/ALPHA.CHG": 5}, spc=8)
-    imgs["fat16"] = BUILD / "fat16.img"
-    lay["fat16p3"] = fatimg.build_image(str(BUILD / "fat16p3.img"), files, fs="fat16", part_slot=3)
-    imgs["fat16p3"] = BUILD / "fat16p3.img"
-    fatimg.build_image(str(BUILD / "nogames.img"), {"WORDS.DIC": bytes(100), "GAME/X.CHG": pk["BRAVO.CHG"][0]},
+    imgs["fat16"] = out / "fat16.img"
+    lay["fat16p3"] = fatimg.build_image(str(out / "fat16p3.img"), files, fs="fat16", part_slot=3)
+    imgs["fat16p3"] = out / "fat16p3.img"
+    fatimg.build_image(str(out / "nogames.img"), {"WORDS.DIC": bytes(100), "GAME/X.CHG": pk["BRAVO.CHG"][0]},
                        fs="fat16")
-    imgs["nogames"] = BUILD / "nogames.img"
+    imgs["nogames"] = out / "nogames.img"
     # corrupt chains in copies of the FAT16 image: ALPHA's second cluster link
     a_cl = lay["fat16"].objects["GAMES/ALPHA.CHG"].clusters
     for tag, val in (("free", 0x0000), ("bad", 0xFFF7), ("short", 0xFFFF), ("range", 0xFF00)):
-        p = BUILD / f"chain_{tag}.img"
+        p = out / f"chain_{tag}.img"
         shutil.copy(imgs["fat16"], p)
         fatimg.set_fat_entry(str(p), lay["fat16"], a_cl[1], val)
         imgs["chain_" + tag] = p
-    fatimg.make_exfat_stub(str(BUILD / "exfat.img"))
-    imgs["exfat"] = BUILD / "exfat.img"
-    (BUILD / "blank.img").write_bytes(bytes(1 << 20))
-    imgs["blank"] = BUILD / "blank.img"
+    fatimg.make_exfat_stub(str(out / "exfat.img"))
+    imgs["exfat"] = out / "exfat.img"
+    (out / "blank.img").write_bytes(bytes(1 << 20))
+    imgs["blank"] = out / "blank.img"
     return imgs, lay, pk
 
 
@@ -342,11 +384,18 @@ def main():
         exe = build("app_visual", "test_app.c", ["-DCHBOOT_MENU=1", "-DCHBOOT_APP=1", "-DMENU_UI=MENU_UI_VISUAL"],
                     app_srcs[:-1] + ["visual.c"])
         ok &= run("app_visual", exe, BUILD / "boot_fat32.img")
+    if menu_built and (a.k in "boot" or a.k in "boot_rev1"):
+        import boot_cases  # noqa: E402
     if menu_built and a.k in "boot":
         if a.k not in "sd":
             imgs, lay, pk = build_images(a.quick)
-        import boot_cases  # noqa: E402
         ok &= boot_cases.run_all(BUILD, build, run, imgs, lay, pk, a.quick, a.pin_frames)
+    if menu_built and a.k in "boot_rev1":
+        # rev1: the same scenarios on its packages and its key bits, its frames
+        # held to the same hashes (frames.json is pinned from rev0's only)
+        out = BUILD / "rev1"
+        imgs1, lay1, pk1 = build_images(a.quick, chgpack.TARGET_REV1, out)
+        ok &= boot_cases.run_all(out, build, run, imgs1, lay1, pk1, a.quick, board="rev1")
     print("ALL PASSED" if ok else "SOME TESTS FAILED")
     return 0 if ok else 1
 

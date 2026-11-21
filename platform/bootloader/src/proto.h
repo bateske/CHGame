@@ -75,8 +75,10 @@
 
 /* 0x0002: SD game menu. RUN now resets into the program instead of jumping.
    0x0003: menu v2 (folders, MENU.IDX order and launch, MENU.BG); READ and
-   STATUS removed (ST_ERR_BADCMD). */
-#define BOOT_VERSION          0x0003u
+   STATUS removed (ST_ERR_BADCMD).
+   0x0004: keeps the system settings block (the metadata page's last 32 B,
+   chgame_map.h) across installs, ABORT and self-update. */
+#define BOOT_VERSION          0x0004u
 
 /* ---- developer self-update gate ---------------------------------------------
  * CHGAME_ALLOW_SELFUPDATE compiles the whole facility in or out. It is 1 for

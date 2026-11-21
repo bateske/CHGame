@@ -3,6 +3,7 @@ package main
 // Firmware upload, image composition, and factory provisioning.
 
 import (
+	"context"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -29,6 +31,11 @@ const (
 	metaMagic   = 0x4D474843 // "CHGM"
 	metaVersion = 1
 	erased      = 0xFF
+
+	// The system settings block: the metadata page's last 32 bytes, reserved,
+	// kept by bootloader v4 and later. A provisioning image leaves it 0xFF.
+	sysSize = 32
+	sysAddr = metaAddr + pageSize - sysSize // 0xF7E0
 
 	devKey = 0x43484744 // "CHGD" - an interlock against accidents, not a secret
 )
@@ -215,6 +222,27 @@ func bootImageBoard(boot []byte) uint32 {
 	return chgTargetRev0
 }
 
+// checkBootBoard: with device, the board the user picked (-device, the IDE's
+// board), refuse a bootloader image built for another, by its board word.
+// Every path that writes a bootloader (burn, provision, selfupdate) checks it
+// before the board is touched. "" checks nothing; a device this tool does not
+// know is refused as targetOf refuses it. The messages are the Python tool's.
+func checkBootBoard(boot []byte, device string) error {
+	if device == "" {
+		return nil
+	}
+	want, err := targetOf(device)
+	if err != nil {
+		return err
+	}
+	if got := bootImageBoard(boot); got != want {
+		return fmt.Errorf("this bootloader is built for %s, not %s: "+
+			"pick %s's bootloader (Tools > Board, then Tools > Bootloader)",
+			boardName(got), boardName(want), device)
+	}
+	return nil
+}
+
 // selfUpdate replaces the bootloader through the bootloader that is running.
 //
 // The new image is staged in the application region by the ordinary upload
@@ -354,30 +382,72 @@ const bootHelp = `no device is in factory ISP mode.
   BOOT must be held ACROSS the power cycle: the chip samples it only at reset,
   so pressing it while the board is already running does nothing.`
 
-// wchispProbe confirms a device is in ISP mode and names it.
+const severalHelp = `wchisp finds %d devices in factory ISP mode (%s).
+
+  Provisioning erases and writes the whole chip, and wchisp would pick one of
+  them by itself. Leave only the board to provision in ISP mode (unplug or
+  power off the others) and try again.`
+
+// wchispDevices: the devices `wchisp probe` lists, as it names them
+// ("0: CH32X035G8U6[0x5623]").
 //
 // Keyed on the POSITIVE signal - a "Device #" line - not on error wording:
 // wchisp changed "Found 0 devices" to "Found 0 USB devices" between 0.2.3 and
 // 0.3.0, and matching the failure text let a missing device sail past.
-func wchispProbe(tool string) (string, error) {
-	out, _ := exec.Command(tool, "probe").CombinedOutput()
-	for _, line := range strings.Split(string(out), "\n") {
+func wchispDevices(out string) []string {
+	var found []string
+	for _, line := range strings.Split(out, "\n") {
 		if i := strings.Index(line, "Device #"); i >= 0 {
-			return strings.TrimSpace(line[i+len("Device #"):]), nil
+			found = append(found, strings.TrimSpace(line[i+len("Device #"):]))
 		}
 	}
-	return "", fmt.Errorf("%s", bootHelp)
+	return found
 }
 
-func provision(bootPath, appPath, wchispPath string) error {
-	tool, err := findWchisp(wchispPath)
-	if err != nil {
-		return err
-	}
+var wchispUIDLine = regexp.MustCompile(`Chip UID:\s*([0-9A-Fa-f]{2}(?:-[0-9A-Fa-f]{2})+)`)
 
+// wchispUID: the chip's unique ID in `wchisp info`'s output
+// ("CD-AB-88-D8-60-BE-B5-42", in capitals), or "" if it names none.
+func wchispUID(out string) string {
+	if m := wchispUIDLine.FindStringSubmatch(out); m != nil {
+		return strings.ToUpper(m[1])
+	}
+	return ""
+}
+
+// wchispProbe confirms exactly one device is in ISP mode and names it.
+func wchispProbe(tool string) (string, error) {
+	out, _ := exec.Command(tool, "probe").CombinedOutput()
+	found := wchispDevices(string(out))
+	switch len(found) {
+	case 0:
+		return "", fmt.Errorf("%s", bootHelp)
+	case 1:
+		return found[0], nil
+	}
+	return "", fmt.Errorf(severalHelp, len(found), strings.Join(found, ", "))
+}
+
+// wchispChipUID asks wchisp for the chip's unique ID, "" if it does not say.
+func wchispChipUID(tool string) string {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	out, _ := exec.CommandContext(ctx, tool, "info").CombinedOutput()
+	return wchispUID(string(out))
+}
+
+// provision writes the bootloader (and a sketch) through the factory ISP.
+// device, the board picked, refuses a bootloader image built for another
+// before anything else; the ROM knows nothing of boards, so this catches a
+// wrong image, not a wrong board. ask, when given (the standalone provision
+// command; burn never asks), is asked before the chip is erased.
+func provision(bootPath, appPath, wchispPath, device string, ask func(string) bool) error {
 	boot, err := os.ReadFile(bootPath)
 	if err != nil {
 		return err
+	}
+	if err := checkBootBoard(boot, device); err != nil {
+		return fmt.Errorf("%s: %v", bootPath, err)
 	}
 	var app []byte
 	if appPath != "" {
@@ -385,14 +455,24 @@ func provision(bootPath, appPath, wchispPath string) error {
 			return err
 		}
 	}
+	board := boardName(bootImageBoard(boot))
 
+	tool, err := findWchisp(wchispPath)
+	if err != nil {
+		return err
+	}
 	fmt.Printf("wchisp      : %s\n", tool)
 	dev, err := wchispProbe(tool)
 	if err != nil {
 		return err
 	}
 	fmt.Printf("device      : %s\n", dev)
-	fmt.Printf("bootloader  : %s  (%d bytes)\n", filepath.Base(bootPath), len(boot))
+	if uid := wchispChipUID(tool); uid != "" {
+		fmt.Printf("chip UID    : %s\n", uid)
+	} else {
+		fmt.Println("chip UID    : not reported by wchisp")
+	}
+	fmt.Printf("bootloader  : %s  (%d bytes, for %s)\n", filepath.Base(bootPath), len(boot), board)
 	if app != nil {
 		fmt.Printf("application : %s  (%d bytes)\n", filepath.Base(appPath), len(app))
 	} else {
@@ -403,6 +483,15 @@ func provision(bootPath, appPath, wchispPath string) error {
 	img, err := buildImage(boot, app)
 	if err != nil {
 		return err
+	}
+
+	if ask != nil {
+		fmt.Printf("This erases the whole chip and writes a bootloader for %s.\n", board)
+		fmt.Println("The factory ISP cannot see which board the chip is on: check that it is")
+		fmt.Println("that board (another board's bootloader drives the wrong pins).")
+		if !ask("erase and write? [y/N] ") {
+			return fmt.Errorf("not confirmed: nothing was erased (-yes provisions without asking)")
+		}
 	}
 
 	// FULL CHIP ERASE FIRST.

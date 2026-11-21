@@ -574,8 +574,7 @@ static void optionsRender(uint32_t frame) {
     const char *help = optSel == O_DEALER ? PAYS[casino.opt.dealer]
                      : optSel == O_GOAL ? "CASH OUT THERE AND WIN" : "B: BACK";
     centred35(98, help, GOLD);
-    centred35(109, "CROUPIER ART: VAMPIRICS", SILVER);    // Press Play On Tape's (see NOTICE)
-    centred35(116, "FONT: PRESS PLAY ON TAPE", SILVER);
+    centred35(116, "CHGAME", SILVER);
 }
 
 // ---------------------------------------------------------------------------

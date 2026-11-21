@@ -10,9 +10,48 @@ from `tools/size_report.py`.
 stays at 0x3000 and every game keeps its 50,944 B. The size gate (gate A) is
 a boot image of at most 12,288 B with at least 256 B to spare; for the
 visual menu, by the owner's choice (2026-10-03, its key map), 192 B
-(`build.sh` passes `--margin 192` for `--ui=visual`).
+(`build.sh` passes `--margin 192` for `--ui=visual`). The gates are the
+same for every board (`--board=rev0|rev1`).
 
-## Current builds (2026-10-06: power-on, launch, the static colour, the pins)
+## Current builds: v4, the system settings block (2026-11-20)
+
+Bootloader version 4 keeps the metadata page's last 32 B, the system
+settings block (`chgame_map.h`), whenever it rewrites the page: one
+`meta_put()` in `update.c` builds the page for `upd_begin()` (header blank)
+and `upd_end()` (header written), both keeping the block, and self-update
+clears the header through `upd_begin()` instead of erasing the page. To pay
+for it, `flash.c`'s two RAM-resident wrappers, `flash_write_page()` and
+`flash_program_page()`, became one, `flash_write_page(..., erase)`: 32 B
+less `.ramfunc`, so 32 B less flash and RAM. Net: `.text` +64 B,
+`.ramfunc` -32 B (-48 B for USB Only), image +32 B on the list menu, +20 B
+on the visual menu, +12 to +24 B elsewhere, -4 B for USB Only; RAM -32 B
+(-48 B), so 64 B of the menu builds' 20,480 are free. The dry runs never
+write flash and are unchanged. Every build is within its gate; the visual
+menu keeps 16 B (rev0) and 12 B (rev1) above its 192 B.
+
+| Build | rev0 image | Free | rev1 image | Free | `.ramfunc` | RAM in use |
+|---|---|---|---|---|---|---|
+| **release** (list menu) | **11,952** | **336** | **11,944** | **344** | 564 | 20,416 |
+| release `--style=static` | 11,740 | 548 | 11,736 | 552 | 564 | 20,276 |
+| **release `--ui=visual`** | **12,080** | **208** | **12,084** | **204** | 548 | 20,224 |
+| release `--ui=visual --style=static` | 11,892 | 396 | 11,888 | 400 | 548 | 20,212 |
+| locked | 11,612 | 676 | 11,620 | 668 | 464 | 20,312 |
+| locked `--ui=visual` | 11,780 | 508 | 11,784 | 504 | 452 | 20,124 |
+| nomenu (USB only) | 5,336 | 6,952 | 5,344 | 6,944 | 548 | 3,672 |
+| app / app `--ui=visual` (dry runs) | 6,408 / 6,824 | - | 6,416 / 6,832 | - | 0 | 18,660 / 18,608 |
+
+Symbol by symbol, rev0's list build (`riscv-none-embed-nm -S`):
+`upd_begin()` 24 -> 14 B, `upd_end()` 138 -> 56 B, `meta_put()` new at
+136 B; `fl_write()` (172 B) is now `flash_write_page()` and the two
+wrappers (12 B and 20 B) are gone; `keys()`, `lcd_on()`, `lcd_wake()`
+and `sd_read()` +22 B and `proto_task()` -4 B only from where LTO and the
+linker's relaxation placed them. Tried first: a three-way erase / program /
+erase-and-program in `meta_put()` (+84 B), then separate erase and program
+calls (+56 B).
+
+The tables below are the builds before v4.
+
+## Builds of 2026-10-06: rev0 (power-on, launch, the static colour, the pins)
 
 | Build | `.text` | `.ramfunc` | `.data` | Boot image | Free | `.bss` | RAM in use |
 |---|---|---|---|---|---|---|---|
@@ -40,8 +79,9 @@ app binaries all compared equal).
 
 **RAM is full on purpose.** A folder of the menu lists `MENU_MAX_GAMES`
 entries (`src/menu.h`), 32 B each, and 240 take what the framebuffer, the
-buffers and the 2 KB stack leave: 32 B of the 20,480 are left. Anything that
-adds RAM to the menu build lowers that number (every 32 B, one entry). A
+buffers and the 2 KB stack leave: 32 B of the 20,480 were left, 64 B since
+v4 (above). Anything that adds RAM to the menu build lowers that number
+(every 32 B, one entry). A
 folder had 128 until 2026-10-03, then 224, then 240 once the rainbow's
 gradient table went.
 
@@ -60,6 +100,69 @@ Notes:
 - The binaries, with SHA-256 sums, are in [release/](release). They use the
   default theme (rainbow). Two independent builds give byte-identical files
   (`tools/dist.sh`).
+
+## Rev1 before v4 (2026-11-17: `--board=rev1`, its pins, its backlight)
+
+Measured with `./build.sh --board=rev1 <mode>`; the rev0 builds above are
+unchanged to the byte (`tools/dist.sh`: rev0's lines in `release/SHA256SUMS`
+are the ones before).
+
+| Build | `.text` | `.ramfunc` | `.data` | Boot image | Free | `.bss` | RAM in use |
+|---|---|---|---|---|---|---|---|
+| **release** | 11,248 | 596 | 84 | **11,928** | **360** | 17,704 | **20,448** |
+| release `--style=static` | 11,044 | 596 | 84 | 11,724 | 564 | 17,564 | 20,308 |
+| **release `--ui=visual`** | 11,408 | 580 | 76 | **12,064** | **224** | 17,536 | **20,256** |
+| release `--ui=visual --style=static` | 11,212 | 580 | 76 | 11,868 | 420 | 17,524 | 20,244 |
+| locked | 11,036 | 496 | 80 | 11,612 | 676 | 17,704 | 20,344 |
+| locked `--ui=visual` | 11,208 | 484 | 76 | 11,768 | 520 | 17,532 | 20,156 |
+| nomenu | 4,676 | 596 | 76 | 5,348 | 6,940 | 984 | 3,720 |
+| app | 6,400 | 0 | 16 | 6,416 | - | 16,580 | 18,660 |
+| app `--ui=visual` | 6,824 | 0 | 8 | 6,832 | - | 16,536 | 18,608 |
+
+**The visual menu's gate:** 224 B free against the 192 B it must keep, 32 B
+to spare (rev0's: 228 free, 36 to spare). Every rev1 build is within its
+gate. The table includes the backlight's 40 ms wait after DISPON (below,
+"The white flash"); before it, every rev1 build but the USB-only one was
+smaller than rev0's.
+
+**The white flash** (2026-11-18, seen on the first Rev1 board): lighting the
+backlight at once after DISPON showed one white frame at power-on. The panel
+shows its RAM from the next refresh on (16.4 ms at the menu's FRMCTR1), and
+its blank page, until then, is white. `lcd_on()` now waits 40 ms before the
+backlight on rev1 (`sys_delay_ms(40)`, as CHGfx waits 100 ms after DISPON):
++12 B visual (12,052 -> 12,064), +28 B list (11,900 -> 11,928; LTO placed
+`lcd_on()` differently), +4 to +32 B elsewhere; USB Only unchanged. Checked
+on the board: no flash.
+
+**What rev1 costs and saves**, symbol by symbol against rev0's visual build
+(`riscv-none-embed-nm -S`; the list build is alike):
+
+| | Bytes | |
+|---|---|---|
+| `hal_buttons()` | +6 | PB11 and PC0/PC3 shifted into the key bits, one XOR for all (`HAL_KEYS`); still one out-of-line copy |
+| `lcd_on()` (in `light()`) | +8 | the backlight: PB9 high after DISPON |
+| `HELLO` (in `proto_task()`) | +6 | the board field |
+| `sd_init()`, `sd_read()` | -20 | the card's CS on PB3: a 2-byte constant, where PB11's 0x800 takes two instructions |
+| `main()`, `lcd_reset()`, `cmd()` | -10 | the GPIO base shared (below) |
+| image | -8 | 12,052 B against 12,060 (before the 40 ms backlight wait, which brought it to 12,064) |
+
+**The savings, in order**, each measured on the release (list) and visual
+builds:
+
+| Step | List | Visual | What |
+|---|---|---|---|
+| rev1's id with rev0's pins (2026-10-07) | 11,936 | 12,076 | the board field alone |
+| rev1's pins, the backlight, `HAL_KEYS` | 11,928 | 12,076 | the pins as `GPIOB->BSHR` and the like; the card's CS on PB3 pays for the keys' shifts and the backlight |
+| `HELLO`'s board field read from the image | 11,924 | 12,072 | `lw a2,20(zero)`, the image's own word at 0x14, instead of loading the constant (-4) |
+| the UID and the board field in one loop | 11,920 | 12,068 | four calls of `put_u32()` become one in a loop of four (-4) |
+| rev1's GPIO registers by address (`HAL_GPIO`) | 11,900 | 12,052 | written as an address, not a member of `GPIOB`, the three ports' registers share one base register (list -20, visual -16) |
+
+Tried, no gain: the keys' mask before the shift (`(c & 9) << 2`; GCC makes
+the same code), A in bit 3 instead of 4, the backlight before the panel's
+CS goes high, SPI1 and RCC by address too. The backlight cannot share a
+store: the last GPIOB write before it is `cmd()`'s DC, shared by every
+command, and setting PB9 there would light the panel at Sleep Out, before
+its first frame.
 
 ## Milestones
 
@@ -97,6 +200,8 @@ Notes:
 | Visual: the owner's key map | 12,056 | 232 | START does nothing; SELECT goes to the cart's cover from anywhere and at the root shows the about page; B at the root or in a genre folder goes to the cart's cover, and on it shows the about page; A on the cart's cover shows the installed program's picture, where only A (run) and B (back) count (+104 B; the dry run now leaves on START). Paid for, by the owner's choice: the repeat-read card cache (-40 B) and the 16-bit card reads (-36 B) are gone (card reads as the list menu's: a byte at a time at 12 MHz), and gate A's margin for this build is 192 B instead of 256. Static 11,868 |
 | Visual: the installed game's border | 12,080 | 208 | The owner asked for a one-pixel border round the picture instead of the stripe: four `lcd_fill()` calls, +52 B (a loop of two, or one pixel at a time, came out the same or larger). Paid for by a fifth size flag for this build, `-fno-tree-vrp` (-28 B; the pixel and card loops identical instruction for instruction), and 24 B of the 40 left under the 192 B margin. Static 11,896 |
 | Power-on on the cover; the launch game never installs by itself; LEFT/RIGHT only where there is somewhere to go (2026-10-06) | 12,060 | 228 | The owner, after the cover-art work. The visual menu stays on the cover at power-on (the search for the installed game still runs behind it, for the stray row; A on the cover shows it): the fade to the installed game and the launch game's 1 s hold and `start()` call went. A launch game that is installed starts before the panel is lit (`boot_reset()` straight from the seek); one that is not waits on its picture after the cover (a second `seek()`). `flip()` reports whether it moved, so LEFT/RIGHT at `GAMES/` without folders do nothing (+16 B). Paid for, and 20 B more, by `flush_all()`: one out-of-line copy of `lcd_flush(0, LCD_H)`'s two constants for its six call sites (-36 B). Static 11,876. The list menu's launch loop became `sel = n` and a `start()` only for a folder or the installed game: 11,920 B (+12); its static build draws colour 15 in the text colour (`background()` sets `lcd_pal[15] = lcd_pal[11]` after either palette): 11,716 B (+32). The USB-only build's `hal_pins_init()` sets up the LED alone: 5,340 B (-60). The buzzer pin is left floating in every build (0 B) |
+| Rev1 (2026-11-17) | 12,052 | 236 | `--board=rev1`: rev1's pins, its backlight (PB9 high after DISPON), its key bits within 0-8 (`HAL_KEYS`), `HELLO`'s board field from the image's word in one loop with the UID, its GPIO registers by address. Rev0 unchanged to the byte. Rev1 list 11,900, static 11,696, visual static 11,864, locked 11,580, nomenu 5,348 ("Rev1" above) |
+| Rev1: no white flash (2026-11-18) | 12,064 | 224 | On the first Rev1 board the backlight lit one white frame at power-on: it now waits 40 ms after DISPON (the panel shows its RAM from the next refresh). Rev1 list 11,928, static 11,724, visual static 11,868, locked 11,612, nomenu 5,348. Rev0 unchanged |
 
 ## Where the visual menu's bytes go
 

@@ -483,8 +483,7 @@ static void optionsRender(uint32_t frame) {
         fmtStr(fmtInt(fmtStr(buf, "FASTEST WIN "), stats.fastest), " ROUNDS");
         centred35(96, buf, GOLD);
     }
-    centred35(108, "SNAKES AND LADDERS " CHSN_VERSION, SILVER);
-    centred35(115, "FONT: PRESS PLAY ON TAPE", SILVER);
+    centred35(115, "CHGAME", SILVER);
 }
 #endif
 

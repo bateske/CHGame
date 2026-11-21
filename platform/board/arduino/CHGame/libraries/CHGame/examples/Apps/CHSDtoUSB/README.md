@@ -250,10 +250,16 @@ drive's volume handle):
 It needs Python 3 with `pyserial`. Most of it wants the **test build**,
 which adds serial commands that stand in for the buttons (A, START, pulling
 the card) and inject faults (garbled blocks on the way in and out, blocks
-that fail every try, at the start of a command and in the middle):
+that fail every try, at the start of a command and in the middle). Build
+it for the board attached, `<board>` `rev0` or `rev1`, into that board's
+folder (`--board <board>` tells `chsd_test.py` which; without it, the
+newest board the installed package has):
 
-    arduino-cli compile -b CHGame:ch32v:rev0:opt=osstd --build-path build/test --build-property build.extra_flags=-DCHSD_TEST=1 .
-    arduino-cli compile -b CHGame:ch32v:rev0:opt=osstd --build-path build/release .
+    arduino-cli compile -b CHGame:ch32v:<board>:opt=osstd --build-path build/<board>/test --build-property build.extra_flags=-DCHSD_TEST=1 .
+    arduino-cli compile -b CHGame:ch32v:<board>:opt=osstd --build-path build/<board>/release .
+
+The release build is also `chgame --board <board> --sketch CHSDtoUSB
+build`.
 
 The test build says TEST in its status bar and at the end of its status
 line. What the tests cover:
@@ -354,12 +360,18 @@ Examples > CHGame > Apps > CHSDtoUSB*, with CHGfx and the CHGame library
 in the package. With 0.2.4, add the CHGfx and CHGame libraries from this
 repository's [`platform/board/arduino/CHGame/libraries`](../../../..).
 
-Board **CHGame Rev0**, *Tools > Optimize* **Smallest (-Os)** (43.3 KB of
+Board **CHGame Rev0**, or **CHGame Rev1** for a Rev1 or Rev 1.5 (board
+package 0.4.0 on), *Tools > Optimize* **Smallest (-Os)** (on Rev0, 43.3 KB of
 50.9 KB and 17,064 B of RAM; with *Smallest + LTO*, the package's default,
-38.0 KB and 16,476 B). From the command line:
+38.0 KB and 16,476 B). The card's chip select (PB11 on Rev0, PB3 on Rev1)
+comes from the board. From the command line, with `rev0` or `rev1`:
 
-    arduino-cli compile -b CHGame:ch32v:rev0:opt=osstd CHSDtoUSB
-    arduino-cli upload  -b CHGame:ch32v:rev0:opt=osstd -p COMx CHSDtoUSB
+    arduino-cli compile -b CHGame:ch32v:rev1:opt=osstd CHSDtoUSB
+    arduino-cli upload  -b CHGame:ch32v:rev1:opt=osstd -p COMx CHSDtoUSB
+
+or from the repository, `chgame --sketch CHSDtoUSB upload` (the newest
+board; `chgame --board rev0 --sketch CHSDtoUSB upload` for a Rev0). An
+upload built for the other board is refused.
 
 The first screen (before the instrument panel) was tested on the board
 with *Smallest (-Os)*; this one, and the move onto the CHGame library,

@@ -10,7 +10,9 @@ painted with tools/artkit (docs/cover-art.md). This module:
                                         (an artkit Picture, a PIL image or a
                                         pixkit.FB), checked against the rule
     cli()                               `chgame boxart`: a sketch's docs/cart.png
-                                        from its tools/cart.py; --check, --sheet
+                                        from its tools/cart.py (or its hand-
+                                        finished tools/art/cart.png); --check,
+                                        --sheet, --export DIR, --import DIR
     placeholder(title, shot)            the plain pictures the tools draw for a
     folder_cover(name)                  game or a folder that has none: the
                                         title in the display font over the
@@ -351,10 +353,24 @@ def recipes():
             if (d / "tools" / "cart.py").is_file()}
 
 
+HAND = pathlib.Path("tools") / "art" / "cart.png"     # a hand-finished picture: it wins over the recipe
+
+
+def programs():
+    """Every example with box art, docs/cart.png: {name: folder}."""
+    root = HERE.parent / "platform" / "board" / "arduino" / "CHGame" / "libraries" / "CHGame" / "examples"
+    return {d.name: d for sub in ("Games", "Apps") for d in sorted((root / sub).iterdir())
+            if (d / "docs" / "cart.png").is_file()}
+
+
 def render(sketch):
-    """The PNG a sketch's tools/cart.py draws (its draw() returns a PIL image,
-    an artkit Picture or a pixkit FB)."""
+    """The PNG a sketch's box art is: its hand-finished tools/art/cart.png when
+    it has one (`chgame boxart --import`), otherwise what its tools/cart.py
+    draws (its draw() returns a PIL image, an artkit Picture or a pixkit FB)."""
     import importlib.util
+    hand = pathlib.Path(sketch) / HAND
+    if hand.is_file():
+        return png(Image.open(hand))
     f = pathlib.Path(sketch) / "tools" / "cart.py"
     spec = importlib.util.spec_from_file_location(f"cart_{pathlib.Path(sketch).name}", f)
     mod = importlib.util.module_from_spec(spec)
@@ -362,10 +378,89 @@ def render(sketch):
     return png(mod.draw())
 
 
+EDIT_NOTES = """Every program's box art, the picture the visual menu shows for it, to edit in one place.
+
+Each <Name>.png is the program's docs/cart.png as the card holds it: an indexed
+128x128 PNG, its own colours at 0-10, the menu's four at 11-14 (#FFF4D6 cream,
+#808080 grey, #000000 black, #D62020 red: use them freely, they cost nothing)
+and #FF00FF at 15. At most 11 colours besides those five. The menu draws a
+border round the picture and, while installing, a bar over rows 110-119
+(docs/visual-menu.md). Keep the file names.
+
+Then, from the repository's root:
+
+    chgame boxart --import {dir}
+
+Each picture that changed is checked against the rule and becomes that
+program's hand-finished box art (tools/art/cart.png, which then wins over its
+tools/cart.py recipe) and its docs/cart.png. Unchanged ones are left alone;
+one that breaks the rule is refused, with the reason. The README's banner and
+galleries show the box art, so remake them after an import:
+
+    python tools/brand/make.py banner
+    python tools/artsheet.py --gallery
+"""
+
+
+def export(out):
+    """Every program's docs/cart.png into OUT/<Name>.png (indexed, its palette as the card's)."""
+    out = pathlib.Path(out)
+    out.mkdir(parents=True, exist_ok=True)
+    progs = programs()
+    for n, d in progs.items():
+        (out / f"{n}.png").write_bytes((d / "docs" / "cart.png").read_bytes())
+    (out / "README.txt").write_text(EDIT_NOTES.format(dir=out.as_posix()), encoding="utf-8", newline="\n")
+    print(f"{out}: {len(progs)} pictures, README.txt")
+    return 0
+
+
+def import_(src):
+    """Each OUT/<Name>.png that differs from its program's docs/cart.png becomes
+    that program's tools/art/cart.png and docs/cart.png, after the picture rule."""
+    from chcart import model
+    src = pathlib.Path(src)
+    bad = changed = 0
+    for n, d in programs().items():
+        f = src / f"{n}.png"
+        if not f.is_file():
+            continue
+        im = Image.open(f)
+        cur = Image.open(d / "docs" / "cart.png").convert("RGB")
+        if im.size != (128, 128):
+            print(f"{n}: {im.size[0]}x{im.size[1]}, must be 128x128")
+            bad += 1
+            continue
+        if im.convert("RGB").tobytes() == cur.tobytes():
+            continue
+        try:
+            data = png(im)
+        except ValueError as e:
+            print(f"{n}: {e}")
+            bad += 1
+            continue
+        issues = model.check_picture(data, f.name)
+        if issues:
+            print(f"{n}: " + "; ".join(str(i) for i in issues))
+            bad += 1
+            continue
+        for p in (d / HAND, d / "docs" / "cart.png"):
+            p.parent.mkdir(parents=True, exist_ok=True)
+            p.write_bytes(data)
+        print(f"{n}: imported ({(d / HAND).relative_to(HERE.parent).as_posix()} and docs/cart.png)")
+        changed += 1
+    print(f"boxart: {changed} imported" + (f", {bad} refused" if bad else ""))
+    return 1 if bad else 0
+
+
 def cli(argv, sketch=None):
-    """`chgame boxart`: a sketch's docs/cart.png from its tools/cart.py;
-    --check: every recipe's picture is the committed one; --sheet F: all of
-    them side by side."""
+    """`chgame boxart`: a sketch's docs/cart.png from its tools/cart.py (or its
+    hand-finished tools/art/cart.png); --check: every recipe's picture is the
+    committed one; --sheet F: all of them side by side; --export DIR / --import
+    DIR: every program's picture out to one folder to edit, and back."""
+    if "--export" in argv:
+        return export(argv[argv.index("--export") + 1])
+    if "--import" in argv:
+        return import_(argv[argv.index("--import") + 1])
     if "--sheet" in argv:
         out = argv[argv.index("--sheet") + 1]
         print(sheet([d / "docs" / "cart.png" for d in recipes().values()], out, cols=6))

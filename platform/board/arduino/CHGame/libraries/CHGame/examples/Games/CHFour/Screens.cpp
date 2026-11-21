@@ -455,9 +455,7 @@ static void optionsRender(uint32_t frame) {
         optField(OPT_TEXT[i], (uint8_t)(optByte(i) + 1), value);
         fontText(115 - fontWidth(value, 0), y, value, i == sel ? WHITE : FELT_LT, 0);
     }
-    centred35(95, "FOUR IN A ROW " CHF4_VERSION, SILVER);
-    centred35(105, "THE DEALER AND THE 3X5 FONT:", SILVER);
-    centred35(112, "PRESS PLAY ON TAPE", SILVER);
+    centred35(112, "CHGAME", SILVER);
 }
 #endif
 

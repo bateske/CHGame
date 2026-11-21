@@ -18,7 +18,7 @@ Hello example, so an emulator can run any of them.
 | `warnings.chgame` | readable, with every warning: an unknown key, a stray file, a 21-character title, a title the menu cannot show, an image that covers the save pages |
 | `pictures.chgame` | the visual menu's pictures: the cart's cover and about page, two folders' covers (one two levels down), two games' pictures, a folder with neither |
 | `system.chgame` | `menu.systemImages`: three of the menu's own screens replaced (installed, folder, error-4) and an about page; the defaults fill the other slots of `SYSTEM.PIC` |
-| `devices.chgame` | two games, each with its rev0 binary and one for a board this reader does not know: `rev1` (reserved, not defined yet) and `other-board`. Both are `unknown-device` warnings, the binaries are kept, and the card is the rev0 binaries' (chgame.md, "Devices and revisions") |
+| `devices.chgame` | two games, each with its rev0 binary and one for another board: `rev1`, a known device (since 2026-11-17; it was reserved when the fixture was made, and its binary is 64 placeholder bytes, not a program), and `other-board`, one no reader knows: `unknown-device`, its binary kept. The card is prepared for rev0, from the rev0 binaries (chgame.md, "Devices and revisions"). A reader from before rev1 warns about both, which gives the same warning codes |
 | `extension.chgame` | a cart from the web tool before `menu.systemImages` existed, written raw: `x-chgame-web` version 1 names two system screens, `menu.systemImages` names one of them differently (the official field wins, with `extension-conflict`), and an `x-other-tool` key rides along, warned about by nobody |
 
 ## bad/

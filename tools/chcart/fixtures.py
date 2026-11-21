@@ -134,11 +134,13 @@ def extension_cart():
 
 
 def devices_cart():
-    """A cart from a writer that knows boards this reader does not: each game
-    has its rev0 binary and one for another board, rev1 (reserved, not yet
-    defined) or other-board (unknown). Those are unknown-device warnings, not
-    used and kept, and the card is the rev0 binaries' (spec/chgame.md,
-    "Devices and revisions"). Written raw: chcart writes what it is given."""
+    """A cart from a writer that knows more boards: each game has its rev0
+    binary and one for another board. rev1 is a known device now (it was
+    reserved when this fixture was made; its binary is 64 placeholder bytes,
+    not a program); other-board is one no reader knows: unknown-device, not
+    used and kept. The card is prepared for rev0, from the rev0 binaries
+    (spec/chgame.md, "Devices and revisions"), so the expected results did not
+    change when rev1 was defined. Written raw: chcart writes what it is given."""
     hello = HELLO.read_bytes()
     m = {"schemaVersion": 1, "title": "TWO BOARDS", "games": [
         {"id": "one", "title": "ONE", "binaries": [{"device": "rev0", "filename": "one/rev0.bin"},

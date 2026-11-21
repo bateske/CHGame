@@ -692,7 +692,7 @@ static void optionsRender(uint32_t frame) {
         if (sel < 3) centred35(100, RULE_HELP[sel][optGet(sel)], WHITE);
         centred35(113, "THEY APPLY FROM THE NEXT GAME", FELT_LT);
     } else {
-        centred35(117, "FONT: PRESS PLAY ON TAPE", SILVER);
+        centred35(117, "CHGAME", SILVER);
     }
 }
 #endif

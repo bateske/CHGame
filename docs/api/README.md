@@ -59,7 +59,7 @@ what will happen, and no more. A sentence or two, not an essay.
   before writing it; keep the voice of the existing comments.
 - **Comments only.** A documentation change never touches code: a release
   build of every game must stay byte-identical (`sha256sum` the
-  `build/release/*.ino.bin` before and after).
+  `build/<board>/release/*.ino.bin` of each board before and after).
 
 The topics:
 

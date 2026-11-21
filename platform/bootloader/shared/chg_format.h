@@ -30,7 +30,7 @@
  * every later board is "CGR<n>". A bootloader installs only its own board's.
  * Ids are never reused or reassigned. */
 #define CHG_TARGET_REV0      0x35335843u   /* "CX35": CHGame Rev0 (CH32X035G8U6) */
-#define CHG_TARGET_REV1      0x31524743u   /* "CGR1": reserved for CHGame Rev1, not yet defined */
+#define CHG_TARGET_REV1      0x31524743u   /* "CGR1": CHGame Rev1, and Rev 1.5 (the same pins) */
 
 /* The board this bootloader is built for. A rev0 build defines nothing, and
  * its binaries are the ones built before boards had ids. Any other board's

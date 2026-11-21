@@ -102,6 +102,25 @@ int app_valid_now(void)
     return le32(B->flash + CHGAME_APP_START + 8) != CHGAME_BOOT_SIG;
 }
 
+static uint8_t sys_byte(uint32_t pattern, uint32_t i)
+{
+    if (pattern == 1) return (uint8_t)(i * 37u + 0x11u);
+    if (pattern == 2) return i == CHGAME_SYS_SIZE - 1 ? 0xFE : 0xFF;
+    return 0xFF;
+}
+
+void sys_seed(uint32_t pattern)
+{
+    for (uint32_t i = 0; i < CHGAME_SYS_SIZE; i++) B->flash[CHGAME_SYS_ADDR + i] = sys_byte(pattern, i);
+}
+
+int sys_is(uint32_t pattern)
+{
+    for (uint32_t i = 0; i < CHGAME_SYS_SIZE; i++)
+        if (B->flash[CHGAME_SYS_ADDR + i] != sys_byte(pattern, i)) return 0;
+    return 1;
+}
+
 int test_summary(void)
 {
     printf("%d passed, %d failed\n", t_pass, t_fail);

@@ -33,6 +33,11 @@ uint32_t le32(const uint8_t *p);
 void put32(uint8_t *p, uint32_t v);
 void make_image(uint8_t *img, uint32_t len, uint32_t seed);       /* app-looking bytes */
 int  app_valid_now(void);                                         /* metadata + CRC check on B->flash */
+/* The system settings block (chgame_map.h), written straight into flash as a
+   future writer would leave it. Pattern 0 is the blank block (all 0xFF), 1
+   mixed bytes, 2 a single byte programmed (the last). */
+void sys_seed(uint32_t pattern);
+int  sys_is(uint32_t pattern);                                    /* the block holds exactly that */
 int  test_summary(void);
 
 #endif

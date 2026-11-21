@@ -135,7 +135,7 @@ RAMFUNC int flash_erase_page(uint32_t addr, flash_region_t region)
 /* Erase (when asked) and program one page, then read it back. A silent
  * programming failure that only showed up at the final image CRC would waste
  * a whole update; catching it per page names the page that failed. */
-RAMFUNC static int fl_write(uint32_t addr, const uint8_t *data, flash_region_t region, int erase)
+RAMFUNC int flash_write_page(uint32_t addr, const uint8_t *data, flash_region_t region, int erase)
 {
     uint32_t irq;
     /* The page buffer is loaded a word at a time, so the source is first
@@ -165,16 +165,6 @@ RAMFUNC static int fl_write(uint32_t addr, const uint8_t *data, flash_region_t r
             return FLASH_ERR_VERIFY;
 
     return FLASH_OK;
-}
-
-RAMFUNC int flash_write_page(uint32_t addr, const uint8_t *data, flash_region_t region)
-{
-    return fl_write(addr, data, region, 1);
-}
-
-RAMFUNC int flash_program_page(uint32_t addr, const uint8_t *data, flash_region_t region)
-{
-    return fl_write(addr, data, region, 0);
 }
 
 /* ---- developer self-update --------------------------------------------------

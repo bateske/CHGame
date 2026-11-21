@@ -12,6 +12,8 @@ website's own hardware tests drive it there."""
 ECHO = ("STATE",)
 # The USB CDC port is the protocol: USB Serial, not the release default's
 # "Upload only". Smallest + LTO, as the website's build-helper builds it.
+# The tools swap the board field (rev0 here) for the board a build is for
+# (--board; tools/device.py fqbn()), keeping the options.
 FQBN = "CHGame:ch32v:rev0:opt=oslto,rtlib=nano,periph=game,usb=serial"
 # One row of LCD DMA scratch instead of two: 512 B of RAM kept for the card's
 # buffers. The website's build-helper builds with the same; so does the

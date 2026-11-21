@@ -13,15 +13,18 @@
 package main
 
 import (
+	"bufio"
+	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 )
 
-var version = "0.2.0"
+var version = "0.3.0"
 
 type opts struct {
 	port    string
@@ -75,97 +78,160 @@ func progressBar(quiet bool) func(done, total int) {
 	}
 }
 
-func main() {
-	o := &opts{}
-	bind := func(fs *flag.FlagSet) {
-		fs.StringVar(&o.port, "port", "", "serial port (auto-detected if omitted)")
-		fs.DurationVar(&o.timeout, "timeout", 10*time.Second, "per-command timeout")
-		fs.BoolVar(&o.debug, "debug", false, "dump frames in both directions")
-		// Arduino's platform.txt expands {upload.verbose} to one of these.
-		fs.BoolVar(&o.verbose, "verbose", false, "more detail")
-		fs.BoolVar(&o.quiet, "quiet", false, "less detail")
-	}
-
-	global := flag.NewFlagSet("chgame-upload", flag.ExitOnError)
-	bind(global)
-	global.Usage = func() {
-		fmt.Fprintf(os.Stderr, `chgame-upload %s
+const usageText = `chgame-upload %s
 
   chgame-upload [flags] probe
   chgame-upload [flags] info
   chgame-upload [flags] touch
   chgame-upload [flags] run
-  chgame-upload [flags] flash <file.bin> [-verify] [-run] [-device rev0]
-  chgame-upload [flags] selfupdate <boot.bin>
-  chgame-upload [flags] provision -bootloader <boot.bin> [-app <app.bin>] [-wchisp <path>]
-  chgame-upload [flags] burn -method usb|isp -bootloader <boot.bin> [-app <app.bin>] [-wchisp <path>]
-  chgame-upload [flags] pack <file.bin> [-out <file.chg>] [-title T] [-author A] [-gameversion V] [-device rev0]
+  chgame-upload [flags] flash <file.bin> [-verify] [-run] [-device rev0|rev1]
+  chgame-upload [flags] selfupdate <boot.bin> [-device rev0|rev1]
+  chgame-upload [flags] provision -bootloader <boot.bin> [-app <app.bin>] [-wchisp <path>] [-device rev0|rev1] [-yes]
+  chgame-upload [flags] burn -method usb|isp -bootloader <boot.bin> [-app <app.bin>] [-wchisp <path>] [-device rev0|rev1]
+  chgame-upload [flags] pack <file.bin> [-out <file.chg>] [-title T] [-author A] [-gameversion V] [-device rev0|rev1]
+  chgame-upload [flags] noop
 
   flash       upload a sketch through the bootloader (what Upload does)
   selfupdate  replace the bootloader over USB, through the one installed
-  provision   write the bootloader through the chip's factory ISP (hold BOOT, power cycle)
+  provision   write the bootloader through the chip's factory ISP (hold BOOT, power cycle);
+              asks before erasing the chip unless -yes is given
   burn        what Arduino's Burn Bootloader and Upload Using Programmer run:
-              selfupdate (usb) or provision (isp), then the sketch if one is given
+              selfupdate (usb) or provision (isp, never asks), then the sketch if one is given
   pack        wrap a sketch image in a .chg package for the SD game menu (every
               build runs it, so Export Compiled Binary leaves one by the sketch)
-  chgame-upload [flags] noop
 
--device names the board the image was built for (rev0; spec/chgame.md's
-device table): pack writes its target id, and flash refuses a board whose
-bootloader reports another. selfupdate and burn -method usb refuse a
-bootloader image built for another board than the one running.
+-device names the board the image was built for (rev0, rev1; spec/chgame.md's
+device table): pack writes its target id (rev0 when absent), and flash refuses
+a board whose bootloader reports another. On selfupdate, burn and provision it
+refuses a bootloader image built for another board, before the board is
+touched. selfupdate and burn -method usb also refuse a bootloader image built
+for another board than the one running. The factory ISP cannot see the board:
+provision prints the chip and the image's board, and the user checks them.
 
 Flags may appear before or after the subcommand.
-`, version)
-		global.PrintDefaults()
+`
+
+// invocation is a command line as parsed: the flags every verb takes, the
+// verb, its positional arguments and the verbs' own flags.
+type invocation struct {
+	o          *opts
+	cmd        string
+	positional []string
+	verify     bool
+	run        bool
+	bootFile   string
+	appFile    string
+	wchispPath string
+	method     string
+	packOut    string
+	packTitle  string
+	packAuthor string
+	packVer    string
+	device     string
+	yes        bool
+}
+
+var errNoCommand = errors.New("no command")
+
+// parseCommand parses the arguments after the program's name: the common
+// flags before or after the verb, and the verb's flags on either side of its
+// positional arguments (platform.txt puts -port before the verb and -run
+// after the image). Errors are written to errOut.
+func parseCommand(argv []string, errOut io.Writer) (*invocation, error) {
+	inv := &invocation{o: &opts{timeout: 10 * time.Second}}
+	o := inv.o
+	// Each flag's default is its current value: binding the verb's flag set
+	// must not reset what was given before the verb (a Var call stores its
+	// default). Until 0.3.0 it did, and `-port P flash ...` lost the port.
+	bind := func(fs *flag.FlagSet) {
+		fs.StringVar(&o.port, "port", o.port, "serial port (auto-detected if omitted)")
+		fs.DurationVar(&o.timeout, "timeout", o.timeout, "per-command timeout")
+		fs.BoolVar(&o.debug, "debug", o.debug, "dump frames in both directions")
+		// Arduino's platform.txt expands {upload.verbose} to one of these.
+		fs.BoolVar(&o.verbose, "verbose", o.verbose, "more detail")
+		fs.BoolVar(&o.quiet, "quiet", o.quiet, "less detail")
 	}
 
-	if err := global.Parse(os.Args[1:]); err != nil {
-		os.Exit(1)
+	global := flag.NewFlagSet("chgame-upload", flag.ContinueOnError)
+	global.SetOutput(errOut)
+	bind(global)
+	global.Usage = func() {
+		fmt.Fprintf(errOut, usageText, version)
+		global.PrintDefaults()
+	}
+	if err := global.Parse(argv); err != nil {
+		return nil, err
 	}
 	rest := global.Args()
 	if len(rest) == 0 {
 		global.Usage()
-		os.Exit(1)
+		return nil, errNoCommand
 	}
-	cmd := rest[0]
+	inv.cmd = rest[0]
 	rest = rest[1:]
 
-	sub := flag.NewFlagSet(cmd, flag.ExitOnError)
+	sub := flag.NewFlagSet(inv.cmd, flag.ContinueOnError)
+	sub.SetOutput(errOut)
 	bind(sub)
-	var (
-		flagVerify = sub.Bool("verify", false, "read back and compare, independently of the device CRC")
-		flagRun    = sub.Bool("run", false, "launch the application afterwards")
-		bootFile   = sub.String("bootloader", "", "bootloader image (provision)")
-		appFile    = sub.String("app", "", "application image (provision)")
-		wchispPath = sub.String("wchisp", "", "path to wchisp (provision)")
-		method     = sub.String("method", "usb", "burn: usb (through the installed bootloader) or isp (factory ISP)")
-		packOut    = sub.String("out", "", "pack: the package (default: the image's name with .chg for .bin)")
-		packTitle  = sub.String("title", "", "pack: what the menu shows (default: the sketch's name in capitals)")
-		packAuthor = sub.String("author", "", "pack: the author")
-		packVer    = sub.String("gameversion", "", "pack: a short version string, e.g. 1.2")
-		device     = sub.String("device", "", "flash, pack: the board the image is built for (rev0); flash refuses any other board")
-	)
+	sub.BoolVar(&inv.verify, "verify", false, "read back and compare, independently of the device CRC")
+	sub.BoolVar(&inv.run, "run", false, "launch the application afterwards")
+	sub.StringVar(&inv.bootFile, "bootloader", "", "bootloader image (provision, burn)")
+	sub.StringVar(&inv.appFile, "app", "", "application image (provision, burn)")
+	sub.StringVar(&inv.wchispPath, "wchisp", "", "path to wchisp (provision, burn -method isp)")
+	sub.StringVar(&inv.method, "method", "usb", "burn: usb (through the installed bootloader) or isp (factory ISP)")
+	sub.StringVar(&inv.packOut, "out", "", "pack: the package (default: the image's name with .chg for .bin)")
+	sub.StringVar(&inv.packTitle, "title", "", "pack: what the menu shows (default: the sketch's name in capitals)")
+	sub.StringVar(&inv.packAuthor, "author", "", "pack: the author")
+	sub.StringVar(&inv.packVer, "gameversion", "", "pack: a short version string, e.g. 1.2")
+	sub.StringVar(&inv.device, "device", "", "the board the image is built for (rev0, rev1): "+
+		"pack writes it, flash refuses another board, selfupdate/burn/provision refuse another board's bootloader")
+	sub.BoolVar(&inv.yes, "yes", false, "provision: erase and write without asking (burn never asks)")
 
 	// Go's flag package stops parsing at the first non-flag argument, so a plain
 	// sub.Parse would silently ignore the trailing flags in
 	//     flash firmware.bin -run
 	// which is exactly the form platform.txt uses. Parse in a loop instead,
 	// peeling off one positional at a time, so flags work on either side.
-	var positional []string
 	for {
 		if err := sub.Parse(rest); err != nil {
-			os.Exit(1)
+			return nil, err
 		}
 		rest = sub.Args()
 		if len(rest) == 0 {
 			break
 		}
-		positional = append(positional, rest[0])
+		inv.positional = append(inv.positional, rest[0])
 		rest = rest[1:]
 	}
+	return inv, nil
+}
 
-	switch cmd {
+// confirm asks on the terminal; anything but y or yes, or no answer at all
+// (stdin closed or empty), is no.
+func confirm(prompt string) bool {
+	fmt.Print(prompt)
+	line, err := bufio.NewReader(os.Stdin).ReadString('\n')
+	if err != nil && line == "" {
+		fmt.Println()
+		return false
+	}
+	s := strings.ToLower(strings.TrimSpace(line))
+	return s == "y" || s == "yes"
+}
+
+func main() {
+	inv, err := parseCommand(os.Args[1:], os.Stderr)
+	switch {
+	case errors.Is(err, flag.ErrHelp):
+		os.Exit(0)
+	case errors.Is(err, errNoCommand):
+		os.Exit(1)
+	case err != nil:
+		os.Exit(2) // a bad flag, as the flag package's ExitOnError (and argparse) exit
+	}
+	o := inv.o
+
+	switch inv.cmd {
 	case "probe":
 		doProbe(o)
 	case "info":
@@ -175,41 +241,46 @@ Flags may appear before or after the subcommand.
 	case "run":
 		doRun(o)
 	case "flash":
-		if len(positional) < 1 {
+		if len(inv.positional) < 1 {
 			die("flash needs an image path")
 		}
-		doFlash(o, positional[0], *flagVerify, *flagRun, *device)
+		doFlash(o, inv.positional[0], inv.verify, inv.run, inv.device)
 	case "provision":
-		if *bootFile == "" {
+		if inv.bootFile == "" {
 			die("provision needs -bootloader")
 		}
-		if err := provision(*bootFile, *appFile, *wchispPath); err != nil {
+		ask := confirm
+		if inv.yes {
+			ask = nil
+		}
+		if err := provision(inv.bootFile, inv.appFile, inv.wchispPath, inv.device, ask); err != nil {
 			die("%v", err)
 		}
 	case "selfupdate":
-		if len(positional) < 1 {
+		if len(inv.positional) < 1 {
 			die("selfupdate needs a bootloader image")
 		}
-		doSelfUpdate(o, positional[0], "")
+		doSelfUpdate(o, inv.positional[0], "", inv.device)
 	case "burn":
-		if *bootFile == "" {
+		if inv.bootFile == "" {
 			die("burn needs -bootloader")
 		}
-		switch *method {
+		switch inv.method {
 		case "usb":
-			doSelfUpdate(o, *bootFile, *appFile)
+			doSelfUpdate(o, inv.bootFile, inv.appFile, inv.device)
 		case "isp":
-			if err := provision(*bootFile, *appFile, *wchispPath); err != nil {
+			// Arduino's Burn Bootloader and Upload Using Programmer: never asks.
+			if err := provision(inv.bootFile, inv.appFile, inv.wchispPath, inv.device, nil); err != nil {
 				die("%v", err)
 			}
 		default:
-			die("unknown method %q (usb or isp)", *method)
+			die("unknown method %q (usb or isp)", inv.method)
 		}
 	case "pack":
-		if len(positional) < 1 {
+		if len(inv.positional) < 1 {
 			die("pack needs an image path")
 		}
-		doPack(o, positional[0], *packOut, *packTitle, *packAuthor, *packVer, *device)
+		doPack(o, inv.positional[0], inv.packOut, inv.packTitle, inv.packAuthor, inv.packVer, inv.device)
 	case "noop":
 		// Arduino runs a separate chip-erase step before Burn Bootloader. The
 		// erase itself is done inside provision(), so that EVERY provisioning
@@ -217,7 +288,7 @@ Flags may appear before or after the subcommand.
 		// not precede with an erase step at all.
 		fmt.Println("erase: performed by the provisioning step itself")
 	default:
-		die("unknown command %q", cmd)
+		die("unknown command %q", inv.cmd)
 	}
 }
 
@@ -400,13 +471,18 @@ func doFlash(o *opts, image string, verify, run bool, device string) {
 }
 
 // doSelfUpdate replaces the bootloader over USB and, given a sketch, uploads
-// it afterwards (the update erases the one that was installed).
-func doSelfUpdate(o *opts, bootPath, appPath string) {
+// it afterwards (the update erases the one that was installed). device, the
+// board picked ("rev1"), refuses an image built for another before the board
+// is touched; "" leaves that to the check against HELLO below.
+func doSelfUpdate(o *opts, bootPath, appPath, device string) {
 	boot, err := os.ReadFile(bootPath)
 	if err != nil {
 		die("cannot read %s: %v", bootPath, err)
 	}
 	if err := checkBootImage(boot); err != nil {
+		die("%s: %v", bootPath, err)
+	}
+	if err := checkBootBoard(boot, device); err != nil {
 		die("%s: %v", bootPath, err)
 	}
 	if appPath != "" {
@@ -437,7 +513,8 @@ func doSelfUpdate(o *opts, bootPath, appPath string) {
 	}
 	fmt.Printf("port        : %s\n", bootPort)
 	fmt.Printf("installed   : bootloader v%d\n", h.BootVersion)
-	fmt.Printf("bootloader  : %s  (%d bytes)\n", filepath.Base(bootPath), len(boot))
+	fmt.Printf("bootloader  : %s  (%d bytes, for %s)\n", filepath.Base(bootPath), len(boot),
+		boardName(bootImageBoard(boot)))
 	if h.AppStart != appStart {
 		c.Close()
 		die("this board reserves 0x%04X bytes for its bootloader, not 0x%04X: "+
@@ -480,5 +557,5 @@ func doSelfUpdate(o *opts, bootPath, appPath string) {
 		return
 	}
 	o.port = newPort
-	doFlash(o, appPath, false, true, "")
+	doFlash(o, appPath, false, true, device)
 }
