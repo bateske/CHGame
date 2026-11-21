@@ -11,8 +11,8 @@ this page is the working guide.
 
 | Device | Board | Target id | State |
 |---|---|---|---|
-| `rev0` | CHGame Rev0, CH32X035G8U6 | `CX35` (`0x35335843`) | released; named after its MCU before boards had ids, kept for good |
-| `rev1` | CHGame Rev1 and Rev 1.5, CH32X035G8U6 | `CGR1` (`0x31524743`) | **defined** (2026-11-17; reserved since 2026-10-07), in board package 0.4.0: rev0's chip and memory map on other pins, the backlight switched (PB9), the SD card's DI gated ("For rev1: the SD card's DI gate", below). Rev 1.5 is the same device: its power section is for libraries and apps, not a board entry (the add-on CHPower repository, with its design). **Meant as the stable pinout**: later boards keep these pins where they can. Ran on a Rev 1.5 board on 2026-11-20 (bootloader v4: uploads, a self-update, an install from the card; [roadmap.md](roadmap.md) §8) |
+| `rev0` | CHGame Rev0, CH32X035G8U6 | `CX35` (`0x35335843`) | released; legacy and discontinued. Named after its MCU before boards had ids, kept for good |
+| `rev1` | CHGame Rev1 and Rev 1.5, CH32X035G8U6 | `CGR1` (`0x31524743`) | **defined** (2026-11-17; reserved since 2026-10-07), in board package 0.4.0: rev0's chip and memory map on other pins, the backlight switched (PB9), the SD card's DI gated ("For rev1: the SD card's DI gate", below). Rev 1.5 is the same device: its power section is for libraries and apps, not a board entry. The current board, and an attempt at a stable pinout: later boards keep these pins where they can. Ran on a Rev 1.5 board on 2026-11-20 (bootloader v4: uploads, a self-update, an install from the card; [roadmap.md](roadmap.md) §8) |
 | `rev2` ... `rev9` | | `CGR2` ... `CGR9` | free, in that order |
 | `rev10` ... `rev99` | | `CG10` ... `CG99` | free |
 

@@ -557,9 +557,9 @@ def wordmark_svg(s=3):
 
 # ---------------------------------------------------------------- the warning
 
-WARNING_TITLE = "HEADS UP: REV1 IS HERE"
-WARNING_LINES = ["Rev1 is our attempt at a stable pinout.",
-                 "Rev0 and Rev1 have different pins: pick your board."]
+WARNING_TITLE = "REV1 IS THE CURRENT BOARD"
+WARNING_LINES = ["Rev1 is an attempt at a stable pinout.",
+                 "Rev0 is legacy and discontinued."]
 
 ICON_WARN = art("""
     .....##.....

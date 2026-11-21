@@ -19,7 +19,7 @@
 
 <br>
 
-<img src="docs/brand/warning.svg" alt="Heads up: Rev1 is here. Rev1 is our attempt at a stable pinout. Rev0 and Rev1 have different pins: pick your board.">
+<img src="docs/brand/warning.svg" alt="Rev1 is the current board. Rev1 is an attempt at a stable pinout. Rev0 is legacy and discontinued.">
 
 <br>
 
@@ -37,7 +37,7 @@ games, and the PC tools (simulator, uploader, card builder).
 <summary><b>Contents</b></summary>
 
 1. [What it is](#-what-it-is)
-2. [What's new in Rev 1](#-whats-new-in-rev-1): [the pinout](#the-pinout-rev0-and-rev1)
+2. [What changed in Rev1](#-what-changed-in-rev1): [the pinout](#the-pinout)
 3. [Get started](#-get-started): [install](#1-install-the-board-package), [a first sketch](#a-first-sketch), [the game menu](#put-the-game-menu-on-your-board)
 4. [The games](#-the-games)
 5. [The game menu](#-the-game-menu)
@@ -50,16 +50,16 @@ games, and the PC tools (simulator, uploader, card builder).
 
 ## 🎮 What it is
 
-<img align="right" width="320" src="docs/brand/board.webp" alt="The CHGame Rev0 board running its demo">
+<img align="right" width="320" src="docs/brand/board.webp" alt="A CHGame board running its demo">
 
-| Board | CHGame Rev0, CHGame Rev1 (and Rev 1.5) |
+| Board | CHGame Rev1 (Rev 1 and Rev 1.5 boards) |
 |---|---|
 | **Chip** | 32-bit RISC-V at 48 MHz (WCH CH32X035) |
 | **Memory** | 62 KB flash, 20 KB RAM, a microSD slot |
 | **Screen** | 128x128 colour LCD, 16 colours of 4,096 |
 | **Buttons** | eight: the D-pad, A, B, START, SELECT |
-| **Sound** | a speaker (a piezo on Rev0, a magnetic buzzer on Rev1), and a status LED |
-| **Power** | USB-C and a LiPo battery (Rev 1.5 adds USB-PD, a USB host on battery and a protected output) |
+| **Sound** | a magnetic buzzer, and a status LED |
+| **Power** | USB-C and a LiPo battery |
 
 It works like an Arduboy. Install one board package, write a sketch with
 one include (`CHGame.h`) and upload it over USB. Switch it on and the
@@ -95,12 +95,12 @@ at the top.
 
 - **The SD card zip** is the quickest: unzip it onto a FAT32 card, put the
   card in, switch on, and [the game menu](#-the-game-menu) lists them all.
-  Take the zip for your board: each board's card holds that board's games.
-- **The cart** is the whole collection in one file: `chgame --board rev1
-  cart deploy CHGame-Casino-<version>.chgame --card E:\` writes a card for
-  your board from it (`rev0` for a Rev0).
-- **Rev1 and Rev 1.5 boards** need 0.4.0 or later, the first release with
-  their binaries (not yet released).
+  Each board revision has its own zip.
+- **The cart** is the whole collection in one file:
+  `chgame cart deploy CHGame-Casino-<version>.chgame --card E:\` writes a
+  card from it.
+- **Rev1 boards** need 0.4.0 or later, the first release with their
+  binaries (not yet released).
 
 ### Why one repository
 
@@ -131,63 +131,54 @@ left to do.
 
 <p align="right"><a href="#readme-top">back to top ↑</a></p>
 
-## ✨ What's new in Rev 1
+## 🔧 What changed in Rev1
 
 > [!IMPORTANT]
-> **Rev1 is our attempt at a stable pinout.** The pins below are the ones
-> we mean to keep: sketches, libraries and accessories made for Rev1
-> should go on working on the boards that follow it. Rev 1.5 already
-> does: it is a Rev1 with a power section added, on the same pins.
+> **Rev1 is the current board, and an attempt at a stable pinout.** Rev0
+> is legacy and discontinued. Rev 1.5 boards use the same pins as Rev1 and
+> take the same builds.
 
-Rev0 was the prototype; Rev1 is the board we want to build on. Same chip,
-same memory map, same screen and same eight buttons, wired better:
+Rev1 keeps Rev0's chip, memory map, screen and buttons, on different pins.
+The main changes: the buttons, the LCD's DC line and the SD card's chip
+select moved; the speaker is a magnetic buzzer on PA1; the backlight is
+switched (PB9) and the LED moved to PB10; the SD card's DI is gated by its
+chip select; I2C and the UART have their own connectors (CN2, CN3); PA0
+senses USB power.
 
-- 🔊 **A new speaker:** a magnetic buzzer on PA1, switched by a MOSFET
-  (the library leaves it low when silent, so it never draws current idle).
-- 💡 **A switched backlight** on PB9. It stays dark until the panel shows
-  its first frame, so you never see power-up noise.
-- 💾 **A friendlier SD slot:** the card's DI goes through an OR gate with
-  its chip select, so cards that listen while deselected keep quiet while
-  the screen is drawn.
-- 🔌 **Real connectors:** CN2 for I2C (`Wire`) and CN3 for a UART
-  (`Serial1`) replace Rev0's header, and PA0 senses whether USB power is
-  there.
-- 🔋 **Rev 1.5 adds power:** USB-PD, a USB host on battery and a
-  protected output, through an add-on with its own libraries and apps
-  (CHPower, coming separately).
+**What it means for games:** a binary runs only on the board it was built
+for, so games have to be recompiled for each target. The source does not
+change: the board package names every pin (`PIN_BTN_A`, `PIN_SD_CS`, ...)
+and the libraries take them from the board selected. To support more than
+one hardware revision, a `.chgame` cart can carry a binary for each,
+older revisions included; see
+[Binaries and devices](spec/chgame.md#binaries-and-devices) in the cart
+format. `chgame export` builds one for every board the installed package
+has.
 
-**Your sketch changes nothing.** The board package names every pin
-(`PIN_BTN_A`, `PIN_SD_CS`, ...) and the libraries take them from the board
-you pick, so the same sketch builds for either board. Pick **CHGame Rev1**
-in the IDE (board package 0.4.0 and later) and you are done; the uploader
-even refuses a binary built for the other board.
+### The pinout
 
-### The pinout, Rev0 and Rev1
-
-| Role | Name in a sketch | Rev0 | Rev1 (and Rev 1.5) |
+| Role | Name in a sketch | Rev1 | Rev0 (legacy) |
 |---|---|---|---|
-| D-pad UP / DOWN | `PIN_BTN_UP` / `PIN_BTN_DOWN` | PB4 / PC14 | **PB0 / PB1** |
-| D-pad LEFT / RIGHT | `PIN_BTN_LEFT` / `PIN_BTN_RIGHT` | PB3 / PC15 | **PC3 / PC0** |
-| A / B | `PIN_BTN_A` / `PIN_BTN_B` | PB1 / PB6 | **PB11** / PB6 |
+| D-pad UP / DOWN | `PIN_BTN_UP` / `PIN_BTN_DOWN` | PB0 / PB1 | PB4 / PC14 |
+| D-pad LEFT / RIGHT | `PIN_BTN_LEFT` / `PIN_BTN_RIGHT` | PC3 / PC0 | PB3 / PC15 |
+| A / B | `PIN_BTN_A` / `PIN_BTN_B` | PB11 / PB6 | PB1 / PB6 |
 | SELECT / START | `PIN_BTN_SELECT` / `PIN_BTN_START` | PB7 / PB8 | PB7 / PB8 |
-| LCD CS / DC / RST | `PIN_LCD_CS` / `PIN_LCD_DC` / `PIN_LCD_RST` | PA4 / PB0 / PB12 | PA4 / **PB4** / PB12 |
-| LCD backlight | `PIN_LCD_BL` | always on | **PB9**, switched |
-| SD card CS | `PIN_SD_CS` | PB11 | **PB3** (also gates the card's DI) |
+| LCD CS / DC / RST | `PIN_LCD_CS` / `PIN_LCD_DC` / `PIN_LCD_RST` | PA4 / PB4 / PB12 | PA4 / PB0 / PB12 |
+| LCD backlight | `PIN_LCD_BL` | PB9, active high | always on |
+| SD card CS | `PIN_SD_CS` | PB3 (also gates the card's DI) | PB11 |
 | SPI1 SCK / MISO / MOSI | `PIN_SPI_SCK` / `PIN_SPI_MISO` / `PIN_SPI_MOSI` | PA5 / PA6 / PA7 | PA5 / PA6 / PA7 |
-| Speaker | `PIN_BUZZER` | PB10, a piezo | **PA1**, a magnetic buzzer |
-| Status LED | `PIN_LED`, `LED_BUILTIN` | PB9 | **PB10** |
-| USB power sense | `PIN_VBUS_SENSE` | – | **PA0** (analog in; HOST_EN on Rev 1.5) |
-| Test pads | `PIN_TP14` / `PIN_TP15` | – (DOWN / RIGHT) | **PC14 / PC15** (CC1 / CC2 on Rev 1.5) |
-| `Serial1` TX / RX | `PIN_SERIAL_TX` / `PIN_SERIAL_RX` | PA2 / PA3, header H1 | PA2 / PA3, **connector CN3** |
-| `Wire` SDA / SCL | `PIN_WIRE_SDA` / `PIN_WIRE_SCL` | PC18 / PC19 | PC18 / PC19, **connector CN2** |
+| Speaker | `PIN_BUZZER` | PA1, magnetic buzzer (TIM2 CH2) | PB10, piezo (TIM1 CH2) |
+| Status LED | `PIN_LED`, `LED_BUILTIN` | PB10 | PB9 |
+| USB power sense | `PIN_VBUS_SENSE` | PA0, analog input | – |
+| Test pads | `PIN_TP14` / `PIN_TP15` | PC14 / PC15 | – (DOWN / RIGHT) |
+| `Serial1` TX / RX | `PIN_SERIAL_TX` / `PIN_SERIAL_RX` | PA2 / PA3, connector CN3 | PA2 / PA3, header H1 |
+| `Wire` SDA / SCL | `PIN_WIRE_SDA` / `PIN_WIRE_SCL` | PC18 / PC19, connector CN2 | PC18 / PC19 |
 | USB D- / D+ | | PC16 / PC17 | PC16 / PC17 |
 
-**Bold** is what moved. The buttons pull up internally and read LOW when
-pressed, on both boards. A binary for one board drives pins the other uses
-as buttons, so always build for the board in your hands: the chip-by-chip
-detail (QFN28 pins, timers, the connectors) is in
-[hardware-pinmap.md](platform/board/docs/hardware-pinmap.md), and how
-boards are named and kept apart in
+The buttons use the internal pull-ups and read LOW when pressed. The
+QFN28 pin numbers, timers and connectors are in
+[hardware-pinmap.md](platform/board/docs/hardware-pinmap.md); how boards
+are named and kept apart is in
 [hardware-revisions.md](docs/hardware-revisions.md).
 
 <p align="right"><a href="#readme-top">back to top ↑</a></p>
@@ -224,23 +215,12 @@ offer 0.2.4 only.)
 
 ### 2. Pick the board
 
-*Tools > Board > CHGame Boards*, then the board in your hands:
-
-| Your board | Pick |
-|---|---|
-| Rev0 | **CHGame Rev0** |
-| Rev1 | **CHGame Rev1** (board package 0.4.0 and later) |
-| Rev 1.5 | **CHGame Rev1** too: it is a Rev1 with a power section added |
-
-The boards have different pins, so a sketch is built for one or the
-other. From 0.4.0, Upload refuses a sketch built for the other board
-before anything is written, and Burn Bootloader with the *CHGame USB*
-programmer refuses the other board's bootloader. With *WCH factory ISP*
-the chip cannot say which board it is on: the bootloader is checked only
-against the board selected, so pick the right one. Rev 1.5's power
-features (USB-PD, the USB host, the protected output) are an add-on, with
-their own libraries and apps (CHPower, coming separately). The pins are
-in [What's new in Rev 1](#the-pinout-rev0-and-rev1).
+*Tools > Board > CHGame Boards > CHGame Rev1* (board package 0.4.0 and
+later), for Rev 1 and Rev 1.5 boards. A legacy Rev0 board takes
+**CHGame Rev0**. Upload and Burn Bootloader refuse a build for the other
+board before anything is written; with the *WCH factory ISP* programmer
+the chip cannot be identified, so the bootloader is checked only against
+the board selected.
 
 ### 3. Upload
 
@@ -300,14 +280,13 @@ the IDE:
 The WCH driver and the BOOT button are only for
 [recovery](platform/board/docs/recovery.md).
 
-**The SD card:** a card is for one board. Unzip the one for yours from the
+**The SD card:** unzip `CHGame-sdcard-<version>-rev1.zip` from the
 [release page](https://github.com/bateske/CHGame/releases/latest) onto a
-FAT32 card: `CHGame-sdcard-<version>-rev0.zip` for a Rev0,
-`CHGame-sdcard-<version>-rev1.zip` for a Rev1 or Rev 1.5 (0.3.0 has one
-zip, `CHGame-sdcard-0.3.0.zip`, for Rev0). Or deploy
-`CHGame-Casino-<version>.chgame`, which holds every board's games, to it
-(`chgame --board rev1 cart deploy ... --card E:\`; [docs/sd-menu.md](docs/sd-menu.md)).
-On the other board, the menu shows a card's games greyed and refuses them.
+FAT32 card (`-rev0.zip` for a legacy Rev0; 0.3.0 has Rev0's alone), or
+deploy `CHGame-Casino-<version>.chgame` to it
+(`chgame cart deploy ... --card E:\`; [docs/sd-menu.md](docs/sd-menu.md)).
+A card holds one board's games; the menu greys out and refuses games built
+for another board.
 Holding **START** for 3 s in any game goes back to the menu.
 
 <p align="right"><a href="#readme-top">back to top ↑</a></p>
@@ -434,13 +413,13 @@ pip install -e .[sim]
 # 2. Build a game (from its folder) against this repository's libraries
 cd platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHFour
 chgame build                     # release build + size report, for the newest board (build/rev1/release)
-chgame --board rev0 build        # the same for a Rev0 (build/rev0/release)
+chgame --board rev0 build        # the same for a legacy Rev0 (build/rev0/release)
 chgame check --no-device         # host tests + every sim script, twice
 chgame sim                       # just the PC simulator
 chgame run tools/scripts/endings.txt out/endings   # screenshots in out/endings
 
 # 3. On a board (plugged in by USB)
-chgame upload                    # a Rev1 or Rev 1.5; chgame --board rev0 upload for a Rev0
+chgame upload                    # chgame --board rev0 upload for a legacy Rev0
 
 # 4. Share a game, and make a card for the game menu
 chgame export                             # build/CHFour.chgame, with a binary per board
@@ -482,8 +461,8 @@ Its Tools menus matter for every game:
 | USB (`usb`) | `uploadonly` for release | Drops `Serial` (about 0.7 KB). Upload still works with no button presses. Debug builds keep `serial`. |
 | C library (`rtlib`) | `nano` (default) | newlib-nano |
 
-Release FQBN: `CHGame:ch32v:rev0:opt=oslto,rtlib=nano,periph=game,usb=uploadonly`
-for a Rev0, `CHGame:ch32v:rev1:...` with the same options for a Rev1 or Rev 1.5.
+Release FQBN: `CHGame:ch32v:rev1:opt=oslto,rtlib=nano,periph=game,usb=uploadonly`
+(`rev0` in place of `rev1` for a legacy Rev0).
 
 ### The CHGame library: `platform/board/arduino/CHGame/libraries/CHGame/`
 
@@ -495,8 +474,7 @@ CHGfx it gives:
 - the house palette with fades, flashes and cycling colours; panels,
   sprites, dithers and the 3x5 font; outlined, shadowed lettering; easing,
   integer sine and screen shake; number formatting;
-- one sound engine for effects and music on the speaker (Rev0's piezo,
-  Rev1's buzzer), and the status LED;
+- one sound engine for effects and music on the speaker, and the status LED;
 - saving in two flash pages past the end of the image (there is no EEPROM);
 - the serial debug protocol for screenshots, injected input and lockstep
   frames: how the simulator and the script driver run a game;

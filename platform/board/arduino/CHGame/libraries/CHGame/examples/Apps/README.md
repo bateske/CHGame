@@ -18,9 +18,6 @@ with its own: CHSDtoUSB green on black, CHSDtoSerial the website's lime and
 grey-greens, CHStlView the blue-teal of its wires. All use the library's
 Sizzle with its particles off.
 
-The Rev 1.5's two apps in the same style, a USB-PD trigger and a USB host,
-are an add-on with their libraries: the CHPower repository.
-
 CHSDtoUSB and CHSDtoSerial have their own SD driver: read-write,
 CRC-checked, with DMA. It comes from sdfatlib, which is why both sketches
 are GPL. Keep that code inside each sketch. The games use the
