@@ -33,17 +33,17 @@ everything that runs on it: the Arduino board package, the game menu built
 into the bootloader, the libraries games are written with, twenty casino
 games, and the PC tools (simulator, uploader, card builder).
 
-<p align="center">
-<a href="#-what-it-is">What it is</a> ·
-<a href="#-what-changed-in-rev1">What changed in Rev1</a> ·
-<a href="#-get-started">Get started</a> ·
-<a href="#-the-games">The games</a> ·
-<a href="#-the-game-menu">The game menu</a> ·
-<a href="#-for-developers">For developers</a> ·
-<a href="#-documentation">Documentation</a> ·
-<a href="#-licences">Licences</a> ·
-<a href="#-credits">Credits</a>
-</p>
+**Contents**
+
+1. [What it is](#-what-it-is): [the built-in games](#the-built-in-games), [why one repository](#why-one-repository)
+2. [What changed in Rev1](#-what-changed-in-rev1)
+3. [Get started](#-get-started): [install](#1-install-the-board-package), [pick the board](#2-pick-the-board), [upload](#3-upload), [write your own](#4-write-your-own), [programming the bootloader](#programming-the-bootloader)
+4. [The games](#-the-games)
+5. [The game menu](#-the-game-menu)
+6. [For developers](#-for-developers)
+7. [Documentation](#-documentation)
+8. [Licences](#-licences)
+9. [Credits](#-credits)
 
 ## 🎮 What it is
 
