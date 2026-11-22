@@ -101,7 +101,7 @@ Messages (INSTALLING, ERROR n, USB UPLOAD) are boxes over rows 36-87.
      `--folder "CARD GAMES"` gives one folder a picture of its own instead.
    - **On the repository's casino card.** Save it over
      `tools/sdcard/menu.png`, then run `chgame card` (and deploy
-     `out/CHGame-Casino.chgame`, or copy `out/sdcard/`).
+     `out/CHGame-Casino.chgame`, or copy your board's `out/sdcard-<board>/`).
    - **For every cart that has no picture of its own** (the platform's
      default): `spec/assets/menu-default.png` is painted by
      `tools/art/menu/menu.py`; change that and run `python tools/menuart.py`

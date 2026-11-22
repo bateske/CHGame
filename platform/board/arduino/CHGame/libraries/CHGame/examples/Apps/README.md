@@ -25,12 +25,12 @@ MIT-licensed, read-only [CHSd](../../../CHSd) instead. CHSDtoSerial builds
 with *USB: Serial* (its serial port is the website's protocol); its README
 and NOTES describe it.
 
-Build it from this folder (the board package 0.3.0 brings CHGfx; it has been tested on the board with `-Os`, hence `opt=osstd`):
+Build it from this folder (the board package 0.3.0 brings CHGfx; it has been tested on the board with `-Os`, hence `opt=osstd`), with `<board>` `rev0` or `rev1` (`rev1` needs 0.4.0):
 
 ```bash
 cd platform/board/arduino/CHGame/libraries/CHGame/examples/Apps/CHSDtoUSB
-arduino-cli compile -b CHGame:ch32v:rev0:opt=osstd .
-arduino-cli upload  -b CHGame:ch32v:rev0:opt=osstd -p <PORT> .
+arduino-cli compile -b CHGame:ch32v:<board>:opt=osstd .
+arduino-cli upload  -b CHGame:ch32v:<board>:opt=osstd -p <PORT> .
 ```
 
 `tools/chsd_test.py` is its hardware test suite. It needs a test build

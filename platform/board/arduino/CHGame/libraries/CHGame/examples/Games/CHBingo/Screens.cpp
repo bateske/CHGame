@@ -103,7 +103,8 @@ void debugJump(char c) {
     fx::reseed();                                        // enter() clears the particles
     switch (c) {
         case 'T': enter(Scr::Title); break;
-        case 'P': game.newGame(); hasGame = true; enter(Scr::Play); break;
+        case 'P': game.newGame(); hasGame = true; enter(Scr::Play); break;     // EASY, at the buy-in
+        case 'M': game.newGame(true); hasGame = true; enter(Scr::Play); break; // the mode picker
         case 'L': enter(Scr::Lose); break;
         case 'O': optBack = Scr::Title; enter(Scr::Options); break;
         case 'S': enter(Scr::Stats); break;
@@ -114,6 +115,7 @@ bool debugGame(char cmd, uint32_t v) {
     switch (cmd) {
         case 'C': if (game.phase != Phase::Buy) return false; game.start((uint8_t)v); return true;
         case 'F': if (!round) return false; game.force((uint8_t)v); return true;
+        case 'U': if (!round || v >= 25 || v == 12) return false; game.force(game.cards[game.focus][v]); return true;
         case 'W': if (!round) return false; game.forceWin(); return true;
         case 'D': if (!round) return false; game.daubAll(); return true;
         case 'H': if (!round) return false; game.hallBall = (uint8_t)v; return true;
@@ -122,6 +124,7 @@ bool debugGame(char cmd, uint32_t v) {
         case 'I': game.forceRare((uint8_t)v); return true;
         case 'M': game.purse = (int32_t)v; return true;
         case 'A': game.jackpot = (int32_t)v; return true;
+        case 'O': if (v >= MODES || game.inPlay()) return false; game.mode = (uint8_t)v; return true;
         case 'V':                                        // power off and on: only the flash survives
             memset((void *)&game, 0, sizeof game);
             seeded = false;
@@ -135,11 +138,11 @@ void debugState(char *buf) {
     for (uint8_t k = 0; k < game.nCards; k++) h = (h ^ game.daub[k] ^ (game.pend[k] << 1)) * 16777619u;
     int32_t waiting = 0;                                 // the cards with a called number on them
     for (uint8_t k = 0; k < game.nCards; k++) if (game.pend[k]) waiting |= 1 << k;
-    const int32_t v[14] = {game.purse, game.jackpot, (int32_t)game.phase, game.nCards, game.nCalled, game.focus,
+    const int32_t v[16] = {game.purse, game.jackpot, (int32_t)game.phase, game.nCards, game.nCalled, game.focus,
                            game.hallBall, (int32_t)(h & 0x7FFFFFFF), hasGame, (int32_t)game.stats.rounds,
-                           game.opt.speed, (int32_t)cur, waiting, game.power};
+                           game.opt.speed, (int32_t)cur, waiting, game.power, game.mode, game.voided};
     char *p = fmtStr(buf, "STATE");
-    for (int i = 0; i < 14; i++) { *p++ = ' '; p = fmtInt(p, v[i]); }
+    for (int i = 0; i < 16; i++) { *p++ = ' '; p = fmtInt(p, v[i]); }
     *fmtStr(p, "\n") = 0;
 }
 #endif
@@ -231,7 +234,7 @@ static void titleUpdate() {
         audio::sfx(Sfx::Select);
         seedOnce();
         switch (items[menuSel]) {
-            case I_PLAY: case I_NEW: game.newGame(); hasGame = true; go(Scr::Play); break;
+            case I_PLAY: case I_NEW: game.newGame(true); hasGame = true; go(Scr::Play); break;
             case I_CONTINUE: game.resume(); go(Scr::Play); break;
             case I_OPTIONS: optBack = Scr::Title; optSel = 0; go(Scr::Options); break;
             case I_STATS: go(Scr::Stats); break;
@@ -484,8 +487,7 @@ static void optionsRender(uint32_t frame) {
                      : optSel == O_DAUBER ? "YOUR DAUBS, YOUR GLOVE"
                      : "B: BACK";
     centred35(100, help, GOLD);
-    centred35(111, "CALLER ART: VAMPIRICS", SILVER);      // Press Play On Tape's (see NOTICE)
-    centred35(117, "FONT: PRESS PLAY ON TAPE", SILVER);
+    centred35(117, "CHGAME", SILVER);
 }
 
 // ---------------------------------------------------------------------------

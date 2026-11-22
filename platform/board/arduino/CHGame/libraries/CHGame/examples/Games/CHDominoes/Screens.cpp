@@ -603,7 +603,7 @@ static void optionsRender(uint32_t frame) {
     // The set of tiles, as it plays.
     table::drawTile(36, 98, 6, 5, false, 3, 5, table::tileFace(), INK, 3);
     table::drawTile(67, 98, 1, 3, false, 3, 5, table::tileFace(), INK, 3);
-    centred35(118, "3X5 FONT: PRESS PLAY ON TAPE", SILVER);
+    centred35(118, "CHGAME", SILVER);
 }
 #endif
 

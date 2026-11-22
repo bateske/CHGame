@@ -37,6 +37,11 @@ static int16_t scroll;
 static uint32_t flashCells, winCells;
 static uint8_t flashCard, flashT, denyT, winCard;
 
+// HARDCORE: a card thrown out is stamped VOID, then drops off the table,
+// showing the next one under it.
+static uint8_t tossCard, tossT;
+static const uint8_t TOSS_HOLD = 14, TOSS_END = 34;
+
 // CHChess's glove: it points at what A will act on (the newest card at the
 // buy-in, the waiting number on the card in play) and dips when A lands.
 // Q4 position gliding to its target.
@@ -50,7 +55,7 @@ static uint8_t holdT;                   // ticks into the follow-through, 0 = no
 static bool gloveOn;
 
 // The end of a round: what follows the first banner.
-enum After : uint8_t { A_NONE, A_JACKPOT, A_CORRECT, A_RIVAL };
+enum After : uint8_t { A_NONE, A_JACKPOT, A_CORRECT, A_RIVAL, A_BUST };
 static uint8_t after[2];
 static uint8_t veilT;
 static bool rivalHad;
@@ -80,7 +85,7 @@ void reset(const Bingo &g) {
     shown = g.purse; purseFlash = 0;
     bubOn = false; face = F_NORMAL;
     scroll = 0;
-    flashT = denyT = 0; winCells = 0;
+    flashT = denyT = tossT = 0; winCells = 0;
     after[0] = after[1] = A_NONE; veilT = 0;
     gloveOn = false; tapT = holdT = 0;
     invalidate();
@@ -98,6 +103,11 @@ void onEvents(Bingo &g) {
     char buf[16];
     while (g.popEvent(e)) {
         switch (e.type) {
+            case Ev::ModeOpen:
+                say("EASY OR\nHARD?", F_RAISED, 90);
+                invalidate();
+                break;
+            case Ev::ModePick: tapT = 1; audio::sfx(Sfx::Cursor); break;
             case Ev::BuyOpen:
                 winCells = 0; scroll = 0;
                 say(g.stats.rounds ? "ANOTHER\nROUND?" : "WELCOME!\nHOW MANY\nCARDS?", F_SMILE, 70);
@@ -122,7 +132,7 @@ void onEvents(Bingo &g) {
                 bubLen = (uint8_t)strlen(bubText);
                 bubChars = 0; bubHold = 60; bubOn = bubBig = true; face = F_NORMAL;
                 audio::sfx(Sfx::Ball);
-                if (e.b) audio::led(audio::LED_BLINK);      // it is on one of the player's cards
+                if (e.b && g.hints()) audio::led(audio::LED_BLINK);   // it is on one of the player's cards
                 break;
             }
             case Ev::Focus:
@@ -154,8 +164,21 @@ void onEvents(Bingo &g) {
                 denyT = 12;
                 audio::sfx(Sfx::Deny);
                 break;
+            case Ev::Pick:                              // HARD: the card picked up or put down
+                tapT = 1; holdT = 0;
+                audio::sfx(e.b ? Sfx::Select : Sfx::Cursor);
+                break;
+            case Ev::Cursor: audio::sfx(Sfx::Tick); break;
+            case Ev::Void:
+                tossCard = e.a; tossT = 1;
+                denyT = 0; holdT = 0;
+                fx::shake(6, 2);
+                audio::sfx(Sfx::Lose);
+                say(e.b ? "NO CARDS\nLEFT!" : "NOT CALLED!\nTHAT CARD'S\nOUT.", F_ANGRY, 50);
+                if (e.b) { after[0] = A_BUST; after[1] = A_NONE; }
+                break;
             case Ev::Power:
-                fx::floatText("POWER!", 77, BAR_Y - 2, CYAN);
+                fx::floatText("POWER!", SIDE_LX, TUBE_Y, CYAN);
                 audio::sfx(Sfx::Power);
                 break;
             case Ev::PowerUse:
@@ -201,7 +224,7 @@ void onEvents(Bingo &g) {
                     *fmtStr(fmtStr(line, "BINGO AT\n"), buf) = 0;
                     say(line, F_SMILE, 60);
                 }
-                fx::floatText("BINGO!", 106, BAR_Y - 6, WHITE);   // from somewhere across the hall
+                fx::floatText("BINGO!", SIDE_RX - 3, TUBE_Y, WHITE);   // from somewhere across the hall
                 audio::sfx(Sfx::Lose);
                 rivalHad = e.b != 0;
                 after[0] = A_RIVAL; after[1] = A_NONE;
@@ -222,20 +245,27 @@ static bool gloveTarget(const Bingo &g, int &x, int &y) {
         y = BUY_Y - 4;
         return true;
     }
-    if (g.phase != Phase::Calling) return false;
-    uint32_t m = g.pend[g.focus];
-    if (m) {                                            // the first number waiting here
+    if (g.phase == Phase::Mode) {                       // pointing right, at the mode chosen
+        x = MODE_X - 2;
+        y = MODE_Y + g.mode * MODE_PITCH + 7;
+        return true;
+    }
+    if (g.phase != Phase::Calling || tossT) return false;
+    uint32_t m = g.hints() ? g.pend[g.focus] : 0;
+    if (g.picking) {                                    // HARD: the glove is the cursor
+        cards::cellXY(g.cursor, x, y);
+        y -= 2;
+        x += scroll;
+    } else if (m) {                                     // the first number waiting here
         uint8_t i = 0;
         while (!((m >> i) & 1)) i++;
         cards::cellXY(i, x, y);
         y -= 2;
-    } else {
-        bool other = false;
-        for (uint8_t k = 0; k < g.nCards; k++) if (g.pend[k]) other = true;
-        if (other) { x = CARD_X + CARD_PITCH + 9; y = CARD_Y + 30; }   // over there: swipe
-        else { x = CARD_X + CARD_W + 2; y = CARD_Y + CARD_H - 4; }   // nothing to do: at rest
+        x += scroll;                                    // it rides the slide
+    } else {                                            // nothing here: it hovers over this card's little copy
+        x = cards::miniX(g, g.focus) + cards::miniW(g) / 2 - 1;
+        y = MINI_Y - 6;                                 // (bob and tap stay above the bar)
     }
-    x += scroll;                                        // it rides the slide
     return true;
 }
 
@@ -245,6 +275,7 @@ void update(const Bingo &g) {
     if (flashT) flashT--;
     if (denyT) denyT--;
     if (veilT) veilT--;
+    if (tossT && ++tossT > TOSS_END) tossT = 0;
 
     // What follows the round's first banner, one thing at a time.
     if (after[0] && !fx::bannerActive() && !(bubOn && bubChars < bubLen)) {
@@ -258,6 +289,9 @@ void update(const Bingo &g) {
             veilT = 100;
         } else if (a == A_CORRECT) {
             say("You just say\nbingo....", F_RAISED, 130);
+        } else if (a == A_BUST) {
+            fx::banner("BUSTED!", fx::B_RED, BANNER_Y, 70);
+            veilT = 70;
         } else {
             fx::banner(rivalHad ? "TOO SLOW!" : "NO LUCK!", fx::B_RED, BANNER_Y, 70);
             veilT = 70;
@@ -303,7 +337,7 @@ void update(const Bingo &g) {
 }
 
 bool busy() {
-    return fx::bannerActive() || veilT || after[0] || bubOn;
+    return fx::bannerActive() || veilT || after[0] || bubOn || tossT;
 }
 
 // ---------------------------------------------------------------------------
@@ -322,7 +356,7 @@ void invalidate() { forceAll = true; }
 static int gloveBob(uint32_t frame) { return (fx::isin((int)((frame >> 3) * 40)) + 128) >> 8; }
 static int gloveDip() { return holdT ? RECOIL[holdT - 1] : tapT ? (tapT < 4 ? tapT : 8 - tapT) >> 1 : 0; }
 
-static bool buying(const Bingo &g) { return g.phase == Phase::Buy || g.phase == Phase::Welcome; }
+static bool buying(const Bingo &g) { return g.phase == Phase::Buy || g.phase == Phase::Welcome || g.phase == Phase::Mode; }
 
 static void felt() {
     gfx_fillRect(0, TABLE_Y, 128, BAR_Y - TABLE_Y, FELT);
@@ -330,18 +364,31 @@ static void felt() {
     dither(0, BAR_Y - 2, 128, 2, FELT_DK, 0);
 }
 
-// The card in play and what shows of its neighbours, mid-slide or at rest.
+// The card in play and what shows of its neighbours (the cards still in
+// play either side), mid-slide or at rest; a card being thrown out on top.
 static void carousel(const Bingo &g) {
-    int n = g.nCards;
+    cards::sides(g, g.frozen());
+    uint8_t live = 0;
+    for (uint8_t k = 0; k < g.nCards; k++) live += g.live(k);
+    cards::Look lk;
     for (int slot = -2; slot <= 2; slot++) {
-        if (n == 1 && slot) continue;
-        int k = (((g.focus + slot) % n) + n) % n;
-        cards::Look lk;
+        if (live < 2 && slot) continue;
+        uint8_t k = g.focus;
+        for (int s = slot; s; s += s < 0 ? 1 : -1) k = g.step(k, (int8_t)(s < 0 ? -1 : 1));
+        if (!g.live(k)) continue;
         lk.focused = slot == 0;
         lk.flash = (flashT && flashCard == k) ? flashCells : 0;
         lk.win = (winCells && winCard == k) ? winCells : 0;
         lk.deny = slot == 0 && (denyT & 4);
-        cards::draw(g, (uint8_t)k, CARD_X + slot * CARD_PITCH + scroll, lk);
+        lk.cursor = (int8_t)(slot == 0 && g.picking ? g.cursor : -1);
+        lk.stamp = false;
+        cards::draw(g, k, CARD_X + slot * CARD_PITCH + scroll, CARD_Y, lk);
+    }
+    if (tossT) {
+        int t = tossT > TOSS_HOLD ? tossT - TOSS_HOLD : 0;
+        lk.focused = lk.deny = false; lk.flash = lk.win = 0; lk.cursor = -1;
+        lk.stamp = true;
+        cards::draw(g, tossCard, CARD_X + t / 2, CARD_Y + t * t / 5, lk);
     }
 }
 
@@ -381,11 +428,14 @@ bool render(const Bingo &g, uint32_t frame) {
     t.add(flashT != 0); t.add(denyT & 4); t.add((int32_t)winCells); t.add(veilT != 0);
     if (buy) { t.add(g.buyN); t.add(g.purse); t.add(g.opt.stakes); t.add(g.opt.hall); }
     else for (uint8_t k = 0; k < g.nCards; k++) { t.add((int32_t)g.daub[k]); t.add((int32_t)g.pend[k]); }
+    t.add(g.power); t.add(g.meter); t.add(g.jackpot); t.add(g.frozen());
+    t.add(g.mode); t.add(g.picking); t.add(g.cursor); t.add(g.voided); t.add(tossT);
     t.add(gloveOn); t.add(gx16 >> 4); t.add(gy16 >> 4); t.add(gloveBob(frame)); t.add(gloveDip());
     Sig b;
-    b.add(buy); b.add(buy ? g.buyN : g.nCards); b.add(g.focus); b.add(g.power); b.add(g.meter);
-    b.add(g.jackpot); b.add(g.doubleCard); b.add(g.frozen());
-    if (!buy) for (uint8_t k = 0; k < g.nCards; k++) b.add(g.pend[k] != 0);
+    b.add(buy); b.add(g.nCards); b.add(g.focus); b.add(g.jackpot); b.add(g.doubleCard);
+    b.add((int32_t)winCells); b.add(winCard); b.add(g.opt.dauber);
+    b.add(g.mode); b.add(g.voided); b.add(g.phase == Phase::Mode);
+    if (!buy) for (uint8_t k = 0; k < g.nCards; k++) { b.add((int32_t)g.daub[k]); b.add((int32_t)g.pend[k]); }
 
     static bool wasMoving = false, wasWallFx = false, wasLow = false;
     static uint32_t sigPlaque = 0, sigBar = 0;
@@ -404,11 +454,12 @@ bool render(const Bingo &g, uint32_t frame) {
     if (drawWall) wallBand(g, expr);
     else if (drawPlaque) table::plaque(shown, pot, purseFlash);
     dbg::prof(0);
-    if (drawBar) cards::bar(g, g.frozen());
+    if (drawBar) cards::bar(g, winCells, winCard);
     if (drawTable) {
         gfx_setClip(0, TABLE_Y, 128, BAR_Y - TABLE_Y);
         felt();
-        if (buy) cards::buyIn(g);
+        if (g.phase == Phase::Mode) cards::modes(g);
+        else if (buy) cards::buyIn(g);
         else carousel(g);
         if (veilT) {                                        // the band a banner stands on
             gfx_fillRect(0, STRIP_Y, 128, STRIP_H, INK);
@@ -422,7 +473,9 @@ bool render(const Bingo &g, uint32_t frame) {
 }
 
 void overlay(const Bingo &g, uint32_t frame) {
-    if (gloveOn)
+    if (gloveOn && g.phase == Phase::Mode)              // the menus' glove, pointing right
+        sprite4(HAND_R, (gx16 >> 4) - 15 - gloveDip(), (gy16 >> 4) - HAND_R_TIP, cards::cuff(cards::daub(g)));
+    else if (gloveOn)
         sprite4(HAND, (gx16 >> 4) - HAND_TIP, (gy16 >> 4) - 15 + gloveBob(frame) + gloveDip(), cards::cuff(cards::daub(g)));
     fx::drawParticles(2);
     fx::drawFloats();

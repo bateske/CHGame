@@ -440,6 +440,9 @@ def main():
         cells = {nm: [row[24 * k:24 * k + 24] for row in sheet] for k, nm in enumerate(names)}
         assert cells["NORMAL"] == normal, "faces.png: its NORMAL must be the dealer's face (12,14 of dealer.png)"
         faces = {nm: cells[nm] for nm in names[1:]}
+    # The blink keeps only his eyes (rows 5-9 of the patch): the mouth and
+    # mustache stay as in NORMAL, and it costs fewer edits.
+    EYES = range(5, 10)
     order = ["ANGRY", "RAISED", "BLINK", "SMILE", "SURPRISED", "TALK"]
     words, starts = [], []
     for nm in order:
@@ -447,7 +450,7 @@ def main():
         img = faces[nm]
         for y in range(18):
             for x in range(24):
-                if img[y][x] != normal[y][x]:
+                if img[y][x] != normal[y][x] and (nm != "BLINK" or y in EYES):
                     c = 15 if img[y][x] == TRANSPARENT else img[y][x]
                     words.append(((y * 24 + x) << 4) | c)
         preview(f"face_{nm.lower()}", img, bg=11)

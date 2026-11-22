@@ -14,6 +14,7 @@ const uint32_t LINES[NLINES] = {
 };
 const uint8_t PRICES[3] = {5, 10, 25};
 const uint8_t RIVALS[3] = {20, 40, 8};
+const uint8_t PAYS[MODES] = {1, 2, 3};
 static const uint8_t INTERVAL[3] = {120, 80, 180};
 static const uint32_t CENTRE = 1u << 12;
 
@@ -60,8 +61,10 @@ uint8_t Bingo::maxCards() const {
     return (uint8_t)(n > MAX_CARDS ? MAX_CARDS : n);
 }
 
+static uint8_t pays(uint8_t mode) { return PAYS[mode < MODES ? mode : 0]; }
+
 int32_t Bingo::potFor(uint8_t n) const {
-    return (int32_t)priceNow() * (n + RIVALS[opt.hall < 3 ? opt.hall : 0]) * 9 / 10;
+    return (int32_t)priceNow() * (n + RIVALS[opt.hall < 3 ? opt.hall : 0]) * 9 / 10 * pays(mode);
 }
 
 uint16_t Bingo::interval() const { return INTERVAL[opt.speed < 3 ? opt.speed : 0]; }
@@ -120,15 +123,18 @@ void Bingo::setupRound(uint8_t n, uint8_t cardPrice, uint8_t nRivals) {
     memset(calledBits, 0, sizeof calledBits);
     nCalled = 0; focus = 0; meter = 0; power = P_NONE; doubleCard = 0xFF; streak = 0;
     nForced = 0;
-    pot = (int32_t)cardPrice * (n + nRivals) * 9 / 10;
+    picking = false; cursor = 12; voided = 0;
+    pot = (int32_t)cardPrice * (n + nRivals) * 9 / 10 * pays(mode);
 }
 
-void Bingo::newGame() {
+void Bingo::newGame(bool ask) {
     purse = START_PURSE;
     if (jackpot < JACKPOT_SEED) jackpot = JACKPOT_SEED;
     nCards = 0; buyN = 3; roundOpen = false;
     qLen = 0;
-    phase = Phase::Welcome;
+    if (mode >= MODES || !ask) mode = M_EASY;
+    if (ask) { phase = Phase::Mode; emit(Ev::ModeOpen, mode); }
+    else phase = Phase::Welcome;
 }
 
 void Bingo::resume() {
@@ -152,6 +158,7 @@ void Bingo::quitNow() {
 void Bingo::saveRound(RoundSave &s) const {
     s.seed = roundSeed;
     memcpy(s.daub, daub, sizeof s.daub);
+    for (uint8_t k = 0; k < nCards; k++) if (!live(k)) s.daub[k] |= 0x80000000u;   // HARDCORE: thrown out
     s.nCards = nCards; s.nCalled = nCalled; s.focus = focus; s.meter = meter; s.power = power;
     s.doubleCard = doubleCard; s.price = price; s.rivals = rivals;
 }
@@ -164,10 +171,11 @@ void Bingo::loadRound(const RoundSave &s) {
     for (uint8_t i = 0; i < nCalled; i++) calledBits[(balls[i] - 1) >> 5] |= 1u << ((balls[i] - 1) & 31);
     for (uint8_t k = 0; k < nCards; k++) {
         daub[k] = (s.daub[k] & 0x1FFFFFFu) | CENTRE;
+        if (s.daub[k] >> 31) { voided |= (uint16_t)(1u << k); continue; }
         for (uint8_t i = 0; i < 25; i++)
             if (cards[k][i] && called(cards[k][i]) && !((daub[k] >> i) & 1)) pend[k] |= 1u << i;
     }
-    focus = s.focus < nCards ? s.focus : 0;
+    focus = step(s.focus < nCards ? s.focus : 0, 0);
     meter = s.meter; power = s.power <= POWER_KINDS ? s.power : 0;
     doubleCard = s.doubleCard;
     roundOpen = true;
@@ -220,15 +228,24 @@ void Bingo::callBall() {
     uint8_t hits = 0;
     for (uint8_t k = 0; k < nCards; k++)
         for (uint8_t i = 0; i < 25; i++)
-            if (cards[k][i] == n && !((daub[k] >> i) & 1)) { pend[k] |= 1u << i; hits++; }
+            if (cards[k][i] == n && live(k) && !((daub[k] >> i) & 1)) { pend[k] |= 1u << i; hits++; }
     callAge = 0;
     timer = interval();
     emit(Ev::Call, n, hits);
 }
 
+// d = 0: k itself if it is still in play, else the next one that is.
+uint8_t Bingo::step(uint8_t k, int8_t d) const {
+    uint8_t f = k;
+    if (!d) { if (live(k)) return k; d = 1; }
+    do f = (uint8_t)((f + nCards + d) % nCards); while (!live(f) && f != k);
+    return f;
+}
+
 void Bingo::moveFocus(int8_t d) {
-    if (nCards < 2) return;
-    focus = (uint8_t)((focus + nCards + d) % nCards);
+    uint8_t f = step(focus, d);
+    if (f == focus) return;
+    focus = f;
     emit(Ev::Focus, focus, (uint8_t)(d > 0));
 }
 
@@ -258,7 +275,12 @@ void Bingo::checkWin(uint8_t card) {
 void Bingo::daubFocus() {
     uint32_t m = pend[focus];
     if (!m) { streak = 0; emit(Ev::Miss, 0); return; }
-    daub[focus] |= m; pend[focus] = 0;
+    daubCells(m);
+}
+
+// Daub cells m (all called) on the card in play.
+void Bingo::daubCells(uint32_t m) {
+    daub[focus] |= m; pend[focus] &= ~m;
     bool fast = false;
     if (callAge <= FAST_TICKS && nCalled)
         for (uint8_t i = 0; i < 25; i++)
@@ -269,7 +291,7 @@ void Bingo::daubFocus() {
         if (streak > stats.bestStreak) stats.bestStreak = streak;
     } else streak = 0;
     emit(Ev::Daub, focus, cells, fast, (int32_t)m);
-    if (!power) {
+    if (!power && hints()) {
         meter = (uint8_t)(meter + cells + (fast ? 2 : 0));
         if (meter >= POWER_FULL) {
             meter = 0;
@@ -278,6 +300,39 @@ void Bingo::daubFocus() {
         }
     }
     checkWin(focus);
+}
+
+// HARD: A on the cursor's cell.
+void Bingo::daubCursor() {
+    uint32_t bit = 1u << cursor;
+    if (pend[focus] & bit) daubCells(bit);
+    else if (daub[focus] & bit) emit(Ev::Deny);         // daubed already: no harm done
+    else if (mode == M_HARDCORE) voidCard();
+    else { streak = 0; emit(Ev::Miss, 0); }
+}
+
+void Bingo::moveCursor(uint8_t repeat) {
+    uint8_t r = cursor / 5, c = cursor % 5;
+    if ((repeat & BTN_LEFT) && c) c--;
+    if ((repeat & BTN_RIGHT) && c < 4) c++;
+    if ((repeat & BTN_UP) && r) r--;
+    if ((repeat & BTN_DOWN) && r < 4) r++;
+    uint8_t to = (uint8_t)(r * 5 + c);
+    if (to != cursor) { cursor = to; emit(Ev::Cursor, cursor); }
+}
+
+// HARDCORE: a number that was never called, daubed. The card is out of the
+// round; with none left the round is lost.
+void Bingo::voidCard() {
+    uint8_t k = focus;
+    voided |= (uint16_t)(1u << k);
+    pend[k] = 0;
+    picking = false;
+    streak = 0;
+    focus = step(k, 1);
+    bool last = focus == k;
+    if (last) { phase = Phase::Lost; wait = 40; }
+    emit(Ev::Void, k, last);
 }
 
 void Bingo::usePower() {
@@ -307,7 +362,7 @@ void Bingo::rivalWins() {
     bool had = false;
     for (uint8_t k = 0; k < nCards; k++)
         for (uint8_t l = 0; l < NLINES; l++)
-            if (((daub[k] | pend[k]) & LINES[l]) == LINES[l]) had = true;
+            if (live(k) && ((daub[k] | pend[k]) & LINES[l]) == LINES[l]) had = true;
     streak = 0;
     phase = Phase::Lost; wait = 40;
     emit(Ev::Rival, hallTable, had);
@@ -325,6 +380,11 @@ void Bingo::update(uint8_t pressed, uint8_t repeat, bool fxBusy) {
         case Phase::Welcome:
             openBuy();
             break;
+        case Phase::Mode:
+            if ((repeat & (BTN_UP | BTN_LEFT)) && mode) emit(Ev::ModePick, --mode);
+            else if ((repeat & (BTN_DOWN | BTN_RIGHT)) && mode + 1 < MODES) emit(Ev::ModePick, ++mode);
+            if (pressed & BTN_A) openBuy();
+            break;
         case Phase::Buy: {
             uint8_t m = maxCards();
             if (repeat & (BTN_LEFT | BTN_DOWN)) {
@@ -338,10 +398,19 @@ void Bingo::update(uint8_t pressed, uint8_t repeat, bool fxBusy) {
         }
         case Phase::Calling:
             if (callAge < 0xFFFF) callAge++;
-            if (repeat & BTN_LEFT) moveFocus(-1);
-            if (repeat & BTN_RIGHT) moveFocus(1);
-            if (pressed & BTN_A) daubFocus();
-            if (phase == Phase::Calling && (pressed & BTN_B)) usePower();
+            if (picking) {                              // HARD: the d-pad moves the cursor
+                moveCursor(repeat);
+                if (pressed & BTN_A) daubCursor();
+                else if (pressed & BTN_B) { picking = false; emit(Ev::Pick, focus, 0); }
+            } else {
+                if (repeat & BTN_LEFT) moveFocus(-1);
+                if (repeat & BTN_RIGHT) moveFocus(1);
+                if (pressed & BTN_A) {
+                    if (hints()) daubFocus();
+                    else { picking = true; cursor = 12; emit(Ev::Pick, focus, 1); }
+                }
+                if (phase == Phase::Calling && (pressed & BTN_B) && hints()) usePower();
+            }
             if (phase != Phase::Calling) break;
             if (timer) timer--;
             if (!timer) {

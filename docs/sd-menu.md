@@ -113,9 +113,10 @@ on a card: [menu-image.md](menu-image.md) has the steps.
   `--sd GAMES/MYGAME.CHG=MYGAME.DAT`.
 - **All the casino games.** Each release has them as one cart
   (`CHGame-Casino-<version>.chgame`) and as the card's contents in a zip
-  (`CHGame-sdcard-<version>.zip`): unzip it onto the card. From a clone,
-  `chgame card` builds every game and writes the cart and the card's
-  contents (`out/sdcard/`).
+  per board (`CHGame-sdcard-<version>-rev0.zip`, `-rev1.zip`; 0.3.0 had
+  one, for Rev0): unzip your board's onto the card. From a clone,
+  `chgame card` builds every game and writes the cart and each board's
+  card contents (`out/sdcard-<board>/`).
 - **By hand.** The menu lists the `GAMES` folder at the top of the card:
   ```
   GAMES/

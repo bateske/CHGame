@@ -20,15 +20,16 @@ Agent-facing notes for continuing work on this game. Rules and controls are in [
 ## Design decisions
 
 - Chosen: a faithful port of Press Play On Tape's game flow and screens. `Round.cpp` keeps PPOT's ViewState flow; the additions are presentation.
-- Chosen (2026-10-06): the title screen draws the cover's BLACKJACK (`TITLE_LOGO`): `tools/cart.py` `title_lines()` gives its lettering as the cover places it, `tools/titleart.py` packs it, the library's `titleArt()` draws it in the house gold as a smooth dithered gradient, with no bevel or glints (docs/cover-art.md, "The same title on the title screen"). PPOT's own logo (`LOGO`) stays on the splash, their credit.
+- Chosen (2026-10-06): the title screen draws the cover's BLACKJACK (`TITLE_LOGO`): `tools/cart.py` `title_lines()` gives its lettering as the cover places it, `tools/titleart.py` packs it, the library's `titleArt()` draws it in the house gold as a smooth dithered gradient, with no bevel or glints (docs/cover-art.md, "The same title on the title screen"). The splash shows the same title under the console's pixel CHGAME logo (`tools/brand/logo-pixel.png`, packed as `CHG_LOGO` and `CHG_LOGO_SHADOW`; its shadow is FX_A, so it turns through the rainbow as the menu's does).
   - Casino rules are the default; the Classic preset keeps PPOT's rules.
   - PPOT's money bugs are fixed in both presets (listed in `NOTICE`).
-- Chosen: the credits are a cozy casino "back room" page, reached with A from Stats. The dealer tells the credits in his speech bubble, under a neon sign and cigarette smoke. Rejected: a demoscene-style credits screen.
-- Credits are exactly as in `NOTICE`, the README and the credits page (A on Stats; `say J C` jumps to it in a script): PPOT, filmote (code) and vampirics (art). Don't add or change names without the owner.
+- Chosen: the credits are a cozy casino "back room" page, reached with A from Stats (`say J C` jumps to it in a script). The dealer sees you out in his speech bubble, under a neon sign and cigarette smoke, with the CHGAME logo printed on the felt. Rejected: a demoscene-style credits screen.
+- Changed (2026-10-20, at Press Play On Tape's request): the game names nobody on screen. Their logo left the splash and the back room, "PPOT 2018" the title (now the version) and "PPOT:" the Classic rules hint; their names left the dealer's lines. Credits are exactly as in `NOTICE` and the README: PPOT, filmote (code) and vampirics (art). Don't add or change names without the owner, and don't put them back in the game (docs/game-readme.md, "Credits").
 - Rejected: the original's "Mario" dealer (Nintendo fan art). It is not included; don't bring it back.
 - Chosen by the owner: court-card portraits without the grey SILVER frame. CHPoker (`../CHPoker`) made the same change, so keep the two decks' court art in step.
 - The release build is Smallest + LTO with USB "Upload only" (`tools/device.py` has the exact settings).
 - Chosen (2026-10-07): the owner's new dealer and faces (`tools/art/common/dealer.png`, `faces.png`; `faces.png` now replaces the expressions rebuilt from PPOT's), and behind him a spotlight of 25% white dots centred on his head (the library's `spotlight()`), where the wood rectangle was.
+  - Chosen (2026-10-20): the blink takes only his eyes (rows 5-9 of the 24x18 patch, `EYES` in `tools/assets.py`) from `faces.png`'s BLINK cell, whose mouth and mustache differ from NORMAL's; so a blink moves nothing but the eyes, and FACE_EDITS is 6 words shorter. The same in all eight dealer games (the sibling checks compare the arrays).
 
 ## Open items
 

@@ -1,17 +1,29 @@
 # The README's one picture (docs/gameplay.gif): the title, then clips of a
-# round: the buy-in, swiping and daubing, a bingo, the one word too many,
-# and a rival getting there first. Each clip is its own recording, named in
+# round: the mode and the buy-in, swiping and daubing, a bingo, the one word
+# too many, a rival getting there first, and HARDCORE: a daub by hand, then
+# a wrong one that costs the card. Each clip is its own recording, named in
 # the order it is shown; ../../../../../../../../../tools/readme_gif.py runs this script and
 # joins them:
 #   chgame gif
 rec start 3
-wait 150
+wait 110
 rec stop 01_title
-# The buy-in: six cards, eyes down, the first call.
+# The mode (EASY), the buy-in: six cards, eyes down, the first call.
 say R 21
-say J P
-wait 70
+say J M
+wait 40
 rec start 3
+wait 20
+tap DOWN
+wait 14
+tap DOWN
+wait 14
+tap UP
+wait 10
+tap UP
+wait 14
+tap A
+wait 40
 tap UP
 wait 8
 tap UP
@@ -23,8 +35,9 @@ wait 150
 rec stop 02_buyin
 # Swiping through the cards, daubing where the frame is rainbow.
 say H 75
+wait 30
 rec start 3
-wait 60
+wait 30
 tap RIGHT
 wait 12
 tap A
@@ -44,7 +57,7 @@ wait 40
 tap LEFT
 wait 10
 tap A
-wait 60
+wait 30
 rec stop 03_swipe
 say D
 wait 1100
@@ -54,7 +67,7 @@ say I 2
 rec start 3
 wait 20
 say W
-wait 260
+wait 200
 rec stop 04_bingo
 # ...and the one word too many.
 wait 100
@@ -67,7 +80,7 @@ say I 1
 rec start 3
 wait 20
 say W
-wait 420
+wait 300
 rec stop 05_itsabingo
 # A rival gets there first.
 wait 100
@@ -75,5 +88,32 @@ tap A
 wait 400
 rec start 3
 say H 1
-wait 320
+wait 270
 rec stop 06_rival
+# HARDCORE: the card picked up, the cursor walked to a called number and
+# daubed, then a number not called: VOID, and the card is gone.
+say R 5
+say J P
+say O 2
+wait 40
+tap A
+wait 4
+say U 8
+wait 110
+rec start 3
+wait 20
+tap A
+wait 12
+tap UP
+wait 10
+tap RIGHT
+wait 12
+tap A
+wait 30
+tap LEFT
+wait 10
+tap LEFT
+wait 12
+tap A
+wait 80
+rec stop 07_hardcore

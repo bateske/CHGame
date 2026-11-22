@@ -75,6 +75,26 @@ static void timerTonePinDeinit()
   }
 }
 
+#if defined(ARDUINO_CHGAME_REV1)
+/* CHGame Rev1: PIN_BUZZER (PA1) switches a MOSFET that feeds a magnetic
+ * buzzer from the battery rail, so a tone must never stop with the pin
+ * HIGH: that is a steady current through the buzzer and its resistor.
+ * pause() turns the timer's interrupts off before it stops the timer, so
+ * nothing toggles the pin after this. */
+static void tonePinLow()
+{
+  if (TimerTone_pinInfo.pin != NC) {
+    GPIO_TypeDef *port = get_GPIO_Port(CH_PORT(TimerTone_pinInfo.pin));
+    if (port != NULL) {
+      digital_io_write(port, CH_MAP_GPIO_PIN(TimerTone_pinInfo.pin), 0);
+    }
+  }
+}
+#define TONE_STOPPED_LOW()  tonePinLow()
+#else
+#define TONE_STOPPED_LOW()  ((void)0)
+#endif
+
 static void timerTonePinInit(PinName p, uint32_t frequency, uint32_t duration)
 {
   uint32_t timFreq = 2 * frequency;
@@ -83,6 +103,7 @@ static void timerTonePinInit(PinName p, uint32_t frequency, uint32_t duration)
     if (frequency == 0) {
       if (TimerTone != NULL) {
         TimerTone->pause();
+        TONE_STOPPED_LOW();
       }
     } else {
       TimerTone_pinInfo.pin = p;
@@ -129,6 +150,7 @@ void noTone(uint8_t _pin, bool destruct)
       TimerTone = NULL;
     } else {
       TimerTone->pause();
+      TONE_STOPPED_LOW();
     }
   }
 }

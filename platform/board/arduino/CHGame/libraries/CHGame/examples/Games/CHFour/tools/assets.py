@@ -292,12 +292,15 @@ def main():
     defs.append(c_array("FACE_NORMAL", data))
     decls.append(f"extern const uint8_t FACE_NORMAL[{len(data)}];                     // his face, a 24 x 18 patch at (12, 14)")
     total += len(data)
+    # The blink keeps only his eyes (rows 5-9 of the patch): the mouth and
+    # mustache stay as in NORMAL, and it costs fewer edits.
+    EYES = range(5, 10)
     words, starts = [], []
     for k in range(1, len(FACES)):
         starts.append(len(words))
         for y in range(18):
             for x in range(24):
-                if faces[k][y][x] != normal[y][x]:
+                if faces[k][y][x] != normal[y][x] and (FACES[k] != "BLINK" or y in EYES):
                     c = 15 if faces[k][y][x] == TRANSPARENT else faces[k][y][x]
                     words.append(((y * 24 + x) << 4) | c)
     starts.append(len(words))

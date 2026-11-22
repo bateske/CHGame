@@ -44,16 +44,30 @@ volume, and the order of directory entries, do not matter.
 
 ## Runtime preparation, step by step
 
-Preparation takes one cart and a device (`rev0`, the default) and gives a
-set of files, `{card path: bytes}`. Every game must have a binary for the
-device (else `bad-device`) and the cart must pass every rule of chgame.md.
+Preparation takes one cart and one device (`rev0` or `rev1`; chcart's
+default is `rev0`) and gives a set of files, `{card path: bytes}`. The cart
+must pass every rule of chgame.md. A game with no binary for the device is
+left off the card, its SD files and any launch flag on it with it, as if the
+cart had never held it (a writer says which it left off); a cart with no
+game for the device at all is `bad-device`. So one cart can carry a program
+made for one board alone (an app for the Rev 1.5's power section, say), and each board's
+card holds what runs on it.
 
 **A card is for one board.** Its CHG files carry that device's target id
 (chgame.md, "Devices and revisions"), and a bootloader installs only its own
 board's: on another board the menu lists them greyed under their 8.3 names
 and starting one shows ERROR 5, with nothing erased. Someone with two
-boards keeps a card for each. The menu's own files and the SD files do not
-depend on the board.
+boards keeps a card for each, which can be prepared from the same cart
+(a cart can carry a binary for each board). The menu's own files and the
+SD files do not depend on the board.
+
+**Cards per board in a distribution.** A release that ships a prepared
+card ships one per board, each a file of its own: the casino card is
+`CHGame-sdcard-<version>-rev0.zip` and `CHGame-sdcard-<version>-rev1.zip`,
+both from the one cart. A file like these, holding one board's contents, is
+the one place a device's name may appear in a name: game titles, cart
+titles, folder names and CHG file names never carry it
+([docs/hardware-revisions.md](../docs/hardware-revisions.md)).
 
 ### 1. The folders
 
@@ -90,7 +104,7 @@ Each game becomes `<folder>/<name>.CHG`: chg.md's format, built as
 | Field | Value |
 |---|---|
 | payload | the game's binary for the device, padded with 0xFF to a multiple of 4 |
-| target id, layout id | the device's (chgame.md's device table): `CX35`, `0x003000F7` for `rev0` |
+| target id, layout id | the device's (chgame.md's device table): `CX35`, `0x003000F7` for `rev0`; `CGR1`, `0x003000F7` for `rev1` |
 | title | the game's `title` |
 | author | the game's `author` if it is printable ASCII, cut to 15 characters; else empty |
 | version | the game's `version` the same way, cut to 7 characters |
@@ -311,11 +325,12 @@ order, the launch flags and the CHG headers exactly as the list menu does
 ## Deploy rules
 
 How a cart gets onto a CHGame (`chgame cart deploy`). A web uploader
-follows the same rules. Everything is for one device, `rev0` unless the
-user says otherwise (`--device`): the card's CHG files and the binary
-flashed. Before flashing, an uploader that knows the device checks it
-against the board's `HELLO` and refuses another board
-(platform/board/docs/protocol.md, "Which board").
+follows the same rules. Everything is for one device, the one the user
+picks (`--device`; chcart's default is `rev0`, and `chgame` passes its
+`--board`, by default the newest board): the card's CHG files and the binary flashed. Before flashing,
+an uploader that knows the device checks it against the board's `HELLO`
+and refuses another board (platform/board/docs/protocol.md, "Which
+board").
 
 **One game without SD files:** flash its binary over USB.
 - With a card given, its CHG file is also added to `GAMES/`, so the menu

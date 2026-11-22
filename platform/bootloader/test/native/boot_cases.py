@@ -4,10 +4,16 @@ converts the panel dumps to PNG and checks them against frames.json.
 
 frames.json pins the SHA-256 of every frame. A change that alters a frame
 fails until the new hashes are recorded (python3 run_tests.py --pin-frames),
-CLAUDE.md rule 2: the pictures are the test."""
+CLAUDE.md rule 2: the pictures are the test.
+
+Every scenario runs for each board (run_all's `board`): rev0's build and
+packages, then rev1's (its key bits, CHGAME_BOARD_TARGET, every package
+packed for its target). The pictures do not depend on the board, so rev1's
+frames are held to the hashes rev0's pinned; only rev0 pins them."""
 import hashlib
 import json
 import pathlib
+import re
 import struct
 import zlib
 
@@ -18,10 +24,28 @@ HERE = pathlib.Path(__file__).resolve().parent
 TITLE_COLS = 19
 
 
-def display_title(name, data):
-    """What the menu shows: the header title, or the 8.3 name for a bad header."""
+def board_target(board):
+    """The CHG target id of a board ("rev0", "rev1")."""
+    return chgpack.target_of(board)
+
+
+def board_defs(board):
+    """The defines that build the bootloader for `board`, as build.sh does."""
+    return [] if board == "rev0" else [f"-DCHGAME_BOARD_TARGET=0x{board_target(board):08X}"]
+
+
+def real_card():
+    """The real card (`chgame card`), rev0's: out/sdcard-rev0.img, or
+    out/sdcard.img as it was named before cards were per board."""
+    out = HERE.parents[3] / "out"
+    return next((p for p in (out / "sdcard-rev0.img", out / "sdcard.img") if p.exists()), out / "sdcard-rev0.img")
+
+
+def display_title(name, data, target=chgpack.TARGET_REV0):
+    """What the menu shows: the header title, or the 8.3 name for a bad header
+    (another board's included)."""
     try:
-        chgpack.parse(data, check_payload=False)
+        chgpack.parse(data, check_payload=False, target=target)
         t = data[0x20:0x40].split(b"\0", 1)[0].decode("ascii")[:TITLE_COLS]
     except chgpack.ChgError:
         t = name.split(".")[0][:8]
@@ -64,7 +88,7 @@ def cart_background_png():
     return buf.getvalue()
 
 
-def cart_cards(build_dir, pk):
+def cart_cards(build_dir, pk, board="rev0"):
     """Three cards made by the reference implementation (tools/chcart), as
     test_boot.c's t_cart_* expect them:
 
@@ -79,8 +103,9 @@ def cart_cards(build_dir, pk):
       cartbadbg   cart with its MENU.BG cut short: the menu's own look
 
     Returns ({name: image path}, {pkg name: CHG bytes}) for the extra
-    payloads (MIKE, EXTRA)."""
+    payloads (MIKE, EXTRA). Every package is for `board`."""
     from chcart import model, runtime
+    target = board_target(board)
     def payload(n):
         return pk[n][0][512:512 + chgpack.parse(pk[n][0])["payload_bytes"]]
     alpha, bravo = payload("ALPHA.CHG"), payload("BRAVO.CHG")
@@ -90,26 +115,27 @@ def cart_cards(build_dir, pk):
     def cart(launch=""):
         G = model.Game
         return model.Cart(title="TEST CART", launch=launch, background=cart_background_png(), games=[
-            G("zulu", "ZULU", {"rev0": bravo}),
-            G("alpha", "ALPHA GAME", {"rev0": alpha}, folder="FOLDER ONE"),
-            G("bravo", "BRAVO", {"rev0": bravo}, folder="FOLDER ONE/INNER"),
-            G("mike", "MIKE", {"rev0": mike})])
+            G("zulu", "ZULU", {board: bravo}),
+            G("alpha", "ALPHA GAME", {board: alpha}, folder="FOLDER ONE"),
+            G("bravo", "BRAVO", {board: bravo}, folder="FOLDER ONE/INNER"),
+            G("mike", "MIKE", {board: mike})])
 
     out, extras = {}, {}
     for name, c in (("cart", cart()), ("cartlaunch", cart("alpha")), ("cartbadbg", cart())):
-        files = runtime.prepare(c)
-        files["GAMES/EXTRA.CHG"] = chgpack.pack(extra, "AAA EXTRA")
+        files = runtime.prepare(c, board)
+        files["GAMES/EXTRA.CHG"] = chgpack.pack(extra, "AAA EXTRA", target=target)
         files["GAMES/EMPTY/"] = None
         files["GAMES/MENU.IDX"] += b"GHOST   CHG".ljust(32, b"\0")
         if name == "cartbadbg":
             files["GAMES/MENU.BG"] = files["GAMES/MENU.BG"][:-512]
         out[name] = build_dir / f"{name}.img"
         fatimg.build_image(str(out[name]), files, fs="fat32", lfn=True, fragment={"GAMES/MENU.BG": 3})
-    extras["MIKE.CHG"] = chgpack.pack(mike, "MIKE")
-    extras["EXTRA.CHG"] = chgpack.pack(extra, "AAA EXTRA")
+    extras["MIKE.CHG"] = chgpack.pack(mike, "MIKE", target=target)
+    extras["EXTRA.CHG"] = chgpack.pack(extra, "AAA EXTRA", target=target)
     # cartbig: 250 games in GAMES/, more than a folder lists (MENU_MAX_GAMES,
     # 240): the menu keeps the first 240 the directory holds, GAME 000-239
-    big = {f"GAMES/G{i:03d}.CHG": chgpack.pack(bytes((j * 7 + i * 13) & 0xFF for j in range(64 + i)), f"GAME {i:03d}")
+    big = {f"GAMES/G{i:03d}.CHG": chgpack.pack(bytes((j * 7 + i * 13) & 0xFF for j in range(64 + i)), f"GAME {i:03d}",
+                                               target=target)
            for i in range(250)}
     out["cartbig"] = build_dir / "cartbig.img"
     fatimg.build_image(str(out["cartbig"]), big, fs="fat32")
@@ -157,12 +183,13 @@ def system_test_pic():
     return b"".join(runtime.menu_picture(test_picture("sys", k)) for k in range(9))
 
 
-def visual_cards(build_dir, pk):
+def visual_cards(build_dir, pk, board="rev0"):
     """The cards test_visual.c reads (its header says what is where):
     vcart, vcartlaunch (the same, launching ALPHA GAME), vcartbad (pictures
     broken, no SYSTEM.PIC). Returns ({name: image path}, {pkg name: CHG
-    bytes})."""
+    bytes}). Every package is for `board`."""
     from chcart import model, runtime
+    target = board_target(board)
 
     def payload(n):
         return pk[n][0][512:512 + chgpack.parse(pk[n][0])["payload_bytes"]]
@@ -178,18 +205,18 @@ def visual_cards(build_dir, pk):
         G = model.Game
         return model.Cart(title="VISUAL CART", launch=launch, cover=P("cover"), about=P("about"),
                           folder_covers={"FOLDER ONE": P("f1"), "FOLDER ONE/INNER": P("inner")}, games=[
-            G("zulu", "ZULU", {"rev0": bravo}, cart_image=P("zulu")),
-            G("alpha", "ALPHA GAME", {"rev0": alpha}, folder="FOLDER ONE", cart_image=P("alpha")),
-            G("bravo", "BRAVO", {"rev0": bravo}, folder="FOLDER ONE/INNER", cart_image=P("bravo")),
-            G("oscar", "OSCAR", {"rev0": oscar}, folder="FOLDER ONE/OTHER", cart_image=P("oscar")),
-            G("mike", "MIKE", {"rev0": mike}, cart_image=P("mike")),
-            G("romeo", "ROMEO", {"rev0": romeo}, folder="TWO", cart_image=P("romeo"))])
+            G("zulu", "ZULU", {board: bravo}, cart_image=P("zulu")),
+            G("alpha", "ALPHA GAME", {board: alpha}, folder="FOLDER ONE", cart_image=P("alpha")),
+            G("bravo", "BRAVO", {board: bravo}, folder="FOLDER ONE/INNER", cart_image=P("bravo")),
+            G("oscar", "OSCAR", {board: oscar}, folder="FOLDER ONE/OTHER", cart_image=P("oscar")),
+            G("mike", "MIKE", {board: mike}, cart_image=P("mike")),
+            G("romeo", "ROMEO", {board: romeo}, folder="TWO", cart_image=P("romeo"))])
 
     out, extras = {}, {}
     sysp = system_test_pic()
     for name, c in (("vcart", cart()), ("vcartlaunch", cart("alpha")), ("vcartbad", cart())):
-        files = runtime.prepare(c)
-        files["GAMES/EXTRA.CHG"] = chgpack.pack(extra, "AAA EXTRA")
+        files = runtime.prepare(c, board)
+        files["GAMES/EXTRA.CHG"] = chgpack.pack(extra, "AAA EXTRA", target=target)
         files["GAMES/EMPTY/"] = None
         files["GAMES/SYSTEM.PIC"] = sysp
         if name == "vcartbad":
@@ -204,15 +231,16 @@ def visual_cards(build_dir, pk):
         fatimg.build_image(str(out[name]), files, fs="fat32", lfn=True, fragment={"GAMES/MIKE.CHG": 3})
     for n, d in (("MIKE.CHG", mike), ("EXTRA.CHG", extra), ("OSCAR.CHG", oscar), ("ROMEO.CHG", romeo),
                  ("STRAY.CHG", stray)):
-        extras[n] = chgpack.pack(d, n[:-4])
+        extras[n] = chgpack.pack(d, n[:-4], target=target)
     return out, extras
 
 
-def run_visual(build_dir, build, run, pk, z, order, extras, card, fdir):
+def run_visual(build_dir, build, run, pk, z, order, extras, card, fdir, board="rev0", other=None):
     """The visual menu's suites, both styles, on the cards above and on the
-    zoo card with SYSTEM.PIC added (fat32sys)."""
+    zoo card with SYSTEM.PIC added (fat32sys), for `board`; `other`: the
+    card with the other board's package (run_all)."""
     from run_tests import CORE, VISUAL, hostpath   # noqa: E402
-    vimgs, vextras = visual_cards(build_dir, pk)
+    vimgs, vextras = visual_cards(build_dir, pk, board)
     files = {"GAMES/" + n: d for n, d in z.items()}
     files["WORDS.DIC"] = bytes(5000)
     files["GAMES/SYSTEM.PIC"] = system_test_pic()
@@ -222,6 +250,8 @@ def run_visual(build_dir, build, run, pk, z, order, extras, card, fdir):
     man = [f"img fat32 {hostpath(card)}", f"img fat32sys {hostpath(sysimg)}",
            f"img cartbig {hostpath(build_dir / 'cartbig.img')}"]
     man += [f"img {k} {hostpath(v)}" for k, v in vimgs.items()]
+    if other:
+        man.append(f"img otherbrd {hostpath(other)}")
     allx = dict(extras)
     allx.update(vextras)
     for n in order + sorted(set(allx) - set(order)):   # (the zoo first: menu_index() is its position)
@@ -235,14 +265,16 @@ def run_visual(build_dir, build, run, pk, z, order, extras, card, fdir):
         man.append(f"pkg {n} 0 {ln} {crc:x} {hostpath(pkdir / n)}")
     mpath = build_dir / "visual_manifest.txt"
     mpath.write_text("\n".join(man) + "\n")
-    defs = ["-DCHBOOT_MENU=1", "-DCHGAME_ALLOW_SELFUPDATE=1", "-DMENU_UI=MENU_UI_VISUAL"]
-    exe = build("visual", "test_visual.c", defs, CORE + VISUAL)
-    ok = run("visual", exe, mpath, fdir)
-    real = HERE.parents[3] / "out" / "sdcard.img"
-    if real.exists():
+    defs = ["-DCHBOOT_MENU=1", "-DCHGAME_ALLOW_SELFUPDATE=1", "-DMENU_UI=MENU_UI_VISUAL", *board_defs(board)]
+    sfx = "" if board == "rev0" else "_" + board
+    exe = build("visual" + sfx, "test_visual.c", defs, CORE + VISUAL)
+    ok = run("visual" + sfx, exe, mpath, fdir)
+    real = real_card()
+    if board == "rev0" and real.exists():         # (the real card is rev0's)
         ok &= run("visual_real", exe, real_manifest(build_dir, real), fdir, "real")
-    ok &= run("visual_static", build("visual_static", "test_visual.c", defs + ["-DMENU_STYLE=MENU_STYLE_STATIC"],
-                                     CORE + VISUAL), mpath, fdir, "style", "static_")
+    ok &= run("visual_static" + sfx, build("visual_static" + sfx, "test_visual.c",
+                                           defs + ["-DMENU_STYLE=MENU_STYLE_STATIC"], CORE + VISUAL),
+              mpath, fdir, "style", "static_")
     return ok
 
 
@@ -280,7 +312,11 @@ def check_pictures(fdir):
     return not diff
 
 
-def run_all(build_dir, build, run, imgs, lay, pk, quick, pin=False):
+def run_all(build_dir, build, run, imgs, lay, pk, quick, pin=False, board="rev0"):
+    """Every whole-boot suite for `board`, on the zoo `pk` (packed for it) and
+    the card images in `build_dir`. Rev0's frames go to build/frames and may
+    be pinned; another board's to build/frames-<board>, held to frames.json."""
+    target = board_target(board)
     z = zoo(pk)
     pkdir = build_dir / "pk"
     pkdir.mkdir(exist_ok=True)
@@ -292,11 +328,19 @@ def run_all(build_dir, build, run, imgs, lay, pk, quick, pin=False):
     card = build_dir / "boot_fat32.img"
     fatimg.build_image(str(card), files, fs="fat32", lfn=True, decoys=True,
                        fragment={"GAMES/ALPHA.CHG": 7, "GAMES/BRAVO.CHG": 3}, dir_pieces={"GAMES": 2})
-    order = sorted(z, key=lambda n: display_title(n, z[n]))
-    from run_tests import hostpath   # noqa: E402  (paths as the test program sees them)
-    carts, extras = cart_cards(build_dir, pk)
+    order = sorted(z, key=lambda n: display_title(n, z[n], target))
+    from run_tests import BUILD, hostpath   # noqa: E402  (paths as the test program sees them)
+    carts, extras = cart_cards(build_dir, pk, board)
+    # the other board's package beside one of this board's (t_other_board):
+    # BRAVO, then OTHER BOARD, ALPHA's payload packed for the other board
+    other_target = chgpack.TARGET_REV1 if target == chgpack.TARGET_REV0 else chgpack.TARGET_REV0
+    alpha = z["ALPHA.CHG"][512:512 + chgpack.parse(z["ALPHA.CHG"])["payload_bytes"]]
+    other = build_dir / "otherbrd.img"
+    fatimg.build_image(str(other), {"GAMES/BRAVO.CHG": z["BRAVO.CHG"],
+                                    "GAMES/OTHER.CHG": chgpack.pack(alpha, "OTHER BOARD", target=other_target)},
+                       fs="fat32", lfn=True)
     man = [f"img fat32 {hostpath(card)}", f"img fat16 {hostpath(imgs['fat16'])}",
-           f"img nogames {hostpath(imgs['nogames'])}"]
+           f"img nogames {hostpath(imgs['nogames'])}", f"img otherbrd {hostpath(other)}"]
     man += [f"img {k} {hostpath(v)}" for k, v in carts.items()]
     for n in order + sorted(extras):             # (the zoo first: menu_index() is its position)
         d = z.get(n) or extras[n]
@@ -310,23 +354,26 @@ def run_all(build_dir, build, run, imgs, lay, pk, quick, pin=False):
         man.append(f"pkg {n} 0 {ln} {crc:x} {hostpath(pkdir / n)}")
     mpath = build_dir / "boot_manifest.txt"
     mpath.write_text("\n".join(man) + "\n")
-    fdir = build_dir / "frames"
+    fdir = BUILD / ("frames" if board == "rev0" else f"frames-{board}")
     fdir.mkdir(exist_ok=True)
     for old in fdir.glob("*"):
         old.unlink()
     from run_tests import CORE, MENU   # noqa: E402
-    exe = build("boot", "test_boot.c", ["-DCHBOOT_MENU=1", "-DCHGAME_ALLOW_SELFUPDATE=1"], CORE + MENU)
-    ok = run("boot", exe, mpath, fdir)
-    wexe = build("boot_static", "test_boot.c", ["-DCHBOOT_MENU=1", "-DCHGAME_ALLOW_SELFUPDATE=1",
-                                               "-DMENU_STYLE=MENU_STYLE_STATIC"], CORE + MENU)
-    ok &= run("boot_static", wexe, mpath, fdir, "style", "static_")   # the static style still works and draws
-    real = HERE.parents[3] / "out" / "sdcard.img"
-    if real.exists():
+    defs = ["-DCHBOOT_MENU=1", "-DCHGAME_ALLOW_SELFUPDATE=1", *board_defs(board)]
+    sfx = "" if board == "rev0" else "_" + board
+    exe = build("boot" + sfx, "test_boot.c", defs, CORE + MENU)
+    ok = run("boot" + sfx, exe, mpath, fdir)
+    wexe = build("boot_static" + sfx, "test_boot.c", defs + ["-DMENU_STYLE=MENU_STYLE_STATIC"], CORE + MENU)
+    ok &= run("boot_static" + sfx, wexe, mpath, fdir, "style", "static_")   # the static style still works and draws
+    real = real_card()
+    if board != "rev0":
+        pass                                      # (the real card is rev0's)
+    elif real.exists():
         ok &= run_real(build_dir, exe, real, fdir)
     else:
-        print(f"{'boot_real':12s} {'skip':6s} no out/sdcard.img (python tools/sdcard/mkcard.py --image out/sdcard.img)")
-    ok &= run_visual(build_dir, build, run, pk, z, order, extras, card, fdir)
-    ok &= check_frames(fdir, pin)
+        print(f"{'boot_real':12s} {'skip':6s} no out/{real.name} (chgame card --image out/{real.name})")
+    ok &= run_visual(build_dir, build, run, pk, z, order, extras, card, fdir, board, other)
+    ok &= check_frames(fdir, pin and board == "rev0", board)
     ok &= check_preview(fdir)
     ok &= check_pictures(fdir)
     return ok
@@ -401,7 +448,9 @@ def run_real(build_dir, exe, img, fdir):
     return run("boot_real", exe, real_manifest(build_dir, img), fdir, "real")
 
 
-def check_frames(fdir, pin):
+def check_frames(fdir, pin, board="rev0"):
+    """The frames in `fdir` against frames.json. Rev0's may pin it (--pin-frames,
+    or when there is none); another board's are only compared."""
     from PIL import Image
     pinned_path = HERE / "frames.json"
     pinned = json.loads(pinned_path.read_text()) if pinned_path.exists() else {}
@@ -410,15 +459,17 @@ def check_frames(fdir, pin):
         im = Image.open(ppm).convert("RGB")
         im.save(ppm.with_suffix(".png"))
         now[ppm.stem] = hashlib.sha256(im.tobytes()).hexdigest()
-    if pin or not pinned:
+    name = "frames" if board == "rev0" else f"frames_{board}"
+    if board == "rev0" and (pin or not pinned):
         if not pin:
             pinned.clear()
         pinned.update(now)
         pinned_path.write_text(json.dumps(pinned, indent=1, sort_keys=True) + "\n", newline="\n")
-        print(f"{'frames':12s} {'pinned':6s} {len(now)} frames recorded in frames.json")
+        print(f"{name:12s} {'pinned':6s} {len(now)} frames recorded in frames.json")
         return True
-    # real_* frames come from out/sdcard.img, which only exists after mkcard.py
-    keys = set(now) | {k for k in pinned if not k.startswith("real_")}
+    # real_* and v_real_* frames come from the real card (`chgame card`), rev0's,
+    # which only exists once it is made
+    keys = set(now) | {k for k in pinned if not re.match(r"(static_)?(v_)?real_", k)}
     diff = sorted(k for k in keys if now.get(k) != pinned.get(k))
-    print(f"{'frames':12s} {'ok' if not diff else 'FAILED':6s} {len(now)} frames vs frames.json" + (f": changed {diff}" if diff else ""))
+    print(f"{name:12s} {'ok' if not diff else 'FAILED':6s} {len(now)} frames vs frames.json" + (f": changed {diff}" if diff else ""))
     return not diff

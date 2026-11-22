@@ -10,7 +10,9 @@
  *   0x3000 +---------------------------+ CHGAME_APP_START
  *          | application    50944 B    |
  *   0xF700 +---------------------------+ CHGAME_META_ADDR
- *          | app metadata    256 B     |  (one flash page, written LAST)
+ *          | app metadata    224 B     |  (one flash page, written LAST)
+ *   0xF7E0 +- - - - - - - - - - - - - -+ CHGAME_SYS_ADDR
+ *          | system settings  32 B     |  (reserved; kept on every rewrite)
  *   0xF800 +---------------------------+ end of 62 KB user flash
  */
 #ifndef CHGAME_MAP_H
@@ -58,6 +60,16 @@
 #define CHGAME_META_MAGIC     0x4D474843u   /* "CHGM" */
 #define CHGAME_META_VERSION   1u
 
+/* --- System settings block (the metadata page's last 32 bytes) ------------- */
+/* Reserved for settings every program can read (none defined yet: spec/
+ * chgame.md, "The system settings block"). Bootloader v4 and later keep these
+ * bytes as they are whenever they rewrite the metadata page (install, ABORT,
+ * self-update); v1-v3 erase them. All 0xFF means never written. A sketch must
+ * not write the metadata page, and nothing may write these bytes before a
+ * format version is published. */
+#define CHGAME_SYS_SIZE       32u
+#define CHGAME_SYS_ADDR       (CHGAME_META_ADDR + CHGAME_PAGE_SIZE - CHGAME_SYS_SIZE) /* 0xF7E0 */
+
 #ifndef __ASSEMBLER__
 #include <stdint.h>
 
@@ -68,7 +80,7 @@ typedef struct {
     uint32_t crc32;        /* CRC-32/ISO-HDLC over the image                 */
     uint32_t app_version;  /* free for the application, 0 if unused          */
     uint32_t reserved[3];
-    /* remainder of the page is 0xFF */
+    /* then 0xFF up to CHGAME_SYS_ADDR, and the system settings block */
 } chgame_meta_t;
 
 typedef struct {
@@ -82,7 +94,8 @@ typedef struct {
     uint32_t boot_count_inv;
 } chgame_bootreq_t;
 
-_Static_assert(sizeof(chgame_meta_t) <= CHGAME_PAGE_SIZE, "metadata exceeds one flash page");
+_Static_assert(sizeof(chgame_meta_t) <= CHGAME_PAGE_SIZE - CHGAME_SYS_SIZE, "metadata overlaps the system settings block");
+_Static_assert(CHGAME_SYS_ADDR == 0xF7E0u && CHGAME_SYS_SIZE % 4u == 0, "system settings block moved");
 _Static_assert(sizeof(chgame_bootreq_t) <= CHGAME_MAGIC_SIZE, "boot request block too large");
 _Static_assert(CHGAME_APP_MAX_SIZE == 50944u, "app region size changed unexpectedly");
 _Static_assert(CHGAME_APP_START % CHGAME_PAGE_SIZE == 0, "APP_START must be page aligned");

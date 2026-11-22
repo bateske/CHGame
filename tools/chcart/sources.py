@@ -283,33 +283,84 @@ def from_sketch(d, image, device="rev0"):
 
 
 def build_sketch(d, device="rev0"):
-    """Compiles the sketch (release) and returns its Game."""
+    """Compiles the sketch (release) for `device` and returns its Game."""
     import device as dev                    # tools/device.py
-    out = dev.build(d)
+    out = dev.build(d, board=device)
     return from_sketch(d, (out / f"{pathlib.Path(d).name}.ino.bin").read_bytes(), device)
+
+
+def game_for_boards(d, boards, binary):
+    """One Game from a sketch built for several boards: binary(d, board) gives
+    each board's release image (bytes, or the .bin's path), and the Game
+    carries every board's in its binaries. The Games made for each board must
+    agree in everything else (they come from the same folder). Never
+    merge() for this: that makes a second game, chfour-2."""
+    d = pathlib.Path(d)
+    if not boards:
+        raise CartError([Issue("bad-device", str(d), "no board to build for: the installed CHGame core has none "
+                               f"of {', '.join(model.DEVICES)} (arduino-cli core list)")])
+    import device as dev                    # tools/device.py: a sketch made for some boards alone
+    mine = dev.for_boards(d)
+    if not dev.sketch_boards(d, boards):
+        raise CartError([Issue("bad-device", str(d), f"it is for {', '.join(mine)} alone (its tools/game.py's "
+                               f"BOARDS), not {', '.join(boards)}")])
+    boards = dev.sketch_boards(d, boards)
+    games = []
+    for b in boards:
+        img = binary(d, b)
+        if not isinstance(img, (bytes, bytearray)):
+            img = pathlib.Path(img).read_bytes()
+        games.append(from_sketch(d, bytes(img), b))
+    import dataclasses
+    first = games[0]
+    for b, g in zip(boards[1:], games[1:]):
+        diff = [f.name for f in dataclasses.fields(first) if f.name != "binaries"
+                and getattr(g, f.name) != getattr(first, f.name)]
+        if diff:
+            raise CartError([Issue("bad-field", str(d), f"its {b} game differs from its {boards[0]} game in "
+                                   f"{', '.join(diff)}: one sketch must make one game")])
+        first.binaries.update(g.binaries)
+    return first
+
+
+def sketch_game(d, boards=None, build=True, log=print):
+    """A sketch folder's Game, with a binary for each board in `boards`
+    (default: every board the installed CHGame core has; tools/device.py
+    says which it skips): built, or with build=False its existing
+    build/<board>/release .bin."""
+    import device as dev                    # tools/device.py
+    d = pathlib.Path(d)
+    boards = list(boards) if boards else dev.installed_boards(log=log)
+
+    def binary(d, b):
+        if build:
+            return dev.image(d, dev.build(d, board=b))
+        f = dev.image(d, dev.build_dir(d, False, b))
+        if not f.exists():
+            raise CartError([Issue("missing-file", str(d), f"{f} is missing: build it (chgame --board {b} build), "
+                                   "or drop --no-build")])
+        return f
+    return game_for_boards(d, boards, binary)
 
 
 # ---- anything -----------------------------------------------------------------------
 
-def load_item(item, build=True, title=None):
+def load_item(item, build=True, title=None, device=None):
     """[Game] from a path: a .chgame (all its games), a .bin/.hex/.elf/.chg,
-    or a sketch folder (built unless build=False, then its build/release
-    .bin); or the name of a game or app in this repository (CHFour)."""
+    or a sketch folder (built for every board the installed core has, or for
+    `device` alone; with build=False its build/<board>/release .bin); or the
+    name of a game or app in this repository (CHFour). `device` is the board
+    a .bin, .hex or .elf was built for (default rev0)."""
     p = pathlib.Path(item)
     if not p.exists() and p.name == str(item) and not p.suffix:
         import paths                        # tools/paths.py
         p = paths.sketch(str(item))
     if p.is_dir():
-        if build:
-            return [build_sketch(p)]
-        b = p / "build" / "release" / f"{p.name}.ino.bin"
-        if not b.exists():
-            raise CartError([Issue("missing-file", str(p), f"{b} is missing: build it, or drop --no-build")])
-        return [from_sketch(p, b.read_bytes())]
+        return [sketch_game(p, [device] if device else None, build)]
     if p.suffix.lower() == ".chgame":
         return zipio.load(p).games
     if p.suffix.lower() in BINARY_SUFFIXES:
-        return [from_binary(p, title)]
+        return [from_binary(p, title, device=device or "rev0")]
     raise CartError([Issue("bad-field", str(p), "not a .chgame, .bin, .hex, .elf, .chg or sketch folder")])
 
 

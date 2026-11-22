@@ -19,18 +19,18 @@ Any change to these files MUST be listed here.
 | `wch_usbcdc_cdc.c` | added `CDC_write_nb()` / `CDC_read_nb()` | The bootloader protocol loop must not be wedged by a host that stopped reading |
 | `wch_usbcdc_cdc.c` | added `CDC_enumerated()` / `CDC_dtr()` / `CDC_baud()` accessors | Needed for mode detection and the 1200-baud upload handshake |
 | `wch_usbcdc_internal.h` | declared the above | |
-| `wch_usbcdc_config.h` | **contents replaced** by a forwarder to `shared/chgame_usb_identity.h` | One identity shared by bootloader and application. An -I shadow does NOT work here — quoted includes search the including file's own directory first, so the vendor copy always won and the change silently did nothing |
+| `wch_usbcdc_config.h` | **contents replaced** by a forwarder to `shared/chgame_usb_identity.h` | One identity shared by bootloader and application. An -I shadow does NOT work here â€” quoted includes search the including file's own directory first, so the vendor copy always won and the change silently did nothing |
 | `wch_usbcdc_handler.c` | `USB_init()` replaced by the Arduino core 0.2.4 version: direct register writes instead of `RCC_*ClockCmd()`/`GPIO_Init()`, the interrupt armed before the pull-up, no 15 ms post-attach spin | the CHGame SD menu bootloader: about 400 B smaller, so the menu fits in the 12 KB reservation |
 | `wch_usbcdc_descr.c` | `hex_chars` in `uint32_to_hex_string()` made `static const` | A local array initialiser made GCC copy the string with newlib's `memcpy` (178 B) |
 | `wch_usbcdc_descr.c`, `wch_usbcdc_internal.h` | manufacturer, product and interface strings are `const` UTF-16 literals; `string_to_utf16le_descriptor()` and the three `generate_*` functions removed (only the serial number is built at run time) | Same descriptor bytes; less code and 56 B less RAM in the menu bootloader |
 
 ## Known issues in upstream that we must address
 
-All three are now addressed — see the modification table above. Kept here as a
+All three are now addressed â€” see the modification table above. Kept here as a
 record of what to re-check when re-syncing with upstream.
 
-1. ~~`CDC_write()` flushed after every byte~~ — fixed.
-2. ~~`CDC_read()`/`CDC_write()` spin-wait~~ — non-blocking variants added; the
+1. ~~`CDC_write()` flushed after every byte~~ â€” fixed.
+2. ~~`CDC_read()`/`CDC_write()` spin-wait~~ â€” non-blocking variants added; the
    originals are left intact for the Arduino-facing wrapper.
-3. ~~Identity strings were Jobit's defaults~~ — replaced wholesale by the shared
+3. ~~Identity strings were Jobit's defaults~~ â€” replaced wholesale by the shared
    header.

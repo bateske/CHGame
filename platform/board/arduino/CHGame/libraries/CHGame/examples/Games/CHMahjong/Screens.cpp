@@ -595,8 +595,7 @@ static void optionsRender(uint32_t frame) {
         optField(OPT_TEXT[i], (uint8_t)(optByte(i) + 1), value);
         text35x2s(114 - text35x2Width(value), y, value, i == sel ? WHITE : SILVER);
     }
-    centred35(108, "CHMAHJONG " CHMJ_VERSION, SILVER);
-    centred35(117, "FONT: PRESS PLAY ON TAPE", SILVER);
+    centred35(117, "CHGAME", SILVER);
 }
 
 // ---------------------------------------------------------------------------

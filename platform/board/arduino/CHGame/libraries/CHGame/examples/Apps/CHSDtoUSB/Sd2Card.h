@@ -76,8 +76,9 @@
  *   - CMD18 multi-block streaming (readStart / readStream / readStop), and
  *     a pipelined variant that hands each block to a callback while the
  *     NEXT block is already arriving by DMA.
- *   - SD_CHIP_SELECT_PIN defaults to PIN_SD_CS (PB11) when the variant
- *     defines it, so SD.begin() with no argument works.
+ *   - SD_CHIP_SELECT_PIN defaults to PIN_SD_CS (PB11 on Rev0, PB3 on
+ *     Rev1) when the variant defines it, so SD.begin() with no argument
+ *     works.
  *
  * Define SD_CH32_DISABLE_FAST before including SD.h to get the stock
  * SPI-library transport back, e.g. to A/B the two.
@@ -137,7 +138,8 @@ uint8_t const SPI_QUARTER_SPEED = 2;
   /* CHGAME: on the CHGame variant SS is PA4, the LCD's chip select, so the
      stock default made SD.begin() clock card commands into the ST7735 while
      the card itself was never selected. The variant names the real card
-     select as PIN_SD_CS (PB11); prefer it whenever it exists. */
+     select as PIN_SD_CS (PB11 on Rev0, PB3 on Rev1); prefer it whenever
+     it exists. */
   #if !defined(SDCARD_SS_PIN) && defined(PIN_SD_CS)
     #define SDCARD_SS_PIN PIN_SD_CS
   #endif

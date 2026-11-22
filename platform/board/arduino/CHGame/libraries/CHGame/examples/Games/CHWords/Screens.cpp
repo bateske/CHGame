@@ -792,8 +792,7 @@ static void optionsRender(uint32_t frame) {
         }
         centred35(100, "A OR B: BACK", GOLD);
     }
-    centred35(109, "WORDS: THE ENABLE LIST", SILVER);
-    centred35(116, "3X5 FONT: PRESS PLAY ON TAPE", SILVER);
+    centred35(116, "CHGAME", SILVER);
 }
 #endif
 

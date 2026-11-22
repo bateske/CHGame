@@ -6,7 +6,7 @@
 The repository's tools/chsim/chdrivelib.py does the driving and has the
 common script commands (wait, tap, hold, snap, gif, rec, say, perf, cal ...).
 CHBingo adds:
-The game's own protocol commands (say R/J/C/F/G/D/W/I/H/X/M/A/Y/V/E) are
+The game's own protocol commands (say R/J/C/F/G/D/W/I/H/X/M/A/O/U/Y/V/E) are
 listed at the top of CHBingo.ino.
 --id names the game's handshake reply (default CHBN).
 """

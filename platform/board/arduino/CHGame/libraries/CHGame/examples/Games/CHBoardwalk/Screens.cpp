@@ -683,8 +683,7 @@ static void optionsRender(uint32_t frame) {
     centred35(82, buf, GOLD);
     fmtMoney(fmtStr(buf, "RICHEST WINNER "), stats.best);
     centred35(90, buf, GOLD);
-    centred35(108, "BOARDWALK " CHBW_VERSION " FOR CHGAME", SILVER);
-    centred35(115, "FONT: PRESS PLAY ON TAPE", SILVER);
+    centred35(115, "CHGAME", SILVER);
 }
 #endif
 

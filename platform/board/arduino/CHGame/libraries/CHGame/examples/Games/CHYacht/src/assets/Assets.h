@@ -20,5 +20,5 @@ constexpr int LOGO_BASE = 8;
 extern const uint8_t LOGO_RAMP[23];
 constexpr int LOGO_DEPTH = 2;
 constexpr int LOGO_SIDE = 7;
-extern const uint16_t FACE_EDITS[196];
+extern const uint16_t FACE_EDITS[190];
 extern const uint16_t FACE_EDIT_AT[7];

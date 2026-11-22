@@ -491,8 +491,7 @@ static void optionsRender(uint32_t frame) {
     };
     const char *help = optSel == O_TABLE ? HELP[game.opt.table] : (optSel == O_ODDS ? HELP[2] : "B: BACK");
     centred35(104, help, SILVER);
-    centred35(112, "DEALER AND FONT BY", FELT_LT);
-    centred35(119, "PRESS PLAY ON TAPE", FELT_LT);
+    centred35(119, "CHGAME", FELT_LT);
 }
 
 // ---------------------------------------------------------------------------

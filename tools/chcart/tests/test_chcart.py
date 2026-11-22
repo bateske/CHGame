@@ -201,7 +201,8 @@ class Sources(unittest.TestCase):
             self.assertEqual(sources.load_item(p)[0].binary(), g.binary())
             self.assertEqual(chgpack.program_image(str(p)), g.binary())
         # the real thing: any example built here gives its .bin from its .elf
-        built = sorted(TOOLS.parent.glob("platform/board/arduino/CHGame/libraries/CHGame/examples/*/*/build/release/*.ino.elf"))
+        ex = TOOLS.parent / "platform/board/arduino/CHGame/libraries/CHGame/examples"
+        built = sorted(ex.glob("*/*/build/*/release/*.ino.elf")) or sorted(ex.glob("*/*/build/release/*.ino.elf"))
         for elf in built[:3]:
             b = elf.with_suffix(".bin")
             if b.exists():
@@ -683,6 +684,18 @@ class Backup(unittest.TestCase):
 class Boards(unittest.TestCase):
     """Which board a binary is for (spec/chgame.md, "Devices and revisions")."""
     CGR1 = 0x31524743
+    # No board is reserved at present (rev1 was until its pinout settled), so
+    # the tests of a reserved board's path reserve rev2 (CGR2) for themselves.
+    CGR2 = 0x32524743
+
+    def reserved(self):
+        """rev2 (CGR2) reserved in both tables for the duration of a `with`."""
+        import contextlib
+        from unittest import mock
+        stack = contextlib.ExitStack()
+        stack.enter_context(mock.patch.dict(model.RESERVED_DEVICES, {"rev2": self.CGR2}))
+        stack.enter_context(mock.patch.dict(chgpack.RESERVED, {self.CGR2: "rev2"}))
+        return stack
 
     def test_tables_agree(self):
         self.assertEqual({d.chg_target: (d.id, d.chg_layout, d.max_image) for d in model.DEVICES.values()},
@@ -691,71 +704,117 @@ class Boards(unittest.TestCase):
         self.assertEqual(chgpack.TARGET_REV1, self.CGR1)
         self.assertEqual(chgpack.fourcc(chgpack.TARGET_REV0), "CX35")
         self.assertEqual(chgpack.fourcc(chgpack.TARGET_REV1), "CGR1")
+        self.assertEqual(chgpack.fourcc(self.CGR2), "CGR2")
         spec = (TOOLS.parent / "spec" / "chgame.md").read_text(encoding="utf-8")
         for name, target in [(d.id, d.chg_target) for d in model.DEVICES.values()] + list(model.RESERVED_DEVICES.items()):
             self.assertIn(f"`{name}`", spec, "every device and reserved name is in the spec's table")
             self.assertIn(f"`{chgpack.fourcc(target)}`", spec)
+        with self.reserved():                               # the reserved tables, when they hold one
+            self.assertEqual({t: n for n, t in model.RESERVED_DEVICES.items()}, chgpack.RESERVED)
+
+    def test_rev1_is_defined(self):
+        """rev1 (CHGame Rev1, also Rev 1.5) is a known board: rev0's chip and
+        memory map, its own target id, its own FQBN."""
+        d = model.DEVICES["rev1"]
+        self.assertEqual((d.id, d.board, d.mcu, d.load_address, d.max_image, d.save_safe, d.chg_target,
+                          d.chg_layout, d.fqbn),
+                         ("rev1", "CHGame Rev1", "CH32X035G8U6", 0x3000, 50944, 50432, self.CGR1, 0x003000F7,
+                          "CHGame:ch32v:rev1"))
+        self.assertNotIn("rev1", model.RESERVED_DEVICES)
+        self.assertNotIn(self.CGR1, chgpack.RESERVED)
+        self.assertEqual(chgpack.target_of("rev1"), self.CGR1)
+        self.assertEqual(chgpack.describe_target(self.CGR1), "rev1 (CGR1)")
+        c = Cart("C", [Game("a", "A", {"rev0": image(100), "rev1": image(100, 2)})])
+        self.assertEqual(model.validate(c), [], "a rev1 binary is no longer unknown-device")
+        big = Cart("C", [Game("a", "A", {"rev1": image(50948)})])
+        self.assertEqual(codes(model.validate(big)), ["binary-size"], "rev1's binaries are checked as rev0's")
+        chg = chgpack.pack(image(100), "A", target=self.CGR1)
+        info = chgpack.parse(chg)
+        self.assertEqual((info["device"], info["target"]), ("rev1", self.CGR1))
+        self.assertEqual(struct.unpack_from("<II", chg, 8), (self.CGR1, 0x003000F7))
+        self.assertEqual(chgpack.parse(chg, target=chgpack.TARGET_REV1)["device"], "rev1")
+        with self.assertRaises(chgpack.ChgError) as e:      # what a rev0 bootloader does with it
+            chgpack.parse(chg, target=chgpack.TARGET_REV0)
+        self.assertEqual(e.exception.code, 4)
+        self.assertIn("rev1 (CGR1)", str(e.exception))
+        self.assertIn("not rev0 (CX35)", str(e.exception))
+        with self.assertRaises(chgpack.ChgError) as e:      # and a rev1 bootloader with a rev0 one
+            chgpack.parse(chgpack.pack(image(100), "A"), target=chgpack.TARGET_REV1)
+        self.assertEqual(e.exception.code, 4)
 
     def test_unknown_and_reserved_devices(self):
         """A binary for a board this reader does not know, or a reserved one,
         is a warning: not used, kept, and the rest of the cart works."""
-        for dev, says in (("rev1", "reserved"), ("rev7", "does not know")):
-            c = Cart("C", [Game("a", "A", {"rev0": image(100), dev: image(100, 2)})])
-            issues = model.validate(c)
-            self.assertEqual(codes(issues), [])
-            warned = [i for i in issues if i.code == "unknown-device"]
-            self.assertTrue(warned and says in warned[0].message and not warned[0].error, warned)
-            back = zipio.load(zipio.to_bytes(c))
-            self.assertEqual(back.game("a").binaries[dev], image(100, 2), "kept when the cart is rewritten")
-            self.assertEqual(runtime.prepare(back), runtime.prepare(Cart("C", [Game("a", "A", {"rev0": image(100)})])))
-        bad = Cart("C", [Game("a", "A", {"REV0": image(100)})])
-        self.assertEqual(codes(model.validate(bad)), ["bad-device"])
-        with self.assertRaises(ValueError):
-            chgpack.pack(image(100), "A", target=self.CGR1)
-        with self.assertRaises(ValueError):
-            chgpack.target_of("rev1")
-        # a package that names rev1, as a rev1 tool would write it
-        chg = bytearray(chgpack.pack(image(100), "A"))
-        struct.pack_into("<I", chg, 8, self.CGR1)
-        struct.pack_into("<I", chg, 0x1FC, __import__("zlib").crc32(bytes(chg[:0x1FC])))
-        with self.assertRaises(chgpack.ChgError) as e:
-            chgpack.parse(bytes(chg))
-        self.assertEqual(e.exception.code, 4)
-        self.assertIn("rev1 (CGR1)", str(e.exception))
+        with self.reserved():
+            for dev, says in (("rev2", "reserved"), ("rev7", "does not know")):
+                c = Cart("C", [Game("a", "A", {"rev0": image(100), dev: image(100, 2)})])
+                issues = model.validate(c)
+                self.assertEqual(codes(issues), [])
+                warned = [i for i in issues if i.code == "unknown-device"]
+                self.assertTrue(warned and says in warned[0].message and not warned[0].error, warned)
+                if says == "does not know":
+                    self.assertIn("known: rev0, rev1", warned[0].message)
+                back = zipio.load(zipio.to_bytes(c))
+                self.assertEqual(back.game("a").binaries[dev], image(100, 2), "kept when the cart is rewritten")
+                self.assertEqual(runtime.prepare(back),
+                                 runtime.prepare(Cart("C", [Game("a", "A", {"rev0": image(100)})])))
+            bad = Cart("C", [Game("a", "A", {"REV0": image(100)})])
+            self.assertEqual(codes(model.validate(bad)), ["bad-device"])
+            with self.assertRaises(ValueError):
+                chgpack.pack(image(100), "A", target=self.CGR2)
+            with self.assertRaises(ValueError) as e:
+                chgpack.target_of("rev2")
+            self.assertIn("reserved", str(e.exception))
+            with self.assertRaises(ValueError) as e:
+                chgpack.target_of("rev7")
+            self.assertIn("known: rev0, rev1", str(e.exception))
+            # a package that names rev2, as a rev2 tool would write it
+            chg = bytearray(chgpack.pack(image(100), "A"))
+            struct.pack_into("<I", chg, 8, self.CGR2)
+            struct.pack_into("<I", chg, 0x1FC, __import__("zlib").crc32(bytes(chg[:0x1FC])))
+            with self.assertRaises(chgpack.ChgError) as e:
+                chgpack.parse(bytes(chg))
+            self.assertEqual(e.exception.code, 4)
+            self.assertIn("rev2 (CGR2)", str(e.exception))
+            self.assertIn("do not support yet", str(e.exception))
 
     def test_a_second_board(self):
-        """With a second board defined (as rev1 will be), a cart carries a
-        binary for each, a card is prepared for one, its CHG files name it,
-        and a backup files each game under the board its CHG names."""
-        from unittest import mock
+        """With a second board defined (rev1), a cart carries a binary for
+        each, a card is prepared for one, its CHG files name it, and a backup
+        files each game under the board its CHG names."""
         from chcart import backup
-        rev1 = model.Device("rev1", "CHGame Rev1", "CH32X035G8U6", 0x3000, 50944, 50432, self.CGR1, 0x003000F7,
-                            "CHGame:ch32v:rev1")
-        with mock.patch.dict(model.DEVICES, {"rev1": rev1}), \
-                mock.patch.dict(chgpack.BOARDS, {self.CGR1: ("rev1", 0x003000F7, 50944)}):
-            g = Game("a", "A", {"rev0": image(100, 1), "rev1": image(120, 2)})
-            c = Cart("C", [g, Game("b", "B", {"rev0": image(90, 3)})])
-            self.assertEqual(codes(model.validate(c)), [])
-            back = zipio.load(zipio.to_bytes(c))
-            self.assertEqual(set(back.game("a").binaries), {"rev0", "rev1"})
-            with self.assertRaises(CartError) as e:
-                runtime.prepare(c, "rev1")                  # b has no rev1 binary
-            self.assertEqual(e.exception.code, "bad-device")
-            one = Cart("C", [g])
-            files0, files1 = runtime.prepare(one, "rev0"), runtime.prepare(one, "rev1")
-            chg0, chg1 = files0["GAMES/A.CHG"], files1["GAMES/A.CHG"]
-            self.assertEqual(chgpack.parse(chg0)["device"], "rev0")
-            self.assertEqual(struct.unpack_from("<I", chg1, 8)[0], self.CGR1)
-            self.assertEqual(chgpack.parse(chg1)["device"], "rev1")
-            with self.assertRaises(chgpack.ChgError):        # a rev0 bootloader refuses it
-                chgpack.parse(chg1, target=chgpack.TARGET_REV0)
-            game1, _, _ = backup.game_from_chg(chg1)
-            self.assertEqual(game1.binaries, {"rev1": image(120, 2)})
-            refused, _, why = backup.game_from_chg(chg1, "rev0")
-            self.assertIsNone(refused)
-            self.assertEqual([i.code for i in why], ["bad-chg"])
-            b, _ = backup.backup(files1)
-            self.assertEqual(b.game("a").binaries, {"rev1": image(120, 2)})
+        g = Game("a", "A", {"rev0": image(100, 1), "rev1": image(120, 2)})
+        c = Cart("C", [g, Game("b", "B", {"rev0": image(90, 3)})])
+        self.assertEqual(codes(model.validate(c)), [])
+        back = zipio.load(zipio.to_bytes(c))
+        self.assertEqual(set(back.game("a").binaries), {"rev0", "rev1"})
+        said = []
+        files = runtime.prepare(c, "rev1", log=said.append)  # b has no rev1 binary: left off
+        self.assertEqual(sorted(p for p in files if p.endswith(".CHG")), ["GAMES/A.CHG"])
+        self.assertIn("b", said[0])
+        self.assertEqual(len([p for p in runtime.prepare(c, "rev0") if p.endswith(".CHG")]), 2)
+        c.launch = "b"                                      # a launch flag on a game left off goes too
+        self.assertEqual(runtime.for_device(c, "rev1")[0].launch, "")
+        self.assertEqual(runtime.for_device(c, "rev0")[0].launch, "b")
+        self.assertEqual(c.launch, "b")                     # (the cart itself is unchanged)
+        with self.assertRaises(CartError) as e:
+            runtime.prepare(Cart("C", [Game("b", "B", {"rev0": image(90, 3)})]), "rev1")
+        self.assertEqual(e.exception.code, "bad-device")    # no game for the board at all
+        one = Cart("C", [g])
+        files0, files1 = runtime.prepare(one, "rev0"), runtime.prepare(one, "rev1")
+        chg0, chg1 = files0["GAMES/A.CHG"], files1["GAMES/A.CHG"]
+        self.assertEqual(chgpack.parse(chg0)["device"], "rev0")
+        self.assertEqual(struct.unpack_from("<I", chg1, 8)[0], self.CGR1)
+        self.assertEqual(chgpack.parse(chg1)["device"], "rev1")
+        with self.assertRaises(chgpack.ChgError):            # a rev0 bootloader refuses it
+            chgpack.parse(chg1, target=chgpack.TARGET_REV0)
+        game1, _, _ = backup.game_from_chg(chg1)
+        self.assertEqual(game1.binaries, {"rev1": image(120, 2)})
+        refused, _, why = backup.game_from_chg(chg1, "rev0")
+        self.assertIsNone(refused)
+        self.assertEqual([i.code for i in why], ["bad-chg"])
+        b, _ = backup.backup(files1)
+        self.assertEqual(b.game("a").binaries, {"rev1": image(120, 2)})
 
 
 class Fixtures(unittest.TestCase):

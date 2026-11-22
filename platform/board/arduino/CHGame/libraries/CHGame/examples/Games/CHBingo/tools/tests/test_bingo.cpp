@@ -372,6 +372,135 @@ static void testBroke() {
     CHECK_EQ(g.dropped(), 0);
 }
 
+// HARD: walk the cursor to a cell.
+static void cursorTo(Bingo &g, int cell) {
+    for (int i = 0; i < 8 && g.cursor != cell; i++) {
+        int r = g.cursor / 5, c = g.cursor % 5;
+        tick(g, r < cell / 5 ? DOWN : r > cell / 5 ? UP : c < cell % 5 ? RIGHT : LEFT);
+    }
+}
+
+// A cell of card k whose number has not been called (not the centre).
+static int uncalled(const Bingo &g, int k) {
+    for (int i = 0; i < 25; i++) if (i != 12 && !g.called(g.cards[k][i])) return i;
+    return -1;
+}
+
+static void testModes() {
+    Bingo g;
+    Event e;
+    // The picker: EASY offered first, UP/DOWN to choose, A to the buy-in.
+    memset((void *)&g, 0, sizeof g);
+    g.seed(77);
+    g.newGame(true);
+    CHECK(g.phase == Phase::Mode);
+    auto ev = tick(g);
+    CHECK_EQ(g.mode, M_EASY);
+    ev = tick(g, DOWN); CHECK(has(ev, Ev::ModePick, &e)); CHECK_EQ(e.a, M_HARD);
+    tick(g, DOWN); tick(g, DOWN);
+    CHECK_EQ(g.mode, M_HARDCORE);
+    ev = tick(g, UP); CHECK_EQ(g.mode, M_HARD);
+    int32_t hardPot = g.potFor(3);
+    ev = tick(g, A);
+    CHECK(has(ev, Ev::BuyOpen));
+    CHECK(g.phase == Phase::Buy);
+    g.mode = M_EASY;
+    CHECK_EQ(hardPot, 2 * g.potFor(3));
+    g.mode = M_HARD;
+
+    // HARD: A picks the card up with the cursor on the centre; the d-pad
+    // moves it (no wrapping); B puts it down; LEFT/RIGHT swipe again.
+    tick(g, A);
+    CHECK(g.phase == Phase::Calling);
+    CHECK_EQ(g.pot, 5 * (3 + RIVALS[0]) * 9 / 10 * 2);
+    g.hallBall = 75;
+    ev = tick(g, A);
+    CHECK(has(ev, Ev::Pick, &e)); CHECK_EQ(e.b, 1);
+    CHECK(g.picking); CHECK_EQ(g.cursor, 12);
+    ev = tick(g, A); CHECK(has(ev, Ev::Deny));      // the free centre: daubed already
+    tick(g, UP); CHECK_EQ(g.cursor, 7);
+    tick(g, LEFT); tick(g, LEFT); tick(g, LEFT); CHECK_EQ(g.cursor, 5);
+    tick(g, RIGHT); CHECK_EQ(g.focus, 0); CHECK_EQ(g.cursor, 6);
+    ev = tick(g, B); CHECK(has(ev, Ev::Pick, &e)); CHECK_EQ(e.b, 0);
+    CHECK(!g.picking);
+    tick(g, RIGHT); CHECK_EQ(g.focus, 1);
+    // A called number: A daubs only the cell under the cursor.
+    uint8_t n = g.cards[1][3];
+    g.force(n);
+    for (int t = 0; t < 400 && !g.nCalled; t++) tick(g);
+    CHECK(g.pend[1] & (1u << 3));
+    tick(g, A);
+    cursorTo(g, 4);
+    ev = tick(g, A);
+    if (!g.called(g.cards[1][4])) { CHECK(has(ev, Ev::Miss)); CHECK_EQ(g.voided, 0); }   // HARD: just a miss
+    cursorTo(g, 3);
+    CHECK_EQ(g.cursor, 3);
+    ev = tick(g, A);
+    CHECK(has(ev, Ev::Daub, &e));
+    CHECK_EQ(e.a, 1); CHECK_EQ(e.b, 1); CHECK_EQ((uint32_t)e.amount, 1u << 3);
+    CHECK(g.daub[1] & (1u << 3)); CHECK(!(g.pend[1] & (1u << 3)));
+    CHECK(g.picking);
+    // No power-ups: the meter stays empty, B only puts the card down.
+    CHECK_EQ(g.meter, 0);
+    g.grant(P_FREEZE);
+    tick(g, B);
+    ev = tick(g, B);
+    CHECK(!has(ev, Ev::PowerUse)); CHECK(!has(ev, Ev::Miss));
+
+    // HARDCORE: a number not called voids the card; swiping skips it; the
+    // last one gone loses the round.
+    memset((void *)&g, 0, sizeof g);
+    g.seed(78);
+    g.newGame();
+    tick(g);
+    g.mode = M_HARDCORE;
+    g.start(3);
+    g.hallBall = 75;
+    CHECK_EQ(g.pot, 5 * (3 + RIVALS[0]) * 9 / 10 * 3);
+    tick(g, A);
+    ev = tick(g, A); CHECK(has(ev, Ev::Deny)); CHECK_EQ(g.voided, 0);   // the centre is no mistake
+    cursorTo(g, uncalled(g, 0));
+    ev = tick(g, A);
+    CHECK(has(ev, Ev::Void, &e)); CHECK_EQ(e.a, 0); CHECK_EQ(e.b, 0);
+    CHECK_EQ(g.voided, 1); CHECK_EQ(g.focus, 1); CHECK(!g.picking);
+    CHECK(g.phase == Phase::Calling);
+    tick(g, RIGHT); CHECK_EQ(g.focus, 2);
+    tick(g, RIGHT); CHECK_EQ(g.focus, 1);           // wraps past the void
+    tick(g, LEFT); CHECK_EQ(g.focus, 2);
+    // Calls leave nothing waiting on the voided card (not forced: a save
+    // deals the draw again from its seed).
+    for (int t = 0; t < 2000 && g.nCalled < 12; t++) tick(g);
+    CHECK_EQ(g.nCalled, 12);
+    CHECK_EQ(g.pend[0], 0u);
+    // Saved and loaded, the void stays.
+    RoundSave s;
+    g.saveRound(s);
+    Bingo h;
+    memset((void *)&h, 0, sizeof h);
+    h.mode = M_HARDCORE;
+    h.loadRound(s);
+    h.resume();
+    CHECK_EQ(h.voided, 1); CHECK_EQ(h.pot, g.pot); CHECK_EQ(h.focus, g.focus);
+    CHECK_EQ(h.pend[0], 0u); CHECK_EQ(h.daub[0], g.daub[0]);
+    for (int k = 1; k < 3; k++) { CHECK_EQ(h.daub[k], g.daub[k]); CHECK_EQ(h.pend[k], g.pend[k]); }
+    // Throw the other two out: the round is lost.
+    for (int k = 0; k < 2; k++) {
+        int f = g.focus;
+        tick(g, A);
+        cursorTo(g, uncalled(g, f));
+        ev = tick(g, A);
+        CHECK(has(ev, Ev::Void, &e)); CHECK_EQ(e.a, f); CHECK_EQ(e.b, k == 1);
+    }
+    CHECK_EQ(g.voided, 7);
+    CHECK(g.phase == Phase::Lost);
+    for (int t = 0; t < 100 && g.phase == Phase::Lost; t++) tick(g);
+    CHECK(g.phase == Phase::Buy);
+    tick(g, A);
+    CHECK(g.phase == Phase::Calling);
+    CHECK_EQ(g.voided, 0); CHECK_EQ(g.mode, M_HARDCORE);
+    CHECK_EQ(g.dropped(), 0);
+}
+
 static void dump() {
     for (uint32_t seed = 1; seed <= 40; seed++) {
         static const int N[3] = {1, 4, 9}, R[3] = {2, 0, 1};      // hall option: 8, 20, 40 rivals
@@ -402,6 +531,7 @@ int main(int argc, char **argv) {
     testPowers();
     testSave();
     testBroke();
+    testModes();
     printf("%ld checks, %ld failures\n", checks, failures);
     return failures ? 1 : 0;
 }

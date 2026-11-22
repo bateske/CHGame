@@ -5,7 +5,7 @@
 # https://arduino.github.io/arduino-cli/latest/platform-specification/
 
 name=CHGame Boards
-version=0.3.0
+version=0.4.0
 
 # Compile variables
 # ----------------------
@@ -70,6 +70,10 @@ build.extra_flags=
 build.bootloader_flags=
 build.ldscript=Link.ld
 build.variant_h=
+# The board's device name (spec/chgame.md), which chgame-upload checks the
+# board, a .chg and a bootloader against (-device, in the recipes below).
+# boards.txt overrides it per board; a board entry without one is rev0.
+build.chgame_device=rev0
 
 # These can be overridden in platform.local.txt
 compiler.c.extra_flags=
@@ -98,7 +102,11 @@ build.pid=0
 
 # Build information's     
 #####################-D{build.board} -DARDUINO_ARCH_{build.arch} -DBOARD_NAME="{build.board}" -DVARIANT_H="{build.variant_h}"
-build.info.flags=-DARDUINO_ARCH_CH32 -D{build.series} -DARDUINO={runtime.ide.version} -D{build.chip} -DVARIANT_H="{build.variant_h}" {build.usb_flags}
+# -DARDUINO_{build.board} is the board macro (ARDUINO_CHGAME_REV0,
+# ARDUINO_CHGAME_REV1) the core, the variant and the libraries choose pins
+# by. It is here rather than in build.extra_flags, which sketches and debug
+# builds replace: this line reaches every C, C++ and assembler file.
+build.info.flags=-DARDUINO_ARCH_CH32 -D{build.series} -DARDUINO={runtime.ide.version} -D{build.chip} -DVARIANT_H="{build.variant_h}" {build.usb_flags} -DARDUINO_{build.board}
 
 # Defaults config
 build.xSerial=
@@ -155,7 +163,9 @@ recipe.objcopy.hex.pattern="{compiler.path}{compiler.objcopy.cmd}" {compiler.elf
 ## Create output (.chg file): the package the bootloader's SD game menu
 ## installs from the card's GAMES folder (the sketch's name, in capitals, is
 ## its title). Sketch > Export Compiled Binary copies it beside the sketch.
-recipe.hooks.objcopy.postobjcopy.1.pattern="{tools.chgame_upload.path}/{tools.chgame_upload.cmd}" pack "{build.path}/{build.project_name}.bin"
+## -device marks it with the board's target id, so another board's menu
+## shows it greyed and will not install it.
+recipe.hooks.objcopy.postobjcopy.1.pattern="{tools.chgame_upload.path}/{tools.chgame_upload.cmd}" pack -device {build.chgame_device} "{build.path}/{build.project_name}.bin"
 
 ##Create output (.lst file)
 #recipe.objcopy.lst.pattern="{compiler.path}{compiler.objdump.cmd}" {compiler.objdump.flags} {compiler.elf2lst.extra_flags} "{build.path}/{build.project_name}.elf" "{build.path}/{build.project_name}.lst"
@@ -202,7 +212,9 @@ tools.chgame_upload.wchisp={runtime.tools.wchisp.path}/wchisp
 tools.chgame_upload.wchisp.windows={runtime.tools.wchisp.path}/wchisp.exe
 tools.chgame_upload.upload.params.verbose=-verbose
 tools.chgame_upload.upload.params.quiet=-quiet
-tools.chgame_upload.upload.pattern="{path}/{cmd}" {upload.verbose} -port "{serial.port}" flash "{build.path}/{build.project_name}.bin" -run
+# -device: the bootloader's HELLO names its board, and an upload built for
+# another board is refused before anything is erased.
+tools.chgame_upload.upload.pattern="{path}/{cmd}" {upload.verbose} -port "{serial.port}" flash -device {build.chgame_device} "{build.path}/{build.project_name}.bin" -run
 
 # Arduino runs a separate chip-erase step before Burn Bootloader. Both ways of
 # writing a bootloader erase what they need themselves, so this is an explicit
@@ -224,18 +236,23 @@ tools.chgame_upload.erase.pattern="{path}/{cmd}" noop
 # {burn.port} is the port argument, and only the usb programmer gives one: a
 # board in ISP mode has no serial port, and Arduino refuses to run a recipe
 # that names {serial.port} when none is selected.
+# -device: chgame-upload refuses a bootloader image whose board word (offset
+# 0x14) names another board than the selected one, through either
+# programmer; over USB chgame-upload also checks the image against the
+# board the bootloader's HELLO reports. The factory ISP cannot see the board
+# itself, so there the board selected in the IDE is the only guard.
 tools.chgame_upload.burn.method=usb
 tools.chgame_upload.burn.port=-port "{serial.port}"
 tools.chgame_upload.bootloader.params.verbose=-verbose
 tools.chgame_upload.bootloader.params.quiet=-quiet
-tools.chgame_upload.bootloader.pattern="{path}/{cmd}" {bootloader.verbose} {burn.port} burn -method {burn.method} -wchisp "{tools.chgame_upload.wchisp}" -bootloader "{runtime.platform.path}/bootloaders/{bootloader.file}"
+tools.chgame_upload.bootloader.pattern="{path}/{cmd}" {bootloader.verbose} {burn.port} burn -method {burn.method} -device {build.chgame_device} -wchisp "{tools.chgame_upload.wchisp}" -bootloader "{runtime.platform.path}/bootloaders/{bootloader.file}"
 
 # Upload Using Programmer: the same, then this sketch. With the factory ISP it
 # is one write, and puts a board with no working bootloader straight back to
 # running the sketch in front of you.
 tools.chgame_upload.program.params.verbose=-verbose
 tools.chgame_upload.program.params.quiet=-quiet
-tools.chgame_upload.program.pattern="{path}/{cmd}" {program.verbose} {burn.port} burn -method {burn.method} -wchisp "{tools.chgame_upload.wchisp}" -bootloader "{runtime.platform.path}/bootloaders/{bootloader.file}" -app "{build.path}/{build.project_name}.bin"
+tools.chgame_upload.program.pattern="{path}/{cmd}" {program.verbose} {burn.port} burn -method {burn.method} -device {build.chgame_device} -wchisp "{tools.chgame_upload.wchisp}" -bootloader "{runtime.platform.path}/bootloaders/{bootloader.file}" -app "{build.path}/{build.project_name}.bin"
 
 # Debugger configuration (general options)
 # ----------------------------------------

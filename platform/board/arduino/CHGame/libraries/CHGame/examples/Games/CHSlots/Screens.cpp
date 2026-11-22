@@ -492,8 +492,7 @@ static void optionsRender(uint32_t frame) {
         if (sel) { text35(112 - w, y, "<", SILVER); text35(120, y, ">", SILVER); }
     }
     centred35(100, optSel == O_GOAL ? "REACH IT TO BREAK THE BANK" : "B: BACK", SILVER);
-    centred35(112, "FONT BY", FELT_LT);
-    centred35(119, "PRESS PLAY ON TAPE", FELT_LT);
+    centred35(119, "CHGAME", FELT_LT);
 }
 
 // ---------------------------------------------------------------------------

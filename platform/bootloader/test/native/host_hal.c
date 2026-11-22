@@ -74,6 +74,11 @@ void host_init(void)
     memset(B->flash, 0xFF, sizeof B->flash);
     B->limit_us = 20000000;     /* 20 s of virtual time per boot */
     B->sd_cs = B->lcd_cs = B->lcd_rst = 1;
+#ifdef CHGAME_BOARD_TARGET
+    /* The boot region holds the bootloader's image: its board word, at 0x14,
+       is what HELLO reports (HAL_BOARD_WORD). */
+    for (int i = 0; i < 4; i++) B->flash[0x14 + i] = (uint8_t)(CHGAME_BOARD_TARGET >> 8 * i);
+#endif
     sd_model_insert(&B->sd, SD_NONE, NULL);
     lcd_model_power(&B->lcd);
     host_power_cycle();
@@ -91,6 +96,7 @@ void host_power_cycle(void)
     lcd_model_power(&B->lcd);
     B->usb_up = 0;
     B->soft_reset = 0;
+    B->backlight = 0;
 }
 
 void host_keys(uint64_t at_ms, uint32_t mask)
@@ -115,6 +121,8 @@ int host_boot(void)
         B->pins_inited = 0;
         B->usb_up = 0;
         B->spi_on = 0;                  /* a reset turns SPI1 off */
+        B->backlight = 0;               /* and the backlight: its pin floats, pulled down */
+        B->dispon_at_boot = B->lcd.dispon_count;
         boot_main();
         _exit(END_CRASH);
     }
@@ -187,7 +195,7 @@ static void flash_op(uint32_t addr, const uint8_t *data, int erase)
     uint32_t n = CHGAME_PAGE_SIZE;
     B->flash_ops++;
     if (addr < CHGAME_APP_START) B->boot_region_writes++;
-    if (B->cut_at_op && B->flash_ops == B->cut_at_op) n = CHGAME_PAGE_SIZE / 2;
+    if (B->cut_at_op && B->flash_ops == B->cut_at_op) { n = CHGAME_PAGE_SIZE / 2; B->cut_addr = addr; }
     for (uint32_t i = 0; i < n; i++)
         B->flash[addr + i] = erase ? 0xFF : (uint8_t)(B->flash[addr + i] & data[i]);
     if (erase) B->erase_count[addr / CHGAME_PAGE_SIZE]++;
@@ -206,7 +214,7 @@ int flash_erase_page(uint32_t addr, flash_region_t region)
     return FLASH_OK;
 }
 
-static int write_page(uint32_t addr, const uint8_t *data, flash_region_t region, int erase)
+int flash_write_page(uint32_t addr, const uint8_t *data, flash_region_t region, int erase)
 {
     if (addr % CHGAME_PAGE_SIZE) return FLASH_ERR_ALIGN;
     if (!range_ok(addr, CHGAME_PAGE_SIZE, region)) return FLASH_ERR_RANGE;
@@ -214,9 +222,6 @@ static int write_page(uint32_t addr, const uint8_t *data, flash_region_t region,
     flash_op(addr, data, 0);
     return memcmp(B->flash + addr, data, CHGAME_PAGE_SIZE) ? FLASH_ERR_VERIFY : FLASH_OK;
 }
-
-int flash_write_page(uint32_t addr, const uint8_t *data, flash_region_t region)   { return write_page(addr, data, region, 1); }
-int flash_program_page(uint32_t addr, const uint8_t *data, flash_region_t region) { return write_page(addr, data, region, 0); }
 
 void flash_selfupdate(uint32_t src, uint32_t len)
 {
@@ -285,6 +290,14 @@ void hal_lcd_select(int on) { B->lcd_cs = !on; }
 void hal_lcd_dc(int data)   { B->lcd_dc = (uint8_t)!!data; }
 void hal_lcd_rst(int high)  { B->lcd_rst = (uint8_t)!!high; lcd_model_rst(&B->lcd, high, B->now_us); }
 void hal_led(int on)        { B->led = (uint8_t)!!on; }
+
+/* (Both boards' builds call it: the model checks the moment.) */
+void hal_backlight_on(void)
+{
+    int ok = B->lcd.on && !B->lcd.garbage_shown;
+    if (!ok) host_log("backlight on too soon: panel %s, %u garbage frames", B->lcd.on ? "on" : "off", B->lcd.garbage_shown);
+    if (B->backlight != 2) B->backlight = ok ? 1 : 2;
+}
 
 uint32_t hal_buttons(void)
 {

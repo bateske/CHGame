@@ -1,21 +1,38 @@
 """The Python uploader's command line and its upload paths, without a board:
-the Go-style flags platform.txt uses, the version pin against main.go, and
-upload()/selfupdate()/flash_file() end to end against a scripted bootloader
-behind a fake serial port."""
+the Go-style flags platform.txt uses (its recipes, word for word), the
+version pin against main.go, upload()/selfupdate()/flash_file() end to end
+against a scripted bootloader behind a fake serial port, and the board checks
+of burn, selfupdate and provision (wchisp scripted)."""
+import io
+import json
 import pathlib
 import re
 import struct
+import subprocess
 import sys
 import tempfile
 import unittest
 import zlib
+from contextlib import redirect_stdout
 from unittest import mock
 
 HERE = pathlib.Path(__file__).resolve().parent
 BOOT = HERE.parents[1]
 sys.path.insert(0, str(BOOT / "host" / "py"))
 import chgame_upload  # noqa: E402
-from chgame_upload import cli, client, layout as L, protocol as P, upload as U  # noqa: E402
+from chgame_upload import chg as C, cli, client, layout as L, protocol as P, provision as W, upload as U  # noqa: E402
+
+VECTORS = json.loads((HERE / "vectors.json").read_text(encoding="utf-8"))
+PLATFORM_TXT = BOOT.parent / "board" / "arduino" / "CHGame" / "platform.txt"
+BOARDS_TXT = PLATFORM_TXT.with_name("boards.txt")
+CGR2 = 0x32524743           # a board reserved for the tests (none is at present)
+
+
+def boot_image(target=0, n=3000):
+    """A bootloader image for a board: linked for 0, its board word at 0x14."""
+    img = bytearray(bytes(4) + struct.pack("<I", 0) + bytes((i * 7) & 0xFF for i in range(n)))
+    struct.pack_into("<I", img, 0x14, target)
+    return bytes(img)
 
 
 class FakeSerial:
@@ -61,9 +78,10 @@ class FakeSerial:
 
 
 class FakeBoot:
-    def __init__(self, boot_version=2, locked=False):
+    def __init__(self, boot_version=2, locked=False, board=None):
         self.flash = bytearray([L.ERASED]) * L.FLASH_SIZE
         self.boot_version, self.locked = boot_version, locked
+        self.board = board              # None: a rev0 bootloader's HELLO, without the board field
         self.unlocked = False
         self.staged = None
         self.opened = []
@@ -71,7 +89,8 @@ class FakeBoot:
 
     def hello(self):
         return bytes([P.ST_OK, 1, P.MODE_BOOTLOADER, 0]) + struct.pack(
-            "<HIIHH", self.boot_version, L.APP_START, L.APP_MAX_SIZE, L.PAGE_SIZE, 56) + bytes(12)
+            "<HIIHH", self.boot_version, L.APP_START, L.APP_MAX_SIZE, L.PAGE_SIZE, 56) + bytes(12) + (
+            b"" if self.board is None else struct.pack("<I", self.board))
 
     def handle(self, cmd, payload):
         self.log.append(cmd)
@@ -138,8 +157,37 @@ class Flags(unittest.TestCase):
         self.assertEqual(cli.duration("500ms"), 0.5)
         self.assertEqual(cli.duration("1m"), 60.0)
 
+    def test_platform_txt_says_so(self):
+        """The board package's recipes are word for word the ones the vectors
+        hold (both tools parse those below), and rev0 is the default board."""
+        lines = PLATFORM_TXT.read_text(encoding="utf-8").splitlines()
+        for key, pattern in VECTORS["platform_txt"]["recipes"].items():
+            self.assertIn(f"{key}={pattern}", lines, f"platform.txt's {key}")
+        self.assertIn(f"build.chgame_device={VECTORS['platform_txt']['default_device']}", lines)
+
+    def test_boards_txt_names_devices(self):
+        """Every board in boards.txt that names its device names one the tool
+        knows, and rev1's board is rev1."""
+        props = dict(ln.split("=", 1) for ln in BOARDS_TXT.read_text(encoding="utf-8").splitlines()
+                     if "=" in ln and not ln.lstrip().startswith("#"))
+        named = {k.split(".", 1)[0]: v for k, v in props.items() if k.endswith(".build.chgame_device")}
+        self.assertEqual(named.get("rev1"), "rev1", "boards.txt: rev1.build.chgame_device=rev1")
+        for board, dev in named.items():
+            self.assertIn(dev, C.DEVICES, board)
+
     def test_platform_txt_recipes(self):
-        # tools.chgame_upload.upload.pattern / bootloader.pattern / program.pattern, as Arduino expands them
+        """What Arduino makes of each recipe, as the vectors have it: the same
+        verb, file and flags the Go tool reads (cli_test.go)."""
+        for case in VECTORS["platform_txt"]["cases"]:
+            with self.subTest(case["key"], argv=case["argv"]):
+                a = cli.parse_args(case["argv"])
+                got = {"cmd": a.cmd, "port": a.port or "", "verbose": a.verbose, "quiet": a.quiet,
+                       "positional": [a.image] if hasattr(a, "image") else [], "run": getattr(a, "run", False),
+                       "device": getattr(a, "device", None) or "", "method": getattr(a, "method", "usb"),
+                       "wchisp": getattr(a, "wchisp", None) or "", "bootloader": getattr(a, "bootloader", None) or "",
+                       "app": getattr(a, "app", None) or ""}
+                self.assertEqual(got, case["want"])
+        # the shapes before -device, as Arduino expands an older platform.txt
         a = cli.parse_args(["-verbose", "-port", "COM7", "flash", "build/CHFour.ino.bin", "-run"])
         self.assertEqual((a.cmd, a.port, a.image, a.run, a.verify, a.verbose), ("flash", "COM7", "build/CHFour.ino.bin", True, False, True))
         a = cli.parse_args(["-quiet", "-port", "COM7", "burn", "-method", "usb", "-wchisp", "W/wchisp.exe", "-bootloader", "B.bin"])
@@ -165,11 +213,24 @@ class Flags(unittest.TestCase):
             from chgame_upload import chg
             self.assertEqual((pathlib.Path(d) / "MyGame.ino.chg").read_bytes(), chg.pack(src.read_bytes(), "MYGAME"))
 
+    def test_device_flags(self):
+        """-device on every verb that writes, -yes on provision (burn takes it and never asks)."""
+        a = cli.parse_args(["burn", "-method", "isp", "-bootloader", "B.bin", "-device", "rev1"])
+        self.assertEqual((a.device, a.yes), ("rev1", False))
+        a = cli.parse_args(["provision", "-bootloader", "B.bin", "-device", "rev1", "-yes"])
+        self.assertEqual((a.cmd, a.device, a.yes), ("provision", "rev1", True))
+        a = cli.parse_args(["provision", "-bootloader", "B.bin"])
+        self.assertEqual((a.device, a.yes), (None, False))
+        a = cli.parse_args(["selfupdate", "B.bin", "-device", "rev0"])
+        self.assertEqual(a.device, "rev0")
+        self.assertEqual(cli.parse_args(["pack", "x.bin"]).device, "rev0")
+
     def test_version_pinned_to_go(self):
         go = (BOOT / "host" / "go" / "main.go").read_text(encoding="utf-8")
         m = re.search(r'^\s*(?:const|var)?\s*version\s*=\s*"([^"]+)"', go, re.M)
         self.assertIsNotNone(m)
         self.assertEqual(chgame_upload.__version__, m.group(1))
+        self.assertEqual(chgame_upload.__version__, "0.3.0")
 
 
 class EndToEnd(unittest.TestCase):
@@ -227,6 +288,128 @@ class EndToEnd(unittest.TestCase):
         self.assertTrue(r["readback_ok"])
         self.assertTrue(any(ln.startswith("readback: MATCHES") for ln in lines))
         self.assertEqual(bytes(self.boot.flash[L.APP_START:L.APP_START + 2048]), image)
+
+    def test_flash_file_which_board(self):
+        """flash -device refuses a board whose HELLO names another, before BEGIN."""
+        self.boot.board = C.TARGET_REV1
+        with tempfile.TemporaryDirectory() as td:
+            f = pathlib.Path(td) / "x.ino.bin"
+            f.write_bytes(bytes(1024))
+            with mock.patch.object(client, "find_ports", return_value=["FAKE"]):
+                with self.assertRaises(ValueError) as cm:
+                    U.flash_file(f, run=False, device="rev0", log=None)
+                self.assertIn("built for rev0 (CX35)", str(cm.exception))
+                self.assertIn("rev1 (CGR1)", str(cm.exception))
+                self.assertNotIn(P.CMD_BEGIN, self.boot.log)
+                U.flash_file(f, run=False, device="rev1", log=None)
+        self.assertIn(P.CMD_END, self.boot.log)
+
+    def test_burn_refuses_another_boards_bootloader(self):
+        """burn (usb and isp) and selfupdate with -device: an image whose board
+        word names another board is refused before any port or wchisp is used."""
+        with tempfile.TemporaryDirectory() as td:
+            b = pathlib.Path(td) / "boot.bin"
+            b.write_bytes(boot_image(C.TARGET_REV1))
+            for argv in (["burn", "-method", "usb", "-bootloader", str(b), "-device", "rev0"],
+                         ["burn", "-method", "isp", "-wchisp", "W", "-bootloader", str(b), "-device", "rev0"],
+                         ["provision", "-wchisp", "W", "-bootloader", str(b), "-device", "rev0", "-yes"],
+                         ["selfupdate", str(b), "-device", "rev0", "-yes"]):
+                with self.subTest(argv=argv), mock.patch.object(subprocess, "run") as run, \
+                        mock.patch.object(client, "find_ports", return_value=["FAKE"]):
+                    with self.assertRaises(SystemExit) as cm:
+                        cli.main(argv)
+                    self.assertIn("built for rev1 (CGR1), not rev0 (CX35)", str(cm.exception.code))
+                    run.assert_not_called()
+                    self.assertEqual(self.boot.opened, [])
+            b.write_bytes(boot_image(0))                # a rev0 image (word 0) is not rev1's either
+            with self.assertRaises(SystemExit) as cm:
+                cli.main(["burn", "-method", "usb", "-bootloader", str(b), "-device", "rev1"])
+            self.assertIn("built for rev0 (CX35), not rev1 (CGR1)", str(cm.exception.code))
+            with self.assertRaises(SystemExit) as cm:   # a device the tool does not know
+                cli.main(["burn", "-method", "usb", "-bootloader", str(b), "-device", "rev9"])
+            self.assertIn("known: rev0, rev1", str(cm.exception.code))
+            self.assertEqual(self.boot.opened, [])
+
+
+class FakeWchisp:
+    """subprocess.run as provision() calls wchisp: probe, info, erase, flash."""
+    def __init__(self, devices=1, uid="CD-AB-88-D8-60-BE-B5-42"):
+        self.devices, self.uid, self.calls = devices, uid, []
+
+    def __call__(self, args, **kw):
+        verb = args[1]
+        self.calls.append(verb)
+        out = {"probe": f"Found {self.devices} USB devices\n" + "".join(
+                   f"Device #{i}: CH32X035G8U6[0x5623]\n" for i in range(self.devices)),
+               "info": "Chip: CH32X035G8U6[0x5623]\n" + (f"Chip UID: {self.uid}\n" if self.uid else ""),
+               "erase": "Erased\n", "flash": "Verify OK\n"}[verb]
+        return subprocess.CompletedProcess(args, 0, out, "")
+
+
+class Provision(unittest.TestCase):
+    """The factory ISP path with wchisp scripted: one device or none, the chip
+    and the image's board shown, a question before erasing unless -yes, and
+    burn -method isp (Arduino's) never asking."""
+
+    def run_cli(self, argv, wchisp, answer=None):
+        def ask(prompt):
+            if answer is None:
+                raise AssertionError("must not ask")
+            if isinstance(answer, BaseException):
+                raise answer
+            return answer
+        out = io.StringIO()
+        with tempfile.TemporaryDirectory() as td:
+            b = pathlib.Path(td) / "boot.bin"
+            b.write_bytes(boot_image(C.TARGET_REV1))
+            tool = pathlib.Path(td) / "wchisp.exe"
+            tool.write_bytes(b"")
+            argv = [str(b) if x == "BOOT" else str(tool) if x == "WCHISP" else x for x in argv]
+            with mock.patch.object(subprocess, "run", wchisp), mock.patch("builtins.input", ask), redirect_stdout(out):
+                try:
+                    code = cli.main(argv)
+                except SystemExit as e:
+                    code = e.code
+        return code, out.getvalue()
+
+    def test_asks_then_writes(self):
+        w = FakeWchisp()
+        code, out = self.run_cli(["provision", "-wchisp", "WCHISP", "-bootloader", "BOOT", "-device", "rev1"], w,
+                                 answer="y")
+        self.assertEqual(code, 0)
+        self.assertEqual(w.calls, ["probe", "info", "erase", "flash"])
+        self.assertIn("chip UID    : CD-AB-88-D8-60-BE-B5-42", out)
+        self.assertIn("for rev1 (CGR1)", out)
+
+    def test_no_answer_erases_nothing(self):
+        for answer in ("n", "", EOFError()):
+            w = FakeWchisp()
+            code, out = self.run_cli(["provision", "-wchisp", "WCHISP", "-bootloader", "BOOT"], w, answer=answer)
+            self.assertIn("not confirmed: nothing was erased", str(code))
+            self.assertEqual(w.calls, ["probe", "info"])
+
+    def test_yes_and_burn_do_not_ask(self):
+        for argv in (["provision", "-yes", "-wchisp", "WCHISP", "-bootloader", "BOOT", "-device", "rev1"],
+                     ["-quiet", "burn", "-method", "isp", "-device", "rev1", "-wchisp", "WCHISP", "-bootloader", "BOOT"]):
+            w = FakeWchisp(uid=None)
+            code, out = self.run_cli(argv, w)
+            self.assertEqual(code, 0, argv)
+            self.assertEqual(w.calls, ["probe", "info", "erase", "flash"])
+            self.assertIn("chip UID    : not reported by wchisp", out)
+
+    def test_several_or_no_devices(self):
+        for n, says in ((2, "finds 2 devices in factory ISP mode"), (0, "no device is in factory ISP mode")):
+            w = FakeWchisp(devices=n)
+            code, _ = self.run_cli(["provision", "-yes", "-wchisp", "WCHISP", "-bootloader", "BOOT"], w)
+            self.assertIn(says, str(code))
+            self.assertEqual(w.calls, ["probe"])
+
+    def test_reserved_device(self):
+        with mock.patch.dict(C.RESERVED, {"rev2": CGR2}):
+            w = FakeWchisp()
+            code, _ = self.run_cli(["provision", "-yes", "-wchisp", "WCHISP", "-bootloader", "BOOT", "-device", "rev2"], w)
+            self.assertIn("rev2 is reserved for a board that is not defined yet", str(code))
+            self.assertEqual(w.calls, [])
 
 
 if __name__ == "__main__":

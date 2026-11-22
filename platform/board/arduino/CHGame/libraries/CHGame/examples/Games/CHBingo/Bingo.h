@@ -18,6 +18,14 @@
 // Money: the cards are paid for when the round starts. The pot is 90% of
 // what the whole hall paid; 5% of the player's buy-in feeds the jackpot,
 // which pays for a bingo within JACKPOT_CALLS calls.
+//
+// Modes, picked at the start of a game: EASY is the above (A daubs every
+// waiting number on the card in play, and the frames show where they are).
+// HARD shows nothing and has no power-ups: A picks the card in play up, a
+// cursor starts on its centre, the d-pad moves it, A daubs that one cell and
+// B puts the card down; it pays the pot twice. HARDCORE is HARD, except that
+// daubing a number not yet called voids the card for the rest of the round;
+// it pays three times.
 #pragma once
 #include <stdint.h>
 
@@ -39,7 +47,7 @@ struct Stats {
     uint16_t jackpots, bestStreak, fastest, gamesBroke;   // fastest: fewest calls to a bingo (0 = none yet)
 };
 
-enum class Phase : uint8_t { Welcome, Buy, Calling, Won, Lost, GameLost, Quit };
+enum class Phase : uint8_t { Welcome, Buy, Calling, Won, Lost, GameLost, Quit, Mode };
 
 enum class Ev : uint8_t {
     BuyOpen,       // the buy-in is open: a = cards chosen
@@ -55,8 +63,16 @@ enum class Ev : uint8_t {
     Bingo,         // a = card, b = line, c = WinFlag bits, amount = the pot paid
     Rival,         // a = the table that called it, b = 1 the player had an undaubed line
     GameOver,      // broke
-    Deny,          // cannot afford that
+    Deny,          // cannot afford that; a cell already daubed
+    ModeOpen,      // the mode picker: a = the mode offered first
+    ModePick,      // a = mode
+    Pick,          // HARD: a = card, b = 1 picked up, 0 put down
+    Cursor,        // HARD: a = the cell
+    Void,          // HARDCORE: a = card, b = 1 it was the last one
 };
+
+enum Mode : uint8_t { M_EASY, M_HARD, M_HARDCORE, MODES };
+extern const uint8_t PAYS[MODES];         // the pot times 1, 2, 3
 
 enum Power : uint8_t { P_NONE, P_WILD, P_FREEZE, P_DOUBLE, POWER_KINDS = 3 };
 enum WinFlag : uint8_t { WIN_RARE = 1, WIN_JACKPOT = 2, WIN_DOUBLE = 4 };
@@ -108,9 +124,14 @@ public:
     uint8_t  meter, power, doubleCard;  // doubleCard: 0xFF = none
     uint16_t streak;
     uint8_t  winCard, winLine;
+    uint8_t  mode;                      // Mode: for the whole game
+    bool     picking;                   // HARD: the card in play is picked up
+    uint8_t  cursor;                    // HARD: its cell (r*5+c)
+    uint16_t voided;                    // HARDCORE: the cards thrown out this round (bit k)
     Phase    phase;
 
-    void    newGame();                  // $500, the buy-in
+    // $500, then the mode picker (ask) or the buy-in in EASY.
+    void    newGame(bool ask = false);
     void    resume();                   // after a load: the round in progress, or the buy-in
     void    seed(uint32_t s) { rng = s ? s : 0x9E3779B9u; }
     // pressed = buttons pressed this tick; repeat = press or auto-repeat
@@ -126,6 +147,9 @@ public:
     bool    frozen() const { return phase == Phase::Calling && nCalled && timer > interval(); }   // FREEZE holds the caller
     bool    inPlay() const { return phase == Phase::Calling || phase == Phase::Won || phase == Phase::Lost; }
     bool    hasRound() const { return phase == Phase::Calling || (phase == Phase::Quit && roundOpen); }
+    bool    hints() const { return mode == M_EASY; }   // rainbow frames, the glove on the waiting number
+    bool    live(uint8_t k) const { return !((voided >> k) & 1); }
+    uint8_t step(uint8_t k, int8_t d) const;   // the next card still in play that way (k itself if none)
 
     void    quitNow();                  // SAVE & QUIT: leaves the table in Quit
     void    saveRound(RoundSave &s) const;
@@ -158,6 +182,10 @@ private:
     void    callBall();
     void    moveFocus(int8_t d);
     void    daubFocus();
+    void    daubCells(uint32_t m);
+    void    daubCursor();
+    void    moveCursor(uint8_t repeat);
+    void    voidCard();
     void    usePower();
     void    checkWin(uint8_t card);
     void    rivalWins();

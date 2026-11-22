@@ -1,7 +1,8 @@
 // CHBingo - 75-ball bingo for the CHGame handheld (CH32X035, 128x128 ST7735,
 // piezo), in the casino style of CHBlackjack and its siblings: the dealer
 // from CHBlackjack's tables calls the balls, and the player races a hall of
-// rivals across up to nine cards, only one and a half of them in view.
+// rivals across up to nine cards, one in view and all of them in little
+// below it, in EASY (A daubs the whole card), HARD or HARDCORE.
 //
 // Frame loop: logic runs while the previous frame is still going out over
 // DMA; drawing waits for it (one framebuffer), then the new frame is sent.
@@ -20,11 +21,16 @@
 #include "Save.h"
 
 #if CHGAME_DEBUG
-// Game commands for the debug protocol (tools/chsim/chdrive.py 'say').
+// Game commands for the debug protocol (tools/chsim/chdrive.py 'say'). The
+// protocol's own letters (? S ! K L N P T Q B) are not available here.
 //   R <seed>          reseed the rules' generator
-//   J <T|P|O|S|L>     jump to a screen (P: a new game at the buy-in)
+//   J <T|P|M|O|S|L>   jump to a screen (P: a new EASY game at the buy-in, M: a new
+//                     game at the mode picker)
+//   O <0|1|2>         the mode, before the round starts: easy, hard, hardcore
 //   C <n>             buy n cards and start the round
 //   F <n[,n...]>      the next balls called
+//   U <cell>          the next ball called is the one on that cell (r*5+c) of
+//                     the card in play
 //   G <card>          put that card in play (0-based)
 //   D                 daub every waiting number on every card
 //   W                 daub the middle row of the card in play: a bingo
@@ -32,7 +38,8 @@
 //   H <call>          the call a rival completes a line on
 //   X <1|2|3>         hand over a power-up (wild, freeze, 2x)
 //   M <amount>        set the purse;  A <amount>  set the jackpot
-//   Y                 print the game state (the save test)
+//   Y                 print the game state (the save test; then the mode and
+//                     the cards thrown out)
 //   V                 power off and on: reload from the save pages
 //   E <1|0>           let a debug build on the board write its save pages
 static bool debugHook(char cmd, const char *args) {

@@ -27,18 +27,27 @@ Rainbow and a Static style. It ran on the board on 2026-10-03
 ([RESULTS](../platform/bootloader/test/hil/RESULTS-2026-10-03.md)), and
 `release/` and the board package carry it.
 
+**Since (2026-11-17):** a second board, CHGame Rev1 (Rev 1.5 uses it too),
+in board package 0.4.0, staged and not yet released: everything builds for
+both boards, and the tools default to the newest. It has not run on a board
+yet ([7. Board revisions](#7-board-revisions)).
+
+**Next, after 0.4.0:** a newer compiler, GCC 16, beside WCH's GCC 8.2, for
+Apple silicon, ARM Linux and smaller games ([9. A newer
+compiler](#9-a-newer-compiler)).
+
 This page records what is in place and what each step involved.
 
 ## What is in place
 
 | | Where | State |
 |---|---|---|
-| Arduino core, variant, linker scripts, Tools menus | `platform/board/arduino/CHGame` | 0.3.0, released 2026-10-07 |
+| Arduino core, variants, linker scripts, Tools menus | `platform/board/arduino/CHGame` | 0.3.0, released 2026-10-07 (CHGame Rev0); 0.4.0 staged, not released (2026-11-17: CHGame Rev1 beside it) |
 | Bootloader with the SD game menu | `platform/bootloader` | menu v2 (2026-10-03), Rainbow and Static (White until that evening, when colour 15 became the picture's magenta as painted; that build has not run on a board): the PC suite, and installed and checked on a board the same day (`test/hil/RESULTS-2026-10-03.md`; the first menu on 2026-10-01) |
 | The visual menu: the same bootloader, one picture at a time, no text ([visual-menu.md](visual-menu.md)) | `platform/bootloader` (`--ui=visual`), `tools/artkit`, each example's `tools/cart.py` | 2026-10-03: Rainbow and Static, in Burn Bootloader; the PC suite passes on test cards and the real casino card (which is now in genre folders, with box art for all 22 programs, repainted on 2026-10-04 with the menu's own pictures: [cover-art.md](cover-art.md)). Not yet run on a board (`platform/bootloader/HARDWARE.md`, "The visual menu") |
 | The `.chgame` format and the SD card's layout | `spec/`, `tools/chcart` | version 1 and layout 2 (with the visual menu's pictures: `menu.cover`, `menu.about`, folder covers, `cartImage` in each CHG file); reference implementation, 24 unit tests, 27 conformance fixtures; the repository's games and release use it |
-| Uploader: `chgame-upload` in Go (the executable the board package installs; Windows, Linux, macOS) and the same tool in Python (`chgame_upload`, what the repository's tools use) | `platform/bootloader/host/go`, `host/py` | 0.2.0 here, with the bootloader update over USB and `burn`; the installed package has 0.1.0. Shared test vectors (`test/protocol/`) hold the two together |
-| Graphics | `platform/board/arduino/CHGame/libraries/CHGfx` | 1.3.0 |
+| Uploader: `chgame-upload` in Go (the executable the board package installs; Windows, Linux, macOS) and the same tool in Python (`chgame_upload`, what the repository's tools use) | `platform/bootloader/host/go`, `host/py` | 0.3.0 here (2026-11-17: rev1, and the board checked on `flash`, `pack`, `burn` and `provision`), for 0.4.0; 0.2.0 brought the bootloader update over USB and `burn`. Shared test vectors (`test/protocol/`) hold the two together |
+| Graphics | `platform/board/arduino/CHGame/libraries/CHGfx` | 1.3.3 (Rev1's pins and backlight) |
 | SD card / FAT | `platform/board/arduino/CHGame/libraries/CHSd` | 1.0.0; never yet run against a real card on a board |
 | The `CHGame` library: buttons and pacing, palette, drawing, the 3x5 font, lettering, effects maths, sound, saving, the debug protocol, `RAMFUNC` | `platform/board/arduino/CHGame/libraries/CHGame` | every game is built on it ([its README](../platform/board/arduino/CHGame/libraries/CHGame/README.md)); in the board package's `libraries/` folder with CHGfx and CHSd |
 | Twenty games, three apps | the CHGame library's examples: `platform/board/arduino/CHGame/libraries/CHGame/examples/Games/`, `apps/CHStlView`, `apps/CHSDtoUSB`, `apps/CHSDtoSerial` | building; verification per game in [status.md](status.md) |
@@ -227,15 +236,106 @@ It is ours now:
 
 ### 7. Board revisions
 
-A Rev1 board with other pins is planned. Done on 2026-10-07, ahead of it:
-the naming rule and the registry (`rev1` reserved as `CGR1`), board ids in
-CHG files, in `HELLO` and in the bootloader image, the uploaders' board
-checks, chcart's `--device`, and readers that use a cart's rev0 binaries
-when it also carries a board they do not know
-([hardware-revisions.md](hardware-revisions.md)). Left until Rev1's pinout
-is settled: that page's checklist, steps 1-9 (the board package's entry and
-variant, `-device` in `platform.txt`, the pins in the libraries and the
-bootloader, the build tools' device option, a run on both boards).
+Done on 2026-10-07, ahead of Rev1: the naming rule and the registry
+(`rev1` reserved as `CGR1`), board ids in CHG files, in `HELLO` and in the
+bootloader image, the uploaders' board checks, chcart's `--device`, and
+readers that use a cart's rev0 binaries when it also carries a board they
+do not know ([hardware-revisions.md](hardware-revisions.md)).
+
+**Rev1 is in** (2026-11-17), for board package 0.4.0, by that page's
+checklist, steps 1-7 and 9: the CHGame Rev1 board entry and variant (Rev
+1.5 boards use it too), `-device` and the board macro in `platform.txt`,
+Rev1's pins in the core, CHGfx (1.3.3, with the backlight), CHSd and the
+CHGame library, five rev1 bootloaders within their size gates,
+chgame-upload 0.3.0, the tools' `--board` (the newest board by default),
+carts with a binary per board, the casino card per board (one zip each in
+a release), and the bench sketch `tools/sketches/CHBoardTest`. Every rev0
+image and bootloader stayed byte for byte the same.
+
+**Not yet done: Rev1 on a board** (step 8). CHBoardTest first, then every
+game and app from the rev1 card, the refusals both ways (a card, an upload
+and a bootloader for the other board), and power: a music soak, battery
+play. Then 0.4.0 is released (item 7 below); until then Boards Manager
+offers 0.3.0, which has Rev0 alone.
+
+**Next: Rev 1.5's power section.** Rev 1.5 is the same device, and Rev1
+firmware runs on it unchanged. Its USB-PD sink, battery-powered USB host
+and protected output need a library (working name CHPower), a hook that
+leaves the power section as power-on left it across resets, and four test
+apps. Built (2026-11-19, run on the owner's Rev 1.5): the library and two
+apps, CHPDTrigger and CHUSBHost; the reset hook covers the exits through
+the CHGame library, not yet an upload's touch. Moved out on 2026-11-20 into
+a repository of its own (CHPower: the libraries CHPower and CHUSBHost, their
+two apps and the design), an add-on rather than part of the platform, since
+later boards may not have the power section.
+
+### 8. System settings
+
+**Reserved** (2026-11-20, for 0.4.0): the last 32 B of flash, `0xF7E0`-`0xF7FF`
+at the end of the metadata page, for settings that belong to the handheld
+rather than to a game, as the Arduboy reserves EEPROM's first 16 B (where
+sketches kept overwriting them). No game can reach the end of flash, and
+bootloader version 4 keeps the block across installs (spec/chgame.md, "The
+system settings block").
+
+**Not yet done:**
+- **Format version 1**: which settings (sound, brightness, a player's name
+  or id were asked for), their encoding, defaults and an integrity check.
+- **Something that writes it**: a settings app in the card's APPS folder,
+  or the menu. Once the block is written, each install erases the metadata
+  page twice instead of once; a probe of programming over a programmed
+  page on the board could bring that back to one.
+- **The library's read API** and the simulator's model of the block.
+- **Getting v4 onto the boards in the field**, which erase the block at
+  every install until their bootloader is updated.
+
+v4 ran on the Rev 1.5 board on 2026-11-20: a pattern in the block came
+through uploads, ABORT, a self-update and an install from the card
+(platform/bootloader/README.md, "Changes of 2026-11-20"). Rev0 has not run
+v4 yet; it is the same code, built for its pins.
+
+### 9. A newer compiler
+
+**Planned for the release after 0.4.0; not started.** 0.4.0 is finished
+and made stable first.
+
+The package's compiler is WCH's GCC 8.2 (`riscv-none-embed-gcc`), a fork
+of the 2018 GCC that WCH ships as binaries only. It is the one tool in the
+package with no build for Apple silicon Macs, which run it through Rosetta
+(Apple keeps Rosetta for general use through macOS 27 only), and none for
+ARM Linux, where the package cannot be installed at all.
+
+The way forward was suggested and worked out by **Julien Dorra**
+([bateske/CHGame#23](https://github.com/bateske/CHGame/pull/23)): GCC 16.2
+and binutils 2.47 with three small patches for our chip (WCH's compressed
+byte and halfword loads and stores, and `interrupt("WCH-Interrupt-fast")`,
+which the core's handlers use), built for Apple silicon and Intel Macs,
+Linux and Windows, and checked on a Rev0 with a test sketch. Every game
+and app came out smaller with it: 444 to 2,044 B, about 950 B in the
+middle (CHCraps from 48 B under the save line to 1,128 B; measured here on
+2026-11-20), and CHSDtoUSB moved data 5 to 7% faster in his tests. The PR
+is not merged as it is: we build our own, from that work, and credit his
+patches and scripts in `platform/board/THIRD-PARTY.md` where they are used.
+
+The plan, keeping every computer that works today working:
+
+1. **GCC 16 beside GCC 8.2**, chosen in a Tools menu (*Compiler*), with
+   GCC 8.2 the default and the same choice in `chgame`. Nothing changes
+   for anyone who does not pick it; Apple silicon gets a native compiler
+   at once. We build it in GitHub Actions from pinned GNU sources and host
+   it on this repository's releases with its source archive. It links
+   WCH's C library from the installed GCC 8.2, as Julien's installer does.
+   The cost: a bigger first download.
+2. **GCC 16 the default**, once every game and app has been built with it
+   for both boards and played on each (the simulator is compiled on the
+   PC, so it cannot test the board's compiler). GCC 8.2 stays in the menu
+   for a release or two. ARM Linux comes in here: Boards Manager refuses a
+   package with a tool that has no build for the computer, so GCC 16 must
+   bring its own C library and GCC 8.2 become optional.
+3. **The bootloader on GCC 16**, separately and later: it is nearly full,
+   so the room would help, but it needs its own size and power-cut tests.
+
+All of it before macOS 28.
 
 ## Before and at the release
 
@@ -273,3 +373,9 @@ bootloader, the build tools' device option, a run on both boards).
    marks them). The scout that finds a face, `artkit.fontscout`, reads
    Pixel Logo Lab, which is not public: the pictures rebuild without it,
    but a new title needs it.
+7. **0.4.0, with Rev1.** Rev1 on the boards (above, and
+   [hardware-revisions.md](hardware-revisions.md), step 8); the rev1
+   variant and bootloaders committed (`release.py` packs committed files
+   only; `stage.py --include-untracked` is for trying it before); the
+   changelog dated; then the release, with the cart and an SD card zip
+   per board (`CHGame-sdcard-<version>-rev0.zip`, `-rev1.zip`).

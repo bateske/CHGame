@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build the CHGame bootloader (Linux, macOS, or Git Bash on Windows).
 #
-#   ./build.sh [MODE] [--ui=list|visual] [--style=rainbow|static] [--nolto]
+#   ./build.sh [MODE] [--board=rev0|rev1] [--ui=list|visual] [--style=rainbow|static] [--nolto]
 #
 # MODE
 #   release   the SD game menu bootloader, with the developer self-update
@@ -19,17 +19,21 @@
 # --style     the menu's colour 15 (the selection bar, the boxes, #FF00FF in
 #             the card's pictures): rainbow (the default), one colour turning
 #             through the colour wheel; or static
+# --board     the board: rev1 (the default: the newest board, CLAUDE.md
+#             rule 9; CHGame Rev1, and Rev 1.5: its pins, src/hal.h; its id,
+#             0x31524743, in HELLO and at offset 0x14 of the image) or rev0
+#             (the binaries rev0 has always had; tools/dist.sh names both)
 # --nolto     build without LTO, for a per-object size breakdown
 # --roomy     link against a 16 KB copy of the script, to measure a build that
 #             does not fit (never flash it)
 #
-# CHBOOT_BOARD_TARGET (environment): the board's target id for a board after
-# rev0 (shared/chg_format.h), e.g. 0x31524743 for rev1. Unset is rev0, and
-# gives the binaries rev0 has always had. Until a later board's pins are in
-# the source this only measures what its id costs: never flash such a build
-# on a rev0 (docs/hardware-revisions.md).
+# CHBOOT_BOARD_TARGET (environment): the same as --board, as the board's
+# target id (shared/chg_format.h): 0x31524743 is rev1, set and empty (or 0)
+# is rev0, unset is the default board. Only
+# ids src/hal.h has pins for build. Never flash one board's build on another
+# (docs/hardware-revisions.md): wrong pins drive a key's line.
 #
-# Output: build/<MODE>[-visual][-static][-board<id>]/chgame_boot.{elf,bin,map,lst}
+# Output: build/<MODE>[-visual][-static][-rev1]/chgame_boot.{elf,bin,map,lst}
 # and a size report.
 set -euo pipefail
 
@@ -39,9 +43,14 @@ LTO=-flto
 STYLE=rainbow
 UI=list
 ROOMY=
+BOARD="${CHBOOT_BOARD_TARGET-0x31524743}"   # unset: the newest board, rev1
+[ "$BOARD" = 0 ] && BOARD=
 for a in "$@"; do
   case "$a" in
     release|locked|nomenu|app) MODE="$a" ;;
+    --board=rev0) BOARD= ;;
+    --board=rev1) BOARD=0x31524743 ;;
+    --board=*) echo "unknown board: ${a#--board=} (rev0, rev1)" >&2; exit 1 ;;
     --nolto) LTO= ;;
     --roomy) ROOMY=1 ;;
     --style=rainbow|--style=static) STYLE="${a#--style=}" ;;
@@ -54,8 +63,11 @@ OUT="$HERE/build/$MODE"
 [ "$STYLE" != rainbow ] && OUT="$OUT-$STYLE"
 [ -z "$LTO" ] && OUT="$OUT-nolto"
 [ -n "$ROOMY" ] && OUT="$OUT-roomy"
-BOARD="${CHBOOT_BOARD_TARGET:-}"
-[ -n "$BOARD" ] && OUT="$OUT-board$BOARD"
+case "$BOARD" in
+  "") ;;
+  0x31524743) OUT="$OUT-rev1" ;;
+  *) OUT="$OUT-board$BOARD" ;;           # (src/hal.h stops any id it has no pins for)
+esac
 
 # The toolchain ships with the CHGame board package (arduino-cli core install
 # CHGame:ch32v); it is found in the usual Arduino data folders. Override with
@@ -94,7 +106,7 @@ DEFS="$DEFS -DMENU_UI=MENU_UI_$(echo "$UI" | tr a-z A-Z)"
 # Defines reach the startup file too, which puts the board id in the image.
 [ -n "$BOARD" ] && DEFS="$DEFS -DCHGAME_BOARD_TARGET=$BOARD"
 INC="-I$SHARED -I$SRC -I$USB -I$SPL -I$SPL/Core -I$SPL/Peripheral/inc"
-WARN="-Wall -Wextra -Wundef -Werror=implicit-function-declaration"
+WARN="-Wall -Wextra -Wundef -Werror=undef -Werror=implicit-function-declaration"
 # The visual menu fits gate A with five more size flags (SIZES.md, "Visual:
 # sideways slides, faster card reads", "paced animations", "the border"):
 # together about 144 B; the pixel and card loops compile the same with or
@@ -144,7 +156,7 @@ done
 
 # Gate A keeps 256 B spare; the visual menu, by the owner's choice
 # (2026-10-03, its key map), 192 B (SIZES.md).
-echo "== $MODE$([ "$UI" != list ] && echo " $UI")$([ "$STYLE" != rainbow ] && echo " $STYLE")$([ -z "$LTO" ] && echo " (no LTO)")"
+echo "== $MODE$([ "$UI" != list ] && echo " $UI")$([ "$STYLE" != rainbow ] && echo " $STYLE")$([ -n "$BOARD" ] && echo " (board $BOARD)")$([ -z "$LTO" ] && echo " (no LTO)")"
 python3 "$HERE/tools/size_report.py" "$OUT/chgame_boot.elf" --size-tool "$SIZE" \
         ${LTO:+} $([ -z "$LTO" ] && echo --objects) \
         $([ "$MODE" = app ] && echo --margin -999999)         $([ "$MODE" != app ] && [ "$UI" = visual ] && echo --margin 192)

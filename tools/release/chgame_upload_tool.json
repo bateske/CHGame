@@ -1,41 +1,41 @@
 {
   "name": "chgame-upload",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "systems": [
     {
       "host": "x86_64-mingw32",
-      "url": "https://github.com/bateske/CHGame/releases/download/v0.3.0/chgame-upload-0.2.0-x86_64-mingw32.tar.bz2",
-      "archiveFileName": "chgame-upload-0.2.0-x86_64-mingw32.tar.bz2",
-      "checksum": "SHA-256:dce1723df37d74c60cdac9024fd2997b952fab39b462fc388cd8215ea6fae129",
-      "size": "1142265"
+      "url": "https://github.com/bateske/CHGame/releases/download/v0.4.0/chgame-upload-0.3.0-x86_64-mingw32.tar.bz2",
+      "archiveFileName": "chgame-upload-0.3.0-x86_64-mingw32.tar.bz2",
+      "checksum": "SHA-256:736ad56fd8dd7da681fea03c77b3b62f942e3f4c19bcb39aadf01e858cc69e23",
+      "size": "1166841"
     },
     {
       "host": "x86_64-pc-linux-gnu",
-      "url": "https://github.com/bateske/CHGame/releases/download/v0.3.0/chgame-upload-0.2.0-x86_64-pc-linux-gnu.tar.bz2",
-      "archiveFileName": "chgame-upload-0.2.0-x86_64-pc-linux-gnu.tar.bz2",
-      "checksum": "SHA-256:19b5fc39aefde57ec98e92ac88940a5713436952780369115ca1c080a722ac78",
-      "size": "1055004"
+      "url": "https://github.com/bateske/CHGame/releases/download/v0.4.0/chgame-upload-0.3.0-x86_64-pc-linux-gnu.tar.bz2",
+      "archiveFileName": "chgame-upload-0.3.0-x86_64-pc-linux-gnu.tar.bz2",
+      "checksum": "SHA-256:fce1649bbd82d43e88309aeb5bbd95268493fea50ca47671a23572a22b9d1aa4",
+      "size": "1080836"
     },
     {
       "host": "aarch64-linux-gnu",
-      "url": "https://github.com/bateske/CHGame/releases/download/v0.3.0/chgame-upload-0.2.0-aarch64-linux-gnu.tar.bz2",
-      "archiveFileName": "chgame-upload-0.2.0-aarch64-linux-gnu.tar.bz2",
-      "checksum": "SHA-256:24d58a70d484a51ff7cd842d92753b7453faa831a548b685a9499a2b4e00757d",
-      "size": "939900"
+      "url": "https://github.com/bateske/CHGame/releases/download/v0.4.0/chgame-upload-0.3.0-aarch64-linux-gnu.tar.bz2",
+      "archiveFileName": "chgame-upload-0.3.0-aarch64-linux-gnu.tar.bz2",
+      "checksum": "SHA-256:b55d8b708f7d2cf96f4ad321d1a70d05650b30afc5a01f406648d51c33309bb1",
+      "size": "958642"
     },
     {
       "host": "x86_64-apple-darwin",
-      "url": "https://github.com/bateske/CHGame/releases/download/v0.3.0/chgame-upload-0.2.0-x86_64-apple-darwin.tar.bz2",
-      "archiveFileName": "chgame-upload-0.2.0-x86_64-apple-darwin.tar.bz2",
-      "checksum": "SHA-256:f736014da70fa6a4718620d0c0239858a942c71a6185c6f356d6a3d5f91db835",
-      "size": "1037699"
+      "url": "https://github.com/bateske/CHGame/releases/download/v0.4.0/chgame-upload-0.3.0-x86_64-apple-darwin.tar.bz2",
+      "archiveFileName": "chgame-upload-0.3.0-x86_64-apple-darwin.tar.bz2",
+      "checksum": "SHA-256:9ffa5d9b65e151c4390a3879e7eec353e9e9b62469d6871595215d153080060e",
+      "size": "1064149"
     },
     {
       "host": "arm64-apple-darwin",
-      "url": "https://github.com/bateske/CHGame/releases/download/v0.3.0/chgame-upload-0.2.0-arm64-apple-darwin.tar.bz2",
-      "archiveFileName": "chgame-upload-0.2.0-arm64-apple-darwin.tar.bz2",
-      "checksum": "SHA-256:4a7ac7f4aeb8001af5710e2834d082c19ca7fff01be855d888f4452be6148a4a",
-      "size": "945652"
+      "url": "https://github.com/bateske/CHGame/releases/download/v0.4.0/chgame-upload-0.3.0-arm64-apple-darwin.tar.bz2",
+      "archiveFileName": "chgame-upload-0.3.0-arm64-apple-darwin.tar.bz2",
+      "checksum": "SHA-256:cdce2588ab23df81d47d17ced8627d9e6db9b8dc30ffdfe5e980b7352ec39247",
+      "size": "970069"
     }
   ]
 }

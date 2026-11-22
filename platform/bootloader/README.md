@@ -145,7 +145,8 @@ the measurements behind them.
   - No SPL GPIO/RCC calls.
   - A 2 Hz blink in USB mode instead of the LED pattern module.
   - No `memcpy`.
-- **`BOOT_VERSION` 2**, reported by HELLO; **3** with menu v2 (below).
+- **`BOOT_VERSION` 2**, reported by HELLO; **3** with menu v2 (below);
+  **4** once it keeps the system settings block (2026-11-20, below).
 - **Menu v2 removed `fault.c`** (the bench LED reporter; a fault now stops
   the bootloader where it is) **and the STATUS and READ commands** (bench
   diagnostics: they answer `ST_ERR_BADCMD`; both uploaders skip `-verify`'s
@@ -159,39 +160,57 @@ the measurements behind them.
 ## Building
 
 ```
-./build.sh [release|locked|nomenu|app] [--ui=list|visual] [--style=rainbow|static] [--nolto] [--roomy]
+./build.sh [release|locked|nomenu|app] [--board=rev0|rev1] [--ui=list|visual] [--style=rainbow|static] [--nolto] [--roomy]
 ```
 
 The toolchain comes with the board package (`arduino-cli core install
-CHGame:ch32v@0.2.4`) and is found in the usual Arduino folders, or set
+CHGame:ch32v`) and is found in the usual Arduino folders, or set
 `CHGAME_TOOLCHAIN`. On Windows, use Git Bash. Output goes to
-`build/<mode>[-visual][-static]/chgame_boot.{bin,elf,map,lst}`, and a size
+`build/<mode>[-visual][-static][-rev1]/chgame_boot.{bin,elf,map,lst}`, and a size
 report is printed. `--roomy` links a build that does not fit against a 16 KB
 copy of the script, to see by how much (never flash it).
 
-| Mode | What | Size |
-|---|---|---|
-| `release` | menu + USB upload + developer self-update. **The one to install.** | 11,920 B |
-| `release --style=static` | the same, colour 15 in the menu's text colour instead of the turning rainbow | 11,716 B |
-| `locked` | `release` without self-update; later bootloader updates then need the factory ISP | 11,600 B |
-| `nomenu` | **the USB-only bootloader**: USB upload + self-update, no menu, no card, no panel. The same code and conventions (the shared update path, RUN by reset, the signature, BOOT_VERSION 3), for a board built without an SD card. It drives the LED (PB9) and the USB pins and nothing else: every other pin stays high-Z, free for other circuits. Also hardware step HW2a | 5,340 B |
-| `app` | the menu as a program linked at 0x3000: a dry run of card, panel and keys under any bootloader, with no USB and no flash writes (HW1) | 6,408 B |
-| `release --ui=visual` | the visual menu + USB upload + self-update | 12,060 B |
-| `release --ui=visual --style=static` | the same, colour 15 as painted | 11,876 B |
-| `app --ui=visual` | the visual menu's dry run, as a program | 6,824 B |
+`--board` picks the board ([docs/hardware-revisions.md](../../docs/hardware-revisions.md)):
+`rev1` (the default, the newest board: CHGame Rev1, which Rev 1.5 is too)
+or `rev0` (the binaries rev0 has always had; `tools/dist.sh` names both).
+The environment's `CHBOOT_BOARD_TARGET` (a target id, `0x31524743` for
+rev1, empty or `0` for rev0) does the same; any other board stops the build
+(`src/hal.h` has no pins for it). One board's bootloader must never go on the
+other: their pins differ, and wrong pins drive a key's line.
+
+| Mode | What | rev0 | rev1 |
+|---|---|---|---|
+| `release` | menu + USB upload + developer self-update. **The one to install.** | 11,952 B | 11,944 B |
+| `release --style=static` | the same, colour 15 in the menu's text colour instead of the turning rainbow | 11,740 B | 11,736 B |
+| `locked` | `release` without self-update; later bootloader updates then need the factory ISP | 11,612 B | 11,620 B |
+| `nomenu` | **the USB-only bootloader**: USB upload + self-update, no menu, no card, no panel. The same code and conventions (the shared update path, RUN by reset, the signature, BOOT_VERSION 4), for a board built without an SD card. It drives the LED (rev0 PB9, rev1 PB10) and the USB pins and nothing else: every other pin stays high-Z, free for other circuits (rev1's backlight stays dark). Also hardware step HW2a | 5,336 B | 5,344 B |
+| `app` | the menu as a program linked at 0x3000: a dry run of card, panel and keys under any bootloader, with no USB and no flash writes (HW1) | 6,408 B | 6,416 B |
+| `release --ui=visual` | the visual menu + USB upload + self-update | 12,080 B | 12,084 B |
+| `release --ui=visual --style=static` | the same, colour 15 as painted | 11,892 B | 11,888 B |
+| `app --ui=visual` | the visual menu's dry run, as a program | 6,824 B | 6,832 B |
 
 **Pins.** Every bootloader leaves the pins it does not use as reset leaves
-them, floating inputs (high-Z): the buzzer (PB10), PB2, PB5, PB13-15,
-PC0-13, PA0-3 and PA8-15 (`src/hal.h`). The menu bootloaders drive the
+them, floating inputs (high-Z) (`src/hal.h`). On rev0: the buzzer (PB10),
+PB2, PB5, PB13-15, PC0-13, PA0-3 and PA8-15; the menu bootloaders drive the
 panel (PA4, PB0, PB12), the card (PB11), SPI1 (PA5-7), the LED (PB9) and
-the keys' pull-ups; the USB-only one only the LED, so a board that puts the
-card's or the panel's pins to another use sees nothing from it. The USB pins
-(PC16, PC17) are the USB stack's in every build.
+the keys' pull-ups. On rev1: the buzzer (PA1), PA0 (VBUS sense), PA2/PA3,
+PB2, PB5 (PB1's pad), PB13-15, PC1/PC2 and PC4-15 (the test pads PC14/PC15,
+CC1/CC2 on Rev 1.5) stay high-Z; the menu bootloaders drive the panel (PA4,
+PB4, PB12), its backlight (PB9: low until the panel shows the first frame
+`lcd_on()` sent, then high), the card (PB3), SPI1 (PA5-7), the LED (PB10)
+and the keys' pull-ups (PB0, PB1, PB6-8, PB11, PC0, PC3). The USB-only one
+drives only the LED, so a board that puts the card's or the panel's pins to
+another use sees nothing from it. The USB pins (PC16, PC17) are the USB
+stack's in every build.
 
-`tools/dist.sh` builds them into [release/](release) with `SHA256SUMS`
-(`chgame_sdvisual.bin`, `chgame_sdvisual_static.bin`,
-`chgame_visual_dryrun.bin` for the visual ones). Two runs give identical
-files.
+`tools/dist.sh` builds every mode for both boards: rev0's into
+[release/](release) (`chgame_sdvisual.bin`, `chgame_sdvisual_static.bin`,
+`chgame_visual_dryrun.bin` for the visual ones), rev1's under the same names
+into [release/rev1/](release/rev1), and one `SHA256SUMS` for both (rev0's
+lines as they always were, then `rev1/...`). It copies the five that Burn
+Bootloader offers into the board package, rev0's to
+`bootloaders/CHGame/` and rev1's to `bootloaders/CHGame/rev1/`. Two runs give
+identical files.
 
 ### Menu v2 (2026-10-03): the card's look, folders, order, launch
 
@@ -252,6 +271,101 @@ The menu draws into a framebuffer and takes its look from the card
 - `python3 tools/screens.py` redraws the pictures in `docs/` after
   `test/native/run_tests.py -k boot`.
 
+## Changes of 2026-11-20: the system settings block (BOOT_VERSION 4)
+
+The metadata page's last 32 B, `0xF7E0`-`0xF7FF`, are reserved for system
+settings: settings that belong to the handheld rather than to a game, none
+defined yet (`src/chgame_map.h`'s `CHGAME_SYS_ADDR`/`CHGAME_SYS_SIZE`;
+spec/chgame.md, "The system settings block"). Games cannot reach them
+(uploads stop at `0xF700`, saves use `0xF500`/`0xF600`), but every earlier
+bootloader erased them at each install. This one keeps them.
+
+- **`update.c`:** `meta_put(len, crc)` builds the page with the header
+  (none for `upd_begin()`, the image's for `upd_end()`), 0xFF after it,
+  and the block copied from flash. A page with nothing to write is only
+  erased, and an erased one only programmed, so while the block is blank
+  an install costs the page one erase and one program, as before. Once it
+  is written, a second erase: `upd_begin()` writes the block back right
+  after clearing the header.
+- **Self-update** clears the header through `upd_begin()`, so updating the
+  bootloader keeps the block too. ABORT and the SD install already went
+  through `upd_begin()`/`upd_end()`.
+- **`flash.c`:** the two RAM-resident wrappers became one
+  `flash_write_page(addr, data, region, erase)`, which pays for most of it:
+  32 B less `.ramfunc`, in flash and in RAM.
+- **Power cuts:** the block stays in flash throughout. A blank block is
+  never touched; a written one can be lost only by a cut while the page
+  itself is rewritten (`upd_begin()`'s and `upd_end()`'s erase and
+  program), and nothing changes for the program's own safety.
+- **Size:** list 11,952 B (+32), visual 12,080 B (+20; 208 free, 16 B above
+  its gate), rev1 11,944 B and 12,084 B (204 free, 12 B above); RAM -32 B in
+  every menu build ([SIZES.md](SIZES.md)).
+- **Tests:** `t_sys_update` (both patterns: mixed bytes, and one byte
+  programmed), `t_sys_usb` (ABORT, then an upload and RUN),
+  `t_sys_powercut_sweep` (a cut at each flash operation of an upload: the
+  block is intact after every one but those on the metadata page),
+  `t_sys_selfupdate` and, in the menu suites, `t_sys_install`. Each fails
+  with the block not kept. The blank-block counts of `t_update_basic` and
+  `t_switch_game` are unchanged. The host model's `cut_addr` names the page
+  a cut landed on.
+- **On a board** (2026-11-20, the Rev 1.5, rev1 Graphic Menu, self-updated
+  from v3 to v4). A bench probe (not kept: it rewrote the metadata page
+  with the header as it was, which no sketch may do) wrote a 32-byte
+  pattern into the block. The pattern then read back intact after each of:
+  - the same image uploaded again;
+  - another program (CHFour), then the probe;
+  - BEGIN, a WRITE and ABORT ("no metadata"), then the probe;
+  - a self-update (v4 over v4), then the probe;
+  - a game installed from the card in the menu, then the probe.
+
+  Every read showed the probe's own header intact and 0xFF between the
+  header and the block. The probe then cleared the block, and CHFour went
+  back on.
+
+## Changes of 2026-11-17: rev1
+
+The bootloader for CHGame Rev1 (and Rev 1.5, the same pins), from the same
+sources: `build.sh --board=rev1`. Every rev0 binary is unchanged to the byte
+(`tools/dist.sh`'s rev0 lines in `SHA256SUMS` are the ones before): each
+rev1 difference sits under `#if defined(CHGAME_BOARD_TARGET)`, the rev0 code
+in its `#else` as it was.
+
+- **`src/hal.h`** includes `chg_format.h` before any board test (an
+  undefined name in `#if` is 0, which would quietly give rev0's pins) and
+  stops the build for any id but rev1's. Rev1's block has its pin words
+  (GPIOA CFGLR `0xB8B34444`, GPIOB CFGLR `0x88433488` and CFGHR
+  `0x44438338`, GPIOC CFGLR `0x44448448`; GPIOC CFGHR is never written),
+  its levels (GPIOB set `0x19DB`, reset `0x600`: backlight and LED low;
+  GPIOC set `0x9`), DC PB4, card CS PB3, LED PB10, and the USB-only build's
+  LED on PB10 alone. `build.sh` and the PC suite compile with
+  `-Werror=undef`.
+- **Keys:** `HAL_KEYS(b, c)` turns the two ports' input words into the key
+  bits, all within bits 0-8 so every mask is an immediate: UP, DOWN, B,
+  SELECT and START read where they are (PB0, PB1, PB6-8), A (PB11) moves
+  down to bit 4, RIGHT and LEFT (PC0, PC3) up to bits 2 and 5 together, and
+  one XOR inverts the lot. It is plain C, so the PC suite tests it.
+- **Backlight:** `hal_backlight_on()` drives PB9 high at the end of
+  `lcd_on()`, after DISPON: the panel then shows the frame just sent (the
+  menu's picture, or the visual menu's black). Until then the pin is driven
+  low; B held at power-on never wakes the panel and leaves it dark; a reset
+  (RUN, a jump) floats it, and the board's pull-down keeps it dark. On rev0
+  it is nothing.
+- **HELLO** sends the UID and the board field in one loop, the board field
+  read from the image's own board word (offset 0x14): fewer bytes than the
+  constant.
+- **Size:** release 11,928 B (+8 against rev0), visual 12,064 B (224 free,
+  32 B above its 192 B gate), nomenu 5,348 B (+8, the board field). They
+  include the backlight's 40 ms wait after DISPON (2026-11-18: without it the
+  first Rev1 board showed one white frame at power-on; the panel shows its
+  RAM only from the next refresh). [SIZES.md](SIZES.md) has every build and
+  the savings.
+- **Tests:** every core suite checks its board's `HAL_KEYS` against its
+  pins; `boot`, `boot_static`, `visual` and `visual_static` run again for
+  rev1 (`*_rev1`) on packages packed for it, and their frames
+  (`build/frames-rev1`) must match `frames.json`; a package for the other
+  board is refused on each board; the panel model checks that the backlight
+  comes on only over a written frame and stays dark with B held.
+
 ## Changes of 2026-10-07: board ids
 
 A later board revision will move pins, so a bootloader, and the CHG files
@@ -267,8 +381,8 @@ compared and is byte-identical.
   rev0's own id there, so a rev0 build always stays the plain one).
 - **`build.sh`** takes `CHBOOT_BOARD_TARGET=0x31524743` from the environment
   for a later board. It reaches both the C and the startup file, and the
-  output folder gets `-board<id>`. Until rev1's pins are in `hal.h` such a
-  build only measures what the id costs: never flash it on a rev0.
+  output folder gets `-board<id>`. (Since 2026-11-17: `--board=rev1`, the
+  folder `-rev1`, and rev1's pins.)
 - **A later board's build reports itself.** `HELLO` grows by the board field
   (offset 30, `proto.c`), and the image carries the id at offset 0x14, a
   reserved vector slot (`startup_chgame_boot.S`; 0 on rev0). The uploaders
@@ -334,7 +448,7 @@ fixed and tried on that board again. Both cost no flash.
 ## Testing
 
 ```
-python3 test/native/run_tests.py            # about 30 s; needs cc and Pillow
+python3 test/native/run_tests.py            # about a minute, both boards; needs cc and Pillow
 ```
 
 On Windows the harness cannot run natively (it forks a process per boot).
@@ -359,15 +473,17 @@ real reset; flash, the card and the panel persist in shared memory.
 
 | Suite | Covers |
 |---|---|
-| core_nomenu / core_menu / core_locked / core_visual | the update path, the protocol (probes vs claims, resync after noise), self-update, the boot decision, a power cut at every flash operation of a USB upload |
+| core_nomenu / core_menu / core_locked / core_visual | the update path, the protocol (probes vs claims, resync after noise), self-update, the boot decision, a power cut at every flash operation of a USB upload; the board's key bits (`HAL_KEYS`) against its pins |
+| core_rev1 | the same as core_menu, built for rev1: `HELLO`'s board field, the other board's packages refused, rev1's key bits (each key's pin alone gives its bit, every other pin nothing) |
 | sd | the SD driver against the card model, the FAT reader against FAT16/FAT32 images (MBR, superfloppy, partition 4, fragmented files and folders, decoy labels, four kinds of broken chain, exFAT, blank), every CHG header error |
 | boot | no card, empty card, menu, install, switch, every bad CHG file, USB notice, B escape, a probing host, upload at the menu, the card dying mid-install, a power cut at every flash operation of an SD install; and on cards made by `tools/chcart`'s `runtime.prepare()`: index order, an entry not in the index, an index record with no file, nested folders and B, launch (installed and not), START held at power-on, a software reset, a broken `MENU.BG`, an empty folder, a folder of 250 games (240 listed) |
 | boot_static | the static style: the same menu's screens, install, folders and launch |
-| boot_real | the real card from `chgame card --image out/sdcard.img`: every program installed from a fresh board through its folder, checked |
+| boot_real | the real card from `chgame card` (`out/sdcard-rev0.img`, or `out/sdcard.img`), rev0 only: every program installed from a fresh board through its folder, checked |
+| boot_rev1 / boot_static_rev1 / visual_rev1 / visual_static_rev1 | every boot and visual scenario again, built for rev1 and on packages packed for it |
 | app / app_visual | the dry runs: no flash writes, a package checked, SELECT (visual: START) leaves |
 | visual / visual_static | the visual menu (`test_visual.c`) on cards from `runtime.prepare()` with pictures: the splash (the cover stays, installed game or not), the search behind it (A on the cover: found, the first copy, not on the card), rows, the ring at the top and below (and LEFT/RIGHT doing nothing without folders), in and out of folders, the about page, install (and its bar), errors from SYSTEM.PIC and from the built-in icons, the card dying mid-install, a power-cut sweep, launch (installed: straight in, the panel dark; not installed: the cover, its picture, A installs; START held), the USB notice and an upload, broken pictures (offset past the file, cut short, a short COVER.PIC, no SYSTEM.PIC), a folder of 250 |
 | visual_real | the real card in the visual menu: the splash, every folder's cover, every game's picture, and every program installed through its folder |
-| frames | 112 screens of both menus pinned by hash in `test/native/frames.json` (the `real_*` ones only when `out/sdcard.img` exists). PNGs are in `test/native/build/frames/` |
+| frames | 112 screens of both menus pinned by hash in `test/native/frames.json` (the `real_*` ones only when the real card exists). PNGs are in `test/native/build/frames/`. `frames_rev1`: rev1's 78 (no real card) against the same hashes, in `build/frames-rev1/` |
 | preview | `chgame background --preview` (tools/chcart/background.py) against the bootloader's own frames of a cart card: every pixel but the rainbow's (rainbow), every pixel (static) |
 | pictures | the visual menu's frames against the pictures `tools/chcart` made: every pixel (static), every pixel but colour 15's (rainbow) |
 | constants | `chgpack.py` and `chcart` against `chg_format.h`, `chgame_map.h` and `chgame_card.h`; `src/icons.h` against `art/icons/` |
@@ -383,22 +499,25 @@ The hardware steps are in [HARDWARE.md](HARDWARE.md).
   (`release/chgame_sdvisual.bin`) or **(Static)**
   (`release/chgame_sdvisual_static.bin`), *Tools > Programmer* **CHGame
   USB**, *Tools > Burn Bootloader*.
-  No driver, no buttons. The installed sketch is erased. It needs a board
-  package that carries this bootloader and `chgame-upload` 0.2.0 (the next
-  release; [docs/roadmap.md](../../docs/roadmap.md)).
+  No driver, no buttons. The installed sketch is erased. It needs board
+  package 0.3.0 or later, and 0.4.0 for a Rev1 (*CHGame Rev1* writes the
+  files in `release/rev1/`).
 - **By hand, the same thing:** `chgame-upload selfupdate
   release/chgame_sdboot.bin` ([host/go](host/go/README.md)), or
   `chgame uploader selfupdate release/chgame_sdboot.bin --yes` (the Python
   uploader, `host/py`).
 - **Factory ISP:** hold BOOT across power-on, then `wchisp flash
-  release/chgame_sdboot.bin`.
+  release/chgame_sdboot.bin` (a rev1: `release/rev1/chgame_sdboot.bin`).
+- **A rev1 board** takes the files in [release/rev1/](release/rev1) and
+  never rev0's (their image's board word, at 0x14, is `CGR1`; the uploaders
+  refuse the other board's).
 - **The first time:** [HARDWARE.md](HARDWARE.md) has two routes. The direct
   route goes straight to `chgame_sdboot.bin`, with fallbacks. The staged
   route is HW1, HW2a, HW2b.
-- **The Arduino IDE caveat.** The installed board package 0.2.4 offers only
-  the factory ISP and writes its own 0.2.4 bootloader. The Bootloader menu
-  and the USB programmer are in `platform/board` and come with the next
-  release.
+- **The Arduino IDE caveat.** Board package 0.2.4 offers only the factory
+  ISP and writes its own 0.2.4 bootloader. The Bootloader menu and the USB
+  programmer came with 0.3.0, the Rev1 board and its bootloaders with
+  0.4.0.
 
 ## Files
 
@@ -412,7 +531,7 @@ The hardware steps are in [HARDWARE.md](HARDWARE.md).
 | `src/install.c`, `update.c` | the SD install and the flash transaction it shares with USB |
 | `src/sd.c`, `fat.c` | SD card and FAT: a C fork of CHSd 1.0.0 (CLAUDE.md rule 4: changes found on hardware go back into CHSd too) |
 | `src/chg.c`, `shared/chg_format.h` | the CHG header ([spec/chg.md](../../spec/chg.md)) |
-| `src/hal.h` | pins, SPI, keys, LED: `static inline` on the board, functions on the PC |
+| `src/hal.h` | pins, SPI, keys, LED, rev1's backlight, for rev0 and rev1: `static inline` on the board, functions on the PC |
 | `src/proto.c`, `usb.c`, `flash.c`, `appmeta.c`, `jump.c`, `startup_chgame_boot.S`, ... | CH32SerialBoot 0.2.4, changed as listed above |
 | `shared/chgame_bootreq.h` | the boot request reasons |
 | `vendor/` | WCH SPL and the USB CDC stack (`vendor/usbcdc/VENDORED.md` lists the changes) |

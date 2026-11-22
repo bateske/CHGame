@@ -1,6 +1,6 @@
 # CHBlackjack
 
-Take $500 to the table and break the bank before the bank breaks you: bet, hit, stand, double and split against a dealer who talks, blinks and deals from a six-deck shoe. It is Press Play On Tape's Arduboy Blackjack, rebuilt in colour.
+Take $500 to the table and break the bank before the bank breaks you: bet, hit, stand, double and split against a dealer who talks, blinks and deals from a six-deck shoe. Inspired by Press Play On Tape's Blackjack for the Arduboy.
 
 ![CHBlackjack gameplay](docs/gameplay.gif)
 

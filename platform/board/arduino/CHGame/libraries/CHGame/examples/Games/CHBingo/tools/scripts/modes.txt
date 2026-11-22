@@ -1,0 +1,78 @@
+# The modes: the picker, HARD (the card picked up, the cursor, a daub, a
+# miss, put down) and HARDCORE (a wrong daub voids the card; the last one
+# busts the round).
+#   chgame run tools/scripts/modes.txt out/modes
+say R 5
+say J M
+wait 40
+snap 01_picker
+tap DOWN
+wait 10
+snap 02_picker_hard
+tap DOWN
+wait 10
+snap 03_picker_hardcore
+tap UP
+wait 6
+tap A
+wait 40
+snap 04_hard_buy_in
+# HARD: three cards; the first call lands on card 1's row 1, column 3.
+tap A
+wait 4
+tap RIGHT
+say U 8
+wait 150
+snap 05_hard_browse
+tap A
+wait 10
+snap 06_hard_picked
+tap UP
+wait 4
+tap RIGHT
+wait 10
+snap 07_hard_cursor
+tap A
+wait 4
+snap 08_hard_daub
+wait 20
+tap LEFT
+wait 4
+tap A
+wait 3
+snap 09_hard_miss
+wait 20
+tap B
+wait 12
+snap 10_hard_put_down
+# HARDCORE: two cards, both daubed wrong.
+say J P
+say O 2
+wait 40
+tap LEFT
+wait 4
+tap A
+wait 30
+snap 11_hardcore_browse
+tap A
+wait 6
+tap UP
+wait 6
+tap A
+wait 4
+snap 12_void
+wait 16
+snap 13_void_falling
+wait 30
+snap 14_next_card
+tap A
+wait 6
+tap DOWN
+wait 6
+tap A
+wait 30
+snap 15_no_cards_left
+wait 60
+snap 16_busted
+wait 200
+snap 17_buy_again

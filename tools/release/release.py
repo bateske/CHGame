@@ -6,8 +6,10 @@
 Checks the tree, runs the uploader's parity tests, builds the Go uploader
 for every host, archives it, packs the platform and writes the index, runs
 the new-user test against them (acceptance.py: a fresh arduino-cli installs
-them from a local server, every example compiles from the installed package,
-and the casino cart and its SD card's contents are made from those builds),
+them from a local server, every example compiles from the installed package
+for every board, and the casino cart, with every board's binaries, and one
+SD card's contents per board, CHGame-sdcard-<version>-<board>.zip, are made
+from those builds),
 then publishes all of it as a GitHub release tagged v<version> (notes: the
 matching section of platform/board/CHANGELOG.md) and re-uploads the index
 to every earlier v* release, so a user on an explicit version URL is
@@ -24,16 +26,21 @@ Preconditions (each is checked, with the fix in the message):
   - platform/board/CHANGELOG.md has a `## <version>` section (to publish,
     dated: `## 0.3.0 (2026-10-05)`, not `(not yet released)`);
   - the committed bootloader binaries in platform/board/arduino/CHGame/
-    bootloaders/CHGame match platform/bootloader/release/SHA256SUMS (the
-    bootloader is rebuilt with platform/bootloader/build.sh and
-    tools/dist.sh, not here);
+    bootloaders/CHGame (rev0's five there, each later board's in its own
+    folder, rev1/) are tracked by git and match
+    platform/bootloader/release/SHA256SUMS (the bootloader is rebuilt with
+    platform/bootloader/build.sh and tools/dist.sh, not here), and they are
+    every file boards.txt's Tools > Bootloader names;
   - the Go tool's version (main.go) equals the Python package's;
+  - the README's game downloads list this version, the latest
+    (tools/release/downloads.py writes the line; a dry run only warns);
   - to publish: gh is installed and logged in, the tree is clean, and HEAD
     is origin/main (gh creates the tag on the remote).
 """
 from __future__ import annotations
 
 import argparse
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -44,14 +51,19 @@ from _common import (BIN_DIR, BOOTLOADER, CHANGELOG, DIST, GO_DIR, HOSTS, PLATFO
                      uploader_version)
 import acceptance  # noqa: E402
 import build_uploader  # noqa: E402
+import downloads  # noqa: E402
 import make_package  # noqa: E402
 import make_tool_archives  # noqa: E402
 
 BOOTLOADERS = PLATFORM / "bootloaders" / "CHGame"
 SUMS = BOOTLOADER / "release" / "SHA256SUMS"
-# committed name -> the name in release/SHA256SUMS
-BOOT_FILES = {n: n for n in ("chgame_sdboot.bin", "chgame_sdboot_static.bin", "chgame_sdvisual.bin",
-                              "chgame_sdvisual_static.bin", "chgame_boot_nomenu.bin")}
+# committed path under bootloaders/CHGame -> its name in release/SHA256SUMS. Each
+# board's five (Tools > Bootloader): rev0's at the top, rev1's in rev1/, as
+# platform/bootloader/tools/dist.sh writes both folders and SHA256SUMS lists them
+# ("rev1/chgame_sdboot.bin").
+BOOT_NAMES = ("chgame_sdboot.bin", "chgame_sdboot_static.bin", "chgame_sdvisual.bin",
+              "chgame_sdvisual_static.bin", "chgame_boot_nomenu.bin")
+BOOT_FILES = {f"{sub}{n}": f"{sub}{n}" for sub in ("", "rev1/") for n in BOOT_NAMES}
 
 
 def check_preconditions(version: str, publish: bool) -> str:
@@ -65,14 +77,32 @@ def check_preconditions(version: str, publish: bool) -> str:
     if publish and f"## {version} (not yet released)" in CHANGELOG.read_text(encoding="utf-8"):
         fail(f"{CHANGELOG.relative_to(REPO)}: date the '## {version}' heading before publishing.")
     sums = {ln.split()[1].lstrip("*"): ln.split()[0] for ln in SUMS.read_text(encoding="utf-8").splitlines() if ln.strip()}
+    tracked = set(make_package.tracked_files())         # what the platform archive packs (tracked files only)
     for committed, released in BOOT_FILES.items():
         f = BOOTLOADERS / committed
         if not f.exists() or sums.get(released) != sha256(f):
             fail(f"bootloaders/CHGame/{committed} does not match {SUMS.relative_to(REPO)}: run "
                  "platform/bootloader/build.sh and platform/bootloader/tools/dist.sh, commit, then release.")
+        if f not in tracked:
+            fail(f"bootloaders/CHGame/{committed} is not tracked by git, so the platform archive would not "
+                 "carry it: commit it, then release.")
+    named = re.findall(r"(?m)^\s*[A-Za-z0-9_]+\.menu\.boot\.\w+\.bootloader\.file=CHGame/(.+?)\s*$",
+                       (PLATFORM / "boards.txt").read_text(encoding="utf-8"))
+    unchecked = sorted(set(named) - set(BOOT_FILES))
+    if unchecked or not named:
+        fail("boards.txt's Tools > Bootloader names " + (", ".join(f"bootloaders/CHGame/{n}" for n in unchecked)
+             or "no bootloaders/CHGame file") + f", which release.py's BOOT_FILES does not check against "
+             f"{SUMS.relative_to(REPO)}: add it there (and to platform/bootloader/tools/dist.sh).")
     gv, pyv = uploader_version(), python_uploader_version()
     if gv != pyv:
         fail(f"chgame-upload versions differ: host/go/main.go says {gv}, host/py says {pyv}")
+    # The README's game downloads list this release (its links are known before it exists).
+    if downloads.top_version() != version:
+        msg = (f"README.md's game downloads do not list {version}: run "
+               f"`python tools/release/downloads.py {version}` and commit it")
+        if publish:
+            fail(msg + " before releasing.")
+        say("warning: " + msg + ".")
     if publish:
         if not shutil.which("gh"):
             fail("gh CLI not found; install it (or use --dry-run and upload the assets by hand)")
@@ -110,7 +140,7 @@ def main(argv=None) -> int:
     ap.add_argument("--skip-go", action="store_true", help="use the binaries already in out/chgame-upload/")
     ap.add_argument("--skip-tests", action="store_true")
     ap.add_argument("--no-accept", action="store_true",
-                    help="skip the new-user test, and with it the SD card zip (not for a real release)")
+                    help="skip the new-user test, and with it the cart and the SD card zips (not for a real release)")
     a = ap.parse_args(argv)
     version = a.version or platform_version()
     tag = f"v{version}"
@@ -138,10 +168,16 @@ def main(argv=None) -> int:
         if not a.dry_run:
             fail("--no-accept is for dry runs: a release is tested as a new user would install it")
     else:
-        card = DIST / f"CHGame-sdcard-{version}.zip"
+        # One SD card zip per board (acceptance fills in {board}), and the cart, with every board's binaries.
+        card = DIST / f"CHGame-sdcard-{version}-{{board}}.zip"
         if acceptance.run(DIST, acceptance.serve.DEFAULT_PORT, True, card, acceptance.DEFAULT_JOBS):
             fail("the new-user test failed (above); nothing published")
-        assets += [card, card.with_name(f"CHGame-Casino-{version}.chgame")]     # (acceptance writes both)
+        made = [acceptance.card_zip(card, b) for b in acceptance.package_boards(PLATFORM)]
+        made.append(card.with_name(f"CHGame-Casino-{version}.chgame"))
+        missing = [f.name for f in made if not f.is_file()]
+        if missing:
+            fail(f"the new-user test did not write {', '.join(missing)}; nothing published")
+        assets += made
     say("=== release assets ===")
     for f in assets:
         say(f"  {f.name:60s} {f.stat().st_size:>10,} B")

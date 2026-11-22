@@ -83,6 +83,30 @@ void USART2_IRQHandler(void) {
 }
 #endif
 
+/* CHGAME: Serial1 is built as HardwareSerial(USART1), but uart_init() takes
+ * the USART from PIN_SERIAL_TX/RX, and on the CHGame boards those are PA2/PA3:
+ * USART2 (the H1 header on Rev0, CN3 on Rev1). Its receive interrupt has to
+ * fill Serial1 then, or Serial1.read() never sees a byte. */
+#if defined(USART2) && defined(HAVE_HWSERIAL1) && !defined(HAVE_HWSERIAL2)
+void USART2_IRQHandler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
+void USART2_IRQHandler(void) {
+  if(USART_GetITStatus(USART2, USART_IT_RXNE) != RESET) {
+    USART_ClearITPendingBit(USART2, USART_IT_RXNE);
+
+    extern HardwareSerial Serial1;
+    HardwareSerial *obj = &Serial1;
+
+    unsigned char c = USART_ReceiveData(USART2);
+    rx_buffer_index_t next_head = (obj->_rx_buffer_head + 1) % SERIAL_RX_BUFFER_SIZE;
+
+    if (next_head != obj->_rx_buffer_tail) {
+      obj->_rx_buffer[obj->_rx_buffer_head] = c;
+      obj->_rx_buffer_head = next_head;
+    }
+  }
+}
+#endif
+
 #if defined(USART3) && defined(HAVE_HWSERIAL3)
 void USART3_IRQHandler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 void USART3_IRQHandler(void) {
@@ -352,7 +376,7 @@ void HardwareSerial::begin(unsigned long baud, byte config)
     NVIC_EnableIRQ(USART1_IRQn);
 #endif
   } 
-#if defined(USART2) && defined(HAVE_HWSERIAL2)
+#if defined(USART2) && (defined(HAVE_HWSERIAL2) || defined(HAVE_HWSERIAL1))   /* CHGAME: or Serial1 on USART2 */
   else if (_serial.uart == USART2) {
     USART_ITConfig(USART2, USART_IT_RXNE, ENABLE);
     NVIC_SetPriority(USART2_IRQn, 2);
@@ -421,7 +445,7 @@ void HardwareSerial::end()
     USART_ITConfig(USART1, USART_IT_RXNE, DISABLE);
 #endif
   } 
-#if defined(USART2) && defined(HAVE_HWSERIAL2)
+#if defined(USART2) && (defined(HAVE_HWSERIAL2) || defined(HAVE_HWSERIAL1))   /* CHGAME: or Serial1 on USART2 */
   else if (_serial.uart == USART2) {
     NVIC_DisableIRQ(USART2_IRQn);
     USART_ITConfig(USART2, USART_IT_RXNE, DISABLE);

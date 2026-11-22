@@ -251,13 +251,18 @@ static void do_hello(void)
     o = put_u32(p, o, CHGAME_APP_MAX_SIZE);
     o = put_u16(p, o, (uint16_t)CHGAME_PAGE_SIZE);
     o = put_u16(p, o, (uint16_t)PROTO_MAX_PAYLOAD);
+#ifdef CHGAME_BOARD_TARGET
+    /* The UID, then the board field at offset 30: only boards after rev0
+       send it, so a rev0 bootloader's HELLO is the 30 bytes it always was
+       (chg_format.h). The board field is this bootloader's own image's board
+       word (offset 0x14: the startup file puts CHG_TARGET_ID there), and one
+       loop sends all four words: fewer bytes than a constant and a call. */
+    for (uint32_t k = 0; k < 4; k++)
+        o = put_u32(p, o, k < 3 ? hal_uid(k) : HAL_BOARD_WORD);
+#else
     o = put_u32(p, o, hal_uid(0));
     o = put_u32(p, o, hal_uid(1));
     o = put_u32(p, o, hal_uid(2));
-#ifdef CHGAME_BOARD_TARGET
-    /* The board field, offset 30: only boards after rev0 send it, so a rev0
-       bootloader's HELLO is the 30 bytes it always was (chg_format.h). */
-    o = put_u32(p, o, CHG_TARGET_ID);
 #endif
 
     send_frame(CMD_HELLO, p, o);
@@ -328,8 +333,9 @@ static void do_dev_write_boot(const uint8_t *p, uint16_t len)
        image linked for address 0, so launching them as an application would run
        code at the wrong address. If power is lost between here and the reset,
        the device comes up with no valid application - which is the safe
-       outcome, because it means whatever bootloader survives stays in charge. */
-    if (flash_erase_page(CHGAME_META_ADDR, FLASH_REGION_APP) != FLASH_OK) {
+       outcome, because it means whatever bootloader survives stays in charge.
+       upd_begin() keeps the system settings block (chgame_map.h). */
+    if (upd_begin() != ST_OK) {
         send_status(CMD_DEV_WRITE_BOOT, ST_ERR_FLASH);
         return;
     }

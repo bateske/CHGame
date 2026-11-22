@@ -135,6 +135,17 @@ void lcd_on(void)
     hal_lcd_select(1);
     cmd(0x29);                       /* DISPON */
     hal_lcd_select(0);
+#if defined(CHGAME_BOARD_TARGET) && !defined(CHBOOT_HOST)
+    /* (rev1) The panel shows its RAM from the next refresh on; until then it
+       shows its blank page, which is white. A refresh is 16.4 ms (FRMCTR1
+       above: 850 kHz / (50 x 278)), so wait two and a half; CHGfx waits
+       100 ms after DISPON for the same reason. Rev0's backlight is always
+       lit, so this costs it nothing to leave out. The PC suite's panel has
+       no refresh, and the wait would only move rev1's rainbow (which turns
+       with time) away from rev0's frames, which rev1's must match. */
+    sys_delay_ms(40);
+#endif
+    hal_backlight_on();              /* (rev1) only now: the panel shows the frame just sent */
 }
 
 static __attribute__((noinline)) void px(uint32_t c)

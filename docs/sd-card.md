@@ -39,8 +39,13 @@ one, using its built-in data in flash. The card adds to that.
 - **Use the card only between `gfx_wait()` and the next flush.** CHGfx
   streams the framebuffer by DMA on the same bus. Hand SPI1 back exactly as
   CHGfx left it.
-- **Select the card by its own pin.** The card's chip select is `PIN_SD_CS`
-  (PB11). The default `SS` (PA4) is the LCD.
+- **Select the card by its own pin.** The card's chip select is `PIN_SD_CS`:
+  PB11 on Rev0, PB3 on Rev1 (CHSd picks it from the board being built
+  for). The default `SS` (PA4) is the LCD on both. On Rev1 an OR gate holds
+  the card's DI high while its CS is high, so the panel's traffic never
+  reaches it; on Rev0 the card sees that traffic and must ignore it, which
+  some cheap cards do not ([hardware-revisions.md](hardware-revisions.md),
+  "For rev1: the SD card's DI gate").
 - **Card formats.** Players' cards are FAT16 or FAT32; cards up to 32 GB
   come that way. exFAT (64 GB and up) is reported as `E_EXFAT`, so a game
   can say "reformat as FAT32". A file in more pieces than the run list holds
@@ -67,11 +72,23 @@ generated from CHSd's `host/`) give the game a pretend card:
 
 ## Putting files on a real card
 
-**Everything at once:** `chgame card` builds every game into one cart,
-`out/CHGame-Casino.chgame`, and lays out its card in `out/sdcard/`: `GAMES/`
+**A card is for one board.** Its CHG files carry that board's binaries and
+its target id, and the menu of another board greys them and refuses them
+(ERROR 5, nothing erased). The data files (`WORDS.DIC` and the rest) are
+the same for both.
+
+**Everything at once:** `chgame card` builds every game for every board
+the installed core has into one cart, `out/CHGame-Casino.chgame`, with
+every board's binaries, and lays out a card per board in
+`out/sdcard-<board>/` (`out/sdcard-rev0/`, `out/sdcard-rev1/`): `GAMES/`
 (the CHG files, the APPS folder, `MENU.IDX`, `MENU.BG`), `WORDS.DIC`,
-`PHRASES.BNK`, `CHCW/` and `MODELS/`. Copy its contents to the card's root,
-or `chgame cart deploy out/CHGame-Casino.chgame --card <drive>`.
+`PHRASES.BNK`, `CHCW/` and `MODELS/`. `--image` also writes a FAT32 image
+per board, `out/sdcard-<board>.img`, and `chgame --board rev0 card` makes
+one board's alone. Copy the contents of the board's folder to the card's
+root, or `chgame --board <board> cart deploy out/CHGame-Casino.chgame
+--card <drive>`. A release carries the same cards as one zip per board,
+`CHGame-sdcard-<version>-rev0.zip` and `-rev1.zip`: unzip the one for the
+board in hand.
 
 **One game's files** travel in its `.chgame` (`chgame export`): its
 `sdcard/` folder becomes the cart's SD files, and deploying the cart puts
@@ -82,7 +99,8 @@ folder to the card. Follow the paths above exactly: the root for
 `WORDS.DIC` and `PHRASES.BNK`, `CHCW/` for crossword packs.
 
 **Without removing the card:** upload
-[CHSDtoUSB](../platform/board/arduino/CHGame/libraries/CHGame/examples/Apps/CHSDtoUSB). The board becomes a USB drive with its
+[CHSDtoUSB](../platform/board/arduino/CHGame/libraries/CHGame/examples/Apps/CHSDtoUSB),
+built for the board in hand. The board becomes a USB drive with its
 serial port still working:
 1. Copy the files to the drive and eject it.
 2. Upload the game again. Upload works while the drive is mounted.
@@ -102,3 +120,9 @@ board.** The first device session should check:
 
 CHSDtoUSB has been tested on hardware: 78 checks pass on a test build, raw
 reads at about 490 KB/s and writes at about 400 KB/s.
+
+Rev1's card (CS on PB3, the DI gate) has been checked only on the PC so
+far: CHSd's tests run its SPI driver for both boards, and the bootloader's
+PC suite reads rev1 cards. On a Rev1 board, `tools/sketches/CHBoardTest`
+reads the card, and CHSDtest's `MIX` with `SET PATTERN 1` should pass with
+the cards that fail it on Rev0.

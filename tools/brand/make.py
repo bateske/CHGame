@@ -4,7 +4,7 @@ rules are docs/brand/README.md.
     python tools/brand/make.py                 # everything
     python tools/brand/make.py banner          # docs/brand/banner.gif, the README's banner
     python tools/brand/make.py buttons         # docs/brand/btn-*.svg, the README's link buttons
-    python tools/brand/make.py warning         # docs/brand/warning.svg, the README's Rev0 caution
+    python tools/brand/make.py warning         # docs/brand/warning.svg, the README's caution
     python tools/brand/make.py xoxo            # docs/brand/xoxo.gif, the special thanks' X and O
     python tools/brand/make.py wordmark        # docs/brand/wordmark.svg (the API reference's header)
     python tools/brand/make.py swatches        # docs/brand/palette.svg
@@ -557,9 +557,9 @@ def wordmark_svg(s=3):
 
 # ---------------------------------------------------------------- the warning
 
-WARNING_TITLE = "IN DEVELOPMENT: REV0 HARDWARE"
-WARNING_LINES = ["CHGame is in active development.",
-                 "This board is Rev0, Rev1 will change the button wiring."]
+WARNING_TITLE = "IN DEVELOPMENT - REV1"
+WARNING_LINES = ["The system specification is still subject to change.",
+                 "REV1 is an attempt at a stable pinout."]
 
 ICON_WARN = art("""
     .....##.....

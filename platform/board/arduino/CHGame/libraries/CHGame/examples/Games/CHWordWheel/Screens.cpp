@@ -499,8 +499,7 @@ static void optionsRender(uint32_t frame) {
                      : optSel == O_CLOCK ? (game.opt.clock ? "TWICE THE TIME TO SOLVE" : "10 SECONDS IN THE BONUS")
                      : "B: BACK";
     centred35(103, help, GOLD);
-    centred35(111, "HOST ART: VAMPIRICS", SILVER);        // Press Play On Tape's (see NOTICE)
-    centred35(117, "FONT: PRESS PLAY ON TAPE", SILVER);
+    centred35(117, "CHGAME", SILVER);
 }
 
 // ---------------------------------------------------------------------------

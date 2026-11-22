@@ -29,6 +29,7 @@
 static struct { char name[16]; int code; uint32_t len, crc; char path[512]; } pk[MAXP];
 static int npk;
 static char img_fat32[512], img_fat32sys[512], img_vcart[512], img_vcartlaunch[512], img_vcartbad[512], img_cartbig[512];
+static char img_otherbrd[512];
 static const char *frames, *frame_prefix = "";
 static uint8_t payload[CHGAME_APP_MAX_SIZE];
 
@@ -88,6 +89,11 @@ static void lcd_sane(const char *what)
     CHECK(B->spi_off_xfers == 0, "%s: %u SPI transfers with SPI1 off (would hang the chip)", what, B->spi_off_xfers);
     CHECK(B->wrong_frames == 0, "%s: %u transfers in the wrong frame size", what, B->wrong_frames);
     CHECK(B->sd.init_fast == 0, "%s: card identified above 400 kHz", what);
+    /* rev1's backlight: on in a boot that switched the panel on, only once
+       it showed the frame lcd_on() sent; dark in any other */
+    CHECK(B->backlight != 2, "%s: backlight on before the panel showed a written frame", what);
+    CHECK(B->backlight == (B->lcd.dispon_count > B->dispon_at_boot), "%s: backlight %s", what,
+          B->backlight == 2 ? "on too soon" : B->backlight ? "on, the panel never switched on" : "dark over the lit panel");
 }
 
 /* The menu's order on img_fat32 (no index: by title), as boot_cases.py wrote it */
@@ -124,6 +130,7 @@ static void t_no_card_no_app(void)
     B->limit_us = 1500000;
     CHECK(host_boot() == END_HANG, "no card, no app: waits");
     CHECK(B->usb_up && B->lcd.on, "in USB mode, saying so");
+    CHECK(B->backlight == 1, "the backlight on, over the panel's first frame");
     lcd_sane("no games");
     snap("no_games");
 }
@@ -499,7 +506,7 @@ static void t_launch_installed(void)
     B->limit_us = 4000000;
     CHECK(host_boot() == END_RESET && B->retained[0] == CHGAME_BOOTREQ_RUN, "launch game installed: RUN at once");
     CHECK(B->flash_ops == 0, "nothing written (%u ops)", B->flash_ops);
-    CHECK(!B->lcd.on && B->lcd.pixels == 0, "the panel never switched on");
+    CHECK(!B->lcd.on && B->lcd.pixels == 0 && B->backlight == 0, "the panel never switched on, nor the backlight");
     CHECK(B->now_us < 1000000, "power-on to RUN in %llu ms", (unsigned long long)(B->now_us / 1000));
     lcd_sane("launch installed");
 }
@@ -585,6 +592,21 @@ static void t_bad_pictures(void)
     keys(one, 1);
     CHECK(host_boot() == END_HANG, "FOLDER ONE, COVER.PIC short");
     snap("bad_cover");
+}
+
+/* A package built for the other board (rev0's on a rev1, rev1's on a rev0):
+   its error, nothing written. The otherbrd card (boot_cases.py): BRAVO, for
+   this board, and OTHER BOARD, for the other, two rows down from the cover. */
+static void t_other_board(void)
+{
+    static const uint32_t k[] = { BTN_DOWN, BTN_DOWN, BTN_A };
+    preinstall("BRAVO.CHG");
+    card(img_otherbrd);
+    keys(k, 3);
+    CHECK(host_boot() == END_HANG, "the other board's package: its error, until a key");
+    CHECK(B->flash_ops == 0, "nothing written (%u ops)", B->flash_ops);
+    CHECK(installed_is("BRAVO.CHG"), "BRAVO still installed");
+    lcd_sane("other board");
 }
 
 /* 250 games in one folder: 240 listed, UP from the cover wraps to the last */
@@ -676,6 +698,7 @@ int main(int argc, char **argv)
             if (!strcmp(b, "vcartlaunch")) snprintf(img_vcartlaunch, sizeof img_vcartlaunch, "%s", c);
             if (!strcmp(b, "vcartbad")) snprintf(img_vcartbad, sizeof img_vcartbad, "%s", c);
             if (!strcmp(b, "cartbig")) snprintf(img_cartbig, sizeof img_cartbig, "%s", c);
+            if (!strcmp(b, "otherbrd")) snprintf(img_otherbrd, sizeof img_otherbrd, "%s", c);
         } else if (!strcmp(a, "pkg") && npk < MAXP) {
             sscanf(line, "%*s %15s %d %u %x %511s", pk[npk].name, &pk[npk].code, &pk[npk].len, &pk[npk].crc, pk[npk].path);
             npk++;
@@ -719,5 +742,6 @@ int main(int argc, char **argv)
     TEST(t_upload_at_menu);
     TEST(t_bad_pictures);
     TEST(t_full_folder);
+    if (img_otherbrd[0]) TEST(t_other_board);
     return test_summary();
 }

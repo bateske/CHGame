@@ -1,5 +1,5 @@
 {
- "version": "0.2.0",
+ "version": "0.3.0",
  "crc16": [
   {
    "data": "",
@@ -202,7 +202,9 @@
   "CHGAME_APP_END": 63232,
   "CHGAME_META_MAGIC": 1296517187,
   "CHGAME_META_VERSION": 1,
-  "CHGAME_BOOT_MAGIC": 1128810306
+  "CHGAME_BOOT_MAGIC": 1128810306,
+  "CHGAME_SYS_SIZE": 32,
+  "CHGAME_SYS_ADDR": 63456
  },
  "chg": {
   "app": "03203d5a7794b1ceeb0825425f7c99b6d3f00d2a4764819ebbd8f5122f4c6986a3c0ddfa1734516e8ba8c5e2ff1c39567390adcae704213e5b7895b2cfec092643607d9ab7d4f10e2b4865829fbcd9f613304d6a87a4c1defb1835526f8ca9c6e3001d3a577491aecbe805223f5c7996b3d0ed0a2744617e9bb8d5f20f2c496683a0bddaf714314e6b88a5c2dffc193653708daac7e4011e3b587592afcce90623405d7a97b4d1ee0b2845627f9cb9d6f3102d4a6784a1bedbf815324f6c89a6c3e0fd1a3754718eabc8e5021f3c597693b0cdea0724415e7b98b5d2ef0c294663809dbad7f4112e4b6885a2bfdcf91633506d8aa7c4e1fe1b3855728facc9e603203d5a7794b1ceeb0825425f7c99b6d3f00d2a4764819ebbd8f5122f4c6986a3c0ddfa1734516e8ba8c5e2ff1c39567390adcae704213e5b7895b2cfec092643607d9ab7d4f10e2b4865829fbcd9f613304d6a87a4c1defb1835526f8ca9c6e3001d3a577491aecbe805223f5c7996b3d0ed0a2744617e9bb8d5f20f2c496683a0bddaf714314e6b88a5c2dffc193653708daac7e4011e3b587592afcce90623405d7a97b4d1ee0b2845627f9cb9d6f3102d4a6784a1bedbf815324f6c89a6c3e0fd1a3754718eabc8e5021f3c597693b0cdea0724415e7b98b5d2ef0c294663809dbad7f4112e4b6885a2bfdcf91633506d8aa7c4e1fe1b3855728facc9e603203d5a7794b1ceeb0825425f7c99b6d3f00d2a4764819ebbd8f5122f4c6986a3c0ddfa1734516e8ba8c5e2ff1c39567390adcae704213e5b7895b2cfec092643607d9ab7d4f10e2b4865829fbcd9f613304d6a87a4c1defb1835526f8ca9c6e3001d3a577491aecbe805223f5c7996b3d0ed0a2744617e9bb8d5f20f2c496683a0bddaf714314e6b88a5c2dffc193653708daac7e4011e3b587592afcce90623405d7a97b4d1ee0b2845627f9cb9d6f3102d4a6784a1bedbf815324f6c89a6c3e0fd1a3754718eabc8e5021f3c597693b0cdea0724415e7b98b5d2ef0c294663809dbad7f4112e4b6885a2bfdcf91633506d8aa7c4e1fe1b3855728facc9e603203d5a7794b1ceeb0825425f7c99b6d3f00d2a4764819ebbd8f5122f4c6986a3c0ddfa1734516e8ba8c5e2ff1c39567390adcae704213e5b7895b2cfec092643607d9ab7d4f10e2b4865829fbcd9f613304d6a87a4c1defb1835526f8ca9c6e3001d3a577491aecbe805223f5c7996b3d0ed0a2744617e9bb8d5f20f2c496683a0bddaf714314e6b88a5c2dffc193653708daac7e4011e3b587592afcce90623405d7a97b4d1ee0b2845627f9cb9d6f3102d4a6784a1bedbf815324f6c89a6c3e0fd1a3754718eabc8e5021f3c597693b0cdea0724415e7b98b5d2ef0c294663809dbad7f4112e4b",
@@ -266,11 +268,11 @@
  },
  "board": {
   "devices": {
-   "rev0": 892557379
-  },
-  "reserved": {
+   "rev0": 892557379,
    "rev1": 827475779
   },
+  "reserved": {},
+  "known": "rev0, rev1",
   "names": [
    {
     "target": 892557379,
@@ -317,12 +319,355 @@
     "name": "short",
     "image": "00000000000000000000000000000000",
     "board": 892557379
+   },
+   {
+    "name": "rev0-explicit",
+    "image": "0000000000000000000000000000000000000000435833350000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "board": 892557379
+   },
+   {
+    "name": "unknown",
+    "image": "0000000000000000000000000000000000000000785634120000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "board": 305419896
    }
   ],
+  "device_check": [
+   {
+    "image": "rev0",
+    "device": "",
+    "ok": true
+   },
+   {
+    "image": "rev0",
+    "device": "rev0",
+    "ok": true
+   },
+   {
+    "image": "rev0",
+    "device": "rev1",
+    "ok": false
+   },
+   {
+    "image": "rev0",
+    "device": "rev9",
+    "ok": false
+   },
+   {
+    "image": "rev1",
+    "device": "",
+    "ok": true
+   },
+   {
+    "image": "rev1",
+    "device": "rev0",
+    "ok": false
+   },
+   {
+    "image": "rev1",
+    "device": "rev1",
+    "ok": true
+   },
+   {
+    "image": "rev1",
+    "device": "rev9",
+    "ok": false
+   },
+   {
+    "image": "short",
+    "device": "",
+    "ok": true
+   },
+   {
+    "image": "short",
+    "device": "rev0",
+    "ok": true
+   },
+   {
+    "image": "short",
+    "device": "rev1",
+    "ok": false
+   },
+   {
+    "image": "short",
+    "device": "rev9",
+    "ok": false
+   },
+   {
+    "image": "rev0-explicit",
+    "device": "",
+    "ok": true
+   },
+   {
+    "image": "rev0-explicit",
+    "device": "rev0",
+    "ok": true
+   },
+   {
+    "image": "rev0-explicit",
+    "device": "rev1",
+    "ok": false
+   },
+   {
+    "image": "rev0-explicit",
+    "device": "rev9",
+    "ok": false
+   },
+   {
+    "image": "unknown",
+    "device": "",
+    "ok": true
+   },
+   {
+    "image": "unknown",
+    "device": "rev0",
+    "ok": false
+   },
+   {
+    "image": "unknown",
+    "device": "rev1",
+    "ok": false
+   },
+   {
+    "image": "unknown",
+    "device": "rev9",
+    "ok": false
+   }
+  ],
+  "reserved_example": {
+   "device": "rev2",
+   "target": 844252995,
+   "name": "rev2 (CGR2)"
+  },
   "packs": [
    {
     "device": "rev0",
     "header": "434847310100000243583335f70030004000000036638d75000000000000000058000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008f52c5c9"
+   },
+   {
+    "device": "rev1",
+    "header": "434847310100000243475231f70030004000000036638d7500000000000000005800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000667c979e"
+   }
+  ]
+ },
+ "wchisp": {
+  "probe": [
+   {
+    "output": "Found 0 USB devices\n",
+    "devices": []
+   },
+   {
+    "output": "Found 1 devices\nDevice #0: CH32X035G8U6[0x5623]\n",
+    "devices": [
+     "0: CH32X035G8U6[0x5623]"
+    ]
+   },
+   {
+    "output": "14:51:24 [INFO] Found 2 USB devices\n14:51:24 [INFO] Device #0: CH32X035G8U6[0x5623]\n14:51:24 [INFO] Device #1: CH32X035G8U6[0x5623]\n",
+    "devices": [
+     "0: CH32X035G8U6[0x5623]",
+     "1: CH32X035G8U6[0x5623]"
+    ]
+   }
+  ],
+  "info": [
+   {
+    "output": "Chip: CH32X035G8U6[0x5623]\nChip UID: CD-AB-88-D8-60-BE-B5-42\nBTVER(bootloader ver): 02.60\n",
+    "uid": "CD-AB-88-D8-60-BE-B5-42"
+   },
+   {
+    "output": "14:51:24 [INFO] Chip: CH32V307VCT6[0x7017] (Code Flash: 256KiB)\n14:51:24 [INFO] Chip UID: 30-78-3e-26-3b-38-a9-d6\n",
+    "uid": "30-78-3E-26-3B-38-A9-D6"
+   },
+   {
+    "output": "Error: no device\n",
+    "uid": ""
+   }
+  ]
+ },
+ "platform_txt": {
+  "recipes": {
+   "recipe.hooks.objcopy.postobjcopy.1.pattern": "\"{tools.chgame_upload.path}/{tools.chgame_upload.cmd}\" pack -device {build.chgame_device} \"{build.path}/{build.project_name}.bin\"",
+   "tools.chgame_upload.upload.pattern": "\"{path}/{cmd}\" {upload.verbose} -port \"{serial.port}\" flash -device {build.chgame_device} \"{build.path}/{build.project_name}.bin\" -run",
+   "tools.chgame_upload.bootloader.pattern": "\"{path}/{cmd}\" {bootloader.verbose} {burn.port} burn -method {burn.method} -device {build.chgame_device} -wchisp \"{tools.chgame_upload.wchisp}\" -bootloader \"{runtime.platform.path}/bootloaders/{bootloader.file}\"",
+   "tools.chgame_upload.program.pattern": "\"{path}/{cmd}\" {program.verbose} {burn.port} burn -method {burn.method} -device {build.chgame_device} -wchisp \"{tools.chgame_upload.wchisp}\" -bootloader \"{runtime.platform.path}/bootloaders/{bootloader.file}\" -app \"{build.path}/{build.project_name}.bin\""
+  },
+  "default_device": "rev0",
+  "cases": [
+   {
+    "key": "recipe.hooks.objcopy.postobjcopy.1.pattern",
+    "argv": [
+     "pack",
+     "-device",
+     "rev1",
+     "B dir/X.ino.bin"
+    ],
+    "want": {
+     "port": "",
+     "verbose": false,
+     "quiet": false,
+     "positional": [
+      "B dir/X.ino.bin"
+     ],
+     "run": false,
+     "device": "rev1",
+     "method": "usb",
+     "wchisp": "",
+     "bootloader": "",
+     "app": "",
+     "cmd": "pack"
+    }
+   },
+   {
+    "key": "tools.chgame_upload.upload.pattern",
+    "argv": [
+     "-verbose",
+     "-port",
+     "COM7",
+     "flash",
+     "-device",
+     "rev1",
+     "B dir/X.ino.bin",
+     "-run"
+    ],
+    "want": {
+     "port": "COM7",
+     "verbose": true,
+     "quiet": false,
+     "positional": [
+      "B dir/X.ino.bin"
+     ],
+     "run": true,
+     "device": "rev1",
+     "method": "usb",
+     "wchisp": "",
+     "bootloader": "",
+     "app": "",
+     "cmd": "flash"
+    }
+   },
+   {
+    "key": "tools.chgame_upload.bootloader.pattern",
+    "argv": [
+     "-quiet",
+     "-port",
+     "COM7",
+     "burn",
+     "-method",
+     "usb",
+     "-device",
+     "rev1",
+     "-wchisp",
+     "W/wchisp.exe",
+     "-bootloader",
+     "P/bootloaders/CHGame/rev1/chgame_sdboot.bin"
+    ],
+    "want": {
+     "port": "COM7",
+     "verbose": false,
+     "quiet": true,
+     "positional": [],
+     "run": false,
+     "device": "rev1",
+     "method": "usb",
+     "wchisp": "W/wchisp.exe",
+     "bootloader": "P/bootloaders/CHGame/rev1/chgame_sdboot.bin",
+     "app": "",
+     "cmd": "burn"
+    }
+   },
+   {
+    "key": "tools.chgame_upload.bootloader.pattern",
+    "argv": [
+     "-quiet",
+     "-port",
+     "COM7",
+     "burn",
+     "-method",
+     "isp",
+     "-device",
+     "rev1",
+     "-wchisp",
+     "W/wchisp.exe",
+     "-bootloader",
+     "P/bootloaders/CHGame/rev1/chgame_sdboot.bin"
+    ],
+    "want": {
+     "port": "COM7",
+     "verbose": false,
+     "quiet": true,
+     "positional": [],
+     "run": false,
+     "device": "rev1",
+     "method": "isp",
+     "wchisp": "W/wchisp.exe",
+     "bootloader": "P/bootloaders/CHGame/rev1/chgame_sdboot.bin",
+     "app": "",
+     "cmd": "burn"
+    }
+   },
+   {
+    "key": "tools.chgame_upload.program.pattern",
+    "argv": [
+     "-quiet",
+     "-port",
+     "COM7",
+     "burn",
+     "-method",
+     "usb",
+     "-device",
+     "rev1",
+     "-wchisp",
+     "W/wchisp.exe",
+     "-bootloader",
+     "P/bootloaders/CHGame/rev1/chgame_sdboot.bin",
+     "-app",
+     "B dir/X.ino.bin"
+    ],
+    "want": {
+     "port": "COM7",
+     "verbose": false,
+     "quiet": true,
+     "positional": [],
+     "run": false,
+     "device": "rev1",
+     "method": "usb",
+     "wchisp": "W/wchisp.exe",
+     "bootloader": "P/bootloaders/CHGame/rev1/chgame_sdboot.bin",
+     "app": "B dir/X.ino.bin",
+     "cmd": "burn"
+    }
+   },
+   {
+    "key": "tools.chgame_upload.program.pattern",
+    "argv": [
+     "-quiet",
+     "-port",
+     "COM7",
+     "burn",
+     "-method",
+     "isp",
+     "-device",
+     "rev1",
+     "-wchisp",
+     "W/wchisp.exe",
+     "-bootloader",
+     "P/bootloaders/CHGame/rev1/chgame_sdboot.bin",
+     "-app",
+     "B dir/X.ino.bin"
+    ],
+    "want": {
+     "port": "COM7",
+     "verbose": false,
+     "quiet": true,
+     "positional": [],
+     "run": false,
+     "device": "rev1",
+     "method": "isp",
+     "wchisp": "W/wchisp.exe",
+     "bootloader": "P/bootloaders/CHGame/rev1/chgame_sdboot.bin",
+     "app": "B dir/X.ino.bin",
+     "cmd": "burn"
+    }
    }
   ]
  }

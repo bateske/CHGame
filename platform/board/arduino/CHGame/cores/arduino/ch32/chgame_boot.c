@@ -34,12 +34,16 @@ void chgame_enter_bootloader(void)
  * driving the piezo would hold the note that was sounding for ever. Instead
  * the piezo pin (PB10) becomes a plain output, low, which takes it from the
  * timer, and the status LED (PB9) stays on. Power off and on to go on.
+ * On Rev1 (ARDUINO_CHGAME_REV1, from platform.txt) the buzzer is PA1 and the
+ * LED PB10; PA1 is driven low (its MOSFET off: a magnetic buzzer held on
+ * from VSYS would heat), and PB9, the backlight there, is left as it is.
  *
  * A debug build (-DCHGAME_DEBUG=1, the CHGame library's switch, which
  * build.extra_flags gives the core too) also keeps the crash at the bottom of
- * the stack (chgame_map.h), and a press of A (PB1) restarts the program,
- * straight past the menu, for the CHGame library's '!' command to report it.
- * ra and sp are as they were at the crash (HardFault_Handler passes them). */
+ * the stack (chgame_map.h), and a press of A (PB1; PB11 on Rev1) restarts the
+ * program, straight past the menu, for the CHGame library's '!' command to
+ * report it. ra and sp are as they were at the crash (HardFault_Handler
+ * passes them). */
 extern volatile uint32_t CFGHR_tmpB;    /* GPIOB CFGHR is write-only: its shadow */
 #if CHGAME_DEBUG
 extern uint32_t _susrstack[], _eusrstack[];
@@ -62,11 +66,24 @@ void chgame_fault(uint32_t ra, uint32_t sp)
     (void)ra; (void)sp;
 #endif
 
+#if defined(ARDUINO_CHGAME_REV1)
+    /* Each pin's level first, then its mode, so neither glitches high. */
+    RCC->APB2PCENR |= RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB;
+    /* Buzzer PA1 low, and PA0 low: on a Rev 1.5, PA0 high is host power (the
+       battery boost onto USB VBUS), which a crashed program must not leave
+       on. Where PA0 is an input (every other program) this does nothing. */
+    GPIOA->BCR  = (1u << 1) | 1u;
+    GPIOA->CFGLR = (GPIOA->CFGLR & ~0xF0u) | 0x30u;         /* PA1: push-pull output, off TIM2 */
+    GPIOB->BSHR = 1u << 10;                                 /* LED PB10 on */
+    CFGHR_tmpB = (CFGHR_tmpB & ~0xF00u) | 0x300u;           /* PB10: push-pull output; PB9 untouched */
+    GPIOB->CFGHR = CFGHR_tmpB;
+#else
     RCC->APB2PCENR |= RCC_APB2Periph_GPIOB;
     CFGHR_tmpB = (CFGHR_tmpB & ~0xFF0u) | 0x330u;    /* PB9, PB10: push-pull outputs */
     GPIOB->CFGHR = CFGHR_tmpB;
     GPIOB->BCR  = 1u << 10;
     GPIOB->BSHR = 1u << 9;
+#endif
 
 #if CHGAME_DEBUG
     /* A sketch can go on answering its PC instead (the CHGame library's debug
@@ -86,11 +103,20 @@ void chgame_fault(uint32_t ra, uint32_t sp)
 
     /* A, to GND with the pull-up: released, then pressed, each read steadily
        for a few ms so neither a hold from before the crash nor bounce counts. */
+#if defined(ARDUINO_CHGAME_REV1)
+    CFGHR_tmpB = (CFGHR_tmpB & ~0xF000u) | 0x8000u;         /* PB11 (A): input, pull-up */
+    GPIOB->CFGHR = CFGHR_tmpB;
+    GPIOB->BSHR = 1u << 11;
+    for (uint32_t pressed = 0; pressed < 2; pressed++)
+        for (uint32_t n = 0; n < 20000u; )
+            n = ((GPIOB->INDR & (1u << 11)) == (pressed ? 0u : (1u << 11))) ? n + 1u : 0u;
+#else
     GPIOB->CFGLR = (GPIOB->CFGLR & ~0xF0u) | 0x80u;
     GPIOB->BSHR = 1u << 1;
     for (uint32_t pressed = 0; pressed < 2; pressed++)
         for (uint32_t n = 0; n < 20000u; )
             n = ((GPIOB->INDR & 2u) == (pressed ? 0u : 2u)) ? n + 1u : 0u;
+#endif
 
     chgame_bootreq.magic   = CHGAME_RUN_MAGIC;
     chgame_bootreq.inverse = (uint32_t)~CHGAME_RUN_MAGIC;

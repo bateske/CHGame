@@ -20,7 +20,7 @@ this one is for the pages around them.
 | `../../tools/brand/logo-pixel.png` | the pixel CHGAME logo, the console's own (73 x 18): ink letters, a magenta shadow | the owner; never redrawn |
 | `banner.gif` | the README's banner: both logos, what it is, and the handheld paging through the game menu's box art | `tools/brand/make.py banner` |
 | `btn-*.svg` | the README's link buttons (website, get started, API docs, shop, forum) | `tools/brand/make.py buttons` |
-| `warning.svg` | the README's caution: in development, Rev0 hardware | `tools/brand/make.py warning` |
+| `warning.svg` | the README's caution: Rev1, an attempt at a stable pinout | `tools/brand/make.py warning` |
 | `xoxo.gif` | the special thanks' easter egg: XOXO in CHTicTacToe's spinning pieces | `tools/brand/make.py xoxo` |
 | `wordmark.svg` | the pixel logo for the API reference's header, its magenta held in yellow (`docs/api/Doxyfile` copies it there) | `tools/brand/make.py wordmark` |
 | `palette.svg` | the palette below | `tools/brand/make.py swatches` |

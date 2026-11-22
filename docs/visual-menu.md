@@ -134,6 +134,14 @@ def draw():
 ```
 
 `chgame boxart` in the sketch's folder runs it and writes `docs/cart.png`.
+
+To retouch the finished pictures by hand, `chgame boxart --export out/cover-art`
+copies every program's `docs/cart.png` into one folder, indexed with its own
+palette as the card holds it, and `chgame boxart --import out/cover-art`
+brings back the ones that changed: each is checked against the picture rule
+and saved as that program's `tools/art/cart.png`, a hand-finished picture
+that then wins over its recipe, and as its `docs/cart.png`. Delete
+`tools/art/cart.png` to go back to the recipe.
 `chgame boxart --check`, from anywhere, checks that every recipe's picture
 is up to date, and `chgame boxart --sheet out.png` puts them all side by
 side. While painting, `python -m artkit show tools/cart.py` (in the sketch's
@@ -162,8 +170,8 @@ rebuild the bootloader. The PC suite fails if `src/icons.h` is out of date.
 ## For developers
 
 - **The bootloader:** [platform/bootloader](../platform/bootloader).
-  `build.sh release --ui=visual [--style=static]` builds it (12,060 B, 228 B
-  spare); `src/visual.c` is the menu. It shares the card's code with the
+  `build.sh release --ui=visual [--style=static]` builds it (12,080 B on
+  rev0, 208 B spare; 12,084 B on rev1); `src/visual.c` is the menu. It shares the card's code with the
   list menu (`src/card.c`). [SIZES.md](../platform/bootloader/SIZES.md) says
   where every byte went: no font and no text paid for the pictures, the
   ring, the search, the fades and the slides.

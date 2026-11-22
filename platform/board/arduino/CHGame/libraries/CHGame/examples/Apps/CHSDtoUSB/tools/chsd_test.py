@@ -3,16 +3,24 @@
     python tools/chsd_test.py                  all tests
     python tools/chsd_test.py scsi raw files   just these
     python tools/chsd_test.py --list
+    python tools/chsd_test.py --board rev0     the board attached (default: the
+                                               newest the installed core has)
 
 Most tests need the test build, which adds serial commands that stand in
-for the buttons and inject faults (see CHSDtoUSB.ino, CHSD_TEST):
+for the buttons and inject faults (see CHSDtoUSB.ino, CHSD_TEST), compiled
+for the board attached (rev0 or rev1) into build/<board>/test:
 
-    arduino-cli compile -b CHGame:ch32v:rev0 --build-path build/test \
+    arduino-cli compile -b CHGame:ch32v:<board>:opt=osstd --build-path build/<board>/test \
         --build-property build.extra_flags=-DCHSD_TEST=1 .
 
-With the release build (compiled into build/release) the tests that need
-those commands say so and skip. The "upload" tests re-upload whichever of
-the two is running, from build/test or build/release.
+With the release build (`chgame --board <board> build`, into
+build/<board>/release) the tests that need those commands say so and skip.
+The "upload" tests re-upload whichever of the two is running, from
+build/<board>/test or build/<board>/release, with that board's FQBN (the
+board package's uploader refuses a board that is not that one). In the
+repository the board's default, the release build's folder and the FQBN
+come from tools/device.py; from an installed board package, without it,
+the board is rev0 unless --board says otherwise.
 
 What it touches on the card:
   * files, only inside \\CHSD_TEST on the drive (deleted at the end);
@@ -38,13 +46,41 @@ from pathlib import Path
 import serial
 import serial.tools.list_ports
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
 import scsi  # noqa: E402
 
-SKETCH = Path(__file__).resolve().parent.parent
-TEST_BUILD = SKETCH / "build" / "test"
-RELEASE_BUILD = SKETCH / "build" / "release"
+# The repository's tools/device.py (the boards, build folders and FQBNs), when
+# this runs from the repository; an installed board package has no tools/.
+if len(HERE.parents) > 9 and (HERE.parents[9] / "tools" / "device.py").is_file():
+    sys.path.insert(0, str(HERE.parents[9] / "tools"))     # the repository's tools/
+    import device  # noqa: E402
+else:
+    device = None
+
+SKETCH = HERE.parent
 RNG = random.Random(0xC5D)
+
+
+def default_board():
+    """The newest board the installed core has (tools/device.py), else rev0."""
+    return device.default_board() if device else "rev0"
+
+
+def test_build(board):
+    """Where the test build for `board` goes: build/<board>/test."""
+    return SKETCH / "build" / board / "test"
+
+
+def release_build(board):
+    """The release build for `board`: build/<board>/release (device.build_dir())."""
+    return device.build_dir(SKETCH, False, board) if device else SKETCH / "build" / board / "release"
+
+
+def fqbn(board):
+    """The FQBN to upload with for `board`: the sketch's own (tools/game.py),
+    its board field swapped (device.fqbn())."""
+    return device.fqbn(SKETCH, False, board) if device else f"CHGame:ch32v:{board}:opt=osstd"
 
 # ---------------------------------------------------------------------------
 # Device access
@@ -76,7 +112,8 @@ def find_drive():
 
 
 class Device:
-    def __init__(self):
+    def __init__(self, board="rev0"):
+        self.board = board                  # the board attached: which build to re-upload, and its FQBN
         self.port = None
         self.ser = None
         self.letter = None
@@ -642,14 +679,14 @@ def t_swap(dev):
 
 
 def image_for(dev):
-    """The build to re-upload: the kind that is running now."""
-    d = TEST_BUILD if dev.status()["test"] else RELEASE_BUILD
+    """The build to re-upload: the kind that is running now, for the board attached."""
+    d = test_build(dev.board) if dev.status()["test"] else release_build(dev.board)
     return d if (d / "CHSDtoUSB.ino.bin").exists() else None
 
 
 def upload(dev, image):
     dev.close()
-    r = subprocess.run(["arduino-cli", "upload", "-b", "CHGame:ch32v:rev0", "-p", dev.port,
+    r = subprocess.run(["arduino-cli", "upload", "-b", fqbn(dev.board), "-p", dev.port,
                         "--input-dir", str(image), str(SKETCH)], capture_output=True, text=True, timeout=120)
     if r.returncode:
         print(r.stdout[-800:] + r.stderr[-800:])
@@ -659,7 +696,8 @@ def upload(dev, image):
 def t_upload(dev):
     image = image_for(dev)
     if not image:
-        print("    (compile into build/test or build/release first: this re-uploads the running build)")
+        print("    (compile into build/%s/test or build/%s/release first: this re-uploads the running build)"
+              % (dev.board, dev.board))
         return
     want = ensure_tree(dev)
     t0 = time.time()
@@ -675,7 +713,7 @@ def t_upload_busy(dev):
     the card must be left idle, so the new sketch finds it working."""
     image = image_for(dev)
     if not image:
-        print("    (compile into build/test or build/release first)")
+        print("    (compile into build/%s/test or build/%s/release first)" % (dev.board, dev.board))
         return
     h = scsi.open_volume(dev.letter)
     settle(h)
@@ -762,14 +800,17 @@ def main():
     ap.add_argument("tests", nargs="*")
     ap.add_argument("--list", action="store_true")
     ap.add_argument("--keep", action="store_true", help="leave \\CHSD_TEST on the card")
+    ap.add_argument("--board", choices=device.BOARDS if device else None,
+                    help="the board attached: its build is re-uploaded with its FQBN (default: the newest "
+                         "the installed core has; rev0 outside the repository)")
     a = ap.parse_args()
     if a.list:
         print(" ".join(n for n, _ in TESTS))
         return
     names = a.tests or [n for n, _ in TESTS]
-    dev = Device()
+    dev = Device(a.board or default_board())
     dev.connect()
-    print("CHSDtoUSB on %s, drive %s:" % (dev.port, dev.letter))
+    print("CHSDtoUSB on %s, drive %s: (%s)" % (dev.port, dev.letter, dev.board))
     if dev.status()["test"]:
         dev.send("z")
     for name, fn in TESTS:

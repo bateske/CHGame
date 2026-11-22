@@ -79,10 +79,11 @@ The `bootloader version` field of `HELLO` (`BOOT_VERSION` in `proto.h`):
 |---|---|---|
 | 1 | board package 0.2.4 (`release/0.2.4/`) | the protocol as above, `RUN` jumps to the program |
 | 2 | the first SD game menu (board package 0.3.0 as staged) | `RUN` resets into the program instead of jumping; images carrying the bootloader signature (`CHBL` at offset 8) are never launched |
-| 3 | menu v2 and the visual menu (2026-10-03, current) | `STATUS` and `READ` removed: `END`'s CRC check of the flash is the verification; `-verify`'s readback is "not available" |
+| 3 | menu v2 and the visual menu (2026-10-03) | `STATUS` and `READ` removed: `END`'s CRC check of the flash is the verification; `-verify`'s readback is "not available" |
+| 4 | board package 0.4.0 (2026-11-20, current) | nothing in the protocol: the bootloader keeps the system settings block (the metadata page's last 32 B, `0xF7E0`-`0xF7FF`; spec/chgame.md, "The system settings block") across `BEGIN`/`END`, `ABORT` and `DEV_WRITE_BOOT`, where versions 1-3 erase it |
 
 The upload sequence (`HELLO`, `BEGIN`, `WRITE`, `END`, `RUN`, `ABORT`) is the
-same in all three. A host may insist on a minimum version for reasons of its
+same in all four. A host may insist on a minimum version for reasons of its
 own (the web uploader asks for 3, the version whose menu reads the card
 layout its tools write); the right answer to an older one is the upgrade
 procedure below, not a different protocol.
@@ -117,14 +118,14 @@ After the status byte:
 | 14 | u16 | flash page size |
 | 16 | u16 | maximum payload |
 | 18 | 12 B | chip unique ID |
-| 30 | u32 | board: the target id of the board the bootloader is built for (spec/chgame.md's device table). **Only boards after rev0 send it**; a 30-byte answer is a rev0 bootloader's, as every one in use is |
+| 30 | u32 | board: the target id of the board the bootloader is built for (spec/chgame.md's device table). **Only boards after rev0 send it**: a rev1 bootloader answers 34 bytes, the last four `CGR1`; a 30-byte answer is a rev0 bootloader's |
 
 A host must take the region and page size from `HELLO` rather than assuming
 them. That is what lets the bootloader reservation change without every tool
 needing an update. **A host ignores bytes past the fields it knows**, so a
 later bootloader can add fields at the end. The board field was added that
-way (2026-10-07): the uploaders since the first one take any answer of 30
-bytes or more.
+way (specified 2026-10-07, sent by rev1's bootloaders from 2026-11-17): the
+uploaders since the first one take any answer of 30 bytes or more.
 
 **Mode 2 is never sent.** Applications deliberately do not implement this
 protocol: a sketch owns its `Serial` stream, so a responder living in the core
@@ -140,12 +141,12 @@ HOST                                    BOOTLOADER
 HELLO ------------------------------->
       <------------------------------- OK, region, page size, max payload
 
-BEGIN size,crc32 -------------------->  erase metadata page FIRST,
-                                        then erase the application pages
+BEGIN size,crc32 -------------------->  erase the metadata FIRST
+                                        (keeping the system settings block)
       <------------------------------- OK
 
-WRITE offset,data -------------------->  stage, commit whole pages,
-      <------------------------------- OK   read back and verify each page
+WRITE offset,data -------------------->  stage, commit whole pages (each erased
+      <------------------------------- OK   as written), read back and verify
    ... repeated, offsets strictly sequential ...
 
 END ---------------------------------->  recompute CRC-32 FROM FLASH,
@@ -157,10 +158,11 @@ RUN ---------------------------------->  ack, detach USB, jump to the app
 Three properties are worth calling out because they are what make an interrupted
 update safe:
 
-1. **`BEGIN` erases the metadata page before anything else.** From that instant
+1. **`BEGIN` erases the metadata before anything else.** From that instant
    the application is marked invalid, so a power loss anywhere in the rest of the
    update leaves the bootloader in charge rather than a half-written image that
-   still looks launchable.
+   still looks launchable. From version 4 the page's last 32 bytes, the system
+   settings block, are written back with it, and `END` keeps them too.
 2. **`END` computes the CRC from flash**, not from anything the device buffered.
    The only claim worth making is about what is actually stored.
 3. **Validity comes from the metadata record and nothing else.** A 95%-complete
@@ -177,7 +179,8 @@ fails CRC for no visible reason.
 
 What every uploader does around the frames, so that the four behave the same
 on the same board. The browser uploader of the web emulator project was
-checked against this list on 2026-10-06 and follows it.
+checked against this list on 2026-10-06 and follows it; the board check
+for rev1 ("Which board", below) came after that check.
 
 **Finding the board.** VID:PID `16C0:27DD`
 (`shared/chgame_usb_identity.h`). The bootloader and a sketch present the
@@ -206,15 +209,15 @@ a sketch may wait for it (`Serial`'s `waitForPC()`).
 **`HELLO` first.** Check mode 1, protocol version 1, a bootloader version
 you accept, and take `APP_START`, `APP_MAX_SIZE`, the page size and the
 maximum payload from the answer. `APP_START` must equal the load address
-the image was linked for (`0x3000` for `rev0`, spec/chgame.md's device
-table); refuse to upload otherwise. If you know the device the image is
+the image was linked for (`0x3000` for `rev0` and `rev1`, spec/chgame.md's
+device table); refuse to upload otherwise. If you know the device the image is
 for, check the board too ("Which board", below).
 
 **The image.** The raw `.bin` (a `.hex` or `.elf` converted on the host, as
 `tools/chcart` does), padded with `0xFF` to a multiple of 4. `BEGIN` carries
 the padded length and the CRC-32 (IEEE, as zlib) of the padded bytes; `END`
 checks that CRC against what is in flash. The length may not exceed
-`APP_MAX_SIZE` (50,944 B on `rev0`). Refuse an image carrying the
+`APP_MAX_SIZE` (50,944 B on `rev0` and `rev1`). Refuse an image carrying the
 bootloader signature `0x4C424843` (`CHBL`) at offset 8 before uploading it:
 the bootloader stores it but never launches it, so `RUN` would answer
 `ERR_CRC`.
@@ -234,8 +237,8 @@ above that saving is off (spec/chgame.md `save-pages`).
 page per frame. **`END`**, then **`RUN`**: the device acknowledges, waits
 60 ms, detaches and resets into the program, which enumerates again under
 the same identity (the uploaders wait up to 6 s for it). On any failure
-send **`ABORT`**: it erases the metadata page, so the board is left with no
-valid program (it stays in the bootloader, or shows the menu, at the next
+send **`ABORT`**: it erases the metadata (version 4 keeps the system
+settings block), so the board is left with no valid program (it stays in the bootloader, or shows the menu, at the next
 power-on) rather than a half-written one that looks launchable. A host that
 dies without sending it leaves the board in the same state, since `BEGIN`
 erased the metadata first.
@@ -244,34 +247,51 @@ erased the metadata first.
 `DEV_WRITE_BOOT` are the board package's and `chgame uploader`'s business.
 A bootloader a host does not support is replaced by the documented upgrade:
 *Tools > Bootloader*, *Tools > Programmer* **CHGame USB**, *Tools > Burn
-Bootloader* in the IDE with the 0.3.0 package, or `chgame uploader
-selfupdate <bin> --yes` (README.md, "The menu bootloader"; the `locked`
-build has no self-update and needs the factory ISP, `recovery.md`).
+Bootloader* in the IDE with the 0.3.0 package or later (0.4.0 for a Rev1),
+or `chgame uploader selfupdate <bin> --yes` (README.md, "The menu
+bootloader"; the `locked` build has no self-update and needs the factory
+ISP, `recovery.md`).
 
 **Which board.** Board revisions move pins, so a sketch or a bootloader
-built for one board misbehaves on another: a sketch shows nothing, and the
-wrong bootloader leaves the board dark until the factory ISP. Each board is
-a device with a target id (spec/chgame.md, "Devices and revisions": `rev0`
-is `CX35`, `rev1` is `CGR1`), and the board says which it is:
-- **`HELLO`'s board field** (offset 30). Absent means rev0 (`CX35`).
+built for one board misbehaves on another. Between Rev0 and Rev1 it is
+worse than a dark screen: each drives pins that the other uses as buttons,
+so a button press shorts a driven output. Each board is a device with a
+target id (spec/chgame.md, "Devices and revisions": `rev0` is `CX35`,
+`rev1` is `CGR1`), and the board says which it is:
+- **`HELLO`'s board field** (offset 30). Rev1's bootloaders send `CGR1`.
+  Absent means rev0 (`CX35`).
 - **A bootloader image's board word**: the u32 at offset `0x14`, a reserved
   slot of the vector table that no interrupt uses (like `CHBL` at offset 8).
   0 means rev0, as on every rev0 bootloader; a later board's build writes
-  its target id there (`CHBOOT_BOARD_TARGET`, platform/bootloader/build.sh).
+  its target id there (`build.sh --board=rev1` writes `CGR1`).
 
-What a host does with them:
+What a host does with them (`chgame-upload` 0.3.0, the Go and the Python
+tool alike, takes `-device` on `flash`, `pack`, `selfupdate`, `burn` and
+`provision`; the board package passes the selected board's from 0.4.0):
 - **Uploading a sketch** whose device it knows (a cart's binary, or the
   board selected in the IDE): it refuses a board whose `HELLO` names another
-  device. `chgame-upload flash -device rev0` does this. Without `-device` it
+  device. `chgame-upload flash -device rev1` does this. Without `-device` it
   checks nothing, as before.
-- **Uploading a bootloader** (`selfupdate`, `burn -method usb`): it refuses
-  an image whose board word names another board than the running
-  bootloader's `HELLO`. The uploaders always do this.
+- **Uploading a bootloader over USB** (`selfupdate`, `burn -method usb`): it
+  refuses an image whose board word names another board than the running
+  bootloader's `HELLO` (always), or than `-device` (when given), before the
+  board is touched.
 - **Packing a CHG file**: it writes the device's target id
-  (`chgame-upload pack -device rev0`; rev0 is the default).
+  (`chgame-upload pack -device rev1`; rev0 is the default).
 - **The factory ISP** (`provision`, `burn -method isp`) talks to the chip's
-  ROM, which knows nothing of boards: nothing is checked there, and picking
-  the right bootloader is the user's (the IDE's board menu).
+  ROM, which knows nothing of boards. With `-device` the uploader refuses
+  an image whose board word names another board, before anything is
+  erased; that checks the image against the board the user named, not
+  against the chip on the cable. `provision` also refuses while more than
+  one chip is in ISP mode, prints the chip, its UID and the image's board,
+  and asks before erasing (`-yes` does not ask; `burn -method isp`, the
+  IDE's, never asks). Naming the right board stays the user's
+  (`recovery.md`).
+- **The browser uploader** uploads sketches only. Given a binary for a
+  known device (a cart's `rev0.bin` or `rev1.bin`), it should read `HELLO`'s
+  board field and refuse another board: a `rev1` binary only to a board
+  that answers `CGR1`, a `rev0` binary only to one that answers `CX35` or
+  sends no field. That needs nothing new from the bootloader.
 
 **What `HELLO` does not say.** Which face the bootloader has (the text
 menu, the graphic menu, or *USB Only*, which has no card at all) and its
