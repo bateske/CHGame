@@ -6,7 +6,7 @@ bumps it. `python tools/release/release.py --repo bateske/CHGame` (in the
 repository root) publishes the release and uses the matching section of this
 file as the GitHub release notes.
 
-## Unreleased
+## 0.4.0 (2026-11-21)
 
 ### Added
 
