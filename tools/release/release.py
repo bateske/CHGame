@@ -32,8 +32,8 @@ Preconditions (each is checked, with the fix in the message):
     platform/bootloader/build.sh and tools/dist.sh, not here), and they are
     every file boards.txt's Tools > Bootloader names;
   - the Go tool's version (main.go) equals the Python package's;
-  - the README's casino downloads list this version first, the latest
-    (tools/release/downloads.py writes the row; a dry run only warns);
+  - the README's game downloads list this version, the latest
+    (tools/release/downloads.py writes the line; a dry run only warns);
   - to publish: gh is installed and logged in, the tree is clean, and HEAD
     is origin/main (gh creates the tag on the remote).
 """
@@ -96,9 +96,9 @@ def check_preconditions(version: str, publish: bool) -> str:
     gv, pyv = uploader_version(), python_uploader_version()
     if gv != pyv:
         fail(f"chgame-upload versions differ: host/go/main.go says {gv}, host/py says {pyv}")
-    # The README's casino downloads list this release first (its links are known before it exists).
+    # The README's game downloads list this release (its links are known before it exists).
     if downloads.top_version() != version:
-        msg = (f"README.md's casino downloads do not list {version} first: run "
+        msg = (f"README.md's game downloads do not list {version}: run "
                f"`python tools/release/downloads.py {version}` and commit it")
         if publish:
             fail(msg + " before releasing.")

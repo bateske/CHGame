@@ -557,8 +557,9 @@ def wordmark_svg(s=3):
 
 # ---------------------------------------------------------------- the warning
 
-WARNING_TITLE = "REV1"
-WARNING_LINES = ["An attempt at a stable pinout."]
+WARNING_TITLE = "IN DEVELOPMENT - REV1"
+WARNING_LINES = ["REV1 is an attempt at a stable pinout.",
+                 "The system specification is still subject to change."]
 
 ICON_WARN = art("""
     .....##.....

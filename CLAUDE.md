@@ -323,7 +323,7 @@ flash|pack` when the command has none of its own, and a binary taken from
 | The uploaders' parity tests (Python and Go against one vector file) | `python -m unittest discover -s platform/bootloader/test/protocol`; `go test ./...` in `host/go` |
 | Stage a release locally and test it as a new user (fresh arduino-cli in `out/newuser/`, every example compiled from the installed package for each board, the casino cart and an SD card zip per board) | `python tools/release/stage.py [--quick] [--serve] [--include-untracked] [--suffix local2]` |
 | Serve the staged release to the Arduino IDE | `python tools/release/serve.py` (URL `http://localhost:8765/package_chgame_index.json`) |
-| A release, dry or real (`platform/board/docs/building.md`); first, the README's casino downloads list it (the cart and each board's SD card, newest first: release.py refuses otherwise) | `python tools/release/downloads.py VERSION` (commit it), then `python tools/release/release.py [--dry-run]` |
+| A release, dry or real (`platform/board/docs/building.md`); first, the README's game downloads list it (the cart and the newest board's SD card: release.py refuses otherwise) | `python tools/release/downloads.py VERSION` (commit it), then `python tools/release/release.py [--dry-run]` |
 | The API reference (Doxygen, into `out/api-docs/html`; published to <https://bateske.github.io/CHGame/> by `.github/workflows/docs.yml`) | `mkdir -p out/api-docs && doxygen docs/api/Doxyfile` (or the Docker line in [docs/api/README.md](docs/api/README.md)) |
 
 The release FQBN is

@@ -37,8 +37,8 @@ games, and the PC tools (simulator, uploader, card builder).
 <summary><b>Contents</b></summary>
 
 1. [What it is](#-what-it-is)
-2. [What changed in Rev1](#-what-changed-in-rev1): [the pinout](#the-pinout)
-3. [Get started](#-get-started): [install](#1-install-the-board-package), [a first sketch](#a-first-sketch), [the game menu](#put-the-game-menu-on-your-board)
+2. [What changed in Rev1](#-what-changed-in-rev1)
+3. [Get started](#-get-started): [install](#1-install-the-board-package), [write your own](#4-write-your-own), [programming the bootloader](#programming-the-bootloader)
 4. [The games](#-the-games)
 5. [The game menu](#-the-game-menu)
 6. [For developers](#-for-developers)
@@ -79,90 +79,82 @@ and play, with no PC.
 | 📐 | **`.chgame`**, the format games are shared in, and the SD card's layout | [`spec/`](spec/README.md) |
 | 🧰 | **The PC tools**: simulator, uploader, packager, card builder, the art toolkit | [`tools/`](tools/README.md) |
 
-### 🎰 Get the casino
+### 🎰 The built-in games
 
-Every game and app here, ready to play: **one `.chgame` cart** with every
-board's binaries ([the format](spec/chgame.md)), and **the SD card it
-makes, per board**, ready to copy. Each board package release carries both
-([all releases](https://github.com/bateske/CHGame/releases)); the newest is
-at the top.
+[Twenty casino games and three apps](#-the-games), packed for the game
+menu with every release:
 
-<!-- downloads:start (tools/release/downloads.py writes this table: edit that, not the rows) -->
-| Release | The cart: every game, every board | The SD card, per board (unzip onto a FAT32 card) |
-|---|---|---|
-| [**0.3.0**](https://github.com/bateske/CHGame/releases/tag/v0.3.0) (2026-10-07), the latest | [`CHGame-Casino-0.3.0.chgame`](https://github.com/bateske/CHGame/releases/download/v0.3.0/CHGame-Casino-0.3.0.chgame) (Rev0) | [Rev0](https://github.com/bateske/CHGame/releases/download/v0.3.0/CHGame-sdcard-0.3.0.zip) |
+<!-- downloads:start (tools/release/downloads.py writes this line) -->
+**0.3.0** (Rev0): [`CHGame-Casino-0.3.0.chgame`](https://github.com/bateske/CHGame/releases/download/v0.3.0/CHGame-Casino-0.3.0.chgame) · [`CHGame-sdcard-0.3.0.zip`](https://github.com/bateske/CHGame/releases/download/v0.3.0/CHGame-sdcard-0.3.0.zip)
 <!-- downloads:end -->
 
-- **The SD card zip** is the quickest: unzip it onto a FAT32 card, put the
-  card in, switch on, and [the game menu](#-the-game-menu) lists them all.
-  Each board revision has its own zip.
-- **The cart** is the whole collection in one file:
-  `chgame cart deploy CHGame-Casino-<version>.chgame --card E:\` writes a
-  card from it.
-- **Rev1 boards** need 0.4.0 or later, the first release with their
-  binaries (not yet released).
+Unzip the `.zip` onto a FAT32 microSD card and switch on. The `.chgame` is
+the same collection in one file ([the format](spec/chgame.md)):
+`chgame cart deploy <file> --card E:\` writes a card from it.
 
 ### Why one repository
 
-The aim is the Arduboy model, with one repository instead of several:
-
-- **One board package.** Install "CHGame" in the Arduino Boards Manager and
-  you have all you need to write for the device: the core, the toolchain,
-  the uploader, the bootloaders, the libraries, and the casino games under
-  *File > Examples*.
-- **One include.** A sketch includes `CHGame.h` and gets the buttons, frame
-  pacing, graphics, the house palette and drawing helpers, sound, saving and
-  the debug protocol the simulator drives it through, with no per-sketch
-  set-up of pins or drivers. The graphics (CHGfx) and SD (CHSd) libraries
-  stay as separate layers underneath it.
-- **One update.** A bug fix or a feature in any layer reaches everyone with
-  the next board package release: core, libraries, bootloader and examples
-  move together and are tested together.
-- **One place for the PC side.** The tools that talk to the device outside
-  Arduino (simulator, uploader, serial and screenshot tools, `.CHG` packager,
-  SD card builder) live here too. The ones an Arduino user needs are in
-  `chgame-upload`, which the board package installs; the developer tools
-  are Python and work from a clone.
-
-**This repository is the source of truth for CHGame.** It replaces the
-separate repositories the pieces grew up in (CH32SerialBoot, CHGfx and one
-per game); those are frozen. [docs/roadmap.md](docs/roadmap.md) has what is
-left to do.
+Everything that runs on CHGame lives here and ships together, the way the
+Arduboy does it but in one place: **one board package** install gives you
+the core, the RISC-V toolchain, a driverless uploader, the bootloaders, the
+libraries and twenty finished games to learn from; **one include**,
+`CHGame.h`, gives a sketch buttons, frame pacing, graphics, sound, saving
+and a debug protocol with no pin set-up; and because the core, libraries,
+bootloader, examples and PC tools are built and tested together, **one
+release** delivers a fix in any layer to everyone. The repositories the
+pieces grew up in are frozen; [the roadmap](docs/roadmap.md) says what's
+next.
 
 <p align="right"><a href="#readme-top">back to top ↑</a></p>
 
 ## 🔧 What changed in Rev1
 
 > [!IMPORTANT]
-> **Rev1 is an attempt at a stable pinout.** Rev 1.5 boards use the same
-> pins and builds.
+> **Rev1 is an attempt at a stable pinout.** The system specification is
+> still subject to change. Rev 1.5 boards use the same pins and builds.
 
 Same chip, memory map, screen and buttons as Rev0, on new pins. Games
 must be recompiled for each target; the source doesn't change. A `.chgame`
 cart can carry a binary for each hardware revision
 ([the cart format](spec/chgame.md#binaries-and-devices)).
 
-### The pinout
+<details>
+<summary><b>The pinout</b>: every pin, Rev1 and Rev0</summary>
 
-| Role | Name in a sketch | Rev1 | Rev0 (legacy) |
+| Function | Name in a sketch | Rev1 | Rev0 (legacy) |
 |---|---|---|---|
-| D-pad UP / DOWN | `PIN_BTN_UP` / `PIN_BTN_DOWN` | PB0 / PB1 | PB4 / PC14 |
-| D-pad LEFT / RIGHT | `PIN_BTN_LEFT` / `PIN_BTN_RIGHT` | PC3 / PC0 | PB3 / PC15 |
-| A / B | `PIN_BTN_A` / `PIN_BTN_B` | PB11 / PB6 | PB1 / PB6 |
-| SELECT / START | `PIN_BTN_SELECT` / `PIN_BTN_START` | PB7 / PB8 | PB7 / PB8 |
-| LCD CS / DC / RST | `PIN_LCD_CS` / `PIN_LCD_DC` / `PIN_LCD_RST` | PA4 / PB4 / PB12 | PA4 / PB0 / PB12 |
+| D-pad UP | `PIN_BTN_UP` | PB0 | PB4 |
+| D-pad DOWN | `PIN_BTN_DOWN` | PB1 (bonded to PB5) | PC14 |
+| D-pad LEFT | `PIN_BTN_LEFT` | PC3 | PB3 |
+| D-pad RIGHT | `PIN_BTN_RIGHT` | PC0 | PC15 |
+| A | `PIN_BTN_A` | PB11 | PB1 |
+| B | `PIN_BTN_B` | PB6 | PB6 |
+| SELECT | `PIN_BTN_SELECT` | PB7 | PB7 |
+| START | `PIN_BTN_START` | PB8 | PB8 |
+| LCD chip select | `PIN_LCD_CS` | PA4 | PA4 |
+| LCD data/command | `PIN_LCD_DC` | PB4 | PB0 |
+| LCD reset | `PIN_LCD_RST` | PB12 | PB12 |
 | LCD backlight | `PIN_LCD_BL` | PB9, active high | always on |
-| SD card CS | `PIN_SD_CS` | PB3 (also gates the card's DI) | PB11 |
-| SPI1 SCK / MISO / MOSI | `PIN_SPI_SCK` / `PIN_SPI_MISO` / `PIN_SPI_MOSI` | PA5 / PA6 / PA7 | PA5 / PA6 / PA7 |
+| SD card chip select | `PIN_SD_CS` | PB3 (also gates the card's DI) | PB11 |
+| SPI1 SCK | `PIN_SPI_SCK` | PA5 | PA5 |
+| SPI1 MISO | `PIN_SPI_MISO` | PA6 | PA6 |
+| SPI1 MOSI | `PIN_SPI_MOSI` | PA7 | PA7 |
 | Speaker | `PIN_BUZZER` | PA1, magnetic buzzer (TIM2 CH2) | PB10, piezo (TIM1 CH2) |
 | Status LED | `PIN_LED`, `LED_BUILTIN` | PB10 | PB9 |
 | USB power sense | `PIN_VBUS_SENSE` | PA0, analog input | – |
-| Test pads | `PIN_TP14` / `PIN_TP15` | PC14 / PC15 | – (DOWN / RIGHT) |
-| `Serial1` TX / RX | `PIN_SERIAL_TX` / `PIN_SERIAL_RX` | PA2 / PA3, connector CN3 | PA2 / PA3, header H1 |
-| `Wire` SDA / SCL | `PIN_WIRE_SDA` / `PIN_WIRE_SCL` | PC18 / PC19, connector CN2 | PC18 / PC19 |
-| USB D- / D+ | | PC16 / PC17 | PC16 / PC17 |
+| Test pad TP14 | `PIN_TP14` | PC14 | – |
+| Test pad TP15 | `PIN_TP15` | PC15 | – |
+| `Serial1` TX | `PIN_SERIAL_TX` | PA2, connector CN3 | PA2, header H1 |
+| `Serial1` RX | `PIN_SERIAL_RX` | PA3, connector CN3 | PA3, header H1 |
+| `Wire` SDA | `PIN_WIRE_SDA` | PC18, connector CN2 | PC18 |
+| `Wire` SCL | `PIN_WIRE_SCL` | PC19, connector CN2 | PC19 |
+| USB D- | | PC16 | PC16 |
+| USB D+ | | PC17 | PC17 |
 
-Full detail: [hardware-pinmap.md](platform/board/docs/hardware-pinmap.md).
+Buttons read LOW when pressed (internal pull-ups). Full detail:
+[hardware-pinmap.md](platform/board/docs/hardware-pinmap.md).
+
+</details>
 
 <p align="right"><a href="#readme-top">back to top ↑</a></p>
 
@@ -190,11 +182,7 @@ arduino-cli core install CHGame:ch32v
 </details>
 
 That is everything: the toolchain, the uploader, the bootloaders, the
-libraries (nothing else to install) and the games under *File > Examples*.
-Each release also carries every game and app as one cart and as a ready
-SD card per board: [Get the casino](#-get-the-casino) links them.
-(Boards Manager URLs from before 0.3.0, the CH32SerialBoot repository's,
-offer 0.2.4 only.)
+libraries and the games under *File > Examples*.
 
 ### 2. Pick the board
 
@@ -206,67 +194,25 @@ later). Rev 1.5 boards use it too.
 Open *File > Examples > CHGame > Hello*, plug the board in and press
 **Upload**. It resets itself, flashes in about half a second and starts.
 For the games (*File > Examples > CHGame > Games*), set *Tools > USB* to
-**Upload only**; *Tools > Optimize* stays at its default, **Smallest +
-LTO**, which they need too.
+**Upload only**.
 
-### A first sketch
+### 4. Write your own
 
-A new sketch needs only `#include <CHGame.h>`:
+Start from `Hello`, the smallest complete sketch, then:
 
-```cpp
-#include <CHGame.h>
+- [Getting started](docs/getting-started.md): the guide, with the Arduboy2
+  calls mapped to CHGame's.
+- [API reference](https://bateske.github.io/CHGame/): every call in the
+  libraries.
+- [The CHGame library](platform/board/arduino/CHGame/libraries/CHGame/README.md):
+  how a game is put together.
 
-void setup() {
-    chgame.boot();                    // buttons; START held 3 s goes back to the menu
-    gfx_begin(GFX_DIV2, GFX_12BPP);   // the panel: 128x128, 16 colours on screen
-    pal::init();                      // the house colours (INK, WHITE, FELT, GOLD ...)
-    chgame.setFrameRate(60);
-}
+### Programming the bootloader
 
-void loop() {
-    if (!chgame.nextFrame()) return;  // 60 times a second
-    chgame.pollButtons();
-    // ... game logic: chgame.pressed(LEFT_BUTTON), chgame.justPressed(A_BUTTON) ...
-    pal::tick();
-
-    gfx_wait();                       // the last frame has gone out: draw the next
-    pal::commit();
-    gfx_clear(FELT);
-    text35x2s(10, 9, "HELLO", WHITE);
-    gfx_flushAsync();                 // sent by DMA while the next frame's logic runs
-}
-```
-
-- **Coming from the Arduboy?** [docs/getting-started.md](docs/getting-started.md)
-  maps the Arduboy2 calls to CHGame's, explains what happens behind the
-  scenes, and walks through a first game.
-- **Every call** is in the [API reference](https://bateske.github.io/CHGame/):
-  the CHGame, CHGfx and CHSd libraries and the core's SPI, Wire and EEPROM.
-  Start with the [CHGame library](https://bateske.github.io/CHGame/group__lib__chgame.html).
-- **How a game is put together:** the CHGame library's
-  [README](platform/board/arduino/CHGame/libraries/CHGame/README.md).
-
-### Put the game menu on your board
-
-The menu bootloader goes on over USB, through the bootloader the board
-already has: no driver, no buttons. *Tools > Bootloader* **SD Text Menu
-(Rainbow)** (or **(Static)**), *Tools > Programmer* **CHGame USB**, then
-*Tools > Burn Bootloader*. Or pick **SD Graphic Menu**, the
-[visual menu](#-the-game-menu), which shows one picture at a time. Without
-the IDE:
-`chgame uploader selfupdate platform/bootloader/release/chgame_sdboot.bin`
-([platform/bootloader](platform/bootloader/README.md#installing-it-on-a-board)).
-The WCH driver and the BOOT button are only for
-[recovery](platform/board/docs/recovery.md).
-
-**The SD card:** unzip `CHGame-sdcard-<version>-rev1.zip` from the
-[release page](https://github.com/bateske/CHGame/releases/latest) onto a
-FAT32 card (`-rev0.zip` for a legacy Rev0; 0.3.0 has Rev0's alone), or
-deploy `CHGame-Casino-<version>.chgame` to it
-(`chgame cart deploy ... --card E:\`; [docs/sd-menu.md](docs/sd-menu.md)).
-A card holds one board's games; the menu greys out and refuses games built
-for another board.
-Holding **START** for 3 s in any game goes back to the menu.
+The game menu lives in the bootloader. *Tools > Bootloader*: **SD Text
+Menu** or **SD Graphic Menu**; *Tools > Programmer*: **CHGame USB**; then
+*Tools > Burn Bootloader*. It goes over USB, with no driver and no buttons.
+A board that won't respond: [recovery](platform/board/docs/recovery.md).
 
 <p align="right"><a href="#readme-top">back to top ↑</a></p>
 
@@ -279,6 +225,11 @@ SD card behind the game menu. Each one, and each app, has box art for the
 visual menu, painted in the manner of early-1990s game boxes:
 
 ![The casino card's box art: its cover, the seven folders, the twenty games and the two apps](docs/cover-art.png)
+
+**On the SD card:** a release's card ([the built-in games](#-the-built-in-games))
+holds one board's games; the menu greys out games built for another board.
+Hold **START** for 3 s in any game to go back to the menu
+([the SD game menu](docs/sd-menu.md)).
 
 Each game is a sketch in
 `platform/board/arduino/CHGame/libraries/CHGame/examples/Games/<Name>/`
