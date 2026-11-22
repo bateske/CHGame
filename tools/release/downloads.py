@@ -40,11 +40,16 @@ def newest_board(boards: dict[str, str]) -> str:
 
 
 def line(version: str, repo: str) -> str:
+    """The cart, the newest board's card, then each older board's as a
+    short 'legacy' link."""
     base = f"https://github.com/{repo}/releases/download/v{version}"
-    board = newest_board(acceptance.package_boards(PLATFORM))
+    boards = acceptance.package_boards(PLATFORM)
+    board = newest_board(boards)
     cart = f"CHGame-Casino-{version}.chgame"
     card = f"CHGame-sdcard-{version}-{board}.zip"
-    return f"**{version}**: [`{cart}`]({base}/{cart}) · [`{card}`]({base}/{card})"
+    older = " · ".join(f"[legacy {boards[b].replace('CHGame ', '')} card]({base}/CHGame-sdcard-{version}-{b}.zip)"
+                       for b in boards if b != board)
+    return f"**{version}**: [`{cart}`]({base}/{cart}) · [`{card}`]({base}/{card})" + (f" · {older}" if older else "")
 
 
 def section(text: str) -> tuple[int, int]:

@@ -71,7 +71,7 @@ and play, with no PC.
 menu with every release:
 
 <!-- downloads:start (tools/release/downloads.py writes this line) -->
-**0.4.0**: [`CHGame-Casino-0.4.0.chgame`](https://github.com/bateske/CHGame/releases/download/v0.4.0/CHGame-Casino-0.4.0.chgame) · [`CHGame-sdcard-0.4.0-rev1.zip`](https://github.com/bateske/CHGame/releases/download/v0.4.0/CHGame-sdcard-0.4.0-rev1.zip)
+**0.4.0**: [`CHGame-Casino-0.4.0.chgame`](https://github.com/bateske/CHGame/releases/download/v0.4.0/CHGame-Casino-0.4.0.chgame) · [`CHGame-sdcard-0.4.0-rev1.zip`](https://github.com/bateske/CHGame/releases/download/v0.4.0/CHGame-sdcard-0.4.0-rev1.zip) · [legacy Rev0 card](https://github.com/bateske/CHGame/releases/download/v0.4.0/CHGame-sdcard-0.4.0-rev0.zip)
 <!-- downloads:end -->
 
 Unzip the `.zip` onto a FAT32 microSD card and switch on. The `.chgame` is
@@ -188,7 +188,8 @@ libraries and the games under *File > Examples*.
 
 ### 2. Pick the board
 
-*Tools > Board > CHGame Boards > CHGame Rev1*. Rev 1.5 boards use it too.
+*Tools > Board > CHGame Boards > CHGame Rev1*. Rev 1.5 boards use it too
+(a legacy Rev0 board takes *CHGame Rev0*).
 
 ### 3. Upload
 
