@@ -225,7 +225,7 @@ load (most are within 1 KB of filling the flash), and they all fit on one
 SD card behind the game menu. Each one, and each app, has box art for the
 visual menu, painted in the manner of early-1990s game boxes:
 
-![The casino card's box art: its cover, the seven folders, the twenty games and the two apps](docs/cover-art.png)
+![The casino card's box art: its cover, the seven folders, the twenty games and two apps](docs/cover-art.png)
 
 **On the SD card:** a release's card ([the built-in games](#the-built-in-games))
 holds one board's games; the menu greys out games built for another board.
@@ -377,18 +377,6 @@ CHGame/
 ├── tools/             the PC tools shared by every game
 └── docs/              platform knowledge, the roadmap, the brand, the API reference's build
 ```
-
-</details>
-
-<details>
-<summary><b>History</b></summary>
-
-The pieces were developed in separate repositories and brought together
-here on 2026-10-01, without their histories: the board package and
-bootloader from CH32SerialBoot `v0.2.4`, CHGfx at `1.3.0`, each game from
-the head of its own repository (the commits are in
-[docs/status.md](docs/status.md)), and CHSd 1.0.0. Those repositories are
-frozen; all development continues here.
 
 </details>
 

@@ -212,11 +212,14 @@ def compare(out, names):
 
 def gallery_casino():
     """The casino card as the visual menu shows it: the cover, the folders,
-    then the games and the apps in the card's order."""
+    then the games and the apps in the card's order. CHSDtoSerial is left
+    out so the 30 pictures make an even grid (five rows of six)."""
     ims = [Image.open(SD / "art" / "cover.png")]
     ims += [Image.open(SD / "art" / f"{f}.png") for f in ("cards", "casino", "dice", "board", "tiles", "words", "apps")]
     for sk, _ in card_order():
         d = sketch_dir(sk)
+        if d and d.name == "CHSDtoSerial":
+            continue
         if d and (d / "docs" / "cart.png").exists():
             ims.append(Image.open(d / "docs" / "cart.png"))
     return ims
