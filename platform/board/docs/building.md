@@ -98,14 +98,14 @@ Manager compares with what a user has installed to decide whether to offer
 an update, so every release bumps it, and the release script refuses a
 version that does not match it. The platform and the uploader are versioned
 apart: `chgame-upload`'s version only moves when `host/go` changes behaviour.
-The next release is platform **0.4.0**, with two boards (CHGame Rev0 and
-CHGame Rev1), and `chgame-upload` **0.3.0**: 0.4.0's recipes pass `-device`
+The last release is platform **0.4.0** (2026-11-21), with two boards
+(CHGame Rev0 and CHGame Rev1), and `chgame-upload` **0.3.0**: 0.4.0's recipes pass `-device`
 to `burn` too, which 0.3.0 checks there (0.2.0 checked it on `flash` only),
 and 0.3.0 keeps a `-port` given before the command, as the recipes give it
 (0.2.0 lost it). The index names the tool's version, so 0.4.0 installs 0.3.0
 with it.
 
-1. Bump `version=` in `platform.txt` (0.4.0 already says it).
+1. Bump `version=` in `platform.txt`.
 2. Retitle the `## Unreleased` (or `## <version> (not yet released)`)
    section of `platform/board/CHANGELOG.md` to `## <version> (<date>)`. The
    script uses it as the GitHub release notes, refuses to run without it,

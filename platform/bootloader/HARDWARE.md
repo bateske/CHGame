@@ -35,8 +35,7 @@ ISP, a bench sketch checks the board, and then the SD menu goes on over USB
 as on Rev0. A Rev 1.5 is a Rev1 here: the same pins, and with this
 firmware its power parts (the CH211, the INA226, the host boost) stay as
 they power up. `UP` is the uploader ("Before starting", below). The core
-must have Rev1 (board package 0.4.0, or a staged `0.4.0-local`:
-[trying-a-release.md](../board/docs/trying-a-release.md)). Keep Rev0
+must have Rev1 (board package 0.4.0 or later). Keep Rev0
 boards off the bench, and label each board with its edition.
 
 1. **Preflight**, at the first power-on, with BOOT held (the factory ISP
@@ -271,7 +270,7 @@ installed game stay. `UP` is the uploader as above (`chgame uploader` or
 - **Software.** This branch checked out. Python 3 with `pip install -r
   tools/requirements.txt`. arduino-cli with `CHGame:ch32v`
   (CLAUDE.md, Setup; these steps were run with 0.2.4, and a Rev1 needs
-  0.4.0 or a staged `0.4.0-local`).
+  0.4.0 or later).
 - **Commands.** Run from the repository root. `UP` is `chgame uploader`
   (the Python uploader, `platform/bootloader/host/py`; `python -m
   chgame_upload` from that folder is the same). `chgame-upload` is the board

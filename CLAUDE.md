@@ -104,9 +104,9 @@ changing that game.
    (the style: [docs/api/README.md](docs/api/README.md)), and
    `doxygen docs/api/Doxyfile` must stay free of warnings. Two things to know:
    - `platform/board` is what the *next* board package release will contain.
-     Builds use the installed package for the core (0.3.0, the last
-     release, which has Rev0 alone; or a `-local` version when a staged
-     build is installed, such as `0.4.0-local` with both boards), so an edit to the core, variant,
+     Builds use the installed package for the core (0.4.0, the last
+     release, with both boards; or a `-local` version when a staged build
+     is installed), so an edit to the core, variant,
      `platform.txt` or `boards.txt` has no effect on a build until it is
      released, staged and installed, or the installed copy is patched. A
      board the installed core lacks cannot be built: `chgame` skips it in
@@ -212,8 +212,9 @@ Manager), then `pip install -e .[sim]` in the repository root.
 
 **Notes:**
 - **The Boards Manager URL** above is this repository's; 0.3.0
-  (2026-10-07) is the first release from here, with every game as one
-  cart, `CHGame-Casino-0.3.0.chgame`, and its SD card's zip beside it. The
+  (2026-10-07) was the first release from here, and 0.4.0 (2026-11-21)
+  the latest, with both boards, every game as one cart
+  (`CHGame-Casino-0.4.0.chgame`) and an SD card zip per board. The
   URL is given here, in the README and in `platform/README.md`: change the
   three together. To install the next version before it is published:
   `python tools/release/stage.py` builds it as `<version>-local` and tests
@@ -221,19 +222,14 @@ Manager), then `pip install -e .[sim]` in the repository root.
   `python tools/release/serve.py` serves it to Boards Manager at
   `http://localhost:8765/package_chgame_index.json`
   ([platform/board/docs/trying-a-release.md](platform/board/docs/trying-a-release.md)).
-- **Rev1 needs 0.4.0.** 0.3.0 has the CHGame Rev0 board alone. 0.4.0, not
-  yet released, adds CHGame Rev1 (for Rev 1 and Rev 1.5 boards), its
+- **Rev1 needs 0.4.0** (released 2026-11-21). 0.3.0 has the CHGame Rev0
+  board alone; 0.4.0 adds CHGame Rev1 (for Rev 1 and Rev 1.5 boards), its
   bootloaders, chgame-upload 0.3.0 and the board checks on Upload and Burn
-  Bootloader. To use it before it is published, stage it:
-  `python tools/release/stage.py --include-untracked` (while the rev1
-  variant and bootloaders are uncommitted: `release.py` packs committed
-  files only), `python tools/release/serve.py`, then `arduino-cli core
-  update-index` and `arduino-cli core install CHGame:ch32v@0.4.0-local`,
-  both with `--additional-urls http://localhost:8765/package_chgame_index.json`.
-  A re-stage takes a new `--suffix` (`local2`, ...), since Arduino keeps an
-  installed version whose number has not changed. To go back, run `core
+  Bootloader. A staged `-local` version (above) takes a new `--suffix`
+  (`local2`, ...) on each re-stage, since Arduino keeps an installed
+  version whose number has not changed. To go back from one, run `core
   update-index` from the GitHub URL first (both indexes are cached under
-  one name), then `core install CHGame:ch32v@0.3.0`
+  one name), then `core install CHGame:ch32v@0.4.0`
   (trying-a-release.md, "Or in your own arduino-cli"). With 0.3.0
   installed the tools build rev0 alone.
 - The board package brings its own RISC-V GCC 8.2 and the `chgame-upload`

@@ -7,7 +7,7 @@ here. The table's "Came from" column is history, not something to sync with.
 
 | Folder | What | Version | Came from | Licence |
 |---|---|---|---|---|
-| `board/arduino/CHGame/` | The CHGame Arduino board package: core, variants (CHGame Rev0, CHGame Rev1), linker scripts, bootloader binaries, `boards.txt` / `platform.txt` | 0.4.0, not yet released (0.3.0 released 2026-10-07) | CH32SerialBoot tag `v0.2.4` (5de3006), folder `arduino/CHGame` | MIT (`board/LICENSE`, `board/THIRD-PARTY.md`) |
+| `board/arduino/CHGame/` | The CHGame Arduino board package: core, variants (CHGame Rev0, CHGame Rev1), linker scripts, bootloader binaries, `boards.txt` / `platform.txt` | 0.4.0, released 2026-11-21 (0.3.0, Rev0 alone, 2026-10-07) | CH32SerialBoot tag `v0.2.4` (5de3006), folder `arduino/CHGame` | MIT (`board/LICENSE`, `board/THIRD-PARTY.md`) |
 | `board/docs/` | The board's docs: hardware pin map, flash/RAM map, boot flow, upload protocol, recovery, CH32X035 gotchas, building the bootloader | 0.2.4 | same tag, folder `docs` | MIT |
 | `board/arduino/CHGame/libraries/CHGame/` | The CHGame library: `CHGame.h`, the one include of a sketch (buttons, pacing, palette, drawing, sound, saving, the debug protocol) | 0.1.0 | built here (2026-10-02) from the code the twenty games shared | Apache-2.0 (`LICENSE`, `NOTICE`) |
 | `board/arduino/CHGame/libraries/CHGfx/` | The graphics library | 1.3.3 | CHGfx tag `1.3.0` (838bbb0) | MIT (+ font notices in its `LICENSE`) |
@@ -47,7 +47,8 @@ arduino-cli core update-index
 arduino-cli core install CHGame:ch32v
 ```
 
-0.3.0 (2026-10-07) is the first release cut from this repository. The
+0.3.0 (2026-10-07) was the first release cut from this repository, and
+0.4.0 (2026-11-21), which adds CHGame Rev1, is the latest. The
 CH32SerialBoot repository's URL offers 0.2.4 only. To try the next version
 before it is published, stage it and install it from this machine:
 [board/docs/trying-a-release.md](board/docs/trying-a-release.md).

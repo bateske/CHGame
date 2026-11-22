@@ -28,9 +28,10 @@ Rainbow and a Static style. It ran on the board on 2026-10-03
 `release/` and the board package carry it.
 
 **Since (2026-11-17):** a second board, CHGame Rev1 (Rev 1.5 uses it too),
-in board package 0.4.0, staged and not yet released: everything builds for
-both boards, and the tools default to the newest. It has not run on a board
-yet ([7. Board revisions](#7-board-revisions)).
+in board package 0.4.0, released 2026-11-21: everything builds for both
+boards, and the tools default to the newest. Its bootloader has run on a
+Rev 1.5 board, and the Rev0 version 4 bootloader on a Rev0
+([7. Board revisions](#7-board-revisions)).
 
 **Next, after 0.4.0:** a newer compiler, GCC 16, beside WCH's GCC 8.2, for
 Apple silicon, ARM Linux and smaller games ([9. A newer
@@ -42,7 +43,7 @@ This page records what is in place and what each step involved.
 
 | | Where | State |
 |---|---|---|
-| Arduino core, variants, linker scripts, Tools menus | `platform/board/arduino/CHGame` | 0.3.0, released 2026-10-07 (CHGame Rev0); 0.4.0 staged, not released (2026-11-17: CHGame Rev1 beside it) |
+| Arduino core, variants, linker scripts, Tools menus | `platform/board/arduino/CHGame` | 0.4.0, released 2026-11-21 (CHGame Rev0 and CHGame Rev1); 0.3.0 (2026-10-07) had Rev0 alone |
 | Bootloader with the SD game menu | `platform/bootloader` | menu v2 (2026-10-03), Rainbow and Static (White until that evening, when colour 15 became the picture's magenta as painted; that build has not run on a board): the PC suite, and installed and checked on a board the same day (`test/hil/RESULTS-2026-10-03.md`; the first menu on 2026-10-01) |
 | The visual menu: the same bootloader, one picture at a time, no text ([visual-menu.md](visual-menu.md)) | `platform/bootloader` (`--ui=visual`), `tools/artkit`, each example's `tools/cart.py` | 2026-10-03: Rainbow and Static, in Burn Bootloader; the PC suite passes on test cards and the real casino card (which is now in genre folders, with box art for all 22 programs, repainted on 2026-10-04 with the menu's own pictures: [cover-art.md](cover-art.md)). Not yet run on a board (`platform/bootloader/HARDWARE.md`, "The visual menu") |
 | The `.chgame` format and the SD card's layout | `spec/`, `tools/chcart` | version 1 and layout 2 (with the visual menu's pictures: `menu.cover`, `menu.about`, folder covers, `cartImage` in each CHG file); reference implementation, 24 unit tests, 27 conformance fixtures; the repository's games and release use it |
@@ -373,9 +374,8 @@ All of it before macOS 28.
    marks them). The scout that finds a face, `artkit.fontscout`, reads
    Pixel Logo Lab, which is not public: the pictures rebuild without it,
    but a new title needs it.
-7. **0.4.0, with Rev1.** Rev1 on the boards (above, and
-   [hardware-revisions.md](hardware-revisions.md), step 8); the rev1
-   variant and bootloaders committed (`release.py` packs committed files
-   only; `stage.py --include-untracked` is for trying it before); the
-   changelog dated; then the release, with the cart and an SD card zip
-   per board (`CHGame-sdcard-<version>-rev0.zip`, `-rev1.zip`).
+7. **0.4.0, with Rev1.** Released 2026-11-21, with the cart and an SD
+   card zip per board (`CHGame-sdcard-0.4.0-rev0.zip`, `-rev1.zip`). Left:
+   the rest of Rev1's bring-up on the boards (above, and
+   [hardware-revisions.md](hardware-revisions.md), step 8), and installing
+   from the SD card on a Rev0 with bootloader version 4.
