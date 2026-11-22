@@ -6,14 +6,14 @@
 
 <p>
 <a href="https://chgame.website"><img src="docs/brand/btn-website.svg" alt="chgame.website"></a>&nbsp;
-<a href="#-get-started"><img src="docs/brand/btn-start.svg" alt="Get started"></a>&nbsp;
+<a href="#-getting-started"><img src="docs/brand/btn-start.svg" alt="Get started"></a>&nbsp;
 <a href="https://bateske.github.io/CHGame/"><img src="docs/brand/btn-docs.svg" alt="API docs"></a>&nbsp;
 <a href="https://www.arduboy.com/shop/p/chgame"><img src="docs/brand/btn-shop.svg" alt="Buy one"></a>&nbsp;
 <a href="https://community.arduboy.com/c/color/56"><img src="docs/brand/btn-forum.svg" alt="Forum"></a>
 </p>
 
 [![Board package](https://img.shields.io/github/v/release/bateske/CHGame?style=for-the-badge&label=board%20package&labelColor=252628&color=F9D84A)](https://github.com/bateske/CHGame/releases/latest)
-[![Arduino](https://img.shields.io/badge/Arduino-IDE%20%26%20CLI-BDE2C7?style=for-the-badge&logo=arduino&logoColor=white&labelColor=252628)](#-get-started)
+[![Arduino](https://img.shields.io/badge/Arduino-IDE%20%26%20CLI-BDE2C7?style=for-the-badge&logo=arduino&logoColor=white&labelColor=252628)](#-getting-started)
 [![RISC-V](https://img.shields.io/badge/RISC--V-CH32X035-C8B6F3?style=for-the-badge&logo=riscv&logoColor=white&labelColor=252628)](docs/platform.md)
 [![C++](https://img.shields.io/badge/language-C%2B%2B-B7DACC?style=for-the-badge&logo=cplusplus&logoColor=white&labelColor=252628)](https://bateske.github.io/CHGame/)
 
@@ -35,9 +35,9 @@ games, and the PC tools (simulator, uploader, card builder).
 
 **Contents**
 
-1. [What it is](#-what-it-is): [the built-in games](#the-built-in-games), [why one repository](#why-one-repository)
+1. [What is CHGame?](#-what-is-chgame): [the built-in games](#the-built-in-games), [why one repository](#why-one-repository)
 2. [What changed in Rev1](#-what-changed-in-rev1)
-3. [Get started](#-get-started): [install](#1-install-the-board-package), [pick the board](#2-pick-the-board), [upload](#3-upload), [write your own](#4-write-your-own), [programming the bootloader](#programming-the-bootloader)
+3. [Getting started](#-getting-started)
 4. [The games](#-the-games)
 5. [The game menu](#-the-game-menu)
 6. [For developers](#-for-developers)
@@ -45,7 +45,7 @@ games, and the PC tools (simulator, uploader, card builder).
 8. [Licences](#-licences)
 9. [Credits](#-credits)
 
-## 🎮 What it is
+## 🎮 What is CHGame?
 
 <img align="right" width="320" src="docs/brand/board.webp" alt="A CHGame board running its demo">
 
@@ -160,7 +160,7 @@ Buttons read LOW when pressed (internal pull-ups). Full detail:
 
 <p align="right"><a href="#readme-top">back to top ↑</a></p>
 
-## 🚀 Get started
+## 🚀 Getting started
 
 ### 1. Install the board package
 
