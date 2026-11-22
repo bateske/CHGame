@@ -14,8 +14,8 @@ file as the GitHub release notes.
   Boards > CHGame Rev1*), FQBN `CHGame:ch32v:rev1`, device `rev1`, variant
   `CH32X035/CHGame_Rev1`, board macro `ARDUINO_CHGAME_REV1`. Rev 1.5 is
   the same board with USB-PD, a battery USB host and a protected power
-  output added; it uses this entry. **Rev1 is the current board and an
-  attempt at a stable pinout; Rev0 is legacy and discontinued.** Rev1 has
+  output added; it uses this entry. **Rev1 is an attempt at a stable
+  pinout.** Rev1 has
   other pins than Rev0, so a sketch is built for one board or the other:
   - buttons UP PB0, DOWN PB1 (PB5 is the same pad: never driven), LEFT
     PC3, RIGHT PC0, A PB11, B PB6, SELECT PB7, START PB8; LCD DC PB4 (CS

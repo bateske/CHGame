@@ -19,7 +19,7 @@
 
 <br>
 
-<img src="docs/brand/warning.svg" alt="Rev1 is the current board. Rev1 is an attempt at a stable pinout. Rev0 is legacy and discontinued.">
+<img src="docs/brand/warning.svg" alt="Rev1. An attempt at a stable pinout.">
 
 <br>
 
@@ -134,26 +134,13 @@ left to do.
 ## 🔧 What changed in Rev1
 
 > [!IMPORTANT]
-> **Rev1 is the current board, and an attempt at a stable pinout.** Rev0
-> is legacy and discontinued. Rev 1.5 boards use the same pins as Rev1 and
-> take the same builds.
+> **Rev1 is an attempt at a stable pinout.** Rev 1.5 boards use the same
+> pins and builds.
 
-Rev1 keeps Rev0's chip, memory map, screen and buttons, on different pins.
-The main changes: the buttons, the LCD's DC line and the SD card's chip
-select moved; the speaker is a magnetic buzzer on PA1; the backlight is
-switched (PB9) and the LED moved to PB10; the SD card's DI is gated by its
-chip select; I2C and the UART have their own connectors (CN2, CN3); PA0
-senses USB power.
-
-**What it means for games:** a binary runs only on the board it was built
-for, so games have to be recompiled for each target. The source does not
-change: the board package names every pin (`PIN_BTN_A`, `PIN_SD_CS`, ...)
-and the libraries take them from the board selected. To support more than
-one hardware revision, a `.chgame` cart can carry a binary for each,
-older revisions included; see
-[Binaries and devices](spec/chgame.md#binaries-and-devices) in the cart
-format. `chgame export` builds one for every board the installed package
-has.
+Same chip, memory map, screen and buttons as Rev0, on new pins. Games
+must be recompiled for each target; the source doesn't change. A `.chgame`
+cart can carry a binary for each hardware revision
+([the cart format](spec/chgame.md#binaries-and-devices)).
 
 ### The pinout
 
@@ -175,11 +162,7 @@ has.
 | `Wire` SDA / SCL | `PIN_WIRE_SDA` / `PIN_WIRE_SCL` | PC18 / PC19, connector CN2 | PC18 / PC19 |
 | USB D- / D+ | | PC16 / PC17 | PC16 / PC17 |
 
-The buttons use the internal pull-ups and read LOW when pressed. The
-QFN28 pin numbers, timers and connectors are in
-[hardware-pinmap.md](platform/board/docs/hardware-pinmap.md); how boards
-are named and kept apart is in
-[hardware-revisions.md](docs/hardware-revisions.md).
+Full detail: [hardware-pinmap.md](platform/board/docs/hardware-pinmap.md).
 
 <p align="right"><a href="#readme-top">back to top ↑</a></p>
 
@@ -216,11 +199,7 @@ offer 0.2.4 only.)
 ### 2. Pick the board
 
 *Tools > Board > CHGame Boards > CHGame Rev1* (board package 0.4.0 and
-later), for Rev 1 and Rev 1.5 boards. A legacy Rev0 board takes
-**CHGame Rev0**. Upload and Burn Bootloader refuse a build for the other
-board before anything is written; with the *WCH factory ISP* programmer
-the chip cannot be identified, so the bootloader is checked only against
-the board selected.
+later). Rev 1.5 boards use it too.
 
 ### 3. Upload
 

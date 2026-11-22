@@ -10,7 +10,7 @@ deeper references are in [../platform/board/docs](../platform/board/docs):
 
 Two boards with one chip and one memory map: **CHGame Rev1** (device
 `rev1`), the current board and an attempt at a stable pinout, and
-**CHGame Rev0** (`rev0`), legacy and discontinued. Rev 1.5 is a Rev1 with
+**CHGame Rev0** (`rev0`), legacy. Rev 1.5 is a Rev1 with
 a power section added (a USB-PD sink, a battery-powered USB host and a
 protected output) and takes the Rev1 build.
 Their pins differ, so every sketch is built for one board or the other
