@@ -19,7 +19,7 @@
 
 <br>
 
-<img src="docs/brand/warning.svg" alt="Rev1. An attempt at a stable pinout.">
+<img src="docs/brand/warning.svg" alt="In development - Rev1. The system specification is still subject to change. Rev1 is an attempt at a stable pinout.">
 
 <br>
 
@@ -113,8 +113,24 @@ next.
 > **Rev1 is an attempt at a stable pinout.** The system specification is
 > still subject to change. Rev 1.5 boards use the same pins and builds.
 
-Same chip, memory map, screen and buttons as Rev0, on new pins. Games
-must be recompiled for each target; the source doesn't change. A `.chgame`
+Same chip, memory map, screen and buttons as Rev0, on new pins. The pins
+moved to make room for what the board can grow into:
+
+- **The D-pad sits on four ADC-capable pins** (A8, A9, A10, A13), leaving
+  room for analog controls later, and avoiding the ADC channels some chip
+  lots lack.
+- **PC14 and PC15 are free for USB-C's CC lines**, which Rev 1.5 uses for
+  USB-PD; on Rev 1 they are test pads.
+- **PA0 senses USB power** (and switches host power on Rev 1.5).
+- **The backlight and LED share TIM1** (PB9, PB10), so both can dim with
+  PWM, and **the buzzer has TIM2 to itself** (PA1), so a tone never
+  changes them.
+- **The SD card's chip select also gates its data line** (PB3), so a
+  deselected card ignores the screen's traffic on the shared SPI bus.
+- **I2C and the UART get their own connectors** (CN2, CN3) for
+  accessories.
+
+Games must be recompiled for each target; the source doesn't change. A `.chgame`
 cart can carry a binary for each hardware revision
 ([the cart format](spec/chgame.md#binaries-and-devices)).
 
