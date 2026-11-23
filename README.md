@@ -8,7 +8,7 @@
 <a href="https://chgame.website"><img src="docs/brand/btn-website.svg" alt="chgame.website"></a>&nbsp;
 <a href="#-getting-started"><img src="docs/brand/btn-start.svg" alt="Get started"></a>&nbsp;
 <a href="https://bateske.github.io/CHGame/"><img src="docs/brand/btn-docs.svg" alt="API docs"></a>&nbsp;
-<a href="https://www.arduboy.com/shop/p/chgame"><img src="docs/brand/btn-shop.svg" alt="Buy one"></a>&nbsp;
+<a href="https://www.arduboy.com/buy-chgame"><img src="docs/brand/btn-shop.svg" alt="Buy one"></a>&nbsp;
 <a href="https://community.arduboy.com/c/color/56"><img src="docs/brand/btn-forum.svg" alt="Forum"></a>
 </p>
 
