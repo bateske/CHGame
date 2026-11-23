@@ -47,7 +47,7 @@ games, and the PC tools (simulator, uploader, card builder).
 
 ## 🎮 What is CHGame?
 
-<img align="right" width="320" src="docs/brand/board.webp" alt="A CHGame board running its demo">
+<img align="right" width="320" src="docs/brand/board.webp" alt="The CHGame Rev1 board, its screen listing what is new in Rev 1">
 
 | Board | CHGame Rev1 (Rev 1 and Rev 1.5 boards) |
 |---|---|
@@ -61,7 +61,9 @@ games, and the PC tools (simulator, uploader, card builder).
 It works like an Arduboy. Install one board package, write a sketch with
 one include (`CHGame.h`) and upload it over USB. Switch it on and the
 **game menu** in the bootloader lists the games on the SD card: pick one
-and play, with no PC.
+and play, with no PC. Rev 1.5 boards add USB-PD, a protected output and a
+battery-powered USB host, with their own libraries:
+[CHPower](https://github.com/bateske/CHPower).
 
 <br clear="right">
 
@@ -97,7 +99,9 @@ next.
 
 > [!IMPORTANT]
 > **Rev1 is an attempt at a stable pinout.** The system specification is
-> still subject to change. Rev 1.5 boards use the same pins and builds.
+> still subject to change. Rev 1.5 boards use the same pins and builds;
+> their power section (USB-PD, a protected output and a battery-powered USB
+> host) is driven by [CHPower](https://github.com/bateske/CHPower).
 
 Same chip, memory map, screen and buttons as Rev0, on new pins. The pins
 moved to make room for what the board can grow into:

@@ -25,7 +25,7 @@ this one is for the pages around them.
 | `wordmark.svg` | the pixel logo for the API reference's header, its magenta held in yellow (`docs/api/Doxyfile` copies it there) | `tools/brand/make.py wordmark` |
 | `palette.svg` | the palette below | `tools/brand/make.py swatches` |
 | `social.png` | GitHub's link preview, 1280 x 640: the banner's opening picture, the logo in its own magenta (uploaded by hand under Settings > Social preview) | `tools/brand/make.py social` |
-| `board.webp` | the Rev0 board, from [chgame.website](https://chgame.website) | a photo |
+| `board.webp` | the Rev1 board | a photo |
 
 Everything but the logo and the photo is generated: change
 `tools/brand/make.py` (or the art it reads), then run
