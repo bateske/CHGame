@@ -104,7 +104,7 @@ changing that game.
    (the style: [docs/api/README.md](docs/api/README.md)), and
    `doxygen docs/api/Doxyfile` must stay free of warnings. Two things to know:
    - `platform/board` is what the *next* board package release will contain.
-     Builds use the installed package for the core (0.4.0, the last
+     Builds use the installed package for the core (0.4.1, the last
      release, with both boards; or a `-local` version when a staged build
      is installed), so an edit to the core, variant,
      `platform.txt` or `boards.txt` has no effect on a build until it is
@@ -212,9 +212,10 @@ Manager), then `pip install -e .[sim]` in the repository root.
 
 **Notes:**
 - **The Boards Manager URL** above is this repository's; 0.3.0
-  (2026-10-07) was the first release from here, and 0.4.0 (2026-11-21)
-  the latest, with both boards, every game as one cart
-  (`CHGame-Casino-0.4.0.chgame`) and an SD card zip per board. The
+  (2026-10-07) was the first release from here, 0.4.0 (2026-11-21)
+  added Rev1, and 0.4.1 (2026-11-24, new box art) is the latest, with both
+  boards, every game as one cart (`CHGame-Casino-0.4.1.chgame`) and an SD
+  card zip per board. The
   URL is given here, in the README and in `platform/README.md`: change the
   three together. To install the next version before it is published:
   `python tools/release/stage.py` builds it as `<version>-local` and tests
@@ -229,7 +230,7 @@ Manager), then `pip install -e .[sim]` in the repository root.
   (`local2`, ...) on each re-stage, since Arduino keeps an installed
   version whose number has not changed. To go back from one, run `core
   update-index` from the GitHub URL first (both indexes are cached under
-  one name), then `core install CHGame:ch32v@0.4.0`
+  one name), then `core install CHGame:ch32v@0.4.1`
   (trying-a-release.md, "Or in your own arduino-cli"). With 0.3.0
   installed the tools build rev0 alone.
 - The board package brings its own RISC-V GCC 8.2 and the `chgame-upload`

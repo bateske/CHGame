@@ -73,7 +73,7 @@ battery-powered USB host, with their own libraries:
 menu with every release:
 
 <!-- downloads:start (tools/release/downloads.py writes this line) -->
-**0.4.0**: [`CHGame-Casino-0.4.0.chgame`](https://github.com/bateske/CHGame/releases/download/v0.4.0/CHGame-Casino-0.4.0.chgame) · [`CHGame-sdcard-0.4.0-rev1.zip`](https://github.com/bateske/CHGame/releases/download/v0.4.0/CHGame-sdcard-0.4.0-rev1.zip) · [legacy Rev0 card](https://github.com/bateske/CHGame/releases/download/v0.4.0/CHGame-sdcard-0.4.0-rev0.zip)
+**0.4.1**: [`CHGame-Casino-0.4.1.chgame`](https://github.com/bateske/CHGame/releases/download/v0.4.1/CHGame-Casino-0.4.1.chgame) · [`CHGame-sdcard-0.4.1-rev1.zip`](https://github.com/bateske/CHGame/releases/download/v0.4.1/CHGame-sdcard-0.4.1-rev1.zip) · [legacy Rev0 card](https://github.com/bateske/CHGame/releases/download/v0.4.1/CHGame-sdcard-0.4.1-rev0.zip)
 <!-- downloads:end -->
 
 Unzip the `.zip` onto a FAT32 microSD card and switch on. The `.chgame` is
@@ -241,7 +241,7 @@ Each game is a sketch in
 `platform/board/arduino/CHGame/libraries/CHGame/examples/Games/<Name>/`
 with its own README (rules, controls, design) and NOTES.md (status,
 decisions, open items). The image column is the Rev1 release build's size with
-the 0.4.0 package, against the **50,944 B** the bootloader
+the 0.4.1 package, against the **50,944 B** the bootloader
 leaves for a sketch; up to 50,432 B a game keeps both of its save pages.
 
 <details>
@@ -250,7 +250,7 @@ leaves for a sketch; up to 50,432 B a game keeps both of its save pages.
 | Game | What it is | Image |
 |---|---|---|
 | [CHBackgammon](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHBackgammon) | Backgammon on felt with chip checkers, a trained CPU, optional match play and doubling cube | 49,536 B |
-| [CHBingo](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHBingo) | 75-ball bingo: up to nine cards against a hall of rivals, power-ups and a jackpot | 40,768 B |
+| [CHBingo](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHBingo) | 75-ball bingo: up to nine cards against a hall of rivals, power-ups and a jackpot | 40,840 B |
 | [CHBlackjack](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHBlackjack) | Press Play On Tape's Arduboy Blackjack rebuilt in colour: the series' first table | 46,128 B |
 | [CHBoardwalk](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHBoardwalk) | BOARDWALK, a property-trading board game on an isometric board, with tap auctions | 49,816 B |
 | [CHCheckers](platform/board/arduino/CHGame/libraries/CHGame/examples/Games/CHCheckers) | Checkers on CHChess's isometric board, with its own engine and chip pieces | 41,888 B |

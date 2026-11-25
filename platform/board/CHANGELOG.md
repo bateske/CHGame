@@ -6,6 +6,25 @@ bumps it. `python tools/release/release.py --repo bateske/CHGame` (in the
 repository root) publishes the release and uses the matching section of this
 file as the GitHub release notes.
 
+## 0.4.1 (2026-11-24)
+
+New box art and one game change; the core, the libraries and the
+bootloaders are as in 0.4.0.
+
+### Changed
+
+- **New box art for 19 programs**, the pictures the SD Graphic Menu shows:
+  Backgammon, Blackjack, Boardwalk, Checkers, Chess, Dominoes, Four in a
+  Row, Mahjong, Poker, Roulette, Slots, Snakes & Ladders, Solitaire, Tic Tac
+  Toe Royale, Word Wheel, Words, SD Card Reader, SD to Serial and STL
+  Viewer, repainted by hand (each example's `tools/art/cart.png`, which now
+  wins over its `tools/cart.py`). The casino cart and the SD cards carry
+  them.
+- **CHBingo: EASY picks the card up first.** A on a card with a number
+  waiting picks it up and the glove glides to that number; each further A
+  daubs one cell, and the card goes down when none is left or on a swipe.
+  B still spends the power-up.
+
 ## 0.4.0 (2026-11-21)
 
 ### Added
