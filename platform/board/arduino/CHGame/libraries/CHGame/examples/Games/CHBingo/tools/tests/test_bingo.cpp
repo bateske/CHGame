@@ -229,15 +229,27 @@ static void testButtons() {
     CHECK(g.pend[1] & 1u);
     uint32_t p0 = g.pend[0];
     ev = tick(g, A);                                // on card 0
-    if (!p0) { CHECK(has(ev, Ev::Miss)); }
+    if (!p0) { CHECK(has(ev, Ev::Miss)); CHECK(!g.picking); }
     CHECK(g.pend[1] & 1u);
     CHECK(!(g.daub[1] & 1u));
     tick(g, RIGHT);
+    CHECK(!g.picking);                              // a swipe puts a card down
+    // EASY: A picks the card up with the cursor on the waiting number...
+    ev = tick(g, A);
+    CHECK(has(ev, Ev::Pick, &e)); CHECK_EQ(e.a, 1); CHECK_EQ(e.b, 1);
+    CHECK(!has(ev, Ev::Daub));
+    CHECK(g.picking); CHECK_EQ(g.cursor, 0);
+    tick(g, LEFT); CHECK(!g.picking); CHECK_EQ(g.focus, 0);   // swiping away puts it down
+    tick(g, RIGHT);
+    ev = tick(g, A); CHECK(g.picking); CHECK_EQ(g.cursor, 0);
+    tick(g, DOWN); CHECK_EQ(g.cursor, 0);          // the d-pad does not move it in EASY
+    // ...and A again daubs it; with nothing left the card goes down.
     ev = tick(g, A);
     CHECK(has(ev, Ev::Daub, &e));
     CHECK_EQ(e.a, 1); CHECK_EQ(e.c, 1);             // fast
     CHECK(g.daub[1] & 1u);
     CHECK_EQ(g.pend[1], 0u);
+    CHECK(!g.picking);
     CHECK_EQ(g.streak, 1);
     CHECK_EQ(g.meter, 3);
     // A top row on card 1, daubed late: a bingo all the same.
@@ -248,8 +260,16 @@ static void testButtons() {
     for (int t = 0; t < 70; t++) tick(g);
     g.forceRare(1);
     int32_t purse = g.purse;
+    // Picked up, the cursor walks the waiting numbers one daub at a time.
+    ev = tick(g, A); CHECK(has(ev, Ev::Pick)); CHECK_EQ(g.cursor, 1);
+    for (int c = 1; c < 4; c++) {
+        ev = tick(g, A);
+        CHECK(has(ev, Ev::Daub, &e)); CHECK_EQ((uint32_t)e.amount, 1u << c); CHECK_EQ(e.c, 0);
+        CHECK(g.picking); CHECK_EQ(g.cursor, c + 1);
+    }
     ev = tick(g, A);
     CHECK(has(ev, Ev::Bingo, &e));
+    CHECK(!g.picking);
     CHECK_EQ(e.a, 1); CHECK_EQ(e.b, 0);
     CHECK(e.c & WIN_RARE);
     CHECK(e.c & WIN_JACKPOT);
@@ -297,7 +317,8 @@ static void testPowers() {
     for (int t = 0; t < 2000 && g.nCalled < 5; t++) tick(g);
     for (int t = 0; t < 1500; t++) tick(g);         // past the jackpot window
     int32_t pot = g.pot;
-    ev = tick(g, A);
+    tick(g, A);                                     // picked up; then a daub per waiting number
+    for (int i = 0; i < 25 && g.phase == Phase::Calling; i++) ev = tick(g, A);
     CHECK(has(ev, Ev::Bingo, &e));
     CHECK(e.c & WIN_DOUBLE);
     CHECK(!(e.c & WIN_JACKPOT));

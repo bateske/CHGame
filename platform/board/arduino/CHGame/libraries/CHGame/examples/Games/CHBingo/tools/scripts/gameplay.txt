@@ -33,13 +33,16 @@ wait 20
 tap A
 wait 150
 rec stop 02_buyin
-# Swiping through the cards, daubing where the frame is rainbow.
+# Swiping through the cards: where the frame is rainbow, A picks the card up
+# (the glove goes to the number) and A again daubs it.
 say H 75
 wait 30
 rec start 3
-wait 30
+wait 12
 tap RIGHT
 wait 12
+tap A
+wait 14
 tap A
 wait 20
 tap RIGHT
@@ -47,15 +50,21 @@ wait 10
 tap RIGHT
 wait 12
 tap A
-wait 50
+wait 14
+tap A
+wait 34
 tap RIGHT
 wait 10
 tap RIGHT
 wait 12
 tap A
-wait 40
+wait 14
+tap A
+wait 28
 tap LEFT
 wait 10
+tap A
+wait 14
 tap A
 wait 30
 rec stop 03_swipe

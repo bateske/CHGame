@@ -302,7 +302,7 @@ void Bingo::daubCells(uint32_t m) {
     checkWin(focus);
 }
 
-// HARD: A on the cursor's cell.
+// A on the cursor's cell (EASY: always a number waiting).
 void Bingo::daubCursor() {
     uint32_t bit = 1u << cursor;
     if (pend[focus] & bit) daubCells(bit);
@@ -319,6 +319,16 @@ void Bingo::moveCursor(uint8_t repeat) {
     if ((repeat & BTN_DOWN) && r < 4) r++;
     uint8_t to = (uint8_t)(r * 5 + c);
     if (to != cursor) { cursor = to; emit(Ev::Cursor, cursor); }
+}
+
+// EASY: the cursor on the first number waiting on the card picked up; with
+// none left (or the round over) the card is put down.
+void Bingo::aim() {
+    uint32_t m = pend[focus];
+    if (!m || phase != Phase::Calling) { picking = false; return; }
+    uint8_t i = 0;
+    while (!((m >> i) & 1)) i++;
+    cursor = i;
 }
 
 // HARDCORE: a number that was never called, daubed. The card is out of the
@@ -398,18 +408,25 @@ void Bingo::update(uint8_t pressed, uint8_t repeat, bool fxBusy) {
         }
         case Phase::Calling:
             if (callAge < 0xFFFF) callAge++;
-            if (picking) {                              // HARD: the d-pad moves the cursor
+            if (picking && !hints()) {                  // HARD: the d-pad moves the cursor
                 moveCursor(repeat);
                 if (pressed & BTN_A) daubCursor();
                 else if (pressed & BTN_B) { picking = false; emit(Ev::Pick, focus, 0); }
             } else {
+                // EASY picks a card up only when a number waits on it, and the
+                // cursor goes to that number: A again daubs it. A swipe puts
+                // the card down; so does daubing the last number waiting.
+                if (repeat & (BTN_LEFT | BTN_RIGHT)) picking = false;
                 if (repeat & BTN_LEFT) moveFocus(-1);
                 if (repeat & BTN_RIGHT) moveFocus(1);
                 if (pressed & BTN_A) {
-                    if (hints()) daubFocus();
-                    else { picking = true; cursor = 12; emit(Ev::Pick, focus, 1); }
+                    if (picking) daubCursor();
+                    else if (!hints()) { picking = true; cursor = 12; emit(Ev::Pick, focus, 1); }
+                    else if (pend[focus]) { picking = true; aim(); emit(Ev::Pick, focus, 1); }
+                    else { streak = 0; emit(Ev::Miss, 0); }
                 }
                 if (phase == Phase::Calling && (pressed & BTN_B) && hints()) usePower();
+                if (picking && hints()) aim();
             }
             if (phase != Phase::Calling) break;
             if (timer) timer--;

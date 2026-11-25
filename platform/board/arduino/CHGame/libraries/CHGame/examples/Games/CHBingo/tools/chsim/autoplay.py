@@ -1,6 +1,7 @@
 """A round of CHBingo played with the buttons, as a person would, recorded
 to a GIF: buy the cards, then swipe toward the cards with a rainbow frame
-and daub, with a reaction time before every press, and use each power-up
+and pick each up and daub (A, then A again for every number waiting), with
+a reaction time before every press, and use each power-up
 in the next quiet moment.
 
     python tools/chsim/autoplay.py OUT.gif [--cards 6] [--seed N] [--every 3]
@@ -93,7 +94,7 @@ class Player:
                 self.step(self.rng.randint(10, 20))
                 self.tap("B")
             elif waiting & (1 << focus):
-                self.step(self.rng.randint(5, 11))      # spot it, then daub
+                self.step(self.rng.randint(5, 11))      # spot it: pick the card up, then daub
                 self.tap("A")
             elif waiting:
                 right = next(k for k in range(1, n) if waiting & (1 << ((focus + k) % n)))
