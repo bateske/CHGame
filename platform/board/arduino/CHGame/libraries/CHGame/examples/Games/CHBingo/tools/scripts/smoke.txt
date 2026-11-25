@@ -28,15 +28,22 @@ wait 60
 snap 08_first_call
 wait 120
 snap 09_second_call
-# Swipe to a card with a number waiting and daub it.
+# Swipe along to a card with a number waiting, pick it up (the glove goes to
+# the number) and daub it.
 tap RIGHT
 wait 2
 snap 10_sliding
 wait 20
 snap 11_next_card
-say D
+tap RIGHT
+wait 20
+tap A
+wait 20
+snap 11b_picked_up
+tap A
 wait 4
 snap 12_daubed
+say D
 wait 240
 tap LEFT
 wait 20

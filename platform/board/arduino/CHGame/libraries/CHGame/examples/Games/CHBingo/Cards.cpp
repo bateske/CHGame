@@ -32,10 +32,10 @@ void cellXY(uint8_t cell, int &x, int &y) {
 
 void draw(const Bingo &g, uint8_t k, int x, int y, const Look &look) {
     if (x >= GFX_W || x + CARD_W <= 0) return;
-    bool pending = g.hints() && g.pend[k];
+    bool pending = g.hints() && g.pend[k] && look.cursor < 0;
     gfx_fillRect(x + 3, y + 3, CARD_W, CARD_H, FELT_DK);   // its shadow on the felt
     // The frame: rainbow while a called number waits on this card (EASY),
-    // cyan while it is picked up (HARD); a raised rim otherwise.
+    // cyan while it is picked up; a raised rim otherwise.
     bool flat = pending || look.deny || look.stamp;
     uint8_t edge = flat ? (pending && !look.deny && !look.stamp ? FX_A : RED)
                  : look.cursor >= 0 ? CYAN : look.focused ? GOLD : WOOD;
@@ -77,7 +77,7 @@ void draw(const Bingo &g, uint8_t k, int x, int y, const Look &look) {
         }
     }
     gfx_hline(x + 2, y + 2 + HEAD_H, 5 * CELL_W, SILVER);  // the header's shadow on the cells
-    // HARD: the cursor, a gold box (shimmering) inside its cell.
+    // The cursor of a card picked up, a gold box (shimmering) inside its cell.
     if (look.cursor >= 0) {
         int cx = x + 2 + (look.cursor % 5) * CELL_W, cy = y + 2 + HEAD_H + (look.cursor / 5) * CELL_H;
         gfx_rect(cx, cy, CELL_W, CELL_H, INK);
@@ -328,7 +328,7 @@ void sides(const Bingo &g, bool frozen) {
 void modes(const Bingo &g) {
     static const char *const NAME[MODES] = {"EASY", "HARD", "HARDCORE"};
     static const uint8_t COL[MODES] = {CYAN, GOLD, RED};
-    static const char *const WHAT[MODES] = {"A DAUBS THE CARD FOR YOU", "FIND THEM, DAUB EACH ONE",
+    static const char *const WHAT[MODES] = {"A PICKS, THE GLOVE FINDS IT", "FIND THEM, DAUB EACH ONE",
                                             "A WRONG DAUB LOSES THE CARD"};
     for (uint8_t m = 0; m < MODES; m++) {
         int y = MODE_Y + m * MODE_PITCH;

@@ -1,6 +1,6 @@
 # CHBingo
 
-Buy up to nine cards and race a hall of rivals to the first line, while the dealer from the Blackjack tables calls the balls. Every card has to be daubed on its own and the screen shows one at a time, with every card in little along the bottom, so the game is swiping: get to the card with the rainbow frame and press A before somebody across the hall shouts first. Or play it HARD, with no hints and every number daubed by hand, for twice the pot, or HARDCORE, where a wrong daub costs you the card, for three times.
+Buy up to nine cards and race a hall of rivals to the first line, while the dealer from the Blackjack tables calls the balls. Every card has to be daubed on its own and the screen shows one at a time, with every card in little along the bottom, so the game is swiping: get to the card with the rainbow frame, press A to pick it up, and A again on the number the glove finds, before somebody across the hall shouts first. Or play it HARD, with no hints and every number daubed by hand, for twice the pot, or HARDCORE, where a wrong daub costs you the card, for three times.
 
 ![CHBingo gameplay](docs/gameplay.gif)
 
@@ -10,7 +10,7 @@ Buy up to nine cards and race a hall of rivals to the first line, while the deal
 |---|---|
 | LEFT / RIGHT | Swipe to the previous / next card (hold to run); move the cursor on a card you picked up (HARD); fewer / more cards at the buy-in; change an option |
 | UP / DOWN | Move the cursor on a card you picked up (HARD); the mode; more / fewer cards at the buy-in; move in the menus |
-| A | EASY: daub every called number waiting on the card in play. HARD: pick the card up, then daub the cell under the cursor. Buy in; select |
+| A | Pick the card in play up, then daub the cell under the glove: in EASY the glove goes to the number waiting (A again for each one), in HARD it starts on the centre. Buy in; select |
 | B | EASY: use the power-up. HARD: put the card down. Back |
 | START | Pause: resume, the called board, options, save and quit |
 
@@ -22,12 +22,12 @@ Buy up to nine cards and race a hall of rivals to the first line, while the deal
 
 | Mode | How you daub | The pot pays |
 |---|---|---|
-| EASY | A daubs every waiting number on the card in play; rainbow frames show where they are; power-ups | x1 |
+| EASY | Rainbow frames show where numbers wait. A picks the card up and the glove goes to the number; A again daubs it. The card goes down when none is left, or when you swipe away. Power-ups | x1 |
 | HARD | No frames, no power-ups: find the numbers yourself. A picks the card up with a cursor on its centre; move it, A daubs that cell, B puts the card down. A number not yet called is a miss | x2 |
 | HARDCORE | As HARD, but daubing a number that was not called voids the card for the rest of the round. Lose them all and the round is lost | x3 |
 
 - **Cards.** You buy one to nine cards a round, $5, $10 or $25 each. You start with $500 and play until you are broke.
-- **Daubing.** A called number only counts once it is daubed, and each card is daubed on its own: swipe to it and press A (in EASY; the HARD modes daub one cell at a time). A card with a number waiting has a rainbow frame, and so has its little copy in the bar at the foot of the screen, where the waiting numbers flash too, which tells you which way to swipe. Numbers you missed stay daubable. The glove points at the next number waiting on the card in play, and otherwise hovers over the card's little copy. Pressing A with nothing waiting buzzes and ends your streak. Completing a line with a daub is the call: BINGO!
+- **Daubing.** A called number only counts once it is daubed, and each card is daubed on its own: swipe to it, press A to pick it up, then A on the cell (in EASY the glove finds the number for you; in the HARD modes you move it there). A card with a number waiting has a rainbow frame, and so has its little copy in the bar at the foot of the screen, where the waiting numbers flash too, which tells you which way to swipe. Numbers you missed stay daubable. In EASY the glove hovers over the card's little copy until you pick the card up, then goes to the first number waiting, and on to the next after each daub. In EASY, pressing A on a card with nothing waiting buzzes and ends your streak. Completing a line with a daub is the call: BINGO!
 - **The hall.** 8, 20 or 40 rival cards play the same draw. When one of them completes a line you still have until the next call to daub a line of your own; after that the round is theirs.
 - **The pot** is 90% of what the whole hall paid for its cards, so more cards cost more, win more often, and are harder to keep up with.
 - **Power-ups** (EASY only). Daubs fill the POWER tube left of the card, and a daub within a second of its call fills it faster and builds a streak. When it is full you are handed one of three, used with B:

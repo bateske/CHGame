@@ -43,7 +43,8 @@ static uint8_t tossCard, tossT;
 static const uint8_t TOSS_HOLD = 14, TOSS_END = 34;
 
 // CHChess's glove: it points at what A will act on (the newest card at the
-// buy-in, the waiting number on the card in play) and dips when A lands.
+// buy-in, the cell under the cursor of a card picked up, else the little copy
+// of the card in play) and dips when A lands.
 // Q4 position gliding to its target.
 static int16_t gx16, gy16;
 static uint8_t tapT;
@@ -164,7 +165,7 @@ void onEvents(Bingo &g) {
                 denyT = 12;
                 audio::sfx(Sfx::Deny);
                 break;
-            case Ev::Pick:                              // HARD: the card picked up or put down
+            case Ev::Pick:                              // the card picked up (or put down with B, HARD)
                 tapT = 1; holdT = 0;
                 audio::sfx(e.b ? Sfx::Select : Sfx::Cursor);
                 break;
@@ -251,15 +252,8 @@ static bool gloveTarget(const Bingo &g, int &x, int &y) {
         return true;
     }
     if (g.phase != Phase::Calling || tossT) return false;
-    uint32_t m = g.hints() ? g.pend[g.focus] : 0;
-    if (g.picking) {                                    // HARD: the glove is the cursor
+    if (g.picking) {                                    // the glove is the cursor (EASY: on the number waiting)
         cards::cellXY(g.cursor, x, y);
-        y -= 2;
-        x += scroll;
-    } else if (m) {                                     // the first number waiting here
-        uint8_t i = 0;
-        while (!((m >> i) & 1)) i++;
-        cards::cellXY(i, x, y);
         y -= 2;
         x += scroll;                                    // it rides the slide
     } else {                                            // nothing here: it hovers over this card's little copy

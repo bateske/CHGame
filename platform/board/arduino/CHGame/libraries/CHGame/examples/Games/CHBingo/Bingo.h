@@ -19,8 +19,9 @@
 // what the whole hall paid; 5% of the player's buy-in feeds the jackpot,
 // which pays for a bingo within JACKPOT_CALLS calls.
 //
-// Modes, picked at the start of a game: EASY is the above (A daubs every
-// waiting number on the card in play, and the frames show where they are).
+// Modes, picked at the start of a game: EASY is the above (the frames show
+// where numbers wait; A on such a card picks it up with the cursor on the
+// waiting number, A again daubs it, and the card goes down when none is left).
 // HARD shows nothing and has no power-ups: A picks the card in play up, a
 // cursor starts on its centre, the d-pad moves it, A daubs that one cell and
 // B puts the card down; it pays the pot twice. HARDCORE is HARD, except that
@@ -66,7 +67,7 @@ enum class Ev : uint8_t {
     Deny,          // cannot afford that; a cell already daubed
     ModeOpen,      // the mode picker: a = the mode offered first
     ModePick,      // a = mode
-    Pick,          // HARD: a = card, b = 1 picked up, 0 put down
+    Pick,          // a = card, b = 1 picked up, 0 put down (HARD's B)
     Cursor,        // HARD: a = the cell
     Void,          // HARDCORE: a = card, b = 1 it was the last one
 };
@@ -125,8 +126,8 @@ public:
     uint16_t streak;
     uint8_t  winCard, winLine;
     uint8_t  mode;                      // Mode: for the whole game
-    bool     picking;                   // HARD: the card in play is picked up
-    uint8_t  cursor;                    // HARD: its cell (r*5+c)
+    bool     picking;                   // the card in play is picked up
+    uint8_t  cursor;                    // its cell (r*5+c); in EASY a number waiting
     uint16_t voided;                    // HARDCORE: the cards thrown out this round (bit k)
     Phase    phase;
 
@@ -147,7 +148,7 @@ public:
     bool    frozen() const { return phase == Phase::Calling && nCalled && timer > interval(); }   // FREEZE holds the caller
     bool    inPlay() const { return phase == Phase::Calling || phase == Phase::Won || phase == Phase::Lost; }
     bool    hasRound() const { return phase == Phase::Calling || (phase == Phase::Quit && roundOpen); }
-    bool    hints() const { return mode == M_EASY; }   // rainbow frames, the glove on the waiting number
+    bool    hints() const { return mode == M_EASY; }   // rainbow frames; A finds the waiting number
     bool    live(uint8_t k) const { return !((voided >> k) & 1); }
     uint8_t step(uint8_t k, int8_t d) const;   // the next card still in play that way (k itself if none)
 
@@ -185,6 +186,7 @@ private:
     void    daubCells(uint32_t m);
     void    daubCursor();
     void    moveCursor(uint8_t repeat);
+    void    aim();
     void    voidCard();
     void    usePower();
     void    checkWin(uint8_t card);
