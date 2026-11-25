@@ -1,0 +1,26 @@
+{
+  "macos-arm64": {
+    "passed": true,
+    "TMPDIR_cases": [
+      "unset",
+      "empty"
+    ],
+    "ctags_tempdir_patch": true,
+    "functions": [
+      "setup",
+      "loop"
+    ]
+  },
+  "macos-x86_64": {
+    "passed": true,
+    "TMPDIR_cases": [
+      "unset",
+      "empty"
+    ],
+    "ctags_tempdir_patch": true,
+    "functions": [
+      "setup",
+      "loop"
+    ]
+  }
+}
